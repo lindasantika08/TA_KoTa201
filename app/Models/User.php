@@ -54,4 +54,8 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    // Schema::table('users', function (Blueprint $blueprint)) {
+    //     $table->string('role')->default('mahasiswa');
+    // };
 }
