@@ -16,11 +16,18 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        if (!Auth::attempt($request->only('email', 'password'))) {
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json(['message'=>'Login Gagal'], 401);
         }
 
-        return response()->json(['message' => 'Login Berhasil']);
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'message' => 'Login Berhasil',
+            'token' => $token
+        ]);
     }
 
     public function logout(Request $request){
