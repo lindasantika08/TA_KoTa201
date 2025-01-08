@@ -7,9 +7,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Inertia\Inertia;
+
 
 class AuthController extends Controller
 {
+
+    public function index() {
+        
+        return Inertia::render('Auth/Login');
+
+    }
+
     public function login(Request $request) {
         $request->validate([
             'email' => 'required|string',
