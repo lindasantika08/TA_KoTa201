@@ -8,6 +8,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
@@ -15,8 +17,12 @@ class User extends Authenticatable
     use HasFactory;
     use Notifiable;
     use SoftDeletes;
+    use HasUuids;
+    use HasRoles;
 
     protected $guard_name = 'sanctum';
+    public $incrementing = false;
+    protected $keyType = 'string';
 
     /**
      * The attributes that are mass assignable.
@@ -24,10 +30,10 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'role_id',
         'name',
         'email',
         'password',
+        'role',
         'nip',
         'nim',
     ];
@@ -55,7 +61,11 @@ class User extends Authenticatable
         ];
     }
 
-    // Schema::table('users', function (Blueprint $blueprint)) {
-    //     $table->string('role')->default('mahasiswa');
-    // };
+    public function isDosen() {
+        return $this->role === 'dosen';
+    }
+
+    public function isMahasiswa() {
+        return $this->role === 'mahasiswa';
+    }
 }

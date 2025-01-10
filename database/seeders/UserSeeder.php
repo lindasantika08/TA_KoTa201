@@ -20,7 +20,7 @@ class UserSeeder extends Seeder
             [
                 'id' =>'ea483968-7f8c-4c02-af8a-936823bf6bcu',
                 'name' => 'Linda',
-                'email' => 'linda.santika.tif22@polban.ac.id',
+                'email' => 'dosen@proyek.com',
                 'password' => bcrypt("qwerty123"),
                 'nip' => '12345678901234567',
                 'role' => 'dosen',

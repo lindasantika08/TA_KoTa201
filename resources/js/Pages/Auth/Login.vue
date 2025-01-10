@@ -1,100 +1,151 @@
 <script>
-import axios from 'axios';
+import { ref, onMounted } from 'vue'
+import { router } from '@inertiajs/vue3'
+import axios from 'axios'
 
 export default {
-  name: 'LoginPage',
-  data() {
-    return {
-      email: '',
-      password: '',
-      error: ''
-    };
-  },
-  methods: {
-    async handleSubmit() {
+  setup() {
+    const email = ref('')
+    const password = ref('')
+    const error = ref(null)
+    const isRedirecting = ref(false)
+
+    const handleSubmit = async () => {
       try {
+        error.value = null
         const response = await axios.post('/api/login', {
-          email: this.email,
-          password: this.password
-        });
+          email: email.value,
+          password: password.value
+        })
         
         if (response.data.token) {
-          localStorage.setItem('auth_token', response.data.token);
-          this.$inertia.visit('/home');
+          localStorage.setItem('auth_token', response.data.token)
+          localStorage.setItem('user_data', JSON.stringify(response.data.user))
+          
+          axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`
+          
+          const role = response.data.user.role
+          if (role === 'dosen') {
+            router.visit('/dosen/dashboard')
+          } else if (role === 'mahasiswa') {
+            router.visit('/mahasiswa/dashboard')
+          }
         }
-      } catch (error) {
-        this.error = 'Login Gagal. Periksa kembali email dan password.';
+      } catch (err) {
+        error.value = err.response?.data?.message || 'Login gagal'
+        localStorage.removeItem('auth_token')
+        localStorage.removeItem('user_data')
       }
     }
+
+    const checkAuthAndRedirect = async () => {
+      if (isRedirecting.value) return
+      
+      const token = localStorage.getItem('auth_token')
+      if (!token) {
+        if (window.location.pathname !== '/login') {
+          router.visit('/login')
+        }
+        return
+      }
+      
+      try {
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+        const userData = JSON.parse(localStorage.getItem('user_data') || 'null')
+        if (!userData) {
+          throw new Error('No user data')
+        }
+
+        await axios.get('/api/user') 
+
+        const role = userData.role
+        if (role === 'dosen') {
+          router.visit('/dosen/dashboard')
+        } else if (role === 'mahasiswa') {
+          router.visit('/mahasiswa/dashboard')
+        }
+      } catch (err) {
+        localStorage.removeItem('auth_token')
+        localStorage.removeItem('user_data')
+        router.visit('/login')
+      }
+    }
+
+    onMounted(() => {
+      checkAuthAndRedirect()
+    })
+
+    return {
+      email,
+      password,
+      error,
+      handleSubmit
+    }
   }
-};
+}
 </script>
 
 <template>
-    <div class="min-h-screen flex">
-      <!-- Left Panel -->
-      <div class="w-1/2 bg-sky-100 p-12">
-        <h1 class="text-3xl font-bold mb-6">Self and Peer Assessment Project</h1>
-        <p class="text-gray-600 leading-relaxed">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit,
-          sed do eiusmod tempor incididunt ut labore et dolore
-          magna aliqua. Ut enim ad minim veniam, quis nostrud
-          exercitation ullamco laboris nisi ut aliquip ex ea
-          commodo consequat. Duis aute irure dolor in
-          reprehenderit in voluptate velit esse cillum dolore eu
-          fugiat nulla pariatur. Excepteur sint occaecat cupidatat
-          non proident, sunt in culpa qui officia deserunt mollit
-          anim id est laborum.
-        </p>
-      </div>
-  
-      <!-- Right Panel - Login Form -->
-      <div class="w-1/2 p-12 flex flex-col justify-center">
-        <div class="max-w-md w-full mx-auto">
-          <h2 class="text-3xl font-bold mb-2">Log In Account</h2>
-          <p class="text-gray-600 mb-8">Hi, Welcome!</p>
-  
-          <form @submit.prevent="handleSubmit" class="space-y-6">
-            <div>
-              <label class="block text-sm font-medium text-gray-700">
-                Email <span class="text-red-500">*</span>
-              </label>
-              <input
-                type="email"
-                v-model="email"
-                required
-                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-  
-            <div>
-              <label class="block text-sm font-medium text-gray-700">
-                Password <span class="text-red-500">*</span>
-              </label>
-              <input
-                type="password"
-                v-model="password"
-                required
-                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-  
-            <div class="flex items-center justify-end">
-              <a href="#" class="text-sm text-gray-600 hover:text-gray-900">
-                Lupa Kata Sandi?
-              </a>
-            </div>
-  
-            <button
-              type="submit"
-              class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-400 hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              MASUK
-            </button>
-          </form>
-        </div>
+  <div class="min-h-screen flex">
+    <!-- Left Panel -->
+    <div class="w-1/2 bg-sky-100 p-12">
+      <h1 class="text-3xl font-bold mb-6">Self and Peer Assessment Project</h1>
+      <p class="text-gray-600 leading-relaxed">
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit,
+        sed do eiusmod tempor incididunt ut labore et dolore
+        magna aliqua.
+      </p>
+    </div>
+
+    <!-- Right Panel - Login Form -->
+    <div class="w-1/2 p-12 flex flex-col justify-center">
+      <div class="max-w-md w-full mx-auto">
+        <h2 class="text-3xl font-bold mb-2">Log In Account</h2>
+        <p class="text-gray-600 mb-8">Hi, Welcome!</p>
+
+        <form @submit.prevent="handleSubmit" class="space-y-6">
+          <div v-if="error" class="bg-red-50 text-red-500 p-3 rounded-md mb-4">
+            {{ error }}
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700">
+              Email <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="email"
+              v-model="email"
+              required
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700">
+              Password <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="password"
+              v-model="password"
+              required
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
+          <div class="flex items-center justify-end">
+            <a href="#" class="text-sm text-gray-600 hover:text-gray-900">
+              Lupa Kata Sandi?
+            </a>
+          </div>
+
+          <button
+            type="submit"
+            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-400 hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            MASUK
+          </button>
+        </form>
       </div>
     </div>
-  </template>
-  
-
+  </div>
+</template>
