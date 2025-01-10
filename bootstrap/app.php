@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'abilities' => CheckAbilities::class,
             'ability' => CheckForAnyAbility::class,
+            'role' => \App\Http\Middleware\CheckRole::class,
         ]);
         $middleware->statefulApi();
     })

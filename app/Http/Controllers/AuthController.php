@@ -20,27 +20,35 @@ class AuthController extends Controller
     }
 
     public function login(Request $request) {
-        $request->validate([
-            'email' => 'required|string',
-            'password' => 'required|string',
+        $credentials = $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required'],
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        if (Auth::attempt($credentials)) {
+            $user = Auth::user();
+            $token = $user->createToken('auth_token')->plainTextToken;
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json(['message'=>'Login Gagal'], 401);
+            return response()->json([
+                'token' => $token,
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->role 
+                ],
+                'message' => 'Login berhasil'
+            ]);
         }
 
-        $token = $user->createToken('auth_token')->plainTextToken;
-
         return response()->json([
-            'message' => 'Login Berhasil',
-            'token' => $token
-        ]);
+            'message' => 'Email atau password salah'
+        ], 401);
     }
 
     public function logout(Request $request){
-        $request->users()->currentAccessToken()->delete();
+        // dd($request->user());
+        $request->user()->currentAccessToken()->delete();
         return response()->json(['message' => 'Logout Berhasil']);
     }
 }

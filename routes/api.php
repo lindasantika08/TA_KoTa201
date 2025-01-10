@@ -13,6 +13,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function () {
         return auth()->user();
     });
-    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::put('/logout', [AuthController::class, 'logout']);
 });
 

@@ -1,17 +1,20 @@
 <?php
 
+use App\Http\Controllers\Dosen\DashboardDosen;
+use App\Http\Controllers\Mahasiswa\DashboardMahasiswa;
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
-// Route untuk halaman login
+Route::redirect('/', 'login');
 Route::get('/login', [AuthController::class, 'index'])->name('login');
-
-// Route untuk proses login
-Route::post('/login', [AuthController::class, 'login']);
-
-// Route untuk dashboard (hanya bisa diakses jika terautentikasi)
 Route::middleware('auth')->group(function () {
-    Route::get('/dashboard', function () {
-        return Inertia::render('Dashboard'); // Merender halaman dashboard
-    })->name('dashboard');
+    // Route untuk dosen
+    Route::middleware(['role:dosen'])->prefix('dosen')->group(function (){
+        Route::get('/dashboard', [DashboardDosen::class, 'dashboard'])->name('dashboard');
+    });
+
+    //Route untuk Mahasiswa
+    Route::middleware('role:mahasiswa')->prefix('mahasiswa')->group(function (){
+        Route::get('/dashboard', [DashboardMahasiswa::class, 'dashboard'])->name('mahasiswa.dashboard');
+    });
 });
