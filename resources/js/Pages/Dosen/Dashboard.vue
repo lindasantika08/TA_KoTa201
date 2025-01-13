@@ -82,6 +82,7 @@ import axios from 'axios';
 import Sidebar from '@/Components/Sidebar.vue';
 import Navbar from '@/Components/Navbar.vue';
 
+
 export default {
   components: {
     Sidebar,
