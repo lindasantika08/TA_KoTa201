@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Dosen\DashboardDosen;
 use App\Http\Controllers\Dosen\AssessmentController;
+use App\Http\Controllers\Dosen\FeedbackController;
+use App\Http\Controllers\Dosen\ReportController;
 use App\Http\Controllers\Mahasiswa\DashboardMahasiswa;
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
@@ -21,6 +23,10 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/assessment/data-with-bobot', [AssessmentController::class, 'getAssessmentsWithBobot'])->name('assessment.data-with-bobot'); // Route baru untuk data dengan bobot
         Route::get('/export-self-assessment', [AssessmentController::class, 'exportExcel'])->name('dosen.export-self');
+
+        Route::get('/report', [ReportController::class, 'report'])->name('report');
+
+        Route::get('/feedback', [FeedbackController::class, 'feedback'])->name('feedback');
     });
 
     //Route untuk Mahasiswa
