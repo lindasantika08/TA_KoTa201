@@ -12,4 +12,17 @@ class DashboardDosen extends Controller
     {
         return Inertia::render('Dosen/Dashboard');
     }
+
+    public function notifications()
+    {
+        return Inertia::render('Dosen/Notifications');
+    }
+
+    public function profile()
+    {
+        return Inertia::render('Dosen/Profile');
+    }
+    
+
+   
 }

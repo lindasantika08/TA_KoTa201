@@ -56,11 +56,10 @@ class AssessmentController extends Controller
             // Pastikan ada 5 kolom (id, type, pertanyaan, aspek, kriteria)
             if (count($rowData) >= 5) {
                 $assessmentData[] = [
-                    'id' => $rowData[0],
-                    'type' => $rowData[1],
                     'pertanyaan' => $rowData[2],
                     'aspek' => $rowData[3],
                     'kriteria' => $rowData[4],
+                    'type' => $rowData[1],
                 ];
             }
         }
@@ -93,27 +92,38 @@ class AssessmentController extends Controller
 
         // Simpan data untuk type_criteria terlebih dahulu
         try {
-            // Simpan data ke tabel type_criteria
+            // Simpan atau perbarui data ke tabel type_criteria
             foreach ($typeCriteriaData as $row) {
-                type_criteria::create([
-                    'aspek' => $row['aspek'],
-                    'kriteria' => $row['kriteria'],
-                    'bobot_1' => $row['bobot_1'],
-                    'bobot_2' => $row['bobot_2'],
-                    'bobot_3' => $row['bobot_3'],
-                    'bobot_4' => $row['bobot_4'],
-                    'bobot_5' => $row['bobot_5'],
-                ]);
+                type_criteria::updateOrCreate(
+                    [
+                        'aspek' => $row['aspek'],
+                        'kriteria' => $row['kriteria']
+                    ],
+                    [
+                        'bobot_1' => $row['bobot_1'],
+                        'bobot_2' => $row['bobot_2'],
+                        'bobot_3' => $row['bobot_3'],
+                        'bobot_4' => $row['bobot_4'],
+                        'bobot_5' => $row['bobot_5'],
+                    ]
+                );
             }
 
-            // Simpan data ke tabel assessment
+            // Hapus data assessment lama yang sudah ada berdasarkan kombinasi pertanyaan, aspek, dan kriteria
+            foreach ($assessmentData as $row) {
+                Assessment::where('pertanyaan', $row['pertanyaan'])
+                    ->where('aspek', $row['aspek'])
+                    ->where('kriteria', $row['kriteria'])
+                    ->delete();
+            }
+
+            // Simpan data baru ke tabel assessment
             foreach ($assessmentData as $row) {
                 Assessment::create([
-                    'id' => $row['id'],
-                    'type' => $row['type'],
                     'pertanyaan' => $row['pertanyaan'],
                     'aspek' => $row['aspek'],
                     'kriteria' => $row['kriteria'],
+                    'type' => $row['type'],
                 ]);
             }
 
@@ -123,6 +133,9 @@ class AssessmentController extends Controller
         }
     }
 
+
+
+
     public function getData()
     {
         $assessments = Assessment::all(); // Ambil semua data assessment
@@ -131,11 +144,23 @@ class AssessmentController extends Controller
 
     public function getAssessmentsWithBobot()
     {
+        // Menggunakan join untuk mengambil data dari tabel assessment dan type_criteria
         $assessments = Assessment::join('type_criteria', function ($join) {
             $join->on('assessment.aspek', '=', 'type_criteria.aspek')
                 ->on('assessment.kriteria', '=', 'type_criteria.kriteria');
         })
-            ->select('assessment.*', 'type_criteria.bobot_1', 'type_criteria.bobot_2', 'type_criteria.bobot_3', 'type_criteria.bobot_4', 'type_criteria.bobot_5')
+            ->select(
+                'assessment.id',
+                'assessment.type',
+                'assessment.pertanyaan',
+                'assessment.aspek',
+                'assessment.kriteria',
+                'type_criteria.bobot_1',
+                'type_criteria.bobot_2',
+                'type_criteria.bobot_3',
+                'type_criteria.bobot_4',
+                'type_criteria.bobot_5'
+            )
             ->get();
 
         return response()->json($assessments);

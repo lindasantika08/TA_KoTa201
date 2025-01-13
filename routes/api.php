@@ -16,4 +16,5 @@ Route::middleware('auth:sanctum')->group(function () {
     });
     Route::get('/export-self-assessment', [AssessmentController::class, 'exportExcel']);
     Route::put('/logout', [AuthController::class, 'logout']);
+
 });
