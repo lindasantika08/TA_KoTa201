@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Dosen;
 
+use App\Exports\AssessmentExport;
 use App\Http\Controllers\Controller;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
@@ -11,17 +12,22 @@ use App\Models\Assessment;
 use App\Models\type_criteria;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
+
 class AssessmentController extends Controller
 {
-    public function selfAssessment()
+    public function self()
     {
-        // Pastikan nama komponen dan folder sesuai dengan struktur di resources/js/Pages/Dosen
         return Inertia::render('Dosen/SelfAssessment');
     }
 
-    public function peerAssessment()
+    public function peer()
     {
         return Inertia::render('Dosen/PeerAssessment');
+    }
+
+    public function exportExcel()
+    {
+        return Excel::download(new AssessmentExport, 'self-assessment.xlsx');
     }
 
     public function import(Request $request)

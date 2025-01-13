@@ -1,5 +1,5 @@
 <script>
-import { Inertia } from '@inertiajs/inertia';
+import { router } from '@inertiajs/vue3';
 
 export default {
   name: "Sidebar",
@@ -19,14 +19,12 @@ export default {
       this.isAssessmentOpen = !this.isAssessmentOpen;
     },
     goToSelfAssessment() {
-      // Menavigasi ke halaman Self Assessment dengan folder Dosen
-      Inertia.visit('/dosen/assessment/selfAssessment'); 
+      router.visit('/dosen/self');
     },
     goToPeerAssessment() {
-      // Menavigasi ke halaman Peer Assessment dengan folder Dosen
-      Inertia.visit('/dosen/assessment/peer'); 
+      router.visit('/dosen/peer');
     },
-  },
+},
 };
 </script>
 
