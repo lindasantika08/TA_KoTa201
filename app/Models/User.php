@@ -6,11 +6,23 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasApiTokens;
+    use HasFactory;
+    use Notifiable;
+    use SoftDeletes;
+    use HasUuids;
+    use HasRoles;
+
+    protected $guard_name = 'sanctum';
+    public $incrementing = false;
+    protected $keyType = 'string';
 
     /**
      * The attributes that are mass assignable.
@@ -21,6 +33,9 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
+        'nip',
+        'nim',
     ];
 
     /**
@@ -44,5 +59,13 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function isDosen() {
+        return $this->role === 'dosen';
+    }
+
+    public function isMahasiswa() {
+        return $this->role === 'mahasiswa';
     }
 }
