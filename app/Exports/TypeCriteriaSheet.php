@@ -18,7 +18,8 @@ class TypeCriteriaSheet implements FromCollection, WithHeadings, WithEvents, Wit
      */
     public function collection()
     {
-        return type_criteria::all()->map(function ($item, $key) {
+        // Ambil data dari database
+        $data = type_criteria::all()->map(function ($item, $key) {
             return [
                 'no' => $key + 1,
                 'aspek' => $item->aspek,
@@ -29,7 +30,24 @@ class TypeCriteriaSheet implements FromCollection, WithHeadings, WithEvents, Wit
                 'bobot_4' => $item->bobot_4,
                 'bobot_5' => $item->bobot_5,
             ];
-        });
+        })
+            ->toArray();
+
+        // Tambahkan 5 baris template kosong
+        for ($i = 0; $i < 5; $i++) {
+            $data[] = [
+                'no' => count($data) + 1,
+                'aspek' => '',
+                'kriteria' => '',
+                'bobot_1' => '',
+                'bobot_2' => '',
+                'bobot_3' => '',
+                'bobot_4' => '',
+                'bobot_5' => '',
+            ];
+        }
+
+        return collect($data);
     }
 
     /**

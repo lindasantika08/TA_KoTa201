@@ -10,6 +10,7 @@ use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
 
 class AssessmentSheet implements FromCollection, WithHeadings, WithEvents, WithTitle, ShouldAutoSize
 {
@@ -18,7 +19,8 @@ class AssessmentSheet implements FromCollection, WithHeadings, WithEvents, WithT
      */
     public function collection()
     {
-        return Assessment::select('type', 'pertanyaan', 'aspek', 'kriteria')
+        // Ambil data dari database
+        $data = Assessment::select('type', 'pertanyaan', 'aspek', 'kriteria')
             ->get()
             ->map(function ($item, $key) {
                 return [
@@ -28,7 +30,21 @@ class AssessmentSheet implements FromCollection, WithHeadings, WithEvents, WithT
                     'aspek' => $item->aspek,
                     'kriteria' => $item->kriteria,
                 ];
-            });
+            })
+            ->toArray();
+
+        // Tambahkan 10 baris template kosong di bawah data yang ada
+        for ($i = 0; $i < 10; $i++) {
+            $data[] = [
+                'no' => count($data) + 1,
+                'type' => '',
+                'pertanyaan' => '',
+                'aspek' => '',
+                'kriteria' => '',
+            ];
+        }
+
+        return collect($data);
     }
 
     /**
@@ -52,30 +68,37 @@ class AssessmentSheet implements FromCollection, WithHeadings, WithEvents, WithT
     {
         return [
             AfterSheet::class => function (AfterSheet $event) {
-                // Get worksheet
                 $worksheet = $event->sheet->getDelegate();
+                $lastRow = $worksheet->getHighestRow(); // Mengambil baris terakhir yang ada
 
-                // Get the last row number
-                $lastRow = $worksheet->getHighestRow();
-
-                // Add borders to all cells including headers
+                // Tambahkan border untuk semua sel termasuk header dan data
                 $worksheet->getStyle('A1:E' . $lastRow)->getBorders()->getAllBorders()->setBorderStyle('thin');
 
-                // Make headers bold
+                // Membuat header menjadi tebal
                 $worksheet->getStyle('A1:E1')->getFont()->setBold(true);
 
-                // Center headers
+                // Meratakan header ke tengah
                 $worksheet->getStyle('A1:E1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-                // Center align No column
+                // Meratakan kolom No ke tengah
                 $worksheet->getStyle('A2:A' . $lastRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-                // Left align text columns (Type, Pertanyaan, Aspek, Kriteria)
+                // Meratakan kolom lainnya ke kiri (Type, Pertanyaan, Aspek, Kriteria)
                 $worksheet->getStyle('B2:E' . $lastRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
 
-                // Auto-size columns
+                // Menyesuaikan ukuran kolom secara otomatis
                 foreach (range('A', 'E') as $col) {
                     $worksheet->getColumnDimension($col)->setAutoSize(true);
+                }
+
+                // Menambahkan dropdown pada kolom 'Type' (Kolom B) mulai dari baris kedua hingga terakhir
+                for ($i = 2; $i <= $lastRow; $i++) {
+                    $validation = $worksheet->getCell("B$i")->getDataValidation();
+                    $validation->setType(DataValidation::TYPE_LIST);
+                    $validation->setErrorStyle(DataValidation::STYLE_INFORMATION);
+                    $validation->setAllowBlank(false);
+                    $validation->setShowDropDown(true);
+                    $validation->setFormula1('"selfAssessment,peerAssessment"');
                 }
             }
         ];
