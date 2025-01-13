@@ -34,44 +34,55 @@
           />
         </div>
 
-        <!-- Container untuk cards dengan full width -->
-        <div class="mt-6 w-full grid grid-cols-1 gap-6">
+        <!-- Container untuk assessment yang dikelompokkan berdasarkan aspek -->
+        <div class="mt-6 space-y-8">
           <div 
-            v-for="assessment in assessments" 
-            :key="assessment.id" 
-            class="bg-white p-6 rounded-lg shadow-lg w-full"
+            v-for="(group, aspek) in groupedAssessments" 
+            :key="aspek" 
+            class="bg-white rounded-lg shadow-lg p-6"
           >
-            <!-- Card Header: Pertanyaan -->
-            <div class="mb-4">
-              <h3 class="text-xl font-semibold">{{ assessment.pertanyaan }}</h3>
-              <h3 class="text-m font-semibold mt-2">{{ assessment.aspek }}</h3>
-              <h3 class="text-m font-semibold mt-2">{{ assessment.kriteria }}</h3>
+            <!-- Header Aspek -->
+            <div class="border-b pb-4 mb-6">
+              <h2 class="text-2xl font-bold text-gray-800">{{ aspek }}</h2>
             </div>
 
-            <!-- Card Body: Bobot -->
-            <div class="w-full">
-              <h4 class="font-medium mb-2">Bobot:</h4>
-              <div class="overflow-x-auto">
-                <table class="w-full table-auto border-collapse">
-                  <thead>
-                    <tr>
-                      <th class="px-4 py-2 border">Bobot 1</th>
-                      <th class="px-4 py-2 border">Bobot 2</th>
-                      <th class="px-4 py-2 border">Bobot 3</th>
-                      <th class="px-4 py-2 border">Bobot 4</th>
-                      <th class="px-4 py-2 border">Bobot 5</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td class="px-4 py-2 border">{{ assessment.bobot_1 }}</td>
-                      <td class="px-4 py-2 border">{{ assessment.bobot_2 }}</td>
-                      <td class="px-4 py-2 border">{{ assessment.bobot_3 }}</td>
-                      <td class="px-4 py-2 border">{{ assessment.bobot_4 }}</td>
-                      <td class="px-4 py-2 border">{{ assessment.bobot_5 }}</td>
-                    </tr>
-                  </tbody>
-                </table>
+            <!-- Daftar Pertanyaan untuk Aspek ini -->
+            <div class="space-y-6">
+              <div 
+                v-for="assessment in group" 
+                :key="assessment.id" 
+                class="bg-gray-50 p-6 rounded-lg"
+              >
+                <!-- Pertanyaan -->
+                <h3 class="text-lg font-semibold mb-4">{{ assessment.pertanyaan }}</h3>
+                <h3 class="text-lg font-semibold mb-4">{{ assessment.kriteria }}</h3>
+
+                <!-- Tabel Bobot -->
+                <div class="w-full">
+                  <h4 class="font-medium mb-2">Bobot:</h4>
+                  <div class="overflow-x-auto">
+                    <table class="w-full table-auto border-collapse bg-white">
+                      <thead>
+                        <tr>
+                          <th class="px-4 py-2 border">1</th>
+                          <th class="px-4 py-2 border">2</th>
+                          <th class="px-4 py-2 border">3</th>
+                          <th class="px-4 py-2 border">4</th>
+                          <th class="px-4 py-2 border">5</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td class="px-4 py-2 border">{{ assessment.bobot_1 }}</td>
+                          <td class="px-4 py-2 border">{{ assessment.bobot_2 }}</td>
+                          <td class="px-4 py-2 border">{{ assessment.bobot_3 }}</td>
+                          <td class="px-4 py-2 border">{{ assessment.bobot_4 }}</td>
+                          <td class="px-4 py-2 border">{{ assessment.bobot_5 }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -82,7 +93,7 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
 import Sidebar from '@/Components/Sidebar.vue';
 import Navbar from '@/Components/Navbar.vue';
@@ -183,11 +194,23 @@ export default {
       }
     });
 
+    // Group assessments berdasarkan aspek
+    const groupedAssessments = computed(() => {
+      const groups = {};
+      assessments.value.forEach(assessment => {
+        if (!groups[assessment.aspek]) {
+          groups[assessment.aspek] = [];
+        }
+        groups[assessment.aspek].push(assessment);
+      });
+      return groups;
+    });
+
     return {
       handleLogout,
       downloadTemplate,
       handleFileUpload,
-      assessments,
+      groupedAssessments,
     };
   },
 };
