@@ -35,29 +35,41 @@
           />
         </div>
 
-        <!-- Tabel untuk menampilkan data dari database -->
-        <div class="mt-6">
-          <h2 class="text-xl font-bold">Data Assessment</h2>
-          <table class="min-w-full table-auto mt-4 border-collapse border border-gray-300">
-            <thead>
-              <tr>
-                <th class="px-4 py-2 border">ID</th>
-                <th class="px-4 py-2 border">Type</th>
-                <th class="px-4 py-2 border">Pertanyaan</th>
-                <th class="px-4 py-2 border">aspek</th>
-                <th class="px-4 py-2 border">kriteria</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="assessment in assessments" :key="assessment.id">
-                <td class="px-4 py-2 border">{{ assessment.id }}</td>
-                <td class="px-4 py-2 border">{{ assessment.type }}</td>
-                <td class="px-4 py-2 border">{{ assessment.pertanyaan }}</td>
-                <td class="px-4 py-2 border">{{ assessment.aspek }}</td>
-                <td class="px-4 py-2 border">{{ assessment.kriteria }}</td>
-              </tr>
-            </tbody>
-          </table>
+        <!-- Menampilkan data assessment dalam bentuk card -->
+        <div class="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div 
+            v-for="assessment in assessments" 
+            :key="assessment.id" 
+            class="bg-white p-4 rounded-lg shadow-lg"
+          >
+            <!-- Card Header: Pertanyaan -->
+            <h3 class="text-xl font-semibold mb-4">{{ assessment.pertanyaan }}</h3>
+
+            <!-- Card Body: Bobot -->
+            <div>
+              <h4 class="font-medium mb-2">Bobot:</h4>
+              <table class="min-w-full table-auto border-collapse">
+                <thead>
+                  <tr>
+                    <th class="px-4 py-2 border">Bobot 1</th>
+                    <th class="px-4 py-2 border">Bobot 2</th>
+                    <th class="px-4 py-2 border">Bobot 3</th>
+                    <th class="px-4 py-2 border">Bobot 4</th>
+                    <th class="px-4 py-2 border">Bobot 5</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="px-4 py-2 border">{{ assessment.bobot_1 }}</td>
+                    <td class="px-4 py-2 border">{{ assessment.bobot_2 }}</td>
+                    <td class="px-4 py-2 border">{{ assessment.bobot_3 }}</td>
+                    <td class="px-4 py-2 border">{{ assessment.bobot_4 }}</td>
+                    <td class="px-4 py-2 border">{{ assessment.bobot_5 }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </main>
     </div>
@@ -69,6 +81,7 @@ import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import Sidebar from '@/Components/Sidebar.vue';
 import Navbar from '@/Components/Navbar.vue';
+
 
 export default {
   components: {
@@ -107,13 +120,39 @@ export default {
     };
 
     // Fungsi untuk mengunduh template Excel
-    const downloadTemplate = () => {
-      const templateUrl = '/templates/template.xlsx';
+    const downloadTemplate = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      
+      const response = await axios.get('/api/export-self-assessment', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+        responseType: 'blob'
+      });
+
+      const blob = new Blob([response.data], { 
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      });
+      
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = templateUrl;
-      link.download = 'template.xlsx';
+      link.href = url;
+      link.setAttribute('download', 'self-assessment.xlsx');
+      document.body.appendChild(link);
+      
       link.click();
-    };
+      
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+    } catch (error) {
+      console.error('Download error:', error);
+      alert('Terjadi kesalahan saat mengunduh file excel');
+    }
+  };
+  
 
     // Fungsi untuk menangani unggahan file
     const handleFileUpload = async (event) => {
