@@ -14,7 +14,7 @@ export default {
       try {
         const token = localStorage.getItem('auth_token')
         if (token) {
-          await axios.post('/api/logout', {}, {
+          await axios.put('/api/logout', {}, {
             headers: {
               'Authorization': `Bearer ${token}`
             }

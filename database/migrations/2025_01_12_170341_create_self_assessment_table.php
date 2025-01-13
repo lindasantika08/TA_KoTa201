@@ -11,12 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('roles', function (Blueprint $table) {
+        Schema::create('self_assessment', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->string('role');
-            $table->string('guard_name');
+            $table->string('semester');
+            $table->string('project');
+            $table->enum('status', ["finished", "not finished yet"]);
+            $table->dateTime('date');
             $table->timestamps();
-            $table->SoftDeletes();
+            $table->softDeletes();
         });
     }
 
@@ -25,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('roles');
+        Schema::dropIfExists('self_assessment');
     }
 };
