@@ -3,49 +3,22 @@
 namespace App\Exports;
 
 use App\Models\Assessment;
+use App\Models\type_criteria;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithStartRow;
+use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 
-class AssessmentExport implements FromCollection, WithHeadings, WithStartRow
+class AssessmentExport implements WithMultipleSheets
 {
-    /**
-     * @return \Illuminate\Support\Collection
-     */
-    public function collection()
-    {
-        return Assessment::select('Type', 'pertanyaan', 'aspek', 'kriteria')
-            ->get()
-            ->map(function ($item, $key) {
-                return [
-                    'no' => $key + 1,
-                    'pertanyaan' => $item->pertanyaan,
-                    'aspek' => $item->aspek,
-                    'kriteria' => $item->kriteria,
-                    // 'date_created' => $item->created_at->format('Y-m-d'),
-                ];
-            });
-    }
-
     /**
      * @return array
      */
-    public function headings(): array
+    public function sheets(): array
     {
         return [
-            'No',
-            'pertanyaan',
-            'aspek',
-            'kriteria',
-            // 'Date Created'
+            new AssessmentSheet(),
+            new TypeCriteriaSheet(),
         ];
-    }
-
-    /**
-     * @return int
-     */
-    public function startRow(): int
-    {
-        return 3;
     }
 }
