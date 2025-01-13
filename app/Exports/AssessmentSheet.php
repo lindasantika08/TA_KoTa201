@@ -5,9 +5,13 @@ namespace App\Exports;
 use App\Models\Assessment;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithStartRow;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Events\AfterSheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use Maatwebsite\Excel\Concerns\WithTitle;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 
-class AssessmentSheet implements FromCollection, WithHeadings, WithStartRow
+class AssessmentSheet implements FromCollection, WithHeadings, WithEvents, WithTitle, ShouldAutoSize
 {
     /**
      * @return \Illuminate\Support\Collection
@@ -23,7 +27,6 @@ class AssessmentSheet implements FromCollection, WithHeadings, WithStartRow
                     'pertanyaan' => $item->pertanyaan,
                     'aspek' => $item->aspek,
                     'kriteria' => $item->kriteria,
-                    // 'date_created' => $item->created_at->format('Y-m-d'),
                 ];
             });
     }
@@ -35,19 +38,54 @@ class AssessmentSheet implements FromCollection, WithHeadings, WithStartRow
     {
         return [
             'No',
-            'type',
-            'pertanyaan',
-            'aspek',
-            'kriteria',
-            // 'Date Created'
+            'Type',
+            'Pertanyaan',
+            'Aspek',
+            'Kriteria'
         ];
     }
 
     /**
-     * @return int
+     * @return array
      */
-    public function startRow(): int
+    public function registerEvents(): array
     {
-        return 3;
+        return [
+            AfterSheet::class => function (AfterSheet $event) {
+                // Get worksheet
+                $worksheet = $event->sheet->getDelegate();
+
+                // Get the last row number
+                $lastRow = $worksheet->getHighestRow();
+
+                // Add borders to all cells including headers
+                $worksheet->getStyle('A1:E' . $lastRow)->getBorders()->getAllBorders()->setBorderStyle('thin');
+
+                // Make headers bold
+                $worksheet->getStyle('A1:E1')->getFont()->setBold(true);
+
+                // Center headers
+                $worksheet->getStyle('A1:E1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+                // Center align No column
+                $worksheet->getStyle('A2:A' . $lastRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+                // Left align text columns (Type, Pertanyaan, Aspek, Kriteria)
+                $worksheet->getStyle('B2:E' . $lastRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+
+                // Auto-size columns
+                foreach (range('A', 'E') as $col) {
+                    $worksheet->getColumnDimension($col)->setAutoSize(true);
+                }
+            }
+        ];
+    }
+
+    /**
+     * @return string
+     */
+    public function title(): string
+    {
+        return 'Assessment';
     }
 }

@@ -176,7 +176,8 @@ export default {
     onMounted(async () => {
       try {
         const response = await axios.get('/dosen/assessment/data-with-bobot');
-        assessments.value = response.data;
+        // Filter hanya yang bertipe 'self assessment'
+        assessments.value = response.data.filter(assessment => assessment.type === 'selfAssessment');
       } catch (error) {
         console.error('Error fetching assessments or type criteria:', error);
       }
