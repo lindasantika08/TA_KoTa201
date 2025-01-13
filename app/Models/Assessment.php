@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\type_criteria;
 
 class Assessment extends Model
 {
@@ -16,7 +17,15 @@ class Assessment extends Model
     protected $fillable = [
         'id',
         'type',
+        'pertanyaan',
+        'aspek',
+        'kriteria',
     ];
+
+    public function typeCriteria()
+    {
+        return $this->belongsTo(type_criteria::class, ['aspek', 'kriteria'], ['aspek', 'kriteria']);
+    }
 
     // Untuk menggunakan UUID, kita akan menambahkan properti boot
     protected static function boot()

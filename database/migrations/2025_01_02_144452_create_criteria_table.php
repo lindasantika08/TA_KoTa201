@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('desc');
             $table->char('type_assessment', 255);
-            $table->foreign('type_assessment')->references('type')->on('assessment');
+            // $table->foreign('type_assessment')->references('type')->on('assessment');
             $table->timestamps();
             $table->softDeletes();
         });

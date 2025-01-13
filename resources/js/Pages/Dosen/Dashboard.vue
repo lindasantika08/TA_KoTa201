@@ -43,16 +43,18 @@
               <tr>
                 <th class="px-4 py-2 border">ID</th>
                 <th class="px-4 py-2 border">Type</th>
-                <th class="px-4 py-2 border">Created At</th>
-                <th class="px-4 py-2 border">Updated At</th>
+                <th class="px-4 py-2 border">Pertanyaan</th>
+                <th class="px-4 py-2 border">aspek</th>
+                <th class="px-4 py-2 border">kriteria</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="assessment in assessments" :key="assessment.id">
                 <td class="px-4 py-2 border">{{ assessment.id }}</td>
                 <td class="px-4 py-2 border">{{ assessment.type }}</td>
-                <td class="px-4 py-2 border">{{ assessment.created_at }}</td>
-                <td class="px-4 py-2 border">{{ assessment.updated_at }}</td>
+                <td class="px-4 py-2 border">{{ assessment.pertanyaan }}</td>
+                <td class="px-4 py-2 border">{{ assessment.aspek }}</td>
+                <td class="px-4 py-2 border">{{ assessment.kriteria }}</td>
               </tr>
             </tbody>
           </table>
