@@ -55,10 +55,11 @@
               >
                 <!-- Pertanyaan -->
                 <h3 class="text-lg font-semibold mb-4">{{ assessment.pertanyaan }}</h3>
+                <h8 class="text-lg font-semibold mb-4">{{ assessment.kriteria }}</h8>
 
                 <!-- Tabel Bobot -->
                 <div class="w-full">
-                  <h4 class="font-medium mb-2">Bobot:</h4>
+                  <h4 class="font-medium mb-2 mt-2">Bobot:</h4>
                   <div class="overflow-x-auto">
                     <table class="w-full table-auto border-collapse bg-white">
                       <thead>
