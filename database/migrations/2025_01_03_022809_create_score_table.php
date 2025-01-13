@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreign('criteria_id')->references('id')->on('criteria');
             $table->integer('total_score');
             $table->string('type_assessment');
-            $table->foreign('type_assessment')->references('type')->on('assessment');
+            // $table->foreign('type_assessment')->references('type')->on('assessment');
             $table->timestamps();
             $table->softDeletes();
         });

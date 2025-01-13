@@ -1,9 +1,7 @@
 <?php
 
 use App\Http\Controllers\Dosen\DashboardDosen;
-use App\Http\Controllers\Dosen\SelfAssessmentController;
-use App\Http\Controllers\Dosen\PeerAssessmentController;
-
+use App\Http\Controllers\Dosen\AssessmentController;
 use App\Http\Controllers\Mahasiswa\DashboardMahasiswa;
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
@@ -12,17 +10,17 @@ Route::redirect('/', 'login');
 Route::get('/login', [AuthController::class, 'index'])->name('login');
 Route::middleware('auth')->group(function () {
     // Route untuk dosen
-    Route::middleware(['role:dosen'])->prefix('dosen')->group(function (){
+    Route::middleware(['role:dosen'])->prefix('dosen')->group(function () {
         Route::get('/dashboard', [DashboardDosen::class, 'dashboard'])->name('dashboard');
-        Route::get('/export-self-assessment', [SelfAssessmentController::class, 'exportExcel'])->name('dosen.export-self');
-        Route::get('/export-peer-assessment', [PeerAssessmentController::class, 'exportExcel'])->name('dosen.export-peer');
-        Route::post('/import-self-assessment', [SelfAssessmentController::class, 'import'])->name('dosen.import-self');
-        Route::get('/self', [SelfAssessmentController::class, 'index'])->name('dosen.self-assessment');
-        Route::get('/peer', [PeerAssessmentController::class, 'index'])->name('dosen.peer-assessment');
+        Route::get('/self', [AssessmentController::class, 'self'])->name('dosen.self-assessment');
+        Route::get('/peer', [AssessmentController::class, 'peer'])->name('dosen.peer-assessment');
+        Route::post('/assessment/import', [AssessmentController::class, 'import'])->name('assessment.import');
+        Route::get('/assessment/data', [AssessmentController::class, 'getData'])->name('assessment.data');
+        Route::get('/export-self-assessment', [AssessmentController::class, 'exportExcel'])->name('dosen.export-self');
     });
 
     //Route untuk Mahasiswa
-    Route::middleware('role:mahasiswa')->prefix('mahasiswa')->group(function (){
+    Route::middleware('role:mahasiswa')->prefix('mahasiswa')->group(function () {
         Route::get('/dashboard', [DashboardMahasiswa::class, 'dashboard'])->name('mahasiswa.dashboard');
     });
 });
