@@ -13,6 +13,8 @@ return new class extends Migration
     {
         Schema::create('assessment', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            // $table->string('tahun_ajaran');
+            // $table->string('nama_proyek');
             $table->char('type', 255);
             $table->string('pertanyaan', 255);
             $table->string('aspek', 255);
@@ -24,6 +26,11 @@ return new class extends Migration
                 ->references(['aspek', 'kriteria'])
                 ->on('type_criteria')
                 ->onDelete('cascade'); // Opsional
+
+            // $table->foreign(['tahun_ajaran', 'nama_proyek'])
+            //     ->references(['tahun_ajaran', 'nama_proyek'])
+            //     ->on('project')
+            //     ->onDelete('cascade'); // Opsional
         });
     }
 
