@@ -6,7 +6,7 @@ import Card from "@/Components/Card.vue";
 
 
 export default {
-  name: "Profile",
+  name: "KelolaKelompok",
   components: {
     Sidebar,
     Navbar,
@@ -27,10 +27,12 @@ export default {
       <!-- Navbar -->
       <Navbar userName="Dosen" />
       <main class="p-6">
-        <Card title="Profile">
+        <Card title="Kelola Kelompok">
           <!-- You can leave the actions section here if you want, or remove it as well -->
           <template #actions>
-
+            <!-- <button class="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+              Action Button
+            </button> -->
           </template>
         </Card>
       </main>

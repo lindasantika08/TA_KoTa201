@@ -27,20 +27,19 @@ export default {
       <!-- Navbar -->
       <Navbar userName="Dosen" />
       <main class="p-6">
-        <h1 class="text-2xl font-bold text-gray-800 mb-6">Dashboard</h1>
-        <Card title="Dashboard Dosen"
-          description="Ini adalah deskripsi card yang menyesuaikan ukuran halaman. Anda bisa menambahkan konten lebih panjang di sini."
-          image="https://via.placeholder.com/800x400">
+        <Card title="Dashboard">
+          <!-- You can leave the actions section here if you want, or remove it as well -->
           <template #actions>
-            <button class="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+            <!-- <button class="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
               Action Button
-            </button>
+            </button> -->
           </template>
         </Card>
       </main>
     </div>
   </div>
 </template>
+
 
 <style scoped>
 /* Optional: Add custom styles here */

@@ -41,7 +41,7 @@
                         class="w-full text-left px-4 py-2 rounded flex justify-between hover:bg-gray-100"
                     >
                         <font-awesome-icon
-                            icon="fa-solid fa-pencil-alt"
+                            icon="fa-solid fa-clipboard-list"
                             class="mr-2"
                         />
                         <span class="text-lg font-semibold">Assessment</span>
@@ -80,6 +80,64 @@
                                     class="mr-2"
                                 />
                                 Peer Assessment
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="mb-4">
+                    <button
+                        @click="toggleKelolaProyekMenu"
+                        :class="{
+                            'bg-white':
+                                isActive('/dosen/kelola-proyek') ||
+                                isActive('/dosen/kelola-kelompok'),
+                        }"
+                        class="w-full text-left px-4 py-2 rounded flex justify-between hover:bg-gray-100"
+                    >
+                        <font-awesome-icon
+                            icon="fa-solid fa-cogs"
+                            class="mr-2"
+                        />
+                        <span class="text-lg font-semibold">Kelola Proyek</span>
+                        <span
+                            :class="{ 'rotate-180': isKelolaProyekOpen }"
+                            class="transform transition-all"
+                            >▼</span
+                        >
+                    </button>
+                    <ul v-if="isKelolaProyekOpen" class="pl-4 mt-2 space-y-2">
+                        <li>
+                            <a
+                                @click="goToKelolaProyek"
+                                :class="{
+                                    'bg-gray-200': isActive(
+                                        '/dosen/kelola-proyek'
+                                    ),
+                                }"
+                                class="block px-4 py-2 rounded cursor-pointer hover:bg-gray-100"
+                            >
+                                <font-awesome-icon
+                                    icon="fa-solid fa-project-diagram"
+                                    class="mr-2"
+                                />
+                                Kelola Proyek
+                            </a>
+                        </li>
+                        <li v-if="role === 'dosen'">
+                            <a
+                                @click="goToKelolaKelompok"
+                                :class="{
+                                    'bg-gray-200': isActive(
+                                        '/dosen/kelola-kelompok'
+                                    ),
+                                }"
+                                class="block px-4 py-2 rounded cursor-pointer hover:bg-gray-100"
+                            >
+                                <font-awesome-icon
+                                    icon="fa-solid fa-tasks"
+                                    class="mr-2"
+                                />
+                                Kelola Kelompok
                             </a>
                         </li>
                     </ul>
@@ -137,11 +195,15 @@ export default {
         return {
             isAssessmentOpen:
                 this.isActive("/dosen/self") || this.isActive("/dosen/peer"), // Mengontrol apakah menu Assessment terbuka
+            isKelolaProyekOpen: this.isActive("/dosen/kelola-proyek") || this.isActive("/dosen/kelola-kelompok"),
         };
     },
     methods: {
         toggleAssessmentMenu() {
             this.isAssessmentOpen = !this.isAssessmentOpen;
+        },
+        toggleKelolaProyekMenu() {
+            this.isKelolaProyekOpen = !this.isKelolaProyekOpen;
         },
         goToSelfAssessment() {
             router.visit("/dosen/self");
@@ -151,6 +213,12 @@ export default {
         },
         isActive(route) {
             return this.$page.url === route;
+        },
+        goToKelolaProyek() {
+            router.visit("/dosen/kelola-proyek");
+        },
+        goToKelolaKelompok() {
+            router.visit("/dosen/kelola-kelompok");
         },
     },
 };

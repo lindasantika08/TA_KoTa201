@@ -6,11 +6,11 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
-class FeedbackController extends Controller
+class KelolaKelompokController extends Controller
 {
-    public function feedback()
+    public function KelolaKelompok()
     {
-        return Inertia::render('Dosen/Feedback');
+        return Inertia::render('Dosen/KelolaKelompok');
     }
    
 }
