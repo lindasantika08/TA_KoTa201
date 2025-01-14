@@ -16,6 +16,8 @@ class Assessment extends Model
     // Tentukan kolom-kolom yang bisa diisi (fillable)
     protected $fillable = [
         'id',
+        'tahun_ajaran',
+        'nama_proyek',
         'type',
         'pertanyaan',
         'aspek',
@@ -27,6 +29,10 @@ class Assessment extends Model
         return $this->belongsTo(type_criteria::class, ['aspek', 'kriteria'], ['aspek', 'kriteria']);
     }
 
+    public function project()
+    {
+        return $this->belongsTo(project::class, ['tahun_ajaran', 'nama_proyek'], ['tahun_ajaran', 'nama_proyek']);
+    }
     // Untuk menggunakan UUID, kita akan menambahkan properti boot
     protected static function boot()
     {

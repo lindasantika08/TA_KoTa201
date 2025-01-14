@@ -10,120 +10,90 @@
 
             <!-- Content -->
             <main class="p-6">
-                <div class="flex items-center justify-between mt-4">
+                <!-- <div class="flex items-center justify-between mt-4">
                     <h1 class="text-2xl font-bold">Self Assessment</h1>
+                </div> -->
+                <Card title="Self Assessment">
+                    <!-- You can leave the actions section here if you want, or remove it as well -->
+                    <template #actions>
+                        <!-- Container untuk assessment yang dikelompokkan berdasarkan aspek -->
+                        <div class="mt-6 space-y-8">
+                            <div v-for="(group, aspek) in groupedAssessments" :key="aspek">
+                                <!-- Card untuk setiap aspek -->
+                                <Card :title="aspek" :description="'Total Pertanyaan: ' + group.length" >
+                                    <template #actions>
+                                        <div>
+                                            <!-- Daftar Pertanyaan -->
+                                            <div v-for="(assessment, index) in group" :key="assessment.id" class="mt-4">
+                                                <h3 class="text-lg font-semibold mb-2">
+                                                    {{ index + 1 }}.
+                                                    {{ assessment.pertanyaan }}
+                                                </h3>
+                                                <h4 class="text-sm text-gray-600">
+                                                    {{ assessment.kriteria }}
+                                                </h4>
 
-                    
-                </div>
-
-                <!-- Container untuk assessment yang dikelompokkan berdasarkan aspek -->
-                <div class="mt-6 space-y-8">
-                    <div
-                        v-for="(group, aspek) in groupedAssessments"
-                        :key="aspek"
-                    >
-                        <!-- Card untuk setiap aspek -->
-                        <Card
-                            :title="aspek"
-                            :description="'Total Pertanyaan: ' + group.length"
-                        >
-                            <template #actions>
-                                <div>
-                                    <!-- Daftar Pertanyaan -->
-                                    <div
-                                        v-for="(assessment, index) in group"
-                                        :key="assessment.id"
-                                        class="mt-4"
-                                    >
-                                        <h3 class="text-lg font-semibold mb-2">
-                                            {{ index + 1 }}.
-                                            {{ assessment.pertanyaan }}
-                                        </h3>
-                                        <h4 class="text-sm text-gray-600">
-                                            {{ assessment.kriteria }}
-                                        </h4>
-
-                                        <!-- Tabel Bobot -->
-                                        <div class="overflow-x-auto mt-2">
-                                            <table
-                                                class="w-full table-auto border-collapse bg-white"
-                                            >
-                                                <thead>
-                                                    <tr>
-                                                        <th
-                                                            class="px-4 py-2 border"
-                                                        >
-                                                            Bobot 1
-                                                        </th>
-                                                        <th
-                                                            class="px-4 py-2 border"
-                                                        >
-                                                            Bobot 2
-                                                        </th>
-                                                        <th
-                                                            class="px-4 py-2 border"
-                                                        >
-                                                            Bobot 3
-                                                        </th>
-                                                        <th
-                                                            class="px-4 py-2 border"
-                                                        >
-                                                            Bobot 4
-                                                        </th>
-                                                        <th
-                                                            class="px-4 py-2 border"
-                                                        >
-                                                            Bobot 5
-                                                        </th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <tr>
-                                                        <td
-                                                            class="px-4 py-2 border"
-                                                        >
-                                                            {{
-                                                                assessment.bobot_1
-                                                            }}
-                                                        </td>
-                                                        <td
-                                                            class="px-4 py-2 border"
-                                                        >
-                                                            {{
-                                                                assessment.bobot_2
-                                                            }}
-                                                        </td>
-                                                        <td
-                                                            class="px-4 py-2 border"
-                                                        >
-                                                            {{
-                                                                assessment.bobot_3
-                                                            }}
-                                                        </td>
-                                                        <td
-                                                            class="px-4 py-2 border"
-                                                        >
-                                                            {{
-                                                                assessment.bobot_4
-                                                            }}
-                                                        </td>
-                                                        <td
-                                                            class="px-4 py-2 border"
-                                                        >
-                                                            {{
-                                                                assessment.bobot_5
-                                                            }}
-                                                        </td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
+                                                <!-- Tabel Bobot -->
+                                                <div class="overflow-x-auto mt-2">
+                                                    <table class="w-full table-auto border-collapse bg-white">
+                                                        <thead>
+                                                            <tr>
+                                                                <th class="px-4 py-2 border">
+                                                                    Bobot 1
+                                                                </th>
+                                                                <th class="px-4 py-2 border">
+                                                                    Bobot 2
+                                                                </th>
+                                                                <th class="px-4 py-2 border">
+                                                                    Bobot 3
+                                                                </th>
+                                                                <th class="px-4 py-2 border">
+                                                                    Bobot 4
+                                                                </th>
+                                                                <th class="px-4 py-2 border">
+                                                                    Bobot 5
+                                                                </th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td class="px-4 py-2 border">
+                                                                    {{
+                                                                        assessment.bobot_1
+                                                                    }}
+                                                                </td>
+                                                                <td class="px-4 py-2 border">
+                                                                    {{
+                                                                        assessment.bobot_2
+                                                                    }}
+                                                                </td>
+                                                                <td class="px-4 py-2 border">
+                                                                    {{
+                                                                        assessment.bobot_3
+                                                                    }}
+                                                                </td>
+                                                                <td class="px-4 py-2 border">
+                                                                    {{
+                                                                        assessment.bobot_4
+                                                                    }}
+                                                                </td>
+                                                                <td class="px-4 py-2 border">
+                                                                    {{
+                                                                        assessment.bobot_5
+                                                                    }}
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
-                            </template>
-                        </Card>
-                    </div>
-                </div>
+                                    </template>
+                                </Card>
+                            </div>
+                        </div>
+                    </template>
+                </Card>
             </main>
         </div>
     </div>

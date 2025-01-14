@@ -16,6 +16,8 @@ Route::middleware('auth')->group(function () {
     // Route untuk dosen
     Route::middleware(['role:dosen'])->prefix('dosen')->group(function () {
         Route::get('/dashboard', [DashboardDosen::class, 'dashboard'])->name('dashboard');
+        Route::get('/dashboard/self', [DashboardDosen::class, 'dashboardself'])->name('dashboardself');
+        Route::get('/dashboard/peer', [DashboardDosen::class, 'dashboardpeer'])->name('dashboardpeer');
         Route::get('/notifications', [DashboardDosen::class, 'notifications'])->name('notifications');
         Route::get('/profile', [DashboardDosen::class, 'profile'])->name('profile');
         Route::get('/self', [AssessmentController::class, 'self'])->name('dosen.self-assessment');

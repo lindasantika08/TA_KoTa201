@@ -12,5 +12,4 @@ class KelolaKelompokController extends Controller
     {
         return Inertia::render('Dosen/KelolaKelompok');
     }
-   
 }

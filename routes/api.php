@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Dosen\AssessmentController;
+use App\Http\Controllers\Dosen\ProjectController;
 use App\Http\Controllers\Dosen\KelolaProyekController;
 
 // Route::get('/user', function (Request $request) {
@@ -19,4 +20,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/logout', [AuthController::class, 'logout']);
     Route::post('/project', [KelolaProyekController::class, 'AddProyek']);
     Route::get('/projects', [KelolaProyekController::class, 'getProjects']);
+    Route::get('/project-dropdown', [ProjectController::class, 'index']);
 });
