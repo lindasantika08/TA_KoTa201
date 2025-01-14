@@ -19,7 +19,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/assessment/import', [AssessmentController::class, 'import'])->name('assessment.import');
         Route::get('/assessment/data', [AssessmentController::class, 'getData'])->name('assessment.data');
 
-        Route::get('/assessment/data-with-bobot', [AssessmentController::class, 'getAssessmentsWithBobot'])->name('assessment.data-with-bobot'); // Route baru untuk data dengan bobot
+        Route::get('/assessment/data-with-bobot', [AssessmentController::class, 'getAssessmentsWithBobot'])->name('assessment.data-with-bobot');
         Route::get('/export-self-assessment', [AssessmentController::class, 'exportExcel'])->name('dosen.export-self');
     });
 
