@@ -2,57 +2,48 @@
     <div class="flex min-h-screen">
         <Sidebar role="dosen" />
         <div class="flex-1">
-            <!-- Navbar -->
             <Navbar userName="Dosen" />
             <main class="p-6">
-                <!-- <h1 class="font-bold text-gray-800 mb-6">Kelola Proyek</h1> -->
                 <Card title="Kelola Proyek">
                     <template #actions>
-                        <!-- Tabel Daftar Proyek -->
-                        <div class="mt-8">
-                            <h2 class="text-lg font-semibold mb-4">
-                                Daftar Proyek
-                            </h2>
-                            <table
-                                class="min-w-full border-collapse table-auto"
+                        <!-- Filter Tahun Ajaran -->
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-lg font-semibold">Daftar Proyek</h2>
+                            <select
+                                v-model="selectedYear"
+                                @change="filterProjects"
+                                class="border border-gray-300 rounded px-4 py-2"
                             >
+                                <option value="">Semua Tahun Ajaran</option>
+                                <option
+                                    v-for="(year, index) in years"
+                                    :key="index"
+                                    :value="year"
+                                >
+                                    {{ year }}
+                                </option>
+                            </select>
+                        </div>
+
+                        <!-- Tabel Daftar Proyek -->
+                        <div>
+                            <table class="min-w-full border-collapse table-auto">
                                 <thead>
                                     <tr class="bg-gray-100">
-                                        <th class="px-4 py-2 border">
-                                            Nama Proyek
-                                        </th>
-                                        <th class="px-4 py-2 border">
-                                            Semester
-                                        </th>
-                                        <th class="px-4 py-2 border">
-                                            Tahun Ajaran
-                                        </th>
-                                        <th class="px-4 py-2 border">
-                                            Jurusan
-                                        </th>
+                                        <th class="px-4 py-2 border">Nama Proyek</th>
+                                        <th class="px-4 py-2 border">Semester</th>
+                                        <th class="px-4 py-2 border">Tahun Ajaran</th>
+                                        <th class="px-4 py-2 border">Jurusan</th>
                                         <th class="px-4 py-2 border">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr
-                                        v-for="(project, index) in projects"
-                                        :key="index"
-                                    >
-                                        <td class="px-4 py-2 border">
-                                            {{ project.nama_proyek }}
-                                        </td>
-                                        <td class="px-4 py-2 border">
-                                            {{ project.semester }}
-                                        </td>
-                                        <td class="px-4 py-2 border">
-                                            {{ project.tahun_ajaran }}
-                                        </td>
-                                        <td class="px-4 py-2 border">
-                                            {{ project.jurusan }}
-                                        </td>
-                                        <td class="px-4 py-2 border">
-                                            {{ project.status }}
-                                        </td>
+                                    <tr v-for="(project, index) in filteredProjects" :key="index">
+                                        <td class="px-4 py-2 border">{{ project.nama_proyek }}</td>
+                                        <td class="px-4 py-2 border">{{ project.semester }}</td>
+                                        <td class="px-4 py-2 border">{{ project.tahun_ajaran }}</td>
+                                        <td class="px-4 py-2 border">{{ project.jurusan }}</td>
+                                        <td class="px-4 py-2 border">{{ project.status }}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -74,12 +65,14 @@
                                 <label class="block text-sm font-medium"
                                     >Semester</label
                                 >
-                                <input
-                                    type="text"
+                                <select
                                     v-model="newProject.semester"
                                     class="w-full border border-gray-300 rounded p-2"
                                     required
-                                />
+                                >
+                                    <option value="Ganjil">Ganjil</option>
+                                    <option value="Genap">Genap</option>
+                                </select>
                             </div>
                             <div class="mb-4">
                                 <label class="block text-sm font-medium"
@@ -107,12 +100,23 @@
                                 <label class="block text-sm font-medium"
                                     >Jurusan</label
                                 >
-                                <input
-                                    type="text"
+                                <select
                                     v-model="newProject.jurusan"
                                     class="w-full border border-gray-300 rounded p-2"
                                     required
-                                />
+                                >
+                                    <option value="Teknik Sipil">Teknik Sipil</option>
+                                    <option value="Teknik Mesin">Teknik Mesin</option>
+                                    <option value="Teknik Elektro">Teknik Elektro</option>
+                                    <option value="Teknik Komputer dan Informatika">Teknik Komputer dan Informatika</option>
+                                    <option value="Teknik Refrigerasi dan Tata Udara">Teknik Refrigerasi dan Tata Udara</option>
+                                    <option value="Teknik Konversi Energi">Teknik Konversi Energi</option>
+                                    <option value="Teknik Kimia">Teknik Kimia</option>
+                                    <option value="Akuntansi">Akuntansi</option>
+                                    <option value="Administrasi Niaga">Administrasi Niaga</option>
+                                    <option value="Bahasa Inggris">Bahasa Inggris</option>
+
+                                </select>
                             </div>
                             <div class="mb-4">
                                 <label class="block text-sm font-medium"
@@ -201,13 +205,16 @@ export default {
                 jurusan: "",
                 start_date: "",
                 end_date: "",
-                status: "aktif",
+                status: "",
             },
-            projects: [], // Menyimpan data proyek
+            projects: [],
+            filteredProjects: [],
+            years: [],
+            selectedYear: "",
         };
     },
     mounted() {
-        this.getProjects(); // Panggil untuk mengambil data proyek saat halaman dimuat
+        this.getProjects();
     },
     methods: {
         openModal() {
@@ -230,9 +237,8 @@ export default {
                     }
                 );
                 alert("Proyek berhasil ditambahkan!");
-                console.log(response.data);
                 this.closeModal();
-                this.getProjects(); // Reload data proyek setelah menambahkan proyek baru
+                this.getProjects();
             } catch (error) {
                 console.error("Error adding project:", error);
                 alert("Terjadi kesalahan saat menambahkan proyek.");
@@ -247,12 +253,26 @@ export default {
                         )}`,
                     },
                 });
-                this.projects = response.data; // Menyimpan data proyek yang diterima
+                this.projects = response.data;
+                this.filteredProjects = this.projects;
+
+                // Extract unique tahun ajaran
+                this.years = [...new Set(this.projects.map((p) => p.tahun_ajaran))];
             } catch (error) {
                 console.error("Error fetching projects:", error);
                 alert("Terjadi kesalahan saat mengambil data proyek.");
             }
         },
+        filterProjects() {
+            if (this.selectedYear) {
+                this.filteredProjects = this.projects.filter(
+                    (project) => project.tahun_ajaran === this.selectedYear
+                );
+            } else {
+                this.filteredProjects = this.projects;
+            }
+        },
     },
 };
 </script>
+
