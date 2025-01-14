@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Dosen\DashboardDosen;
 use App\Http\Controllers\Dosen\AssessmentController;
+use App\Http\Controllers\Dosen\ProjectController;
 use App\Http\Controllers\Dosen\KelolaProyekController;
 use App\Http\Controllers\Dosen\KelolaKelompokController;
 use App\Http\Controllers\Dosen\FeedbackController;
@@ -24,9 +25,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/peer', [AssessmentController::class, 'peer'])->name('dosen.peer-assessment');
         Route::post('/assessment/import', [AssessmentController::class, 'import'])->name('assessment.import');
         Route::get('/assessment/data', [AssessmentController::class, 'getData'])->name('assessment.data');
-        Route::get('/assessment/data-with-bobot', [AssessmentController::class, 'getAssessmentsWithBobot'])->name('assessment.data-with-bobot'); // Route baru untuk data dengan bobot
+        Route::get('/assessment/data-with-bobot', [AssessmentController::class, 'getAssessmentsWithBobot'])
+            ->name('dosen.assessment.data-with-bobot'); // Route baru untuk data dengan bobot
         Route::get('/assessment/create', [AssessmentController::class, 'create'])->name('CreateAssessment');
-       
+        Route::get('/assessment/projects', [ProjectController::class, 'getProjectsWithAssessments']);
+
+
         Route::get('/export-self-assessment', [AssessmentController::class, 'exportExcel'])->name('dosen.export-self');
         Route::get('/kelola-proyek', [KelolaProyekController::class, 'KelolaProyekView'])->name('kelola.proyek');
         Route::post('/tambah-proyek', [KelolaProyekController::class, 'AddProyek'])->name('kelola-proyek.store');

@@ -21,4 +21,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/project', [KelolaProyekController::class, 'AddProyek']);
     Route::get('/projects', [KelolaProyekController::class, 'getProjects']);
     Route::get('/project-dropdown', [ProjectController::class, 'index']);
+    Route::get('/assessment/projects', [ProjectController::class, 'getProjectsWithAssessments']);
 });
