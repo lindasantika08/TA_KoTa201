@@ -27,7 +27,7 @@ export default {
       <!-- Navbar -->
       <Navbar userName="Dosen" />
       <main class="p-6">
-        <Card title="Notification">
+        <Card title="Report">
           <!-- You can leave the actions section here if you want, or remove it as well -->
           <template #actions>
             <!-- <button class="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
