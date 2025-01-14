@@ -19,32 +19,37 @@ class TypeCriteriaSheet implements FromCollection, WithHeadings, WithEvents, Wit
     public function collection()
     {
         // Ambil data dari database
-        $data = type_criteria::all()->map(function ($item, $key) {
-            return [
-                'no' => $key + 1,
-                'aspek' => $item->aspek,
-                'kriteria' => $item->kriteria,
-                'bobot_1' => $item->bobot_1,
-                'bobot_2' => $item->bobot_2,
-                'bobot_3' => $item->bobot_3,
-                'bobot_4' => $item->bobot_4,
-                'bobot_5' => $item->bobot_5,
-            ];
-        })
-            ->toArray();
+        $typeCriterias = type_criteria::all();
 
-        // Tambahkan 5 baris template kosong
-        for ($i = 0; $i < 5; $i++) {
-            $data[] = [
-                'no' => count($data) + 1,
-                'aspek' => '',
-                'kriteria' => '',
-                'bobot_1' => '',
-                'bobot_2' => '',
-                'bobot_3' => '',
-                'bobot_4' => '',
-                'bobot_5' => '',
-            ];
+        if ($typeCriterias->isEmpty()) {
+            // Jika tidak ada data, buat 5 baris template kosong
+            $data = [];
+            for ($i = 1; $i <= 5; $i++) {
+                $data[] = [
+                    'no' => $i,
+                    'aspek' => '',
+                    'kriteria' => '',
+                    'bobot_1' => '',
+                    'bobot_2' => '',
+                    'bobot_3' => '',
+                    'bobot_4' => '',
+                    'bobot_5' => '',
+                ];
+            }
+        } else {
+            // Jika ada data, map data yang ada
+            $data = $typeCriterias->map(function ($item, $key) {
+                return [
+                    'no' => $key + 1,
+                    'aspek' => $item->aspek,
+                    'kriteria' => $item->kriteria,
+                    'bobot_1' => $item->bobot_1,
+                    'bobot_2' => $item->bobot_2,
+                    'bobot_3' => $item->bobot_3,
+                    'bobot_4' => $item->bobot_4,
+                    'bobot_5' => $item->bobot_5,
+                ];
+            })->toArray();
         }
 
         return collect($data);

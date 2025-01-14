@@ -20,9 +20,23 @@ class AssessmentSheet implements FromCollection, WithHeadings, WithEvents, WithT
     public function collection()
     {
         // Ambil data dari database
-        $data = Assessment::select('type', 'pertanyaan', 'aspek', 'kriteria')
-            ->get()
-            ->map(function ($item, $key) {
+        $assessments = Assessment::select('type', 'pertanyaan', 'aspek', 'kriteria')->get();
+
+        if ($assessments->isEmpty()) {
+            // Jika tidak ada data, buat 10 baris template kosong
+            $data = [];
+            for ($i = 1; $i <= 10; $i++) {
+                $data[] = [
+                    'no' => $i,
+                    'type' => '',
+                    'pertanyaan' => '',
+                    'aspek' => '',
+                    'kriteria' => '',
+                ];
+            }
+        } else {
+            // Jika ada data, map data yang ada
+            $data = $assessments->map(function ($item, $key) {
                 return [
                     'no' => $key + 1,
                     'type' => $item->type,
@@ -30,18 +44,7 @@ class AssessmentSheet implements FromCollection, WithHeadings, WithEvents, WithT
                     'aspek' => $item->aspek,
                     'kriteria' => $item->kriteria,
                 ];
-            })
-            ->toArray();
-
-        // Tambahkan 10 baris template kosong di bawah data yang ada
-        for ($i = 0; $i < 10; $i++) {
-            $data[] = [
-                'no' => count($data) + 1,
-                'type' => '',
-                'pertanyaan' => '',
-                'aspek' => '',
-                'kriteria' => '',
-            ];
+            })->toArray();
         }
 
         return collect($data);

@@ -12,17 +12,27 @@ export default {
   data() {
     return {
       isAssessmentOpen: false, // Mengontrol apakah menu Assessment terbuka
+      isKelolaProyekOpen: false,
     };
   },
   methods: {
     toggleAssessmentMenu() {
       this.isAssessmentOpen = !this.isAssessmentOpen;
     },
+    toggleKelolaProyekMenu() {
+      this.isKelolaProyekOpen = !this.isKelolaProyekOpen;
+    },
     goToSelfAssessment() {
       router.visit('/dosen/self');
     },
     goToPeerAssessment() {
       router.visit('/dosen/peer');
+    },
+    goToKelolaProyek() {
+      router.visit('/dosen/kelola-proyek');
+    },
+    goToKelolaKelompok() {
+      router.visit('/dosen/');
     },
 },
 };
@@ -68,6 +78,35 @@ export default {
             </a>
           </li>
         </ul>
+        
+      </li>
+      <li class="mb-4">
+        <button 
+          @click="toggleKelolaProyekMenu"
+          class="w-full text-left px-4 py-2 rounded hover:bg-gray-700 flex items-center justify-between"
+        >
+          <span class="text-lg font-semibold">Kelola Proyek</span>
+          <span :class="{'rotate-180': isKelolaProyekOpen}" class="transform transition-all">▼</span>
+        </button>
+        <ul v-if="isKelolaProyekOpen" class="pl-4 mt-2 space-y-2">
+          <li>
+            <a 
+              @click="goToKelolaProyek"
+              class="block px-4 py-2 rounded hover:bg-gray-700 cursor-pointer"
+            >
+              Kelola Proyek
+            </a>
+          </li>
+          <li v-if="role === 'dosen'">
+            <a 
+              @click="goToKelolaKelompok"
+              class="block px-4 py-2 rounded hover:bg-gray-700 cursor-pointer"
+            >
+              Kelola Kelompok
+            </a>
+          </li>
+        </ul>
+        
       </li>
     </ul>
   </aside>

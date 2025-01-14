@@ -12,14 +12,17 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('project', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->string('name');
-            $table->string('desc');
+            $table->string('semester');
+            $table->string('tahun_ajaran');
+            $table->string('nama_proyek');
+            $table->string('jurusan');
             $table->date('start_date');
             $table->date('end_date');
             $table->string('status');
             $table->timestamps();
             $table->softDeletes();
+
+            $table->primary(['tahun_ajaran', 'nama_proyek']);
         });
     }
 
