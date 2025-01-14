@@ -22,6 +22,16 @@ class DashboardDosen extends Controller
     {
         return Inertia::render('Dosen/Profile');
     }
+
+    public function dashboardself()
+    {
+        return Inertia::render('Dosen/AnswerSelf');
+    }
+
+    public function dashboardpeer()
+    {
+        return Inertia::render('Dosen/AnswerPeer');
+    }
     
 
    
