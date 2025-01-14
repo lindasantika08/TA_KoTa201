@@ -19,11 +19,11 @@
                     <a
                         :href="'/dosen/dashboard'"
                         :class="{ 'bg-gray-200': isActive('/dosen/dashboard') }"
-                        class="block px-4 py-2 rounded hover:bg-gray-100 text-lg font-semibold"
+                        class="block px-4 py-2 rounded hover:bg-gray-100 text-base font-medium"
                     >
                         <font-awesome-icon
                             icon="fa-solid fa-house"
-                            class="mr-2"
+                            class="mr-4"
                         />
                         Dashboard
                     </a>
@@ -38,16 +38,16 @@
                                 isActive('/dosen/self') ||
                                 isActive('/dosen/peer'),
                         }"
-                        class="w-full text-left px-4 py-2 rounded flex justify-between hover:bg-gray-100"
+                        class="w-full text-left px-4 py-2 rounded flex justify-start hover:bg-gray-100"
                     >
                         <font-awesome-icon
                             icon="fa-solid fa-clipboard-list"
-                            class="mr-2"
+                            class="mr-6"
                         />
-                        <span class="text-lg font-semibold">Assessment</span>
+                        <span class="text-base font-medium">Assessment</span>
                         <span
                             :class="{ 'rotate-180': isAssessmentOpen }"
-                            class="transform transition-all"
+                            class="transform transition-all ml-2"
                             >▼</span
                         >
                     </button>
@@ -58,9 +58,9 @@
                                 :class="{
                                     'bg-gray-200': isActive('/dosen/assessment/create'),
                                 }"
-                                class="block px-4 py-2 rounded cursor-pointer hover:bg-gray-100"
+                                class="block px-4 py-2 rounded cursor-pointer hover:bg-gray-100 text-sm"
                             >
-                            <font-awesome-icon :icon="['fas', 'address-card']" class="mr-2"/>
+                            <font-awesome-icon :icon="['fas', 'address-card']" class="mr-4"/>
                                 Create Assessment
                             </a>
                         </li>
@@ -70,11 +70,11 @@
                                 :class="{
                                     'bg-gray-200': isActive('/dosen/self'),
                                 }"
-                                class="block px-4 py-2 rounded cursor-pointer hover:bg-gray-100"
+                                class="block px-4 py-2 rounded cursor-pointer hover:bg-gray-100 text-sm"
                             >
                                 <font-awesome-icon
                                     icon="fa-solid fa-user-check"
-                                    class="mr-2"
+                                    class="mr-4"
                                 />
                                 Self Assessment
                             </a>
@@ -85,11 +85,11 @@
                                 :class="{
                                     'bg-gray-200': isActive('/dosen/peer'),
                                 }"
-                                class="block px-4 py-2 rounded cursor-pointer hover:bg-gray-100"
+                                class="block px-4 py-2 rounded cursor-pointer hover:bg-gray-100 text-sm"
                             >
                                 <font-awesome-icon
                                     icon="fa-solid fa-users"
-                                    class="mr-2"
+                                    class="mr-4"
                                 />
                                 Peer Assessment
                             </a>
@@ -104,16 +104,16 @@
                                 isActive('/dosen/kelola-proyek') ||
                                 isActive('/dosen/kelola-kelompok'),
                         }"
-                        class="w-full text-left px-4 py-2 rounded flex justify-between hover:bg-gray-100"
+                        class="w-full text-left px-4 py-2 rounded flex justify-start hover:bg-gray-100"
                     >
                         <font-awesome-icon
                             icon="fa-solid fa-cogs"
-                            class="mr-2"
+                            class="mr-4"
                         />
-                        <span class="text-lg font-semibold">Kelola Proyek</span>
+                        <span class="text-base font-medium">Manage Projects</span>
                         <span
                             :class="{ 'rotate-180': isKelolaProyekOpen }"
-                            class="transform transition-all"
+                            class="transform transition-all ml-2"
                             >▼</span
                         >
                     </button>
@@ -126,13 +126,13 @@
                                         '/dosen/kelola-proyek'
                                     ),
                                 }"
-                                class="block px-4 py-2 rounded cursor-pointer hover:bg-gray-100"
+                                class="block px-4 py-2 rounded cursor-pointer hover:bg-gray-100 text-sm"
                             >
                                 <font-awesome-icon
                                     icon="fa-solid fa-project-diagram"
-                                    class="mr-2"
+                                    class="mr-4"
                                 />
-                                Kelola Proyek
+                                Manage Projects
                             </a>
                         </li>
                         <li v-if="role === 'dosen'">
@@ -143,13 +143,13 @@
                                         '/dosen/kelola-kelompok'
                                     ),
                                 }"
-                                class="block px-4 py-2 rounded cursor-pointer hover:bg-gray-100"
+                                class="block px-4 py-2 rounded cursor-pointer hover:bg-gray-100 text-sm"
                             >
                                 <font-awesome-icon
                                     icon="fa-solid fa-tasks"
-                                    class="mr-2"
+                                    class="mr-4"
                                 />
-                                Kelola Kelompok
+                                Manage Group
                             </a>
                         </li>
                     </ul>
@@ -159,11 +159,11 @@
                     <a
                         :href="'/dosen/report'"
                         :class="{ 'bg-gray-200': isActive('/dosen/report') }"
-                        class="block px-4 py-2 rounded hover:bg-gray-100 text-lg font-semibold"
+                        class="block px-4 py-2 rounded hover:bg-gray-100 text-base font-medium"
                     >
                         <font-awesome-icon
                             icon="fa-solid fa-chart-line"
-                            class="mr-2"
+                            class="mr-4"
                         />
                         Report
                     </a>
@@ -173,11 +173,11 @@
                     <a
                         :href="'/dosen/feedback'"
                         :class="{ 'bg-gray-200': isActive('/dosen/feedback') }"
-                        class="block px-4 py-2 rounded hover:bg-gray-100 text-lg font-semibold"
+                        class="block px-4 py-2 rounded hover:bg-gray-100 text-base font-medium"
                     >
                         <font-awesome-icon
                             icon="fa-solid fa-comment-dots"
-                            class="mr-2"
+                            class="mr-4"
                         />
                         Feedback
                     </a>

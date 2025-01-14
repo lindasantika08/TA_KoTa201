@@ -29,9 +29,11 @@
         >
           <font-awesome-icon
             icon="fa-solid fa-user"
-            class="w-6 h-6 text-black group-hover:text-gray-200"
+            class="w-6 h-6 text-black group-hover:text-gray-200 mr-2"
           />
+          <span class="text-sm font-medium text-black mr-2">{{ userName }}</span>
         </button>
+       
 
         <!-- Dropdown Menu -->
         <div

@@ -7,23 +7,10 @@
                 <Card title="Kelola Proyek">
                     <template #actions>
                         <!-- Filter Tahun Ajaran -->
-                        <div class="flex justify-between items-center mb-4">
-                            <h2 class="text-lg font-semibold">Daftar Proyek</h2>
-                            <select
-                                v-model="selectedYear"
-                                @change="filterProjects"
-                                class="border border-gray-300 rounded px-4 py-2"
-                            >
-                                <option value="">Semua Tahun Ajaran</option>
-                                <option
-                                    v-for="(year, index) in years"
-                                    :key="index"
-                                    :value="year"
-                                >
-                                    {{ year }}
-                                </option>
-                            </select>
-                        </div>
+                        <Dropdown title="Daftar Proyek" :options="years.map((year) => ({ label: year, value: year }))"
+                            v-model="selectedYear" @update:modelValue="filterProjects"
+                            :defaultOption="{ label: 'Semua Tahun Ajaran', value: '' }"
+                            class="flex justify-between items-center mb-4" />
 
                         <!-- Tabel Daftar Proyek -->
                         <div>
@@ -52,64 +39,42 @@
                 </Card>
 
                 <!-- Modal -->
-                <div
-                    v-if="isModalOpen"
-                    class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
-                >
+                <div v-if="isModalOpen"
+                    class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
                     <div class="bg-white p-6 rounded-lg w-1/2">
                         <h2 class="text-lg font-semibold mb-4">
                             Tambah Proyek
                         </h2>
                         <form @submit.prevent="addProject">
                             <div class="mb-4">
-                                <label class="block text-sm font-medium"
-                                    >Semester</label
-                                >
-                                <select
-                                    v-model="newProject.semester"
-                                    class="w-full border border-gray-300 rounded p-2"
-                                    required
-                                >
+                                <label class="block text-sm font-medium">Semester</label>
+                                <select v-model="newProject.semester" class="w-full border border-gray-300 rounded p-2"
+                                    required>
                                     <option value="Ganjil">Ganjil</option>
                                     <option value="Genap">Genap</option>
                                 </select>
                             </div>
                             <div class="mb-4">
-                                <label class="block text-sm font-medium"
-                                    >Tahun Ajaran</label
-                                >
-                                <input
-                                    type="text"
-                                    v-model="newProject.tahun_ajaran"
-                                    class="w-full border border-gray-300 rounded p-2"
-                                    required
-                                />
+                                <label class="block text-sm font-medium">Tahun Ajaran</label>
+                                <input type="text" v-model="newProject.tahun_ajaran"
+                                    class="w-full border border-gray-300 rounded p-2" required />
                             </div>
                             <div class="mb-4">
-                                <label class="block text-sm font-medium"
-                                    >Nama Proyek</label
-                                >
-                                <input
-                                    type="text"
-                                    v-model="newProject.nama_proyek"
-                                    class="w-full border border-gray-300 rounded p-2"
-                                    required
-                                />
+                                <label class="block text-sm font-medium">Nama Proyek</label>
+                                <input type="text" v-model="newProject.nama_proyek"
+                                    class="w-full border border-gray-300 rounded p-2" required />
                             </div>
                             <div class="mb-4">
-                                <label class="block text-sm font-medium"
-                                    >Jurusan</label
-                                >
-                                <select
-                                    v-model="newProject.jurusan"
-                                    class="w-full border border-gray-300 rounded p-2"
-                                    required
-                                >
+                                <label class="block text-sm font-medium">Jurusan</label>
+                                <select v-model="newProject.jurusan" class="w-full border border-gray-300 rounded p-2"
+                                    required>
                                     <option value="Teknik Sipil">Teknik Sipil</option>
                                     <option value="Teknik Mesin">Teknik Mesin</option>
                                     <option value="Teknik Elektro">Teknik Elektro</option>
-                                    <option value="Teknik Komputer dan Informatika">Teknik Komputer dan Informatika</option>
-                                    <option value="Teknik Refrigerasi dan Tata Udara">Teknik Refrigerasi dan Tata Udara</option>
+                                    <option value="Teknik Komputer dan Informatika">Teknik Komputer dan Informatika
+                                    </option>
+                                    <option value="Teknik Refrigerasi dan Tata Udara">Teknik Refrigerasi dan Tata Udara
+                                    </option>
                                     <option value="Teknik Konversi Energi">Teknik Konversi Energi</option>
                                     <option value="Teknik Kimia">Teknik Kimia</option>
                                     <option value="Akuntansi">Akuntansi</option>
@@ -119,52 +84,29 @@
                                 </select>
                             </div>
                             <div class="mb-4">
-                                <label class="block text-sm font-medium"
-                                    >Tanggal Mulai</label
-                                >
-                                <input
-                                    type="date"
-                                    v-model="newProject.start_date"
-                                    class="w-full border border-gray-300 rounded p-2"
-                                    required
-                                />
+                                <label class="block text-sm font-medium">Tanggal Mulai</label>
+                                <input type="date" v-model="newProject.start_date"
+                                    class="w-full border border-gray-300 rounded p-2" required />
                             </div>
                             <div class="mb-4">
-                                <label class="block text-sm font-medium"
-                                    >Tanggal Selesai</label
-                                >
-                                <input
-                                    type="date"
-                                    v-model="newProject.end_date"
-                                    class="w-full border border-gray-300 rounded p-2"
-                                    required
-                                />
+                                <label class="block text-sm font-medium">Tanggal Selesai</label>
+                                <input type="date" v-model="newProject.end_date"
+                                    class="w-full border border-gray-300 rounded p-2" required />
                             </div>
                             <div class="mb-4">
-                                <label class="block text-sm font-medium"
-                                    >Status</label
-                                >
-                                <select
-                                    v-model="newProject.status"
-                                    class="w-full border border-gray-300 rounded p-2"
-                                    required
-                                >
+                                <label class="block text-sm font-medium">Status</label>
+                                <select v-model="newProject.status" class="w-full border border-gray-300 rounded p-2"
+                                    required>
                                     <option value="aktif">Aktif</option>
                                     <option value="nonaktif">Nonaktif</option>
                                 </select>
                             </div>
                             <div class="flex justify-end">
-                                <button
-                                    type="button"
-                                    @click="closeModal"
-                                    class="px-4 py-2 bg-gray-300 text-black rounded mr-2"
-                                >
+                                <button type="button" @click="closeModal"
+                                    class="px-4 py-2 bg-gray-300 text-black rounded mr-2">
                                     Batal
                                 </button>
-                                <button
-                                    type="submit"
-                                    class="px-4 py-2 bg-blue-500 text-white rounded"
-                                >
+                                <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded">
                                     Simpan
                                 </button>
                             </div>
@@ -173,10 +115,8 @@
                 </div>
             </main>
         </div>
-        <button
-            @click="openModal"
-            class="fixed bottom-10 right-10 bg-blue-500 text-white rounded-full p-6 shadow-lg hover:bg-blue-600 focus:outline-none"
-        >
+        <button @click="openModal"
+            class="fixed bottom-10 right-10 bg-blue-500 text-white rounded-full p-6 shadow-lg hover:bg-blue-600 focus:outline-none">
             <span class="text-2xl">+</span>
         </button>
     </div>
@@ -187,6 +127,7 @@ import axios from "axios";
 import Sidebar from "@/Components/Sidebar.vue";
 import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
+import Dropdown from "@/Components/Dropdown.vue";
 
 export default {
     name: "KelolaProyek",
@@ -194,6 +135,7 @@ export default {
         Sidebar,
         Navbar,
         Card,
+        Dropdown,
     },
     data() {
         return {
@@ -275,4 +217,3 @@ export default {
     },
 };
 </script>
-
