@@ -1,5 +1,68 @@
+<template>
+  <div class="flex min-h-screen">
+    <Sidebar role="dosen" />
+
+    <div class="flex-1">
+      <Navbar userName="Dosen" />
+      <main class="p-6">
+        <Card title="Create Assessment">
+          <template #actions>
+            <!-- Dropdown untuk memilih Tahun Ajaran dan Nama Proyek -->
+            <div class="mt-4">
+              <label for="project-select" class="block text-sm font-medium text-gray-700">
+                Pilih Tahun Ajaran dan Nama Proyek
+              </label>
+              <select
+                id="project-select"
+                v-model="selectedProject"
+                class="mt-2 p-2 border border-gray-300 rounded w-full"
+                required
+              >
+                <option value="" disabled selected>Pilih Proyek</option>
+                <option
+                  v-for="project in projects"
+                  :key="`${project.tahun_ajaran}-${project.nama_proyek}`"
+                  :value="project"
+                >
+                  {{ project.tahun_ajaran }} - {{ project.nama_proyek }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Tombol untuk mendownload template -->
+            <div class="mt-4">
+              <button
+                @click="downloadTemplate"
+                class="px-4 py-2 mt-2 bg-blue-500 text-white rounded"
+                :disabled="!selectedProject.tahun_ajaran || !selectedProject.nama_proyek"
+              >
+                <font-awesome-icon :icon="['fas', 'file-excel']" class="mr-2" />
+                Download Template
+              </button>
+            </div>
+
+            <!-- Import Data Excel -->
+            <div class="mt-4">
+              <label for="file-upload" class="block text-sm font-medium text-gray-700">
+                Import Data Excel (File .xlsx/.xls)
+              </label>
+              <input
+                type="file"
+                id="file-upload"
+                accept=".xlsx, .xls"
+                @change="handleFileUpload"
+                class="mt-2 p-2 border border-gray-300 rounded"
+              />
+            </div>
+          </template>
+        </Card>
+      </main>
+    </div>
+  </div>
+</template>
+
 <script>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted } from "vue";
 import axios from "axios";
 import Sidebar from "@/Components/Sidebar.vue";
 import Navbar from "@/Components/Navbar.vue";
@@ -12,14 +75,24 @@ export default {
     Card,
   },
   setup() {
-    const isLoggingOut = ref(false);
-    const assessments = ref([]);
+    const projects = ref([]); // Menyimpan daftar proyek
+    const selectedProject = ref({ tahun_ajaran: "", nama_proyek: "" }); // Menyimpan pilihan proyek
 
+    // Fungsi untuk mendownload template sesuai dengan pilihan proyek
     const downloadTemplate = async () => {
+      if (!selectedProject.value.tahun_ajaran || !selectedProject.value.nama_proyek) {
+        alert("Pilih Tahun Ajaran dan Nama Proyek terlebih dahulu.");
+        return;
+      }
+
       try {
         const token = localStorage.getItem("auth_token");
 
         const response = await axios.get("/api/export-self-assessment", {
+          params: {
+            tahun_ajaran: selectedProject.value.tahun_ajaran,
+            nama_proyek: selectedProject.value.nama_proyek,
+          },
           headers: {
             Authorization: `Bearer ${token}`,
             Accept: "application/json",
@@ -41,12 +114,19 @@ export default {
 
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
+        
+        // Cek jika template kosong
+        const isEmpty = response.headers["content-disposition"]?.includes("empty-template");
+        if (isEmpty) {
+          alert("Template kosong, tidak ada data untuk proyek yang dipilih.");
+        }
       } catch (error) {
         console.error("Download error:", error);
         alert("Terjadi kesalahan saat mengunduh file excel");
       }
     };
 
+    // Fungsi untuk menghandle upload file Excel
     const handleFileUpload = async (event) => {
       const formData = new FormData();
       formData.append("file", event.target.files[0]);
@@ -64,76 +144,25 @@ export default {
       }
     };
 
+    // Mengambil data proyek saat komponen dipasang
     onMounted(async () => {
       try {
-        const response = await axios.get("/dosen/assessment/data-with-bobot");
-        // Filter hanya yang bertipe 'self assessment'
-        assessments.value = response.data.filter(
-          (assessment) => assessment.type === "peerAssessment"
-        );
+        const response = await axios.get("/api/projects");
+        projects.value = response.data; // Menyimpan daftar proyek
       } catch (error) {
-        console.error("Error fetching assessments or type criteria:", error);
+        console.error("Error fetching projects:", error);
       }
-    });
-
-    // Group assessments berdasarkan aspek
-    const groupedAssessments = computed(() => {
-      const groups = {};
-      assessments.value.forEach((assessment) => {
-        if (!groups[assessment.aspek]) {
-          groups[assessment.aspek] = [];
-        }
-        groups[assessment.aspek].push(assessment);
-      });
-      return groups;
     });
 
     return {
       downloadTemplate,
       handleFileUpload,
-      groupedAssessments,
+      projects,
+      selectedProject,
     };
   },
 };
 </script>
-
-<template>
-  <!-- Wrapper with Flexbox Layout -->
-  <div class="flex min-h-screen">
-    <!-- Sidebar -->
-    <Sidebar role="dosen" />
-
-    <!-- Main Content Area -->
-    <div class="flex-1 ">
-      <!-- Navbar -->
-      <Navbar userName="Dosen" />
-      <main class="p-6">
-        <Card title="Create Assessment">
-          <template #actions>
-            <label for="file-upload" class="block text-sm font-medium text-gray-700">
-                Template Assessment
-              </label>
-            <!-- Tombol untuk download template Excel -->
-            <button @click="downloadTemplate" class="px-4 py-2 mt-4 bg-blue-500 text-white rounded">
-              <font-awesome-icon :icon="['fas', 'file-excel']" class="mr-2" />
-                Download
-            </button>
-
-            <!-- Form untuk mengunggah file Excel -->
-            <div class="mt-4">
-              <label for="file-upload" class="block text-sm font-medium text-gray-700">
-                Import Data Excel (File .xlsx/.xls)
-              </label>
-              <input type="file" id="file-upload" accept=".xlsx, .xls" @change="handleFileUpload"
-                class="mt-2 p-2 border border-gray-300 rounded" />
-            </div>
-          </template>
-        </Card>
-      </main>
-    </div>
-  </div>
-</template>
-
 
 <style scoped>
 /* Optional: Add custom styles here */
