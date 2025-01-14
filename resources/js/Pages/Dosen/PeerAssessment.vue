@@ -12,31 +12,6 @@
       <main class="p-6">
         <h1 class="text-2xl font-bold">Peer Assessment</h1>
 
-        <!-- Tombol untuk download template Excel -->
-        <button
-          @click="downloadTemplate"
-          class="px-4 py-2 mt-4 bg-blue-500 text-white rounded"
-        >
-          Download Template Excel
-        </button>
-
-        <!-- Form untuk mengunggah file Excel -->
-        <div class="mt-4">
-          <label
-            for="file-upload"
-            class="block text-sm font-medium text-gray-700"
-          >
-            Import Data Excel
-          </label>
-          <input
-            type="file"
-            id="file-upload"
-            accept=".xlsx, .xls"
-            @change="handleFileUpload"
-            class="mt-2 p-2 border border-gray-300 rounded"
-          />
-        </div>
-
         <!-- Container untuk assessment yang dikelompokkan berdasarkan aspek -->
         <div class="mt-6 space-y-8">
           <div v-for="(group, aspek) in groupedAssessments" :key="aspek">

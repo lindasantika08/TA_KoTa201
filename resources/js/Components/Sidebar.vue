@@ -4,7 +4,7 @@
         <aside
             class="w-64 bg-white text-black py-6 px-4 sticky top-0 h-screen shadow-2xl"
         >
-            <!-- Logo Institusi -->
+            <!-- Logo Polban -->
             <div class="mb-6 text-center">
                 <img
                     src="https://th.bing.com/th/id/OIP.vIvWflPMt3G6kLbeL_uYBQHaKq?rs=1&pid=ImgDetMain"
@@ -52,6 +52,18 @@
                         >
                     </button>
                     <ul v-if="isAssessmentOpen" class="pl-4 mt-2 space-y-2">
+                        <li v-if="role === 'dosen'">
+                            <a
+                                @click="goToCreateAssessment"
+                                :class="{
+                                    'bg-gray-200': isActive('/dosen/assessment/create'),
+                                }"
+                                class="block px-4 py-2 rounded cursor-pointer hover:bg-gray-100"
+                            >
+                            <font-awesome-icon :icon="['fas', 'address-card']" class="mr-2"/>
+                                Create Assessment
+                            </a>
+                        </li>
                         <li>
                             <a
                                 @click="goToSelfAssessment"
@@ -194,7 +206,7 @@ export default {
     data() {
         return {
             isAssessmentOpen:
-                this.isActive("/dosen/self") || this.isActive("/dosen/peer"), // Mengontrol apakah menu Assessment terbuka
+                this.isActive("/dosen/self") || this.isActive("/dosen/peer") || this.isActive("/dosen/assessment/create"), 
             isKelolaProyekOpen: this.isActive("/dosen/kelola-proyek") || this.isActive("/dosen/kelola-kelompok"),
         };
     },
@@ -204,6 +216,9 @@ export default {
         },
         toggleKelolaProyekMenu() {
             this.isKelolaProyekOpen = !this.isKelolaProyekOpen;
+        },
+        goToCreateAssessment() {
+            router.visit("/dosen/assessment/create");
         },
         goToSelfAssessment() {
             router.visit("/dosen/self");

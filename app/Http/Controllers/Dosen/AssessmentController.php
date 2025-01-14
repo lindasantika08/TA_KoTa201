@@ -14,6 +14,11 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class AssessmentController extends Controller
 {
+    public function create()
+    {
+        return Inertia::render('Dosen/CreateAssessment');
+    }
+    
     public function self()
     {
         return Inertia::render('Dosen/SelfAssessment');
