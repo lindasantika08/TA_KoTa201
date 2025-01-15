@@ -175,8 +175,10 @@ class AssessmentController extends Controller
         return response()->json($assessments); // Kembalikan sebagai response JSON
     }
 
-    public function getAssessmentsWithBobot()
-    {
+    public function getAssessmentsWithBobot(Request $request) {
+        $tahunAjaran = $request->query('tahun_ajaran');
+        $namaProyek = $request->query('nama_proyek');
+        
         // Menggunakan join untuk mengambil data dari tabel assessment dan type_criteria
         $assessments = Assessment::join('type_criteria', function ($join) {
             $join->on('assessment.aspek', '=', 'type_criteria.aspek')
@@ -196,7 +198,11 @@ class AssessmentController extends Controller
             )
             ->get();
 
-        return response()->json($assessments);
+        return Inertia::render('Dosen/SelfAssessment', [
+            'assessments' => $assessments,
+            'tahunAjaran' => $tahunAjaran,
+            'namaProyek' => $namaProyek
+        ]);
     }
 
     public function CreteProyek()

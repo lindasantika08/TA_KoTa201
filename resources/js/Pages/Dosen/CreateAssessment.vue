@@ -114,12 +114,6 @@ export default {
 
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
-        
-        // Cek jika template kosong
-        const isEmpty = response.headers["content-disposition"]?.includes("empty-template");
-        if (isEmpty) {
-          alert("Template kosong, tidak ada data untuk proyek yang dipilih.");
-        }
       } catch (error) {
         console.error("Download error:", error);
         alert("Terjadi kesalahan saat mengunduh file excel");

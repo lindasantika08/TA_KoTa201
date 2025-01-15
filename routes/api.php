@@ -7,9 +7,7 @@ use App\Http\Controllers\Dosen\AssessmentController;
 use App\Http\Controllers\Dosen\ProjectController;
 use App\Http\Controllers\Dosen\KelolaProyekController;
 
-// Route::get('/user', function (Request $request) {
-//     return $request->user();
-// })->middleware('auth:sanctum');
+use App\Http\Controllers\Mahasiswa\AssessmentMahasiswa;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function () {
@@ -21,4 +19,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/project', [KelolaProyekController::class, 'AddProyek']);
     Route::get('/projects', [KelolaProyekController::class, 'getProjects']);
     Route::get('/project-dropdown', [ProjectController::class, 'index']);
+    Route::get('/self-assessment', [AssessmentMahasiswa::class, 'getDataSelf']);
+    Route::get('/assessment/projects', [ProjectController::class, 'getProjectsWithAssessments']);
 });
