@@ -9,10 +9,6 @@ use App\Http\Controllers\Dosen\KelolaProyekController;
 
 use App\Http\Controllers\Mahasiswa\AssessmentMahasiswa;
 
-// Route::get('/user', function (Request $request) {
-//     return $request->user();
-// })->middleware('auth:sanctum');
-
 Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function () {

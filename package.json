@@ -22,7 +22,9 @@
         "@fortawesome/free-solid-svg-icons": "^6.7.2",
         "@fortawesome/vue-fontawesome": "^3.0.8",
         "@inertiajs/vue3": "^2.0.0",
+        "@types/ziggy-js": "^1.8.0",
         "dayjs": "^1.11.13",
-        "vue": "^3.5.13"
+        "vue": "^3.5.13",
+        "ziggy-js": "^2.4.2"
     }
 }

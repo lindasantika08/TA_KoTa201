@@ -13,7 +13,9 @@ export default defineConfig({
     ],
     resolve: {
         alias: {
-            '@': path.resolve(__dirname, 'resources/js'), // Alias untuk jalur import
+            '@': path.resolve(__dirname, 'resources/js'),
+            ziggy: path.resolve('vendor/tightenco/ziggy/dist/vue.m.js'),
+            '@ziggy': path.resolve('vendor/tightenco/ziggy/dist'),
         },
     },
 });

@@ -18,15 +18,13 @@ class ProjectController extends Controller
 
     public function getProjectsWithAssessments()
     {
-        // Mengambil data proyek dengan assessment yang terkait
         $projects = Assessment::select('tahun_ajaran', 'nama_proyek')
             ->distinct()
             ->get()
-            ->toArray(); // Pastikan mengirim data dalam bentuk array
+            ->toArray();
 
-        // Mengirim data ke Vue menggunakan Inertia
         return Inertia::render('Dosen/DaftarProyek', [
-            'projects' => $projects, // Pastikan data terkirim
+            'projects' => $projects,
         ]);
     }
 }

@@ -4,6 +4,7 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';
+import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 
 library.add(fas);
 
@@ -18,6 +19,7 @@ createInertiaApp({
     setup({ el, App, props, plugin }) {
         const app = createApp({ render: () => h(App, props) });
         app.use(plugin);
+        app.use(ZiggyVue);
         app.component('font-awesome-icon', FontAwesomeIcon);
         app.mount(el);
         return app;
