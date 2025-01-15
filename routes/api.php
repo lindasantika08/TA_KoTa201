@@ -21,4 +21,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/project-dropdown', [ProjectController::class, 'index']);
     Route::get('/self-assessment', [AssessmentMahasiswa::class, 'getDataSelf']);
     Route::get('/assessment/projects', [ProjectController::class, 'getProjectsWithAssessments']);
+    Route::get('/proyek-self-assessment', [ProjectController::class, 'getDataSelf']);
+    Route::get('/proyek-Peer-assessment', [ProjectController::class, 'getDataPeer']);
 });
