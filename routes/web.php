@@ -6,6 +6,8 @@ use App\Http\Controllers\Dosen\KelolaProyekController;
 use App\Http\Controllers\Dosen\KelolaKelompokController;
 use App\Http\Controllers\Dosen\FeedbackController;
 use App\Http\Controllers\Dosen\ReportController;
+
+use App\Http\Controllers\Mahasiswa\AssessmentMahasiswa;
 use App\Http\Controllers\Mahasiswa\DashboardMahasiswa;
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
@@ -26,20 +28,17 @@ Route::middleware('auth')->group(function () {
         Route::get('/assessment/data', [AssessmentController::class, 'getData'])->name('assessment.data');
         Route::get('/assessment/data-with-bobot', [AssessmentController::class, 'getAssessmentsWithBobot'])->name('assessment.data-with-bobot'); // Route baru untuk data dengan bobot
         Route::get('/assessment/create', [AssessmentController::class, 'create'])->name('CreateAssessment');
-       
         Route::get('/export-self-assessment', [AssessmentController::class, 'exportExcel'])->name('dosen.export-self');
         Route::get('/kelola-proyek', [KelolaProyekController::class, 'KelolaProyekView'])->name('kelola.proyek');
         Route::post('/tambah-proyek', [KelolaProyekController::class, 'AddProyek'])->name('kelola-proyek.store');
-
         Route::get('/kelola-kelompok', [KelolaKelompokController::class, 'KelolaKelompok'])->name('KelolaKelompok');
-
         Route::get('/report', [ReportController::class, 'report'])->name('report');
-
         Route::get('/feedback', [FeedbackController::class, 'feedback'])->name('feedback');
     });
 
     //Route untuk Mahasiswa
     Route::middleware('role:mahasiswa')->prefix('mahasiswa')->group(function () {
         Route::get('/dashboard', [DashboardMahasiswa::class, 'dashboard'])->name('mahasiswa.dashboard');
+        Route::get('/self', [AssessmentMahasiswa::class, 'selfAssessment'])->name('mahasiswa.dashboard');
     });
 });

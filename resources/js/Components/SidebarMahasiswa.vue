@@ -17,8 +17,8 @@
             <ul class="flex flex-col space-y-4">
                 <li>
                     <a
-                        :href="'/dosen/dashboard'"
-                        :class="{ 'bg-gray-200': isActive('/dosen/dashboard') }"
+                        :href="'/mahasiswa/dashboard'"
+                        :class="{ 'bg-gray-200': isActive('/mahasiswa/dashboard') }"
                         class="block px-4 py-2 rounded hover:bg-gray-100 text-base font-medium"
                     >
                         <font-awesome-icon
@@ -35,8 +35,8 @@
                         @click="toggleAssessmentMenu"
                         :class="{
                             'bg-white':
-                                isActive('/dosen/self') ||
-                                isActive('/dosen/peer'),
+                                isActive('/mahasiswa/self') ||
+                                isActive('/mahasiswa/peer'),
                         }"
                         class="w-full text-left px-4 py-2 rounded flex justify-start hover:bg-gray-100"
                     >
@@ -52,23 +52,11 @@
                         >
                     </button>
                     <ul v-if="isAssessmentOpen" class="pl-4 mt-2 space-y-2">
-                        <li v-if="role === 'dosen'">
-                            <a
-                                @click="goToCreateAssessment"
-                                :class="{
-                                    'bg-gray-200': isActive('/dosen/assessment/create'),
-                                }"
-                                class="block px-4 py-2 rounded cursor-pointer hover:bg-gray-100 text-sm"
-                            >
-                            <font-awesome-icon :icon="['fas', 'address-card']" class="mr-4"/>
-                                Create Assessment
-                            </a>
-                        </li>
                         <li>
                             <a
                                 @click="goToSelfAssessment"
                                 :class="{
-                                    'bg-gray-200': isActive('/dosen/self'),
+                                    'bg-gray-200': isActive('/mahasiswa/self-assessment'),
                                 }"
                                 class="block px-4 py-2 rounded cursor-pointer hover:bg-gray-100 text-sm"
                             >
@@ -79,11 +67,11 @@
                                 Self Assessment
                             </a>
                         </li>
-                        <li v-if="role === 'dosen'">
+                        <li v-if="role === 'mahasiswa'">
                             <a
                                 @click="goToPeerAssessment"
                                 :class="{
-                                    'bg-gray-200': isActive('/dosen/peer'),
+                                    'bg-gray-200': isActive('/mahasiswa/peer'),
                                 }"
                                 class="block px-4 py-2 rounded cursor-pointer hover:bg-gray-100 text-sm"
                             >
@@ -96,69 +84,10 @@
                         </li>
                     </ul>
                 </li>
-                <li class="mb-4">
-                    <button
-                        @click="toggleKelolaProyekMenu"
-                        :class="{
-                            'bg-white':
-                                isActive('/dosen/kelola-proyek') ||
-                                isActive('/dosen/kelola-kelompok'),
-                        }"
-                        class="w-full text-left px-4 py-2 rounded flex justify-start hover:bg-gray-100"
-                    >
-                        <font-awesome-icon
-                            icon="fa-solid fa-cogs"
-                            class="mr-4"
-                        />
-                        <span class="text-base font-medium">Manage Projects</span>
-                        <span
-                            :class="{ 'rotate-180': isKelolaProyekOpen }"
-                            class="transform transition-all ml-2"
-                            >▼</span
-                        >
-                    </button>
-                    <ul v-if="isKelolaProyekOpen" class="pl-4 mt-2 space-y-2">
-                        <li>
-                            <a
-                                @click="goToKelolaProyek"
-                                :class="{
-                                    'bg-gray-200': isActive(
-                                        '/dosen/kelola-proyek'
-                                    ),
-                                }"
-                                class="block px-4 py-2 rounded cursor-pointer hover:bg-gray-100 text-sm"
-                            >
-                                <font-awesome-icon
-                                    icon="fa-solid fa-project-diagram"
-                                    class="mr-4"
-                                />
-                                Manage Projects
-                            </a>
-                        </li>
-                        <li v-if="role === 'dosen'">
-                            <a
-                                @click="goToKelolaKelompok"
-                                :class="{
-                                    'bg-gray-200': isActive(
-                                        '/dosen/kelola-kelompok'
-                                    ),
-                                }"
-                                class="block px-4 py-2 rounded cursor-pointer hover:bg-gray-100 text-sm"
-                            >
-                                <font-awesome-icon
-                                    icon="fa-solid fa-tasks"
-                                    class="mr-4"
-                                />
-                                Manage Group
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-
                 <li>
                     <a
-                        :href="'/dosen/report'"
-                        :class="{ 'bg-gray-200': isActive('/dosen/report') }"
+                        :href="'/mahasiswa/report'"
+                        :class="{ 'bg-gray-200': isActive('/mahasiswa/report') }"
                         class="block px-4 py-2 rounded hover:bg-gray-100 text-base font-medium"
                     >
                         <font-awesome-icon
@@ -171,8 +100,8 @@
 
                 <li>
                     <a
-                        :href="'/dosen/feedback'"
-                        :class="{ 'bg-gray-200': isActive('/dosen/feedback') }"
+                        :href="'/mahasiswa/feedback'"
+                        :class="{ 'bg-gray-200': isActive('/mahasiswa/feedback') }"
                         class="block px-4 py-2 rounded hover:bg-gray-100 text-base font-medium"
                     >
                         <font-awesome-icon
@@ -200,14 +129,14 @@ export default {
     props: {
         role: {
             type: String,
-            required: true, // "dosen" atau "mahasiswa"
+            required: true, // "mahasiswa" atau "mahasiswa"
         },
     },
     data() {
         return {
             isAssessmentOpen:
-                this.isActive("/dosen/self") || this.isActive("/dosen/peer") || this.isActive("/dosen/assessment/create"), 
-            isKelolaProyekOpen: this.isActive("/dosen/kelola-proyek") || this.isActive("/dosen/kelola-kelompok"),
+                this.isActive("/mahasiswa/self") || this.isActive("/mahasiswa/peer") || this.isActive("/mahasiswa/assessment/create"), 
+            isKelolaProyekOpen: this.isActive("/mahasiswa/kelola-proyek") || this.isActive("/mahasiswa/kelola-kelompok"),
         };
     },
     methods: {
@@ -218,22 +147,22 @@ export default {
             this.isKelolaProyekOpen = !this.isKelolaProyekOpen;
         },
         goToCreateAssessment() {
-            router.visit("/dosen/assessment/create");
+            router.visit("/mahasiswa/assessment/create");
         },
         goToSelfAssessment() {
-            router.visit("/dosen/self");
+            router.visit("/mahasiswa/self");
         },
         goToPeerAssessment() {
-            router.visit("/dosen/peer");
+            router.visit("/mahasiswa/peer");
         },
         isActive(route) {
             return this.$page.url === route;
         },
         goToKelolaProyek() {
-            router.visit("/dosen/kelola-proyek");
+            router.visit("/mahasiswa/kelola-proyek");
         },
         goToKelolaKelompok() {
-            router.visit("/dosen/kelola-kelompok");
+            router.visit("/mahasiswa/kelola-kelompok");
         },
     },
 };
