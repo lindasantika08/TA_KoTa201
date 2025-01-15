@@ -19,7 +19,7 @@ export default {
   data() {
     return {
       breadcrumbs: [
-        { text: "Assessment", href: "/assessment" },
+        { text: "Assessment", href: "/self" },
         { text: "Self Assessment", href: null }
       ],
       headers: [
@@ -35,7 +35,7 @@ export default {
   },
   methods: {
     handleDetail(item) {
-      router.visit(`/mahasiswa/self-assessment/${item.id}/detail`, {
+      router.visit(`/mahasiswa/self-assessment`, {
         method: 'get',
         preserveState: true
       });
