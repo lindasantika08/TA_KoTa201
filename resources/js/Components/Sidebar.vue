@@ -221,7 +221,7 @@ export default {
             router.visit("/dosen/assessment/create");
         },
         goToSelfAssessment() {
-            router.visit("/dosen/self");
+            router.visit("/dosen/assessment/projects");
         },
         goToPeerAssessment() {
             router.visit("/dosen/peer");
