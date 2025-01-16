@@ -20,7 +20,6 @@ export default{
   data() {
     return {
       breadcrumbs: [
-        { text: "Assessment", href: "/assessment" },
         { text: "Self Assessment", href: null }
       ],
       headers : [
@@ -66,7 +65,7 @@ mounted() {
 
 <template>
   <div class="flex min-h-screen">
-    <sidebar role="dosen" />
+    <Sidebar role="dosen" />
     <div class="flex-1">
       <Navbar Username="dosen" />
       <main class="p-6">
@@ -74,38 +73,43 @@ mounted() {
           <Breadcrumb :items="breadcrumbs" />
         </div>
 
-        <card
+        <Card
           title="DAFTAR PROYEK SELF ASSESSMENT"
           description=""
           class="w-full"
         >
-          <DataTable :headers="headers" :items="items" class="mt-10">
-            <template #column-actions="{ item }">
-              <button
-                @click="handleDetail(item)"
-                class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              >
-                <font-awesome-icon icon="fa-solid fa-eye" class="mr-2" />
-                Detail
-              </button>
-            </template>
+          <!-- Cek apakah items kosong -->
+          <div v-if="items.length === 0" class="text-center text-gray-500 py-6">
+            Belum ada assessment
+          </div>
+          <div v-else>
+            <DataTable :headers="headers" :items="items" class="mt-10">
+              <template #column-actions="{ item }">
+                <button
+                  @click="handleDetail(item)"
+                  class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  <font-awesome-icon icon="fa-solid fa-eye" class="mr-2" />
+                  Detail
+                </button>
+              </template>
 
-            <template #column-status="{ item }">
-              <span
-                :class="[
-                  'px-2 py-1 rounded-full text-xs font-medium',
-                  item.status === 'aktif'
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-red-100 text-red-800',
-                ]"
-              >
-                {{ item.status }}
-              </span>
-            </template>
-          </DataTable>
-        </card>
+              <template #column-status="{ item }">
+                <span
+                  :class="[ 
+                    'px-2 py-1 rounded-full text-xs font-medium', 
+                    item.status === 'aktif' 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-red-100 text-red-800'
+                  ]"
+                >
+                  {{ item.status }}
+                </span>
+              </template>
+            </DataTable>
+          </div>
+        </Card>
       </main>
     </div>
   </div>
 </template>
-
