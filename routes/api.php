@@ -25,4 +25,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/bobot', [SelfAssessment::class, 'getFilteredBobot']);
     Route::get('/questions', [SelfAssessment::class, 'getQuestionsByProject']);
     Route::post('/save-answer', [SelfAssessment::class, 'saveAnswer']);
+    Route::get('/proyek-self-assessment', [ProjectController::class, 'getDataSelf']);
+    Route::get('/proyek-Peer-assessment', [ProjectController::class, 'getDataPeer']);
 });
