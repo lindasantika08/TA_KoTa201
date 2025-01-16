@@ -28,27 +28,76 @@ export default {
                 { key: 'bobot_4', label: 'Bobot 4' },
                 { key: 'bobot_5', label: 'Bobot 5' },
             ],
-            items: []
-        }
+            items: [],
+            questions: [],
+            currentQuestionIndex: 0,
+            answer: '',
+            bobot: []
+        };
     },
     mounted() {
-    axios.get('/api/bobot')
-    .then(response => {
-        this.items = response.data.map((item, index) => ({
-            id: item.id,
-            bobot_1: item.bobot_1,
-            bobot_2: item.bobot_2,
-            bobot_3: item.bobot_3,
-            bobot_4: item.bobot_4,
-            bobot_5: item.bobot_5,
-        }));
-    })
-    .catch(error => {
-        console.error('There something when reach data:', error);
-    });
-  }
-
-}
+        // Ambil data bobot untuk DataTable
+        axios.get('/api/bobot', { params: { nama_proyek: '' } })
+        .then(response => {
+            if (Array.isArray(response.data)) {
+                this.questions = response.data;
+            } else {
+                console.error('Invalid questions data format');
+                this.questions = [];
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching questions:', error);
+            this.questions = [];
+        });
+    },
+    watch: {
+        currentQuestionIndex(newIndex) {
+            if (this.questions.length > 0) {
+                const currentQuestion = this.questions[newIndex];
+                axios.get('/api/bobot', {
+                    params: {
+                        aspek: currentQuestion.aspek,
+                        kriteria: currentQuestion.kriteria
+                    }
+                }).then(response => {
+                    this.bobot = response.data;
+                }).catch(error => {
+                    console.error('Error fetching bobot:', error);
+                });
+            }
+        }
+    },
+    methods: {
+        submitAnswer() {
+            if (this.questions.length === 0) return;
+            
+            const currentQuestion = this.questions[this.currentQuestionIndex];
+            axios.post('/api/save-answer', {
+                question_id: currentQuestion.id,
+                answer: this.answer
+            }).then(() => {
+                alert('Jawaban disimpan!');
+                this.nextQuestion();
+            }).catch(error => {
+                console.error('Error saving answer:', error);
+            });
+        },
+        prevQuestion() {
+            if (this.currentQuestionIndex > 0) {
+                this.currentQuestionIndex--;
+            }
+        },
+        nextQuestion() {
+            if (this.currentQuestionIndex < this.questions.length - 1) {
+                this.currentQuestionIndex++;
+                this.answer = ''; // Reset jawaban setelah pindah ke pertanyaan berikutnya
+            } else {
+                alert('Semua pertanyaan telah dijawab!');
+            }
+        }
+    }
+};
 </script>
 
 <template>
@@ -65,23 +114,42 @@ export default {
                     description=""
                     class="w-full"
                 >
-                <div class="grid grid-cols-2 gap-6 text-sm leading-6 mb-6">
-                    <div>
-                    <p><strong>NIM:</strong> 221511034</p>
-                    <p><strong>Nama Lengkap:</strong> Adhiya Rahma Anzani</p>
-                    <p><strong>Kelas:</strong> 1B</p>
+                    <div class="grid grid-cols-2 gap-6 text-sm leading-6 mb-6">
+                        <div>
+                            <p><strong>NIM:</strong> 221511034</p>
+                            <p><strong>Nama Lengkap:</strong>Linda Santika</p>
+                            <p><strong>Kelas:</strong> 1B</p>
+                        </div>
+                        <div>
+                            <p><strong>Kelompok:</strong> 1 (Satu)</p>
+                            <p><strong>Proyek:</strong> Aplikasi Perkantoran</p>
+                            <p><strong>Tanggal Pengisian:</strong> 25 Juli 2024</p>
+                        </div>
                     </div>
-                    <div>
-                    <p><strong>Kelompok:</strong> 1 (Satu)</p>
-                    <p><strong>Proyek:</strong> Aplikasi Perkantoran</p>
-                    <p><strong>Tanggal Pengisian:</strong> 25 Juli 2024</p>
-                    </div>
-                </div>
+                    
+                    <!-- Tabel Bobot -->
                     <DataTable 
                         :headers="headers"
                         :items="items"
                         @view="handleView"
                     />
+                    
+                    <!-- Pertanyaan -->
+                    <Card v-if="questions.length > 0" 
+                          :title="`Pertanyaan ${currentQuestionIndex + 1}`" 
+                          description="Isi sesuai dengan kriteria dan aspek">
+                        <p>{{ questions[currentQuestionIndex].pertanyaan }}</p>
+                    </Card>
+
+                    <form @submit.prevent="submitAnswer" v-if="questions.length > 0">
+                        <textarea v-model="answer" placeholder="Masukkan jawaban Anda"></textarea>
+                        <button type="submit">Simpan Jawaban</button>
+                    </form>
+
+                    <div class="navigation" v-if="questions.length > 0">
+                        <button @click="prevQuestion" :disabled="currentQuestionIndex === 0">Sebelumnya</button>
+                        <button @click="nextQuestion" :disabled="currentQuestionIndex === questions.length - 1">Selanjutnya</button>
+                    </div>
                 </Card>
             </main>
         </div>
@@ -89,5 +157,5 @@ export default {
 </template>
 
 <style scoped>
-/* Add any custom styles here if needed */
+/* Tambahkan styling sesuai kebutuhan */
 </style>

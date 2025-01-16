@@ -18,19 +18,18 @@ return new class extends Migration
             $table->char('type', 255);
             $table->string('pertanyaan', 255);
             $table->string('aspek', 255);
-            $table->string('kriteria', 255); // Pastikan panjangnya sama dengan `type_criteria`
+            $table->string('kriteria', 255);
             $table->timestamps();
 
-            // Foreign key constraint
             $table->foreign(['aspek', 'kriteria'])
                 ->references(['aspek', 'kriteria'])
                 ->on('type_criteria')
-                ->onDelete('cascade'); // Opsional
+                ->onDelete('cascade');
 
             $table->foreign(['tahun_ajaran', 'nama_proyek'])
                 ->references(['tahun_ajaran', 'nama_proyek'])
                 ->on('project')
-                ->onDelete('cascade'); // Opsional
+                ->onDelete('cascade');
         });
     }
 
