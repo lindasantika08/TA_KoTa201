@@ -28,7 +28,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/peer', [AssessmentController::class, 'peer'])->name('dosen.peer-assessment');
         Route::post('/assessment/import', [AssessmentController::class, 'import'])->name('assessment.import');
         Route::get('/assessment/data', [AssessmentController::class, 'getData'])->name('assessment.data');
-        Route::get('/assessment/data-with-bobot', [AssessmentController::class, 'getAssessmentsWithBobot'])->name('dosen.assessment.data-with-bobot');
+        Route::get('/assessment/data-with-bobot-self', [AssessmentController::class, 'getAssessmentsWithBobotSelf'])->name('dosen.assessment.data-with-bobot-self');
+        Route::get('/assessment/data-with-bobot-peer', [AssessmentController::class, 'getAssessmentsWithBobotpeer'])->name('dosen.assessment.data-with-bobot-peer');
         Route::get('/assessment/create', [AssessmentController::class, 'create'])->name('CreateAssessment');
         Route::get('/assessment/projectsSelf', [ProjectController::class, 'getProjectsWithAssessmentsSelf']);
         Route::get('/assessment/projectsPeer', [ProjectController::class, 'getProjectsWithAssessmentsPeer']);

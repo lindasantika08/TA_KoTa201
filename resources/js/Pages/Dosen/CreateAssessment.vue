@@ -33,10 +33,7 @@
                     class="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     :disabled="!selectedActiveProject.tahun_ajaran"
                   >
-                    <font-awesome-icon
-                      :icon="['fas', 'file-excel']"
-                      class="mr-2"
-                    />
+                    <font-awesome-icon :icon="['fas', 'file-excel']" class="mr-2" />
                     Download Template Aktif
                   </button>
                 </div>
@@ -48,31 +45,26 @@
                   Proyek Tidak Aktif
                 </label>
                 <select
-                  v-model="selectedInactiveProject"
-                  class="mt-2 p-2 border border-gray-300 rounded w-full"
-                  required
-                >
-                  <option value="" disabled selected>
-                    Pilih Proyek Tidak Aktif
-                  </option>
-                  <option
-                    v-for="project in inactiveProjects"
-                    :key="`inactive-${project.tahun_ajaran}-${project.nama_proyek}`"
-                    :value="project"
-                  >
-                    {{ project.tahun_ajaran }} - {{ project.nama_proyek }}
-                  </option>
-                </select>
+  v-model="selectedInactiveProject"
+  class="mt-2 p-2 border border-gray-300 rounded w-full"
+  required
+>
+  <option value="" disabled selected>Pilih Proyek Tidak Aktif</option>
+  <option
+    v-for="project in inactiveProjects"
+    :key="`inactive-${project.tahun_ajaran}-${project.nama_proyek}`"
+    :value="project"
+  >
+    {{ project.tahun_ajaran }} - {{ project.nama_proyek }}
+  </option>
+</select>
                 <div class="mt-4">
                   <button
                     @click="downloadInactiveTemplate"
                     class="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     :disabled="!selectedInactiveProject.tahun_ajaran"
                   >
-                    <font-awesome-icon
-                      :icon="['fas', 'file-excel']"
-                      class="mr-2"
-                    />
+                    <font-awesome-icon :icon="['fas', 'file-excel']" class="mr-2" />
                     Download Template Tidak Aktif
                   </button>
                 </div>
@@ -81,10 +73,7 @@
 
             <!-- Import Data Excel -->
             <div class="mt-8">
-              <label
-                for="file-upload"
-                class="block text-sm font-medium text-gray-700"
-              >
+              <label for="file-upload" class="block text-sm font-medium text-gray-700">
                 Import Data Excel (File .xlsx/.xls)
               </label>
               <input
@@ -121,28 +110,24 @@ export default {
     const selectedInactiveProject = ref({ tahun_ajaran: "", nama_proyek: "" });
 
     const activeProjects = computed(() => {
-      return projects.value.filter((project) => project.status === "aktif");
+      return projects.value.filter(project => project.status === 'aktif');
     });
 
     const inactiveProjects = computed(() => {
-      return projects.value.filter((project) => project.status !== "aktif");
+      return projects.value.filter(project => project.status !== 'aktif');
     });
 
     const downloadActiveTemplate = async () => {
-      await downloadTemplate(selectedActiveProject.value, "active");
+      await downloadTemplate(selectedActiveProject.value, 'active');
     };
 
     const downloadInactiveTemplate = async () => {
-      await downloadTemplate(selectedInactiveProject.value, "inactive");
+      await downloadTemplate(selectedInactiveProject.value, 'inactive');
     };
 
     const downloadTemplate = async (project, type) => {
       if (!project.tahun_ajaran || !project.nama_proyek) {
-        alert(
-          `Pilih Proyek ${
-            type === "active" ? "Aktif" : "Tidak Aktif"
-          } terlebih dahulu.`
-        );
+        alert(`Pilih Proyek ${type === 'active' ? 'Aktif' : 'Tidak Aktif'} terlebih dahulu.`);
         return;
       }
 
@@ -152,7 +137,7 @@ export default {
           params: {
             tahun_ajaran: project.tahun_ajaran,
             nama_proyek: project.nama_proyek,
-            type: type,
+            type: type
           },
           headers: {
             Authorization: `Bearer ${token}`,

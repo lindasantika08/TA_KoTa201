@@ -86,7 +86,7 @@ export default {
   methods: {
     handleDetail(item) {
       router.get(
-        "/dosen/assessment/data-with-bobot",
+        "/dosen/assessment/data-with-bobot-peer",
         {
           tahun_ajaran: item.tahun_ajaran,
           nama_proyek: item.nama_proyek,

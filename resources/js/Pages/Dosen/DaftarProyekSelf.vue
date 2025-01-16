@@ -36,7 +36,7 @@ export default{
 //method
 methods: {
   handleDetail(item){
-    router.get('/dosen/assessment/data-with-bobot', {
+    router.get('/dosen/assessment/data-with-bobot-self', {
       tahun_ajaran: item.tahun_ajaran,
       nama_proyek: item.nama_proyek
     }, {
