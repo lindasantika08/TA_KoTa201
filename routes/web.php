@@ -7,6 +7,7 @@ use App\Http\Controllers\Dosen\KelolaProyekController;
 use App\Http\Controllers\Dosen\KelolaKelompokController;
 use App\Http\Controllers\Dosen\FeedbackController;
 use App\Http\Controllers\Dosen\ReportController;
+use App\Http\Controllers\Dosen\AnswerController;
 
 use App\Http\Controllers\Mahasiswa\AssessmentMahasiswa;
 use App\Http\Controllers\Mahasiswa\DashboardMahasiswa;
@@ -41,6 +42,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/kelola-kelompok', [KelolaKelompokController::class, 'KelolaKelompok'])->name('KelolaKelompok');
         Route::get('/report', [ReportController::class, 'report'])->name('report');
         Route::get('/feedback', [FeedbackController::class, 'feedback'])->name('feedback');
+        Route::get('/Answers-self', [AnswerController::class, 'showAnswersSelf'])->name('showself');
     });
 
     //Route untuk Mahasiswa

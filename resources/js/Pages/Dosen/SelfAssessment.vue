@@ -10,63 +10,125 @@
 
             <!-- Content -->
             <main class="p-6">
-                <Card :title="`Self Assessment - ${namaProyek} (${tahunAjaran})`">
+                <Card
+                    :title="`Self Assessment - ${namaProyek} (${tahunAjaran})`"
+                >
                     <template #actions>
+                        <div class="flex justify-end">
+                            <button
+                                @click="handleAnswers()"
+                                class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                            >
+                                <font-awesome-icon icon="fa-solid fa-eye" />
+                            </button>
+                        </div>
                         <!-- Container untuk assessment yang dikelompokkan berdasarkan aspek -->
                         <div class="mt-6 space-y-8">
-                            <div v-for="(group, aspek) in groupedAssessments" :key="aspek">
+                            <div
+                                v-for="(group, aspek) in groupedAssessments"
+                                :key="aspek"
+                            >
                                 <!-- Card untuk setiap aspek -->
-                                <Card :title="aspek" :description="'Total Pertanyaan: ' + group.length">
+                                <Card
+                                    :title="aspek"
+                                    :description="
+                                        'Total Pertanyaan: ' + group.length
+                                    "
+                                >
                                     <template #actions>
                                         <div>
                                             <!-- Daftar Pertanyaan -->
-                                            <div v-for="(assessment, index) in group" :key="assessment.id" class="mt-4">
-                                                <h3 class="text-lg font-semibold mb-2">
+                                            <div
+                                                v-for="(
+                                                    assessment, index
+                                                ) in group"
+                                                :key="assessment.id"
+                                                class="mt-4"
+                                            >
+                                                <h3
+                                                    class="text-lg font-semibold mb-2"
+                                                >
                                                     {{ index + 1 }}.
                                                     {{ assessment.pertanyaan }}
                                                 </h3>
-                                                <h4 class="text-sm text-gray-600">
+                                                <h4
+                                                    class="text-sm text-gray-600"
+                                                >
                                                     {{ assessment.kriteria }}
                                                 </h4>
 
                                                 <!-- Tabel Bobot -->
-                                                <div class="overflow-x-auto mt-2">
-                                                    <table class="w-full table-auto border-collapse bg-white">
+                                                <div
+                                                    class="overflow-x-auto mt-2"
+                                                >
+                                                    <table
+                                                        class="w-full table-auto border-collapse bg-white"
+                                                    >
                                                         <thead>
                                                             <tr>
-                                                                <th class="px-4 py-2 border">
+                                                                <th
+                                                                    class="px-4 py-2 border"
+                                                                >
                                                                     Bobot 1
                                                                 </th>
-                                                                <th class="px-4 py-2 border">
+                                                                <th
+                                                                    class="px-4 py-2 border"
+                                                                >
                                                                     Bobot 2
                                                                 </th>
-                                                                <th class="px-4 py-2 border">
+                                                                <th
+                                                                    class="px-4 py-2 border"
+                                                                >
                                                                     Bobot 3
                                                                 </th>
-                                                                <th class="px-4 py-2 border">
+                                                                <th
+                                                                    class="px-4 py-2 border"
+                                                                >
                                                                     Bobot 4
                                                                 </th>
-                                                                <th class="px-4 py-2 border">
+                                                                <th
+                                                                    class="px-4 py-2 border"
+                                                                >
                                                                     Bobot 5
                                                                 </th>
                                                             </tr>
                                                         </thead>
                                                         <tbody>
                                                             <tr>
-                                                                <td class="px-4 py-2 border">
-                                                                    {{ assessment.bobot_1 }}
+                                                                <td
+                                                                    class="px-4 py-2 border"
+                                                                >
+                                                                    {{
+                                                                        assessment.bobot_1
+                                                                    }}
                                                                 </td>
-                                                                <td class="px-4 py-2 border">
-                                                                    {{ assessment.bobot_2 }}
+                                                                <td
+                                                                    class="px-4 py-2 border"
+                                                                >
+                                                                    {{
+                                                                        assessment.bobot_2
+                                                                    }}
                                                                 </td>
-                                                                <td class="px-4 py-2 border">
-                                                                    {{ assessment.bobot_3 }}
+                                                                <td
+                                                                    class="px-4 py-2 border"
+                                                                >
+                                                                    {{
+                                                                        assessment.bobot_3
+                                                                    }}
                                                                 </td>
-                                                                <td class="px-4 py-2 border">
-                                                                    {{ assessment.bobot_4 }}
+                                                                <td
+                                                                    class="px-4 py-2 border"
+                                                                >
+                                                                    {{
+                                                                        assessment.bobot_4
+                                                                    }}
                                                                 </td>
-                                                                <td class="px-4 py-2 border">
-                                                                    {{ assessment.bobot_5 }}
+                                                                <td
+                                                                    class="px-4 py-2 border"
+                                                                >
+                                                                    {{
+                                                                        assessment.bobot_5
+                                                                    }}
                                                                 </td>
                                                             </tr>
                                                         </tbody>
@@ -87,7 +149,7 @@
 
 <script>
 import { ref, computed } from "vue";
-import { usePage } from '@inertiajs/vue3';
+import { router, usePage } from "@inertiajs/vue3";
 import Sidebar from "@/Components/Sidebar.vue";
 import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
@@ -98,13 +160,30 @@ export default {
         Navbar,
         Card,
     },
+    methods: {
+    handleAnswers() {
+        // Log data tahunAjaran dan namaProyek sebelum melakukan request
+        console.log("Tahun Ajaran:", this.tahunAjaran);
+        console.log("Nama Proyek:", this.namaProyek);
+
+        // Menggunakan Inertia untuk mengarahkan ke halaman dosen/answers-self dan meneruskan data
+        this.$inertia.visit('/dosen/Answers-self', {
+            method: 'get',
+            data: {
+                tahunAjaran: this.tahunAjaran,
+                namaProyek: this.namaProyek,
+            },
+            preserveState: true,
+        });
+    }
+},
     props: {
         tahunAjaran: String,
         namaProyek: String,
         assessments: {
             type: Array,
-            required: true
-        }
+            required: true,
+        },
     },
     setup(props) {
         const showDropdown = ref(false);
@@ -131,7 +210,7 @@ export default {
             showDropdown,
             groupedAssessments,
             tahunAjaran: props.tahunAjaran,
-            namaProyek: props.namaProyek
+            namaProyek: props.namaProyek,
         };
     },
 };

@@ -4,18 +4,20 @@ namespace App\Http\Controllers\Mahasiswa;
 
 use App\Http\Controllers\Controller;
 use App\Models\type_criteria;
-use App\Models\Assessment;  
-use App\Models\Answers;      
+use App\Models\Assessment;
+use App\Models\Answers;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class SelfAssessment extends Controller
 {
-    public function assessment() {
+    public function assessment()
+    {
         return Inertia::render('Mahasiswa/SelfAssessmentMahasiswa');
     }
 
-    public function getQuestionsByProject(Request $request) {
+    public function getQuestionsByProject(Request $request)
+    {
         try {
             $questions = Assessment::where('nama_proyek', $request->nama_proyek)
                 ->get(['id', 'pertanyaan', 'aspek', 'kriteria']);
@@ -25,7 +27,8 @@ class SelfAssessment extends Controller
         }
     }
 
-    public function getFilteredBobot(Request $request) {
+    public function getFilteredBobot(Request $request)
+    {
         try {
             $bobot = type_criteria::where('aspek', $request->aspek)
                 ->where('kriteria', $request->kriteria)
@@ -37,7 +40,8 @@ class SelfAssessment extends Controller
         }
     }
 
-    public function saveAnswer(Request $request) {
+    public function saveAnswer(Request $request)
+    {
         try {
             $answer = Answer::create([
                 'question_id' => $request->question_id,

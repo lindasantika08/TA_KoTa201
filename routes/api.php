@@ -15,16 +15,20 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function () {
         return auth()->user();
     });
+    //dosen
     Route::get('/export-self-assessment', [AssessmentController::class, 'exportExcel']);
     Route::put('/logout', [AuthController::class, 'logout']);
     Route::post('/project', [KelolaProyekController::class, 'AddProyek']);
     Route::get('/projects', [KelolaProyekController::class, 'getProjects']);
     Route::get('/project-dropdown', [ProjectController::class, 'index']);
-    Route::get('/self-assessment', [AssessmentMahasiswa::class, 'getDataSelf']);
     Route::get('/assessment/projects', [ProjectController::class, 'getProjectsWithAssessments']);
-    Route::get('/bobot', [SelfAssessment::class, 'getFilteredBobot']);
-    Route::get('/questions', [SelfAssessment::class, 'getQuestionsByProject']);
-    Route::post('/save-answer', [SelfAssessment::class, 'saveAnswer']);
     Route::get('/proyek-self-assessment', [ProjectController::class, 'getDataSelf']);
     Route::get('/proyek-Peer-assessment', [ProjectController::class, 'getDataPeer']);
+
+    //mahasiswa
+    Route::get('/bobot', [SelfAssessment::class, 'getFilteredBobot']);
+    Route::get('/self-assessment', [AssessmentMahasiswa::class, 'getDataSelf']);
+    Route::get('/questions', [SelfAssessment::class, 'getQuestionsByProject']);
+    Route::get('/type-kriteria', [SelfAssessment::class, '']);
+    Route::post('/save-answer', [SelfAssessment::class, 'saveAnswer']);
 });
