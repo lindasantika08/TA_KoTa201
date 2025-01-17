@@ -10,6 +10,9 @@
 
             <!-- Content -->
             <main class="p-6">
+                <div class="mb-4">
+                    <Breadcrumb :items="breadcrumbs" />
+                </div>
                 <Card :title="`Peer Assessment - ${namaProyek} (${tahunAjaran})`">
                     <template #actions>
                         <!-- Container untuk assessment yang dikelompokkan berdasarkan aspek -->
@@ -91,12 +94,22 @@ import { usePage } from '@inertiajs/vue3';
 import Sidebar from "@/Components/Sidebar.vue";
 import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
+import Breadcrumb from "@/Components/Breadcrumb.vue";
 
 export default {
     components: {
         Sidebar,
         Navbar,
         Card,
+        Breadcrumb,
+    },
+    data() {
+        return {
+            breadcrumbs: [
+                { text: "Peer Assessment", href: "/dosen/assessment/projectsPeer" },
+                { text: "Detail", href: null }
+            ],
+        }
     },
     props: {
         tahunAjaran: String,

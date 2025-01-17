@@ -30,6 +30,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/proyek-Peer-assessment', [ProjectController::class, 'getDataPeer']);
     Route::get('/kelola-kelompok/export', [KelolaKelompokController::class, 'exportTemplate']);
     Route::post('/kelola-kelompok/import', [KelolaKelompokController::class, 'importData']);
-    // Route::get('/kelola-kelompok/data', [KelolaKelompokController::class, 'getKelompokData']);
 
 });

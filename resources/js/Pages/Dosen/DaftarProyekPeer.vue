@@ -70,7 +70,7 @@ export default {
   data() {
     return {
       breadcrumbs: [
-        { text: "Peer Assessment", href: null },
+        { text: "Peer Assessment", href: "/dosen/assessment/projectsPeer" },
       ],
       headers: [
         { key: "no", label: "No" },

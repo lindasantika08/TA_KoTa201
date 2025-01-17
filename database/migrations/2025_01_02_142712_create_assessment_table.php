@@ -24,12 +24,12 @@ return new class extends Migration
             $table->foreign(['aspek', 'kriteria'])
                 ->references(['aspek', 'kriteria'])
                 ->on('type_criteria')
-                ->onDelete('cascade');
+                ->onDelete('cascade'); 
 
             $table->foreign(['tahun_ajaran', 'nama_proyek'])
                 ->references(['tahun_ajaran', 'nama_proyek'])
                 ->on('project')
-                ->onDelete('cascade');
+                ->onDelete('cascade'); 
         });
     }
 

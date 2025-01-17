@@ -41,4 +41,23 @@ class Kelompok extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
+
+    public function dosen()
+    {
+        return $this->belongsTo(User::class, 'dosen_id');
+    }
+
+    public function members()
+    {
+        return $this->hasMany(User::class, 'user_id'); // Relasi ke tabel users
+    }
+
+    // Definisikan relasi dengan model Project
+    public function project()
+    {
+        // return $this->belongsTo(Project::class);
+        // return $this->belongsTo(Project::class, 'tahun_ajaran', 'tahun_ajaran')
+        //         ->where('nama_proyek', $this->nama_proyek); // Menambahkan filter untuk 'nama_proyek'
+        return $this->belongsTo(Project::class, 'tahun_ajaran', 'nama_proyek');
+    }
 }

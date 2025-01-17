@@ -19,29 +19,45 @@ class KelolaKelompokController extends Controller
 {
     public function KelolaKelompok()
     {
-        return Inertia::render('Dosen/KelolaKelompok');
-    }
+        $kelompokData = Kelompok::with('user', 'dosen')->get();
+        Log::info('Data Kelompok yang Dikirim:', ['kelompok' => $kelompokData]);
 
-    public function ViewKelompok()
+
+        // Transformasi data
+        $kelompok = $kelompokData
+            ->groupBy(function ($item) {
+                return $item->tahun_ajaran . '-' . $item->kelompok;
+            }) // Mengelompokkan data berdasarkan kombinasi tahun ajaran dan nama kelompok
+            ->map(function ($items) {
+                $first = $items->first();
+                return [
+                    'id' => $first->id,
+                    'tahun_ajaran' => $first->tahun_ajaran,
+                    'nama_proyek' => $first->nama_proyek,
+                    'kelompok' => $first->kelompok,
+                    'dosen' => $first->dosen->name ?? '-', // Nama dosen
+                    'anggota' => $items->pluck('user.name')->unique()->toArray(), // Nama anggota unik
+                ];
+            })
+            ->sortBy('kelompok') // Urutkan kelompok dari kecil ke besar
+            ->values(); // Reset index agar menjadi array numerik
+
+        return Inertia::render('Dosen/KelolaKelompok', [
+            'kelompok' => $kelompok,
+        ]);
+    }
+    public function CreateKelompok()
     {
-        return Inertia::render('Dosen/ViewKelompok');
+        return Inertia::render('Dosen/CreateKelompok');
     }
 
-    public function getKelompokData()
+    public function showDetail($id)
     {
-        // Mengambil semua data kelompok
-        $kelompokData = Kelompok::all();
-
-        // Mengembalikan data dalam format JSON
-        return response()->json($kelompokData);
+        $kelompok = Kelompok::with('user', 'dosen')->findOrFail($id);
+        return Inertia::render('Dosen/DetailKelompok', [
+            'kelompok' => $kelompok
+        ]);
     }
-
-    // public function KelolaKelompok()
-    // {
-    //     // Ambil data proyek untuk dropdown
-    //     $projects = Project::all();
-    //     return view('dosen.kelola-kelompok', compact('projects'));
-    // }
 
     public function exportTemplate(Request $request)
     {
@@ -49,8 +65,12 @@ class KelolaKelompokController extends Controller
         $tahunAjaran = $request->input('tahun_ajaran');
         $namaProyek = $request->input('nama_proyek');
 
+        if (!$tahunAjaran || !$namaProyek) {
+            return response()->json(['error' => 'Parameter tidak lengkap.'], 400);
+        }
+
         // Kirim data ke export untuk menghasilkan template
-        return Excel::download(new KelompokExport($tahunAjaran, $namaProyek), 'template_kelompok.xlsx');
+        return Excel::download(new KelompokExport($tahunAjaran, $namaProyek), 'Data_Kelompok.xlsx');
     }
 
     public function importData(Request $request)
@@ -72,7 +92,6 @@ class KelolaKelompokController extends Controller
 
             // Jika berhasil mengimpor data
             return response()->json(['message' => 'Data kelompok berhasil diimpor'], 200);
-
         } catch (\Exception $e) {
             // Jika ada error, tangkap dan tampilkan pesan error
             Log::error('Import error: ' . $e->getMessage());
