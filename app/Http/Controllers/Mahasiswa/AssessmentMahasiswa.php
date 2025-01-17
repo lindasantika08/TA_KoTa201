@@ -14,7 +14,7 @@ class AssessmentMahasiswa extends Controller
     }
 
     public function peerAssessment() {
-
+        return Inertia::render('Mahasiswa/ProjectPeerAssessment');
     }
 
     public function getDataSelf() {
