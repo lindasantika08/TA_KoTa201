@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Dosen\AssessmentController;
 use App\Http\Controllers\Dosen\ProjectController;
 use App\Http\Controllers\Dosen\KelolaProyekController;
+use App\Http\Controllers\Dosen\KelolaKelompokController;
 
 use App\Http\Controllers\Mahasiswa\AssessmentMahasiswa;
 
@@ -21,4 +22,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/project-dropdown', [ProjectController::class, 'index']);
     Route::get('/self-assessment', [AssessmentMahasiswa::class, 'getDataSelf']);
     Route::get('/assessment/projects', [ProjectController::class, 'getProjectsWithAssessments']);
+    Route::get('/kelola-kelompok/export', [KelolaKelompokController::class, 'exportTemplate']);
+    Route::post('/kelola-kelompok/import', [KelolaKelompokController::class, 'importData']);
+    // Route::get('/kelola-kelompok/data', [KelolaKelompokController::class, 'getKelompokData']);
+
 });

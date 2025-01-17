@@ -34,7 +34,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/export-self-assessment', [AssessmentController::class, 'exportExcel'])->name('dosen.export-self');
         Route::get('/kelola-proyek', [KelolaProyekController::class, 'KelolaProyekView'])->name('kelola.proyek');
         Route::post('/tambah-proyek', [KelolaProyekController::class, 'AddProyek'])->name('kelola-proyek.store');
+        
         Route::get('/kelola-kelompok', [KelolaKelompokController::class, 'KelolaKelompok'])->name('KelolaKelompok');
+        Route::get('/kelola-kelompok/data', [KelolaKelompokController::class, 'getKelompokData'])->name('KelolaKelompok');
+        Route::get('/kelola-kelompok/export', [KelolaKelompokController::class, 'exportTemplate'])->name('kelola-kelompok.export');
+        Route::post('/kelola-kelompok/import', [KelolaKelompokController::class, 'importData'])->name('kelola-kelompok.import');
+        
         Route::get('/report', [ReportController::class, 'report'])->name('report');
         Route::get('/feedback', [FeedbackController::class, 'feedback'])->name('feedback');
     });
