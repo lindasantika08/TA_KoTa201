@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\type_criteria;
+use App\Models\Assessment;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithEvents;
@@ -13,19 +14,39 @@ use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 
 class TypeCriteriaSheet implements FromCollection, WithHeadings, WithEvents, WithTitle, ShouldAutoSize
 {
-    /**
-     * @return \Illuminate\Support\Collection
-     */
+
+    protected $tahunAjaran;
+    protected $namaProyek;
+
+    public function __construct($tahunAjaran, $namaProyek)
+    {
+        $this->tahunAjaran = $tahunAjaran;
+        $this->namaProyek = $namaProyek;
+    }
+
     public function collection()
     {
-        // Ambil data dari database
-        $typeCriterias = type_criteria::all();
+        $typeCriterias = Assessment::select(
+            'assessment.aspek',
+            'assessment.kriteria',
+            'type_criteria.bobot_1',
+            'type_criteria.bobot_2',
+            'type_criteria.bobot_3',
+            'type_criteria.bobot_4',
+            'type_criteria.bobot_5'
+        )
+            ->where('assessment.tahun_ajaran', $this->tahunAjaran)
+            ->where('assessment.nama_proyek', $this->namaProyek)
+            ->join('type_criteria', function ($join) {
+                $join->on('assessment.aspek', '=', 'type_criteria.aspek')
+                    ->on('assessment.kriteria', '=', 'type_criteria.kriteria');
+            })
+            ->get();
 
         if ($typeCriterias->isEmpty()) {
             // Jika tidak ada data, buat 5 baris template kosong
-            $data = [];
-            for ($i = 1; $i <= 5; $i++) {
-                $data[] = [
+            $data = collect(range(1, 5))->map(function ($i) {
+                return [
                     'no' => $i,
                     'aspek' => '',
                     'kriteria' => '',
@@ -35,7 +56,7 @@ class TypeCriteriaSheet implements FromCollection, WithHeadings, WithEvents, Wit
                     'bobot_4' => '',
                     'bobot_5' => '',
                 ];
-            }
+            });
         } else {
             // Jika ada data, map data yang ada
             $data = $typeCriterias->map(function ($item, $key) {
@@ -49,11 +70,12 @@ class TypeCriteriaSheet implements FromCollection, WithHeadings, WithEvents, Wit
                     'bobot_4' => $item->bobot_4,
                     'bobot_5' => $item->bobot_5,
                 ];
-            })->toArray();
+            });
         }
 
         return collect($data);
     }
+
 
     /**
      * @return array

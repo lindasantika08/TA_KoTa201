@@ -10,11 +10,11 @@ use Inertia\Inertia;
 class AssessmentMahasiswa extends Controller
 {
     public function selfAssessment() {
-        return Inertia::render('Mahasiswa/SelfAssessment');
+        return Inertia::render('Mahasiswa/ProjectSelfAssessment');
     }
 
     public function peerAssessment() {
-
+        return Inertia::render('Mahasiswa/ProjectPeerAssessment');
     }
 
     public function getDataSelf() {

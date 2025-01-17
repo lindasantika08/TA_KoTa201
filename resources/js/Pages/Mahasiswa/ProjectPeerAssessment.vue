@@ -19,7 +19,7 @@ export default {
   data() {
     return {
       breadcrumbs: [
-        { text: "Assessment", href: "/assessment" },
+        { text: "Assessment", href: "/assessment/self" },
         { text: "Self Assessment", href: null }
       ],
       headers: [
@@ -35,7 +35,7 @@ export default {
   },
   methods: {
     handleDetail(item) {
-      router.visit(`/mahasiswa/self-assessment/${item.id}/detail`, {
+      router.visit(`/mahasiswa/assessment/self-assessment`, {
         method: 'get',
         preserveState: true
       });
@@ -51,7 +51,6 @@ export default {
             proyek: item.nama_proyek,
             status: item.status,
             tanggal: dayjs(item.created_at).format('DD MMMM YYYY HH:mm'),
-            // Tidak perlu mengatur actions di sini karena kita akan menggunakan slot
         }));
     })
     .catch(error => {
@@ -81,7 +80,6 @@ export default {
             :items="items"
             class="mt-10"
           >
-            <!-- Custom template untuk kolom actions -->
             <template #column-actions="{ item }">
               <button 
                 @click="handleDetail(item)"
@@ -92,7 +90,6 @@ export default {
               </button>
             </template>
 
-            <!-- Optional: Custom template untuk kolom status -->
             <template #column-status="{ item }">
               <span 
                 :class="[

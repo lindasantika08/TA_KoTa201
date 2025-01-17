@@ -10,13 +10,18 @@ use App\Http\Controllers\Dosen\ReportController;
 
 use App\Http\Controllers\Mahasiswa\AssessmentMahasiswa;
 use App\Http\Controllers\Mahasiswa\DashboardMahasiswa;
+use App\Http\Controllers\Mahasiswa\SelfAssessment;
+use App\Http\Controllers\Mahasiswa\PeerAssessment;
+use App\Http\Controllers\Mahasiswa\FeedbackMahasiswa;
+use App\Http\Controllers\Mahasiswa\ReportMahasiswa;
+
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', 'login');
 Route::get('/login', [AuthController::class, 'index'])->name('login');
 Route::middleware('auth')->group(function () {
-    
+
     // Route untuk dosen
     Route::middleware(['role:dosen'])->prefix('dosen')->group(function () {
         Route::get('/dashboard', [DashboardDosen::class, 'dashboard'])->name('dashboard');
@@ -28,9 +33,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/peer', [AssessmentController::class, 'peer'])->name('dosen.peer-assessment');
         Route::post('/assessment/import', [AssessmentController::class, 'import'])->name('assessment.import');
         Route::get('/assessment/data', [AssessmentController::class, 'getData'])->name('assessment.data');
-        Route::get('/assessment/data-with-bobot', [AssessmentController::class, 'getAssessmentsWithBobot'])->name('dosen.assessment.data-with-bobot');
+        Route::get('/assessment/data-with-bobot-self', [AssessmentController::class, 'getAssessmentsWithBobotSelf'])->name('dosen.assessment.data-with-bobot-self');
+        Route::get('/assessment/data-with-bobot-peer', [AssessmentController::class, 'getAssessmentsWithBobotpeer'])->name('dosen.assessment.data-with-bobot-peer');
         Route::get('/assessment/create', [AssessmentController::class, 'create'])->name('CreateAssessment');
-        Route::get('/assessment/projects', [ProjectController::class, 'getProjectsWithAssessments']);
+        Route::get('/assessment/projectsSelf', [ProjectController::class, 'getProjectsWithAssessmentsSelf']);
+        Route::get('/assessment/projectsPeer', [ProjectController::class, 'getProjectsWithAssessmentsPeer']);
         Route::get('/export-self-assessment', [AssessmentController::class, 'exportExcel'])->name('dosen.export-self');
         Route::get('/kelola-proyek', [KelolaProyekController::class, 'KelolaProyekView'])->name('kelola.proyek');
         Route::post('/tambah-proyek', [KelolaProyekController::class, 'AddProyek'])->name('kelola-proyek.store');
@@ -47,6 +54,12 @@ Route::middleware('auth')->group(function () {
     //Route untuk Mahasiswa
     Route::middleware('role:mahasiswa')->prefix('mahasiswa')->group(function () {
         Route::get('/dashboard', [DashboardMahasiswa::class, 'dashboard'])->name('mahasiswa.dashboard');
-        Route::get('/self', [AssessmentMahasiswa::class, 'selfAssessment'])->name('mahasiswa.dashboard');
+        Route::get('/assessment/self', [AssessmentMahasiswa::class, 'selfAssessment'])->name('mahasiswa.dashboard');
+        Route::get('/assessment/peer', [AssessmentMahasiswa::class, 'peerAssessment'])->name('mahasiswa.assessment');
+        Route::get('/assessment/self-assessment', [SelfAssessment::class, 'assessment'])->name('mahasiswa.assessment');
+        Route::get('/assessment/peer-assessment', [PeerAssessment::class, 'assessment'])->name('mahasiswa.assessment');
+        Route::get('/feedback', [FeedbackMahasiswa::class, 'feedbackMahasiswa'])->name('mahasiswa.feedback');
+        Route::get('/report', [ReportMahasiswa::class, 'reportMahasiswa'])->name('mahasiswa.report');
+
     });
 });

@@ -35,8 +35,8 @@
                         @click="toggleAssessmentMenu"
                         :class="{
                             'bg-white':
-                                isActive('/mahasiswa/self') ||
-                                isActive('/mahasiswa/peer'),
+                                isActive('/mahasiswa/assessment/self') ||
+                                isActive('/mahasiswa/assessment/peer'),
                         }"
                         class="w-full text-left px-4 py-2 rounded flex justify-start hover:bg-gray-100"
                     >
@@ -150,10 +150,10 @@ export default {
             router.visit("/mahasiswa/assessment/create");
         },
         goToSelfAssessment() {
-            router.visit("/mahasiswa/self");
+            router.visit("/mahasiswa/assessment/self");
         },
         goToPeerAssessment() {
-            router.visit("/mahasiswa/peer");
+            router.visit("/mahasiswa/assessment/peer");
         },
         isActive(route) {
             return this.$page.url === route;
