@@ -23,6 +23,7 @@ class UserSeeder extends Seeder
                 'email' => 'dosen@proyek.com',
                 'password' => bcrypt("qwerty123"),
                 'nip' => '12345678901234567',
+                'nim' => null,
                 'role' => 'dosen',
             ],
             [
@@ -30,6 +31,7 @@ class UserSeeder extends Seeder
                 'name' => 'Thoriq',
                 'email' => 'mahasiswa@proyek.com',
                 'password' => bcrypt("qwerty123"),
+                'nip' => null,
                 'nim'=> '123456789',
                 'role' => 'mahasiswa',
             ],

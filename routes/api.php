@@ -20,11 +20,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/project', [KelolaProyekController::class, 'AddProyek']);
     Route::get('/projects', [KelolaProyekController::class, 'getProjects']);
     Route::get('/project-dropdown', [ProjectController::class, 'index']);
-    Route::get('/self-assessment', [AssessmentMahasiswa::class, 'getDataSelf']);
-    Route::get('/assessment/projects', [ProjectController::class, 'getProjectsWithAssessments']);
-    Route::get('/bobot', [SelfAssessment::class, 'getFilteredBobot']);
-    Route::get('/questions', [SelfAssessment::class, 'getQuestionsByProject']);
-    Route::post('/save-answer', [SelfAssessment::class, 'saveAnswer']);
     Route::get('/proyek-self-assessment', [ProjectController::class, 'getDataSelf']);
     Route::get('/proyek-Peer-assessment', [ProjectController::class, 'getDataPeer']);
+    Route::get('/assessment/projects', [ProjectController::class, 'getProjectsWithAssessments']);
+
+    Route::get('/self-assessment', [AssessmentMahasiswa::class, 'getDataSelf']);
+    Route::get('/bobot', [SelfAssessment::class, 'getFilteredBobot']);
+    Route::get('/questions', [SelfAssessment::class, 'getQuestionsByProject']);
+    Route::get('/user-info', [SelfAssessment::class, 'getUserInfo']);
+    Route::post('/save-answer', [SelfAssessment::class, 'saveAnswer']);
+
 });

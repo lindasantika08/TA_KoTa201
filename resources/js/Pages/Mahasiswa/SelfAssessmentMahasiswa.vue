@@ -14,6 +14,20 @@ export default {
         SidebarMahasiswa,
         Breadcrumb
     },
+    props: {
+        studentInfo: {
+            type: Object,
+            default: () => ({
+                'nim': '',
+                'name': '',
+                'class': '',
+                'group': '',
+                'project': '',
+                'date': '',
+            })
+        }
+    },
+
     data() {
         return {
             breadcrumbs: [
@@ -32,14 +46,16 @@ export default {
             answer: '',
             loading: true,
             error: null,
-            studentInfo: {
-                nim: '',
-                name: '',
-                class: '',
-                group: '',
-                project: '',
-                date: ''
-            }
+            studentInfo: {},
+            score: 0,
+            // studentInfo: {
+            //     nim: '',
+            //     name: '',
+            //     class: '',
+            //     group: '',
+            //     project: '',
+            //     date: ''
+            // }
         };
     },
     computed: {
@@ -52,6 +68,7 @@ export default {
     async created() {
         console.log('Component created - starting fetch');
         await this.fetchQuestions();
+        await this.fetchStudentsInfo();
     },
     methods: {
         async fetchQuestions() {
@@ -81,6 +98,21 @@ export default {
                 this.loading = false;
             }
         },
+        async fetchStudentsInfo() {
+            try {
+                const response = await axios.get('/api/user-info');
+                if (response.data) {
+                    this.studentInfo = response.data;
+                }
+            } catch (error) {
+                console.error ('Failed to fetch student info: ', error);
+            }
+        },
+        setScore(value) {
+            this.score = value;
+            console.log('Score set to:', value);
+        },
+
         submitAnswer() {
             if (!this.currentQuestion) {
                 console.log('No current question available');
@@ -216,13 +248,31 @@ export default {
                             <p class="text-gray-700">{{ currentQuestion.pertanyaan }}</p>
                         </div>
 
+                        <!-- Menambahkan komponen Rating Slider -->
+                        <div class="score-container mt-4">
+                            <div class="slider-container">
+                                <div class="track"></div>
+                                <div class="points">
+                                    <div class="point" 
+                                        v-for="n in 5" 
+                                        :key="n"
+                                        :class="{ active: score >= n }"
+                                        @click="setScore(n)"
+                                        :data-value="n">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="values">
+                                <span v-for="n in 5" :key="n" class="value">{{ n }}</span>
+                            </div>
+                            <!-- <div class="selected-value">
+                                <span>{{ score }}</span>
+                            </div> -->
+                        </div>
                         
                         <!-- Answer Form -->
                         <form @submit.prevent="submitAnswer" class="space-y-4">
                             <div>
-                                <label for="answer" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Jawaban Anda:
-                                </label>
                                 <textarea
                                     id="answer"
                                     v-model="answer"
@@ -239,14 +289,14 @@ export default {
                                     type="button"
                                     @click="prevQuestion"
                                     :disabled="currentQuestionIndex === 0"
-                                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50"
+                                    class="px-4 py-2 bg-yellow-400 text-white rounded hover:bg-blue-600"
                                 >
                                     Sebelumnya
                                 </button>
 
                                 <button
                                     type="submit"
-                                    class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                                    class="px-4 py-2 bg-blue-400 text-white rounded hover:bg-blue-600"
                                 >
                                     Simpan Jawaban
                                 </button>
@@ -255,7 +305,7 @@ export default {
                                     type="button"
                                     @click="nextQuestion"
                                     :disabled="currentQuestionIndex === questions.length - 1"
-                                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50"
+                                    class="px-4 py-2 bg-green-500 text-white rounded hover:bg-blue-600"
                                 >
                                     Selanjutnya
                                 </button>
@@ -273,3 +323,62 @@ export default {
         </div>
     </div>
 </template>
+
+<style scoped>
+.score-container {
+    margin: 20px 0;
+}
+
+.slider-container {
+    position: relative;
+    margin: 40px 0;
+}
+
+.track {
+    width: 100%;
+    height: 4px;
+    background: #ddd;
+    position: relative;
+}
+
+.points {
+    display: flex;
+    justify-content: space-between;
+    position: absolute;
+    width: 100%;
+    top: -8px;
+}
+
+.point {
+    width: 20px;
+    height: 20px;
+    background: #fff;
+    border: 2px solid #85ccda;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.point.active {
+    background: #8be1f3;
+}
+
+.values {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1px;
+}
+
+.value {
+    font-size: 16px;
+    color: #666;
+}
+
+.selected-value {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #85ccda;
+}
+</style>

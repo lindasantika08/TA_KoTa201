@@ -7,8 +7,10 @@ use App\Models\type_criteria;
 use App\Models\Assessment;  
 use App\Models\Answers;    
 use App\Models\project;  
+use App\Models\User;  
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Auth;
 
 class SelfAssessment extends Controller
 {

@@ -55,6 +55,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/assessment/peer-assessment', [PeerAssessment::class, 'assessment'])->name('mahasiswa.assessment');
         Route::get('/feedback', [FeedbackMahasiswa::class, 'feedbackMahasiswa'])->name('mahasiswa.feedback');
         Route::get('/report', [ReportMahasiswa::class, 'reportMahasiswa'])->name('mahasiswa.report');
+        Route::get('/user-info', [SelfAssessment::class, 'getUserInfo'])->name('mahasiswa.info-student');
+
 
     });
 });
