@@ -77,4 +77,20 @@ class SelfAssessment extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+
+    public function getUserInfo(Request $request)
+    {
+        $user = Auth::user();
+
+        $userInfo = [
+            'nim' => $user->nim,
+            'name' => $user->name,
+            'class' => '1B',
+            'group' => '1 (Satu)',
+            'project' => 'Aplikasi Perkantoran',
+            'date' => now()->format('d F Y')
+        ];
+
+        return response()->json($userInfo);
+    }
 }

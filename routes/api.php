@@ -9,6 +9,8 @@ use App\Http\Controllers\Dosen\KelolaProyekController;
 
 use App\Http\Controllers\Mahasiswa\AssessmentMahasiswa;
 use App\Http\Controllers\Mahasiswa\SelfAssessment;
+use App\Http\Controllers\Mahasiswa\PeerAssessment;
+use App\Models\AnswersPeer;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function () {
@@ -28,7 +30,12 @@ Route::middleware('auth:sanctum')->group(function () {
     //mahasiswa
     Route::get('/bobot', [SelfAssessment::class, 'getFilteredBobot']);
     Route::get('/self-assessment', [AssessmentMahasiswa::class, 'getDataSelf']);
+    Route::get('/peer-assessment', [AssessmentMahasiswa::class, 'getDataPeer']);
     Route::get('/questions', [SelfAssessment::class, 'getQuestionsByProject']);
+    Route::get('/questions-peer', [PeerAssessment::class, 'getQuestionsByProject']);
     Route::get('/type-kriteria', [SelfAssessment::class, '']);
     Route::post('/save-answer', [SelfAssessment::class, 'saveAnswer']);
+    Route::post('/save-answer-peer', [PeerAssessment::class, 'AnswersPeer']);
+    Route::get('/kelompok', [AssessmentMahasiswa::class, 'getKelompokByUser']);
+    Route::get('/users/search', [AssessmentMahasiswa::class, 'searchByNim']);
 });
