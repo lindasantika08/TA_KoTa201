@@ -1,3 +1,166 @@
+<script>
+import axios from 'axios';
+import DataTable from "@/Components/DataTable.vue";
+import Navbar from "@/Components/Navbar.vue";
+import Card from "@/Components/Card.vue";
+import SidebarMahasiswa from '../../Components/SidebarMahasiswa.vue';
+import Breadcrumb from "@/Components/Breadcrumb.vue";
+
+export default {
+  components: {
+    DataTable,
+    Navbar,
+    Card,
+    SidebarMahasiswa,
+    Breadcrumb
+  },
+  data() {
+    return {
+      breadcrumbs: [
+        { text: "Assessment", href: "/self" },
+        { text: "Peer Assessment", href: null }
+      ],
+      headers: [
+        { key: 'bobot_1', label: 'Bobot 1' },
+        { key: 'bobot_2', label: 'Bobot 2' },
+        { key: 'bobot_3', label: 'Bobot 3' },
+        { key: 'bobot_4', label: 'Bobot 4' },
+        { key: 'bobot_5', label: 'Bobot 5' },
+      ],
+      questions: [],
+      currentQuestionIndex: 0,
+      answer: '',
+      scaleAnswer: null,
+      loading: true,
+      error: null,
+      kelompok: [],
+      selectedMember: '',
+      studentInfo: {
+        nim: '',
+        name: '',
+        class: '',
+        group: '',
+        project: '',
+        date: ''
+      }
+    };
+  },
+  computed: {
+    currentQuestion() {
+      return this.questions[this.currentQuestionIndex] || null;
+    }
+  },
+  created() {
+    this.initializeData();
+  },
+  methods: {
+    async initializeData() {
+      this.loading = true;
+      this.error = null;
+
+      try {
+        // Fetch kelompok data first
+        const kelompokResponse = await axios.get("/api/kelompok");
+        if (kelompokResponse.data && Array.isArray(kelompokResponse.data)) {
+          const currentUser = kelompokResponse.data[0] || {};
+          this.studentInfo = {
+            nim: currentUser.user?.nim || "",
+            name: currentUser.user?.name || "",
+            class: currentUser.user?.kelas || "",
+            group: currentUser.kelompok || "",
+            project: currentUser.nama_proyek || "",
+            date: new Date().toLocaleDateString("id-ID"),
+          };
+          this.kelompok = kelompokResponse.data.filter(
+            (item) =>
+              item.kelompok === currentUser.kelompok &&
+              item.user?.id !== currentUser.user?.id
+          );
+          
+          // Only fetch questions after kelompok data is loaded
+          const questionsResponse = await axios.get('/api/questions-peer');
+          if (questionsResponse.data && Array.isArray(questionsResponse.data)) {
+            this.questions = questionsResponse.data;
+          } else {
+            throw new Error('Invalid questions response format');
+          }
+        } else {
+          throw new Error('Invalid kelompok response format');
+        }
+      } catch (error) {
+        this.error = `Error loading data: ${error.message}`;
+        console.error('Error:', error);
+      } finally {
+        this.loading = false;
+      }
+    },
+    async fetchUserIdByNim(nim) {
+      try {
+        const response = await axios.get(`/api/users/search?nim=${nim}`);
+        return response.data?.user_id || null;
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        return null;
+      }
+    },
+    async submitAnswer() {
+      if (!this.currentQuestion) return;
+
+      const user_id = await this.fetchUserIdByNim(this.studentInfo.nim);  // Pastikan menggunakan await
+      if (!user_id) {
+        alert('User tidak ditemukan');
+        return;
+      }
+
+      const peer_id = this.selectedMember; // ID teman yang dinilai
+      const score = this.scaleAnswer; // Skor dari jawaban
+      const status = 'submitted'; // Status jawaban
+
+      // Menambahkan log untuk melihat data yang akan disubmit
+      console.log("Data yang akan disubmit:", {
+        user_id: user_id,
+        peer_id: peer_id,
+        question_id: this.currentQuestion.id,
+        answer: this.answer,
+        score: score,
+        status: status
+      });
+
+      try {
+        await axios.post('/api/save-answer-peer', {
+          user_id: user_id, 
+          peer_id: peer_id,
+          question_id: this.currentQuestion.id,
+          answer: this.answer,
+          score: score, 
+          status: status,
+        });
+        alert('Jawaban berhasil disimpan!');
+        this.nextQuestion();
+      } catch (error) {
+        alert('Gagal menyimpan jawaban. Silakan coba lagi.');
+      }
+    },
+    prevQuestion() {
+      if (this.currentQuestionIndex > 0) {
+        this.currentQuestionIndex--;
+        this.answer = '';
+        this.scaleAnswer = null;
+      }
+    },
+    nextQuestion() {
+      if (this.currentQuestionIndex < this.questions.length - 1) {
+        this.currentQuestionIndex++;
+        this.answer = '';
+        this.scaleAnswer = null;
+      } else {
+        alert('Semua pertanyaan telah dijawab!');
+      }
+    }
+  }
+};
+</script>
+
 <template>
   <div class="flex min-h-screen">
     <SidebarMahasiswa role="mahasiswa" />
@@ -156,166 +319,3 @@
   </div>
 </template>
 
-<script>
-import axios from 'axios';
-import DataTable from "@/Components/DataTable.vue";
-import Navbar from "@/Components/Navbar.vue";
-import Card from "@/Components/Card.vue";
-import SidebarMahasiswa from '../../Components/SidebarMahasiswa.vue';
-import Breadcrumb from "@/Components/Breadcrumb.vue";
-
-export default {
-  components: {
-    DataTable,
-    Navbar,
-    Card,
-    SidebarMahasiswa,
-    Breadcrumb
-  },
-  data() {
-    return {
-      breadcrumbs: [
-        { text: "Assessment", href: "/self" },
-        { text: "Peer Assessment", href: null }
-      ],
-      headers: [
-        { key: 'bobot_1', label: 'Bobot 1' },
-        { key: 'bobot_2', label: 'Bobot 2' },
-        { key: 'bobot_3', label: 'Bobot 3' },
-        { key: 'bobot_4', label: 'Bobot 4' },
-        { key: 'bobot_5', label: 'Bobot 5' },
-      ],
-      questions: [],
-      currentQuestionIndex: 0,
-      answer: '',
-      scaleAnswer: null,
-      loading: true,
-      error: null,
-      kelompok: [],
-      selectedMember: '',
-      studentInfo: {
-        nim: '',
-        name: '',
-        class: '',
-        group: '',
-        project: '',
-        date: ''
-      }
-    };
-  },
-  computed: {
-    currentQuestion() {
-      return this.questions[this.currentQuestionIndex] || null;
-    }
-  },
-  created() {
-    this.initializeData();
-  },
-  methods: {
-    async initializeData() {
-      this.loading = true;
-      this.error = null;
-
-      try {
-        // Fetch kelompok data first
-        const kelompokResponse = await axios.get("/api/kelompok");
-        if (kelompokResponse.data && Array.isArray(kelompokResponse.data)) {
-          const currentUser = kelompokResponse.data[0] || {};
-          this.studentInfo = {
-            nim: currentUser.user?.nim || "",
-            name: currentUser.user?.name || "",
-            class: currentUser.user?.kelas || "",
-            group: currentUser.kelompok || "",
-            project: currentUser.nama_proyek || "",
-            date: new Date().toLocaleDateString("id-ID"),
-          };
-          this.kelompok = kelompokResponse.data.filter(
-            (item) =>
-              item.kelompok === currentUser.kelompok &&
-              item.user?.id !== currentUser.user?.id
-          );
-          
-          // Only fetch questions after kelompok data is loaded
-          const questionsResponse = await axios.get('/api/questions-peer');
-          if (questionsResponse.data && Array.isArray(questionsResponse.data)) {
-            this.questions = questionsResponse.data;
-          } else {
-            throw new Error('Invalid questions response format');
-          }
-        } else {
-          throw new Error('Invalid kelompok response format');
-        }
-      } catch (error) {
-        this.error = `Error loading data: ${error.message}`;
-        console.error('Error:', error);
-      } finally {
-        this.loading = false;
-      }
-    },
-    async fetchUserIdByNim(nim) {
-      try {
-        const response = await axios.get(`/api/users/search?nim=${nim}`);
-        return response.data?.user_id || null;
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-        return null;
-      }
-    },
-    async submitAnswer() {
-  if (!this.currentQuestion) return;
-
-  // Cari user_id berdasarkan nim mahasiswa
-  const user_id = await this.fetchUserIdByNim(this.studentInfo.nim);  // Pastikan menggunakan await
-  if (!user_id) {
-    alert('User tidak ditemukan');
-    return;
-  }
-
-  const peer_id = this.selectedMember; // ID teman yang dinilai
-  const score = this.scaleAnswer; // Skor dari jawaban
-  const status = 'submitted'; // Status jawaban
-
-  // Menambahkan log untuk melihat data yang akan disubmit
-  console.log("Data yang akan disubmit:", {
-    user_id: user_id,
-    peer_id: peer_id,
-    question_id: this.currentQuestion.id,
-    answer: this.answer,
-    score: score,
-    status: status
-  });
-
-  try {
-    await axios.post('/api/save-answer-peer', {
-      user_id: user_id, 
-      peer_id: peer_id,
-      question_id: this.currentQuestion.id,
-      answer: this.answer,
-      score: score, 
-      status: status,
-    });
-    alert('Jawaban berhasil disimpan!');
-    this.nextQuestion();
-  } catch (error) {
-    alert('Gagal menyimpan jawaban. Silakan coba lagi.');
-  }
-},
-    prevQuestion() {
-      if (this.currentQuestionIndex > 0) {
-        this.currentQuestionIndex--;
-        this.answer = '';
-        this.scaleAnswer = null;
-      }
-    },
-    nextQuestion() {
-      if (this.currentQuestionIndex < this.questions.length - 1) {
-        this.currentQuestionIndex++;
-        this.answer = '';
-        this.scaleAnswer = null;
-      } else {
-        alert('Semua pertanyaan telah dijawab!');
-      }
-    }
-  }
-};
-</script>
