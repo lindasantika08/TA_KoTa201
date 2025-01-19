@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\type_criteria;
 use App\Models\Assessment;
 use App\Models\Answers;
+use App\Models\project;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -18,14 +19,37 @@ class SelfAssessment extends Controller
 
     public function getQuestionsByProject(Request $request)
     {
-        try {
-            $questions = Assessment::where('nama_proyek', $request->nama_proyek)
-                ->get(['id', 'pertanyaan', 'aspek', 'kriteria']);
-            return response()->json($questions);
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
+        $tahunAjaran = $request->query('tahun_ajaran');
+        $namaProyek = $request->query('nama_proyek');
+
+        $assessments = Assessment::join('type_criteria', function ($join) {
+            $join->on('assessment.aspek', '=', 'type_criteria.aspek')
+                ->on('assessment.kriteria', '=', 'type_criteria.kriteria');
+        })
+            ->select(
+                'assessment.id',
+                'assessment.type',
+                'assessment.pertanyaan',
+                'assessment.aspek',
+                'assessment.kriteria',
+                'type_criteria.bobot_1',
+                'type_criteria.bobot_2',
+                'type_criteria.bobot_3',
+                'type_criteria.bobot_4',
+                'type_criteria.bobot_5'
+            )
+            ->when($tahunAjaran, function ($query, $tahunAjaran) {
+                $query->where('assessment.tahun_ajaran', $tahunAjaran);
+            })
+            ->when($namaProyek, function ($query, $namaProyek) {
+                $query->where('assessment.nama_proyek', $namaProyek);
+            })
+            ->where('assessment.type', 'selfAssessment')
+            ->get();
+
+        return response()->json($assessments);
     }
+
 
     public function getFilteredBobot(Request $request)
     {
