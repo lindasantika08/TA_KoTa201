@@ -20,7 +20,7 @@ export default {
     return {
       breadcrumbs: [
         { text: "Assessment", href: "/assessment/self" },
-        { text: "Self Assessment", href: null }
+        { text: "Peer Assessment", href: null }
       ],
       headers: [
         { key: 'no', label: 'No' },
@@ -35,14 +35,14 @@ export default {
   },
   methods: {
     handleDetail(item) {
-      router.visit(`/mahasiswa/assessment/self-assessment`, {
+      router.visit(`/mahasiswa/assessment/peer-assessment`, {
         method: 'get',
         preserveState: true
       });
     }
   },
   mounted() {
-    axios.get('/api/self-assessment')
+    axios.get('/api/peer-assessment')
     .then(response => {
         this.items = response.data.map((item, index) => ({
             id: item.id,
