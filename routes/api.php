@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Dosen\AssessmentController;
+use App\Http\Controllers\Dosen\AnswerController;
 use App\Http\Controllers\Dosen\ProjectController;
 use App\Http\Controllers\Dosen\KelolaProyekController;
 use App\Http\Controllers\Dosen\KelolaKelompokController;
@@ -24,9 +25,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/project', [KelolaProyekController::class, 'AddProyek']);
     Route::get('/projects', [KelolaProyekController::class, 'getProjects']);
     Route::get('/project-dropdown', [ProjectController::class, 'index']);
-    Route::get('/assessment/projects', [ProjectController::class, 'getProjectsWithAssessments']);
-    Route::get('/proyek-self-assessment', [ProjectController::class, 'getDataSelf']);
-    Route::get('/proyek-Peer-assessment', [ProjectController::class, 'getDataPeer']);
+    Route::get('/get-question-id', [AnswerController::class, 'getQuestionId']);
+    Route::get('/user-info-dosen', [AnswerController::class, 'getUserInfoDosen']);
+    Route::get('/questions-dosen', [SelfAssessment::class, 'getQuestionsByProject']);
+    Route::get('/answers/list', [AnswerController::class, 'getListAnswers']);
 
     //mahasiswa
     Route::get('/bobot', [SelfAssessment::class, 'getFilteredBobot']);
@@ -44,5 +46,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/save-answer-peer', [PeerAssessment::class, 'AnswersPeer']);
     Route::get('/kelompok', [AssessmentMahasiswa::class, 'getKelompokByUser']);
     Route::get('/users/search', [AssessmentMahasiswa::class, 'searchByNim']);
+    Route::get('/user-info', [SelfAssessment::class, 'getUserInfo']);
+    Route::get('/assessment/projects', [ProjectController::class, 'getProjectsWithAssessments']);
+    Route::get('/proyek-self-assessment', [ProjectController::class, 'getDataSelf']);
+    Route::get('/proyek-Peer-assessment', [ProjectController::class, 'getDataPeer']);
+    Route::get('/get-answer/{questionId}', [SelfAssessment::class, 'getAnswer']);
+    Route::post('/save-all-answers', [SelfAssessment::class, 'saveAllAnswers']);
     Route::get('/api/saved-answer-peer', [PeerAssessment::class, 'getSavedAnswer']);
 });

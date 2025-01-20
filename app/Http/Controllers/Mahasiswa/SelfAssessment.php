@@ -4,21 +4,22 @@ namespace App\Http\Controllers\Mahasiswa;
 
 use App\Http\Controllers\Controller;
 use App\Models\type_criteria;
-use App\Models\Assessment;
-use App\Models\Answers;
-use App\Models\project;
+use App\Models\Assessment;  
+use App\Models\Answers;    
+use App\Models\project;  
+use App\Models\User;  
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class SelfAssessment extends Controller
 {
-    public function assessment()
-    {
+    public function assessment() {
         return Inertia::render('Mahasiswa/SelfAssessmentMahasiswa');
     }
 
-    public function getQuestionsByProject(Request $request)
-    {
+    public function getQuestionsByProject(Request $request) {
         $tahunAjaran = $request->query('tahun_ajaran');
         $namaProyek = $request->query('nama_proyek');
 
@@ -51,8 +52,7 @@ class SelfAssessment extends Controller
     }
 
 
-    public function getFilteredBobot(Request $request)
-    {
+    public function getFilteredBobot(Request $request) {
         try {
             $bobot = type_criteria::where('aspek', $request->aspek)
                 ->where('kriteria', $request->kriteria)
@@ -64,22 +64,45 @@ class SelfAssessment extends Controller
         }
     }
 
-    public function saveAnswer(Request $request)
-    {
+    public function saveAnswer(Request $request) {
+        DB::beginTransaction();
         try {
-            $answer = Answer::create([
-                'question_id' => $request->question_id,
-                'answer' => $request->answer,
-                'user_id' => auth()->id(),
+            $validated = $request->validate([
+                'question_id' => 'required|uuid',
+                'answer' => 'required|string',
+                'score' => 'required|integer|between:1,5',
+                'status' => 'required|string'
             ]);
-            return response()->json(['message' => 'Answer saved successfully', 'data' => $answer]);
+
+            $answer = Answers::updateOrCreate(
+                [
+                    'question_id' => $validated['question_id'],
+                    'user_id' => auth()->id()
+                ],
+                [
+                    'answer' => $validated['answer'],
+                    'score' => $validated['score'],
+                    'status' => $validated['status']
+                ]
+            );
+
+            DB::commit();
+            
+            return response()->json([
+                'message' => $answer->wasRecentlyCreated ? 
+                    'Answer saved successfully' : 
+                    'Answer updated successfully',
+                'answer' => $answer
+            ]);
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            DB::rollBack();
+            return response()->json([
+                'error' => 'Failed to save answer: ' . $e->getMessage()
+            ], 500);
         }
     }
 
-    public function getUserInfo(Request $request)
-    {
+    public function getUserInfo(Request $request) {
         $user = Auth::user();
 
         $userInfo = [
@@ -92,5 +115,56 @@ class SelfAssessment extends Controller
         ];
 
         return response()->json($userInfo);
+    }
+
+    public function getAnswer($questionId) {
+        try {
+            $answer = Answers::where('question_id', $questionId)
+                ->where('user_id', auth()->id())
+                ->first();
+                
+            return response()->json($answer);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function saveAllAnswers(Request $request) {
+        DB::beginTransaction();
+        try {
+            $validated = $request->validate([
+                'answers' => 'required|array',
+                'answers.*.question_id' => 'required|uuid',
+                'answers.*.answer' => 'required|string',
+                'answers.*.score' => 'required|integer|between:1,5',
+                'answers.*.status' => 'required|string'
+            ]);
+
+            foreach ($validated['answers'] as $answerData) {
+                Answers::updateOrCreate(
+                    [
+                        'question_id' => $answerData['question_id'],
+                        'user_id' => auth()->id()
+                    ],
+                    [
+                        'answer' => $answerData['answer'],
+                        'score' => $answerData['score'],
+                        'status' => $answerData['status']
+                    ]
+                );
+            }
+
+            DB::commit();
+            return response()->json([
+                'success' => true,
+                'message' => 'Semua jawaban berhasil disimpan'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }
