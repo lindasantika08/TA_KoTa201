@@ -78,38 +78,48 @@ export default {
         },
     },
     async created() {
-        console.log('Component created - starting fetch');
-        await this.fetchQuestions();
-        await this.fetchStudentsInfo();
-    },
-    methods: {
+    console.log('Component created - starting fetch');
+    await this.fetchQuestions();
+    await this.fetchStudentsInfo();
+},
 
-        async fetchQuestions() {
-            console.log('Fetching questions started');
-            this.loading = true;
-            this.error = null;
-            
-            try {
-                const response = await axios.get('/api/questions');
-                console.log('API Response:', response);
-                
-                if (response.data && Array.isArray(response.data)) {
-                    this.questions = response.data;
-                    console.log('Questions loaded:', this.questions.length);
-                    this.loading = false;
-                } else {
-                    throw new Error('Invalid response format');
-                }
-            } catch (error) {
-                console.error('Error details:', {
-                    message: error.message,
-                    response: error.response,
-                    status: error.response?.status
-                });
-                this.error = `Error loading questions: ${error.message}`;
-                this.loading = false;
-            }
-        },
+methods: {
+    async fetchQuestions() {
+    console.log('Fetching questions started');
+    this.loading = true;
+    this.error = null;
+
+    try {
+        // Ambil tahun_ajaran dan nama_proyek dari kelompok mahasiswa
+        const { tahun_ajaran, nama_proyek } = this.studentInfo; // Asumsi sudah ada di data mahasiswa
+
+        const params = {
+            tahun_ajaran,
+            nama_proyek
+        };
+
+        // Memanggil API dengan parameter tahun_ajaran dan nama_proyek
+        const response = await axios.get('/api/questions-dosen', { params });
+        
+        console.log('API Response:', response);
+        
+        if (response.data && Array.isArray(response.data)) {
+            this.questions = response.data;
+            console.log('Questions loaded:', this.questions.length);
+            this.loading = false;
+        } else {
+            throw new Error('Invalid response format');
+        }
+    } catch (error) {
+        console.error('Error details:', {
+            message: error.message,
+            response: error.response,
+            status: error.response?.status
+        });
+        this.error = `Error loading questions: ${error.message}`;
+        this.loading = false;
+    }
+},
         async fetchStudentsInfo() {
             try {
                 const response = await axios.get('/api/user-info-dosen');
@@ -258,9 +268,9 @@ export default {
 
 <template>
     <div class="flex min-h-screen">
-        <Sidebar role="Dosen" />
+        <Sidebar role="dosen" />
         <div class="flex-1">
-            <Navbar userName="Dosen" />
+            <Navbar userName="dosen" />
             <main class="p-6">
                 <div class="mb-4">
                     <Breadcrumb :items="breadcrumbs" />

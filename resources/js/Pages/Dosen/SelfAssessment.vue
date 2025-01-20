@@ -214,7 +214,10 @@ export default {
                         nama_proyek: props.namaProyek,
                     },
                 });
-                return response.data.questionId;
+
+                if (response.data) {
+                    return response.data.questionId;
+                }
             } catch (error) {
                 console.error("Error fetching QuestionId:", error);
                 alert(
@@ -225,26 +228,26 @@ export default {
         };
 
         const handleAnswers = async () => {
-    // Ambil QuestionId dari backend
-    const questionId = await fetchQuestionId();
-    if (!questionId) return;
+            // Ambil QuestionId dari backend
+            const questionId = await fetchQuestionId();
+            if (!questionId) return;
 
-    // Data yang ingin dikirim
-    const data = {
-        QuestionId: questionId,
-        tahunAjaran: props.tahunAjaran,
-        namaProyek: props.namaProyek,
-    };
+            // Data yang ingin dikirim
+            const data = {
+                QuestionId: questionId,
+                tahunAjaran: props.tahunAjaran,
+                namaProyek: props.namaProyek,
+            };
 
-    // Log data ke konsol untuk debugging
-    console.log("Data yang akan dikirim:", data);
+            // Log data ke konsol untuk debugging
+            console.log("Data yang akan dikirim:", data);
 
-    // Navigasi ke halaman pengisian assessment
-    router.visit("/dosen/AnswerSelf", {
-        method: "get",
-        data: data,
-    });
-};
+            // Navigasi ke halaman pengisian assessment
+            router.visit("/dosen/AnswerSelf", {
+                method: "get",
+                data: data,
+            });
+        };
 
         return {
             toggleDropdown,
