@@ -25,7 +25,8 @@ return new class extends Migration
             $table->foreign('user_id')->references('id')->on('users');
             $table->foreign('peer_id')->references('id')->on('users');
             $table->foreign('question_id')->references('id')->on('assessment');
-            $table->unique(['user_id', 'peer_id', 'question_id']);
+            $table->unique(['question_id', 'user_id', 'peer_id'], 'unique_user_question');
+
         });
     }
 

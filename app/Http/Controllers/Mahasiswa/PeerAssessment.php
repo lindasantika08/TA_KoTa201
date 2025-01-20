@@ -49,26 +49,8 @@ class PeerAssessment extends Controller
         return response()->json($assessments);
     }
 
-    public function AnswersPeer(Request $request)
-    {
-        // Log request data
-        \Log::info('=== Start AnswersPeer Request ===');
-        \Log::info('Request Data:', $request->all());
-
+    public function AnswersPeer(Request $request) {
         try {
-            // Cek keberadaan data sebelum validasi
-            \Log::info('Checking User:', ['user_id' => $request->user_id]);
-            $userExists = \App\Models\User::find($request->user_id);
-            \Log::info('User exists:', ['exists' => (bool)$userExists]);
-
-            \Log::info('Checking Peer:', ['peer_id' => $request->peer_id]);
-            $peerExists = \App\Models\User::find($request->peer_id);
-            \Log::info('Peer exists:', ['exists' => (bool)$peerExists]);
-
-            \Log::info('Checking Question:', ['question_id' => $request->question_id]);
-            $questionExists = \App\Models\Assessment::find($request->question_id);
-            \Log::info('Question exists:', ['exists' => (bool)$questionExists]);
-
             $validated = $request->validate([
                 'user_id' => 'required|string|exists:users,id',
                 'peer_id' => 'required|string|exists:users,id',
@@ -77,44 +59,63 @@ class PeerAssessment extends Controller
                 'score' => 'required|integer|min:1|max:5',
                 'status' => 'required|string',
             ]);
-
-            \Log::info('Validated Data:', $validated);
-
-            // Coba buat record baru
-            \Log::info('Attempting to create record');
-            $answer = AnswersPeer::create($validated);
-            \Log::info('Record created successfully:', $answer->toArray());
-
+    
+            $existingAnswer = AnswersPeer::where([
+                'user_id' => $validated['user_id'],
+                'peer_id' => $validated['peer_id'],
+                'question_id' => $validated['question_id'],
+            ])->first();
+    
+            if ($existingAnswer) {
+                $existingAnswer->update([
+                    'answer' => $validated['answer'],
+                    'score' => $validated['score'],
+                    'status' => $validated['status']
+                ]);
+                $answer = $existingAnswer;
+            } else {
+                $answer = AnswersPeer::create($validated);
+            }
+    
             return response()->json([
                 'success' => true,
                 'message' => 'Jawaban peer berhasil disimpan.',
                 'data' => $answer,
             ], 201);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            \Log::error('Validation Error:', [
-                'errors' => $e->errors(),
-                'message' => $e->getMessage()
-            ]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Validasi gagal',
-                'errors' => $e->errors()
-            ], 422);
+    
         } catch (\Exception $e) {
             \Log::error('Error in AnswersPeer:', [
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
+                'line' => $e->getLine()
             ]);
-
+    
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan saat menyimpan jawaban peer.',
-                'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
+                'error' => $e->getMessage()
             ], 500);
         }
     }
+
+    public function answeredPeers(Request $request) {
+        try {
+            $user = $request->user();
+            
+            $answeredPeerIds = AnswersPeer::where('user_id', $user->id)
+                ->select('peer_id')
+                ->groupBy('peer_id')
+                ->havingRaw('COUNT(DISTINCT question_id) = ?', [Assessment::count()])
+                ->pluck('peer_id');
+                
+            return response()->json($answeredPeerIds);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil data peer yang sudah dinilai'
+            ], 500);
+        }
+    }
+
+    
 }

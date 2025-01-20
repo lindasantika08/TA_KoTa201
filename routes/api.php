@@ -43,5 +43,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/save-all-answers', [SelfAssessment::class, 'saveAllAnswers']);
     Route::get('/kelola-kelompok/export', [KelolaKelompokController::class, 'exportTemplate']);
     Route::post('/kelola-kelompok/import', [KelolaKelompokController::class, 'importData']);
-
+    Route::post('/save-all-answers-peer', [PeerAssessment::class, 'saveAllAnswersPeer']);
+    Route::get('/get-answer-peer/{questionId}', [PeerAssessment::class, 'getAnswerPeer']);
+    Route::get('/answered-peers', [PeerAssessment::class, 'answeredPeers']);
+    
 });

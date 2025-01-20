@@ -3,16 +3,25 @@ import axios from "axios";
 import SidebarMahasiswa from "@/Components/SidebarMahasiswa.vue";
 import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
+import Breadcrumb from "@/Components/Breadcrumb.vue";
 
 
 export default {
   name: "Profile",
   components: {
-    Sidebar,
+    SidebarMahasiswa,
     Navbar,
     Card,
-
+    Breadcrumb,
   },
+
+  data() {
+        return {
+            breadcrumbs: [
+                { text: "Report", href: null },
+            ],
+        }
+      }
 };
 </script>
 
@@ -23,6 +32,9 @@ export default {
     <div class="flex-1 ">
       <Navbar userName="Mahasiswa" />
       <main class="p-6">
+        <div class="mb-4">
+            <Breadcrumb :items="breadcrumbs" />
+        </div>
         <Card title="Report">
           <template #actions>
           </template>
