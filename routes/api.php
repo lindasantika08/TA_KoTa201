@@ -29,6 +29,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user-info-dosen', [AnswerController::class, 'getUserInfoDosen']);
     Route::get('/questions-dosen', [SelfAssessment::class, 'getQuestionsByProject']);
     Route::get('/answers/list', [AnswerController::class, 'getListAnswers']);
+    Route::get('/assessment/projects', [ProjectController::class, 'getProjectsWithAssessments']);
+    Route::get('/proyek-self-assessment', [ProjectController::class, 'getDataSelf']);
+    Route::get('/proyek-Peer-assessment', [ProjectController::class, 'getDataPeer']);
 
     //mahasiswa
     Route::get('/bobot', [SelfAssessment::class, 'getFilteredBobot']);
@@ -52,5 +55,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/proyek-Peer-assessment', [ProjectController::class, 'getDataPeer']);
     Route::get('/get-answer/{questionId}', [SelfAssessment::class, 'getAnswer']);
     Route::post('/save-all-answers', [SelfAssessment::class, 'saveAllAnswers']);
-    Route::get('/api/saved-answer-peer', [PeerAssessment::class, 'getSavedAnswer']);
+    Route::get('/saved-answer-peer', [PeerAssessment::class, 'getSavedAnswer']);
 });
