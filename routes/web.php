@@ -52,7 +52,8 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/report', [ReportController::class, 'report'])->name('report');
         Route::get('/feedback', [FeedbackController::class, 'feedback'])->name('feedback');
-        Route::get('/Answers-self', [AnswerController::class, 'showAnswersSelf'])->name('showself');
+        Route::get('/AnswerSelf', [AnswerController::class, 'answerSelf'])->name('dosen.answerSelf');
+        Route::get('/answers-self-assessment', [AnswerController::class, 'getListAnswersView']);
     });
 
     //Route untuk Mahasiswa

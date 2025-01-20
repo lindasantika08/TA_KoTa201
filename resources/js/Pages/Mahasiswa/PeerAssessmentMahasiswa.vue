@@ -106,6 +106,7 @@ export default {
           };
 
           const answeredPeerIds = answeredPeersResponse.data || [];
+          console.log('data :', this.studentInfo);
           this.kelompok = kelompokResponse.data.filter(
             (item) =>
               item.kelompok === currentUser.kelompok &&
