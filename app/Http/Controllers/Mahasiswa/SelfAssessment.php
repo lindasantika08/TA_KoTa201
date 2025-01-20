@@ -4,19 +4,21 @@ namespace App\Http\Controllers\Mahasiswa;
 
 use App\Http\Controllers\Controller;
 use App\Models\type_criteria;
-use App\Models\Assessment;  
-use App\Models\Answers;    
-use App\Models\project;  
+use App\Models\Assessment;
+use App\Models\Answers;
+use App\Models\project;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class SelfAssessment extends Controller
 {
-    public function assessment() {
+    public function assessment()
+    {
         return Inertia::render('Mahasiswa/SelfAssessmentMahasiswa');
     }
 
-    public function getQuestionsByProject(Request $request) {
+    public function getQuestionsByProject(Request $request)
+    {
         $tahunAjaran = $request->query('tahun_ajaran');
         $namaProyek = $request->query('nama_proyek');
 
@@ -47,9 +49,10 @@ class SelfAssessment extends Controller
 
         return response()->json($assessments);
     }
-    
 
-    public function getFilteredBobot(Request $request) {
+
+    public function getFilteredBobot(Request $request)
+    {
         try {
             $bobot = type_criteria::where('aspek', $request->aspek)
                 ->where('kriteria', $request->kriteria)
@@ -61,7 +64,8 @@ class SelfAssessment extends Controller
         }
     }
 
-    public function saveAnswer(Request $request) {
+    public function saveAnswer(Request $request)
+    {
         try {
             $answer = Answer::create([
                 'question_id' => $request->question_id,
@@ -74,7 +78,8 @@ class SelfAssessment extends Controller
         }
     }
 
-    public function getUserInfo(Request $request) {
+    public function getUserInfo(Request $request)
+    {
         $user = Auth::user();
 
         $userInfo = [
