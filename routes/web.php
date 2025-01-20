@@ -44,7 +44,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/tambah-proyek', [KelolaProyekController::class, 'AddProyek'])->name('kelola-proyek.store');
 
         Route::get('/kelola-kelompok', [KelolaKelompokController::class, 'KelolaKelompok'])->name('KelolaKelompok');
-        Route::get('/kelola-kelompok/data', [KelolaKelompokController::class, 'getKelompokData'])->name('KelolaKelompok');
+        Route::get('/kelola-kelompok/create', [KelolaKelompokController::class, 'CreateKelompok'])->name('CreateKelompok');
+        Route::get('/kelola-kelompok/kelompok/{id}', [KelolaKelompokController::class, 'showDetail'])->name('DetailKelompok');
+
         Route::get('/kelola-kelompok/export', [KelolaKelompokController::class, 'exportTemplate'])->name('kelola-kelompok.export');
         Route::post('/kelola-kelompok/import', [KelolaKelompokController::class, 'importData'])->name('kelola-kelompok.import');
 

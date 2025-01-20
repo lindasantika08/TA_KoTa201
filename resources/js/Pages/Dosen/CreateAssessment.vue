@@ -5,6 +5,9 @@
     <div class="flex-1">
       <Navbar userName="Dosen" />
       <main class="p-6">
+        <div class="mb-4">
+          <Breadcrumb :items="breadcrumbs" />
+        </div>
         <Card title="Create Assessment">
           <template #actions>
             <div class="grid grid-cols-2 gap-8">
@@ -13,26 +16,17 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                   Proyek Aktif
                 </label>
-                <select
-                  v-model="selectedActiveProject"
-                  class="mt-2 p-2 border border-gray-300 rounded w-full"
-                  required
-                >
+                <select v-model="selectedActiveProject" class="mt-2 p-2 border border-gray-300 rounded w-full" required>
                   <option value="" disabled selected>Pilih Proyek Aktif</option>
-                  <option
-                    v-for="project in activeProjects"
-                    :key="`active-${project.tahun_ajaran}-${project.nama_proyek}`"
-                    :value="project"
-                  >
+                  <option v-for="project in activeProjects"
+                    :key="`active-${project.tahun_ajaran}-${project.nama_proyek}`" :value="project">
                     {{ project.tahun_ajaran }} - {{ project.nama_proyek }}
                   </option>
                 </select>
                 <div class="mt-4">
-                  <button
-                    @click="downloadActiveTemplate"
+                  <button @click="downloadActiveTemplate"
                     class="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    :disabled="!selectedActiveProject.tahun_ajaran"
-                  >
+                    :disabled="!selectedActiveProject.tahun_ajaran">
                     <font-awesome-icon :icon="['fas', 'file-excel']" class="mr-2" />
                     Download Template Aktif
                   </button>
@@ -44,26 +38,18 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                   Proyek Tidak Aktif
                 </label>
-                <select
-  v-model="selectedInactiveProject"
-  class="mt-2 p-2 border border-gray-300 rounded w-full"
-  required
->
-  <option value="" disabled selected>Pilih Proyek Tidak Aktif</option>
-  <option
-    v-for="project in inactiveProjects"
-    :key="`inactive-${project.tahun_ajaran}-${project.nama_proyek}`"
-    :value="project"
-  >
-    {{ project.tahun_ajaran }} - {{ project.nama_proyek }}
-  </option>
-</select>
+                <select v-model="selectedInactiveProject" class="mt-2 p-2 border border-gray-300 rounded w-full"
+                  required>
+                  <option value="" disabled selected>Pilih Proyek Tidak Aktif</option>
+                  <option v-for="project in inactiveProjects"
+                    :key="`inactive-${project.tahun_ajaran}-${project.nama_proyek}`" :value="project">
+                    {{ project.tahun_ajaran }} - {{ project.nama_proyek }}
+                  </option>
+                </select>
                 <div class="mt-4">
-                  <button
-                    @click="downloadInactiveTemplate"
+                  <button @click="downloadInactiveTemplate"
                     class="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    :disabled="!selectedInactiveProject.tahun_ajaran"
-                  >
+                    :disabled="!selectedInactiveProject.tahun_ajaran">
                     <font-awesome-icon :icon="['fas', 'file-excel']" class="mr-2" />
                     Download Template Tidak Aktif
                   </button>
@@ -76,13 +62,8 @@
               <label for="file-upload" class="block text-sm font-medium text-gray-700">
                 Import Data Excel (File .xlsx/.xls)
               </label>
-              <input
-                type="file"
-                id="file-upload"
-                accept=".xlsx, .xls"
-                @change="handleFileUpload"
-                class="mt-2 p-2 border border-gray-300 rounded w-full"
-              />
+              <input type="file" id="file-upload" accept=".xlsx, .xls" @change="handleFileUpload"
+                class="mt-2 p-2 border border-gray-300 rounded w-full" />
             </div>
           </template>
         </Card>
@@ -97,12 +78,21 @@ import axios from "axios";
 import Sidebar from "@/Components/Sidebar.vue";
 import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
+import Breadcrumb from "@/Components/Breadcrumb.vue";
 
 export default {
   components: {
     Sidebar,
     Navbar,
     Card,
+    Breadcrumb,
+  },
+  data() {
+    return {
+      breadcrumbs: [
+        { text: "Create Assessment", href: "/dosen/assessment/create" },
+      ],
+    };
   },
   setup() {
     const projects = ref([]);
