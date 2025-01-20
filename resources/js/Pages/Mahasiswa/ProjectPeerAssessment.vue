@@ -34,8 +34,14 @@ export default {
     }
   },
   methods: {
-    handleDetail(item) {
+    handleAnswer(item) {
       router.visit(`/mahasiswa/assessment/peer-assessment`, {
+        method: 'get',
+        preserveState: true
+      });
+    },
+    handleDetail(item) {
+      router.visit(`/mahasiswa/peer-assessment/peer-detail`, { // harusnya ditambah $id
         method: 'get',
         preserveState: true
       });
@@ -82,12 +88,20 @@ export default {
           >
             <template #column-actions="{ item }">
               <button 
-                @click="handleDetail(item)"
+                @click="handleAnswer(item)"
                 class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
                 <font-awesome-icon icon="fa-solid fa-pencil" class="mr-2" />
                 Answer
               </button>
+              <button 
+                @click="handleDetail(item)"
+                class="px-3 py-1 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 ml-2"
+              >
+                <font-awesome-icon icon="fa-solid fa-eye" class="mr-2" />
+                Detail
+              </button>
+              
             </template>
 
             <template #column-status="{ item }">
