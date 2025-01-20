@@ -38,4 +38,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/save-answer-peer', [PeerAssessment::class, 'AnswersPeer']);
     Route::get('/kelompok', [AssessmentMahasiswa::class, 'getKelompokByUser']);
     Route::get('/users/search', [AssessmentMahasiswa::class, 'searchByNim']);
+    Route::get('/api/saved-answer-peer', [PeerAssessment::class, 'getSavedAnswer']);
 });

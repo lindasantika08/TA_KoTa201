@@ -300,22 +300,63 @@ export default {
     alert('Gagal menyimpan jawaban. Silakan coba lagi.');
   }
 },
-    prevQuestion() {
-      if (this.currentQuestionIndex > 0) {
-        this.currentQuestionIndex--;
-        this.answer = '';
-        this.scaleAnswer = null;
-      }
-    },
-    nextQuestion() {
-      if (this.currentQuestionIndex < this.questions.length - 1) {
-        this.currentQuestionIndex++;
-        this.answer = '';
-        this.scaleAnswer = null;
-      } else {
-        alert('Semua pertanyaan telah dijawab!');
-      }
+async fetchSavedAnswer(questionId, peerId) {
+  try {
+    console.log("Fetching saved answer for:", { questionId, peerId }); // Log parameter
+    const response = await axios.get(`/api/saved-answer-peer?question_id=${questionId}&peer_id=${peerId}`);
+    console.log("Response from API:", response.data); // Log response API
+    return response.data || null;
+  } catch (error) {
+    console.error("Error fetching saved answer:", error);
+    if (error.response) {
+      console.error("Error response data:", error.response.data); // Log data error dari response
+      console.error("Error response status:", error.response.status); // Log status code dari error
+    }
+    return null;
+  }
+},
+
+  
+async prevQuestion() {
+  if (this.currentQuestionIndex > 0) {
+    this.currentQuestionIndex--;
+    const prevQuestion = this.questions[this.currentQuestionIndex];
+
+    // Ambil data dari API
+    const savedAnswer = await this.fetchSavedAnswer(prevQuestion.id, this.selectedMember);
+    console.log("Saved answer for previous question:", savedAnswer); // Log data
+
+    if (savedAnswer) {
+      this.answer = savedAnswer.answer || ''; // Pastikan default adalah string kosong
+      this.scaleAnswer = savedAnswer.score || null; // Pastikan default adalah null
+    } else {
+      this.answer = '';
+      this.scaleAnswer = null;
     }
   }
+},
+
+async nextQuestion() {
+  if (this.currentQuestionIndex < this.questions.length - 1) {
+    this.currentQuestionIndex++;
+    const nextQuestion = this.questions[this.currentQuestionIndex];
+
+    // Ambil data dari API
+    const savedAnswer = await this.fetchSavedAnswer(nextQuestion.id, this.selectedMember);
+    console.log("Saved answer for next question:", savedAnswer); // Log data
+
+    if (savedAnswer) {
+      this.answer = savedAnswer.answer || ''; // Pastikan default adalah string kosong
+      this.scaleAnswer = savedAnswer.score || null; // Pastikan default adalah null
+    } else {
+      this.answer = '';
+      this.scaleAnswer = null;
+    }
+  } else {
+    alert('Semua pertanyaan telah dijawab!');
+  }
+}
+
+}
 };
 </script>

@@ -51,24 +51,10 @@ class PeerAssessment extends Controller
 
     public function AnswersPeer(Request $request)
     {
-        // Log request data
-        \Log::info('=== Start AnswersPeer Request ===');
-        \Log::info('Request Data:', $request->all());
-
         try {
-            // Cek keberadaan data sebelum validasi
-            \Log::info('Checking User:', ['user_id' => $request->user_id]);
             $userExists = \App\Models\User::find($request->user_id);
-            \Log::info('User exists:', ['exists' => (bool)$userExists]);
-
-            \Log::info('Checking Peer:', ['peer_id' => $request->peer_id]);
             $peerExists = \App\Models\User::find($request->peer_id);
-            \Log::info('Peer exists:', ['exists' => (bool)$peerExists]);
-
-            \Log::info('Checking Question:', ['question_id' => $request->question_id]);
             $questionExists = \App\Models\Assessment::find($request->question_id);
-            \Log::info('Question exists:', ['exists' => (bool)$questionExists]);
-
             $validated = $request->validate([
                 'user_id' => 'required|string|exists:users,id',
                 'peer_id' => 'required|string|exists:users,id',
@@ -78,12 +64,9 @@ class PeerAssessment extends Controller
                 'status' => 'required|string',
             ]);
 
-            \Log::info('Validated Data:', $validated);
-
             // Coba buat record baru
-            \Log::info('Attempting to create record');
             $answer = AnswersPeer::create($validated);
-            \Log::info('Record created successfully:', $answer->toArray());
+
 
             return response()->json([
                 'success' => true,
@@ -91,22 +74,12 @@ class PeerAssessment extends Controller
                 'data' => $answer,
             ], 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
-            \Log::error('Validation Error:', [
-                'errors' => $e->errors(),
-                'message' => $e->getMessage()
-            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'Validasi gagal',
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
-            \Log::error('Error in AnswersPeer:', [
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
-            ]);
 
             return response()->json([
                 'success' => false,
@@ -116,5 +89,21 @@ class PeerAssessment extends Controller
                 'line' => $e->getLine()
             ], 500);
         }
+    }
+
+    public function getSavedAnswer(Request $request)
+    {
+        $questionId = $request->query('question_id');
+        $peerId = $request->query('peer_id');
+
+        $answer = AnswersPeer::where('question_id', $questionId)
+            ->where('peer_id', $peerId)
+            ->first();
+
+        if ($answer) {
+            return response()->json($answer);
+        }
+
+        return response()->json(['message' => 'Answer not found'], 404);
     }
 }
