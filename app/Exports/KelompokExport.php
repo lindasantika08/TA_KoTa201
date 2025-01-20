@@ -2,8 +2,8 @@
 
 namespace App\Exports;
 
-use App\Models\Kelompok;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
@@ -25,32 +25,52 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
 
     public function collection()
     {
-        // Ambil semua user yang memiliki role mahasiswa
+        // Query data kelompok
+        $kelompokData = DB::table('kelompok')
+            ->join('users as mahasiswa', 'kelompok.user_id', '=', 'mahasiswa.id')
+            ->join('users as dosen', 'kelompok.dosen_id', '=', 'dosen.id')
+            ->where('kelompok.tahun_ajaran', $this->tahunAjaran)
+            ->where('kelompok.nama_proyek', $this->namaProyek)
+            ->select(
+                'kelompok.tahun_ajaran',
+                'kelompok.nama_proyek',
+                'mahasiswa.name as mahasiswa_name',
+                'mahasiswa.nim',
+                DB::raw("CONCAT(dosen.name, ' - ', dosen.kode_dosen) as dosen_manajer"), // Menggabungkan nama dosen dan kode_dosen
+                'kelompok.kelompok'
+            )
+            // ->orderBy('mahasiswa.name', 'asc')
+            ->orderBy('kelompok.kelompok', 'asc') // Urutkan berdasarkan kelompok
+            ->get();
+
+        // Jika data kelompok ditemukan, tambahkan kolom No secara dinamis
+        if ($kelompokData->isNotEmpty()) {
+            $dataWithNo = $kelompokData->map(function ($item, $index) {
+                return (object) array_merge(['no' => $index + 1], (array) $item);
+            });
+
+            return $dataWithNo;
+        }
+
+        // Jika data kosong, log pesan dan buat template data kosong
+        Log::info("Tidak ada data kelompok untuk tahun ajaran {$this->tahunAjaran} dan proyek {$this->namaProyek}.");
+
         $mahasiswa = DB::table('users')
             ->where('role', 'mahasiswa')
             ->select('name', 'nim')
+            ->orderBy('name', 'asc')
             ->get();
 
-        // Ambil semua dosen dengan role dosen
-        $dosen = DB::table('users')
-            ->where('role', 'dosen')
-            ->select('name', 'kode_dosen')
-            ->get();
-
-        // Siapkan data untuk template export
         $data = [];
-        $no = 1;
-
-        // Loop melalui mahasiswa dan buat template dengan kelompok kosong
-        foreach ($mahasiswa as $mahasiswaItem) {
+        foreach ($mahasiswa as $index => $mahasiswaItem) {
             $data[] = [
-                'no' => $no++,
+                'no' => $index + 1,
                 'tahun_ajaran' => $this->tahunAjaran,
-                'proyek' => $this->namaProyek,
-                'name' => $mahasiswaItem->name, // Mengambil name dari mahasiswa
-                'nim' => $mahasiswaItem->nim,   // Mengambil nim dari mahasiswa
-                'kode_dosen' => '', // Kosongkan untuk diisi dengan dropdown
-                'kelompok' => '', // Kolom kelompok tetap kosong
+                'nama_proyek' => $this->namaProyek,
+                'name' => $mahasiswaItem->name,
+                'nim' => $mahasiswaItem->nim,
+                'kode_dosen' => '', // Kosong untuk dropdown
+                'kelompok' => '', // Kosong
             ];
         }
 
@@ -59,7 +79,7 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
 
     public function headings(): array
     {
-        return ['No', 'Tahun Ajaran', 'Proyek', 'Name', 'NIM', 'Dosen Manager', 'Kelompok'];
+        return ['No', 'Tahun Ajaran', 'Proyek', 'Nama', 'NIM', 'Dosen Manajer', 'Kelompok'];
     }
 
     public function registerEvents(): array
@@ -78,7 +98,7 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
                     })
                     ->toArray();
 
-                // Membuat data validation untuk dropdown di kolom Kode Dosen
+                // Membuat data validation untuk dropdown di kolom F
                 $validation = new DataValidation();
                 $validation->setType(DataValidation::TYPE_LIST)
                     ->setErrorStyle(DataValidation::STYLE_INFORMATION)
@@ -86,7 +106,7 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
                     ->setShowDropDown(true)
                     ->setFormula1('"' . implode(',', $dosenList) . '"');
 
-                // Menambahkan dropdown pada setiap sel di kolom 'Kode Dosen'
+                // Menambahkan dropdown pada setiap sel di kolom F
                 for ($row = 2; $row <= $lastRow; $row++) {
                     $worksheet->getCell('F' . $row)->setDataValidation(clone $validation);
                 }
@@ -94,10 +114,8 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
                 // Tambahkan border untuk semua sel
                 $worksheet->getStyle('A1:G' . $lastRow)->getBorders()->getAllBorders()->setBorderStyle('thin');
 
-                // Membuat header menjadi tebal
+                // Membuat header menjadi tebal dan rata tengah
                 $worksheet->getStyle('A1:G1')->getFont()->setBold(true);
-
-                // Meratakan header ke tengah
                 $worksheet->getStyle('A1:G1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
                 // Meratakan kolom No ke tengah

@@ -20,7 +20,7 @@ export default{
   data() {
     return {
       breadcrumbs: [
-        { text: "Self Assessment", href: null }
+        { text: "Self Assessment", href: "/dosen/assessment/projectsSelf" }
       ],
       headers : [
         { key: 'no', label: 'No' },

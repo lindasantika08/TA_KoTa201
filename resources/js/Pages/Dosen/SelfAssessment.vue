@@ -10,9 +10,10 @@
 
             <!-- Content -->
             <main class="p-6">
-                <Card
-                    :title="`Self Assessment - ${namaProyek} (${tahunAjaran})`"
-                >
+                <div class="mb-4">
+                    <Breadcrumb :items="breadcrumbs" />
+                </div>
+                <Card :title="`Self Assessment - ${namaProyek} (${tahunAjaran})`">
                     <template #actions>
                         <div class="flex justify-end">
                             <button
@@ -153,12 +154,22 @@ import { router, usePage } from "@inertiajs/vue3";
 import Sidebar from "@/Components/Sidebar.vue";
 import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
+import Breadcrumb from "@/Components/Breadcrumb.vue";
 
 export default {
     components: {
         Sidebar,
         Navbar,
         Card,
+        Breadcrumb,
+    },
+    data() {
+        return {
+            breadcrumbs: [
+                { text: "Self Assessment", href: "/dosen/assessment/projectsSelf" },
+                { text: "Detail", href: null }
+            ],
+        }
     },
     methods: {
     handleAnswers() {
