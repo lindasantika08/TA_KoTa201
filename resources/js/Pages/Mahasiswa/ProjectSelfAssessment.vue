@@ -24,7 +24,7 @@ export default {
       ],
       headers: [
         { key: 'no', label: 'No' },
-        { key: 'semester', label: 'Semester' },
+        { key: 'tahunAjaran', label: 'tahunAjaran' },
         { key: 'proyek', label: 'Proyek' },
         { key: 'status', label: 'Status' },
         { key: 'tanggal', label: 'Tanggal Pengisian' },
@@ -35,11 +35,21 @@ export default {
   },
   methods: {
     handleAnswer(item) {
-      router.visit(`/mahasiswa/assessment/self-assessment`, {
-        method: 'get',
-        preserveState: true
-      });
+  const tahunAjaran = item.tahunAjaran;
+  const namaProyek = item.proyek;
+
+  console.log('Tahun Ajaran:', tahunAjaran);
+  console.log('Nama Proyek:', namaProyek);
+
+  router.visit(`/mahasiswa/assessment/self-assessment`, {
+    method: 'get',
+    data: {
+      tahunAjaran: tahunAjaran, // Sesuai dengan validasi di controller
+      namaProyek: namaProyek    // Sesuai dengan validasi di controller
     },
+    preserveState: true
+  });
+},
     handleDetail(item) {
       router.visit(`/mahasiswa/peer-assessment/self-detail`, { // harusnya ditambah $id
         method: 'get',
@@ -53,7 +63,7 @@ export default {
         this.items = response.data.map((item, index) => ({
           id: item.id,
           no: index + 1,
-          semester: item.semester,
+          tahunAjaran: item.tahun_ajaran,
           proyek: item.nama_proyek,
           status: item.status,
           tanggal: dayjs(item.created_at).format('DD MMMM YYYY HH:mm'),

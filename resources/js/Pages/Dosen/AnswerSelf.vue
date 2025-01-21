@@ -133,6 +133,7 @@ methods: {
                 const response = await axios.get('/api/user-info-dosen');
                 if (response.data) {
                     this.studentInfo = response.data;
+                    this.studentInfo.project = this.namaProyek;
                 }
             } catch (error) {
                 console.error ('Failed to fetch student info: ', error);
