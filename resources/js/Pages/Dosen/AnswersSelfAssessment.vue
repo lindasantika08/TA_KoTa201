@@ -1,118 +1,139 @@
-<template>
-    <div class="flex min-h-screen">
-        <!-- Sidebar -->
-        <Sidebar role="dosen" />
-
-        <!-- Main Content -->
-        <div class="flex-1">
-            <!-- Navbar -->
-            <Navbar userName="Dosen" />
-
-            <!-- Content -->
-            <main class="p-6">
-                <!-- Card utama -->
-                <Card :title="`Answer Self Assessment - ${namaProyek} (${tahunAjaran})`">
-                    <template #actions>
-                        <div class="flex justify-end"></div>
-                    </template>
-
-                    <!-- Bagian Konten Jawaban -->
-                    <div class="mt-6 space-y-8">
-                        <div class="bg-white p-6 shadow rounded-md">
-                            <h1 class="text-2xl font-semibold mb-4">List Answers Self Assessment</h1>
-
-                            <!-- Tampilkan informasi kosong jika tidak ada jawaban -->
-                            <div v-if="answers.length === -1" class="text-center text-gray-500 py-6">
-                                Jawaban belum tersedia.
-                            </div>
-                            <div v-else>
-                                <DataTable :headers="headers" :items="answers">
-                                    <template #column-actions="{ item }">
-                                        <button
-                                            @click="handleDetail(item)"
-                                            class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                                        >
-                                            <font-awesome-icon icon="fa-solid fa-eye" class="mr-2" />
-                                            Detail
-                                        </button>
-                                    </template>
-
-                                    <template #column-status="{ item }">
-                                        <span
-                                            :class="[ 
-                                                'px-2 py-1 rounded-full text-xs font-medium', 
-                                                item.status === 'aktif' 
-                                                  ? 'bg-green-100 text-green-800' 
-                                                  : 'bg-red-100 text-red-800'
-                                            ]"
-                                        >
-                                            {{ item.status }}
-                                        </span>
-                                    </template>
-                                </DataTable>
-                            </div>
-                        </div>
-                    </div>
-                </Card>
-            </main>
-        </div>
-    </div>
-</template>
-
 <script>
-import { ref, computed } from "vue";
-import { usePage } from "@inertiajs/vue3";
-import Sidebar from "@/Components/Sidebar.vue";
-import Navbar from "@/Components/Navbar.vue";
-import Card from "@/Components/Card.vue";
-import DataTable from "@/Components/DataTable.vue";
+import axios from 'axios';
+import DataTable from "@/Components/DataTable.vue";  // Pastikan DataTable sudah terimport
+import Navbar from "@/Components/Navbar.vue";  // Pastikan Navbar sudah terimport
+import Sidebar from "@/Components/Sidebar.vue";  // Pastikan Sidebar sudah terimport
+import Breadcrumb from "@/Components/Breadcrumb.vue";  // Pastikan Breadcrumb sudah terimport
 
 export default {
-    components: {
-        Sidebar,
-        Navbar,
-        Card,
-        DataTable
-    },
-    props: {
-        tahunAjaran: String,
-        namaProyek: String,
-        answers: Array,
-    },
-    data() {
-        return {
-            headers: [
-                { key: 'no', label: 'No' },
-                { key: 'question', label: 'Question' },
-                { key: 'answer', label: 'Answer' },
-                { key: 'status', label: 'Status' },
-                { key: 'tanggal', label: 'Date Created' },
-                { key: 'actions', label: 'Actions' },
-            ]
-        };
-    },
-    methods: {
-        handleDetail(item) {
-            this.$inertia.visit('/dosen/assessment/data-with-bobot-self', {
-                method: 'get',
-                data: {
-                    tahun_ajaran: item.tahun_ajaran,
-                    nama_proyek: item.nama_proyek,
-                },
-                preserveState: true
-            });
-        }
-    },
-    setup(props) {
-        const answers = props.answers.map((answer, index) => ({
-            no: index + 1,
-            question: answer.question ? answer.question.pertanyaan : 'No question',
-            answer: answer.answer,
-            status: answer.status,
-            tanggal: dayjs(answer.created_at).format('DD MMMM YYYY HH:mm'),
-        }));
+  components: {
+    DataTable,  // Komponen DataTable digunakan
+    Navbar,     // Komponen Navbar digunakan
+    Sidebar,    // Komponen Sidebar digunakan
+    Breadcrumb  // Komponen Breadcrumb digunakan
+  },
+  data() {
+    return {
+      tahun_ajaran: '',   // Menyimpan tahun_ajaran
+      nama_proyek: '',    // Menyimpan nama_proyek
+      answers: [],        // Menyimpan data jawaban
+      breadcrumbs: [
+        { text: "Self Assessment", href: "/dosen/assessment/projectsSelf" }
+      ],  // Breadcrumbs untuk navigasi
+      headers: [
+        { key: 'no', label: 'No' },
+        { key: 'nama_pengguna', label: 'Nama Pengguna' },
+        { key: 'pertanyaan', label: 'Pertanyaan' },
+        { key: 'skor', label: 'Skor' },
+        { key: 'jawaban', label: 'Jawaban' },
 
-        return { answers };
-    },
+        { key: 'status', label: 'Status' }
+      ],  // Header untuk DataTable
+    };
+  },
+  mounted() {
+    // Mengambil tahun_ajaran dan nama_proyek dari query params
+    const query = new URLSearchParams(window.location.search);
+    this.tahun_ajaran = query.get('tahun_ajaran');
+    this.nama_proyek = query.get('nama_proyek');
+    
+    // Debugging: Menampilkan tahun_ajaran dan nama_proyek
+    console.log('Tahun Ajaran:', this.tahun_ajaran);
+    console.log('Nama Proyek:', this.nama_proyek);
+
+    if (this.tahun_ajaran && this.nama_proyek) {
+      this.fetchAnswers();  // Ambil data jawaban berdasarkan tahun ajaran dan nama proyek
+    } else {
+      console.error('Tahun Ajaran atau Nama Proyek tidak ditemukan!');
+    }
+  },
+  methods: {
+    fetchAnswers() {
+      // Debugging: Menampilkan query params sebelum membuat request
+      console.log('Tahun Ajaran:', this.tahun_ajaran);
+      console.log('Nama Proyek:', this.nama_proyek);
+
+      // Mengambil data jawaban dari API berdasarkan tahun_ajaran dan nama_proyek
+      axios.get('/api/answers/list', {
+        params: {
+          tahun_ajaran: this.tahun_ajaran,
+          nama_proyek: this.nama_proyek
+        }
+      })
+      .then(response => {
+        console.log('Data jawaban diterima:', response.data);
+        // Periksa apakah data sudah sesuai struktur yang diharapkan
+        if (Array.isArray(response.data)) {
+          this.answers = response.data;
+        } else {
+          console.error("Data yang diterima tidak sesuai format yang diharapkan.");
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching answers:', error);
+      });
+    }
+  }
 };
 </script>
+
+
+<template>
+    <div class="flex min-h-screen">
+      <!-- Sidebar -->
+      <Sidebar role="dosen" />
+      
+      <div class="flex-1">
+        <!-- Navbar -->
+        <Navbar Username="dosen" />
+        
+        <main class="p-6">
+          <div class="mb-4">
+            <!-- Breadcrumb -->
+            <Breadcrumb :items="breadcrumbs" />
+          </div>
+  
+          <div class="mb-6">
+            <h1 class="text-xl font-semibold">Answers Self Assessment</h1>
+          </div>
+  
+          <!-- Tabel untuk menampilkan data jawaban -->
+          <div v-if="answers.length === 0" class="text-center text-gray-500 py-6">
+            Belum ada jawaban
+          </div>
+          
+          <div v-else>
+            <DataTable :headers="headers" :items="answers" class="mt-10">
+              <template #column-status="{ item }">
+                <span :class="[ 
+                  'px-2 py-1 rounded-full text-xs font-medium', 
+                  item.status === 'aktif' 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-red-100 text-red-800'
+                ]">
+                  {{ item.status }}
+                </span>
+              </template>
+              <template #column-no="{index }">
+                {{ index + 1 }} <!-- Menampilkan nomor urut -->
+              </template>
+              <template #column-nama_pengguna="{ item }">
+                {{ item.user.name }} <!-- Menampilkan nama pengguna, jika ada key 'user.name' -->
+              </template>
+              <template #column-pertanyaan="{ item }">
+                {{ item.pertanyaan }} <!-- Menampilkan pertanyaan -->
+              </template>
+              <template #column-skor="{ item }">
+                {{ item.score }} <!-- Menampilkan skor -->
+              </template>
+              <template #column-jawaban="{ item }">
+                {{ item.answer }} <!-- Menampilkan jawaban -->
+              </template>
+
+            </DataTable>
+          </div>
+        </main>
+      </div>
+    </div>
+  </template>
+  

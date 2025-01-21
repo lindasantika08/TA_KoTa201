@@ -19,10 +19,11 @@ return new class extends Migration
             $table->foreign('question_id')->references('id')->on('assessment');
             $table->string('answer');
             $table->integer('score');
-            $table->unique('user_id', 'question_id');
             $table->string('status')->default('pending');
             $table->softDeletes();
             $table->timestamps();
+
+            $table->unique(['question_id', 'user_id'], 'unique_user_question');
         });
     }
 
