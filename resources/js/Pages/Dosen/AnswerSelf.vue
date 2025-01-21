@@ -17,18 +17,26 @@ export default {
         ConfirmModal
     },
     props: {
-        studentInfo: {
-            type: Object,
-            default: () => ({
-                'nip': '',
-                'name': '',
-                'class': '',
-                'group': '',
-                'project': '',
-                'date': '',
-            })
-        }
+    studentInfo: {
+        type: Object,
+        default: () => ({
+            'nip': '',
+            'name': '',
+            'class': '',
+            'group': '',
+            'project': '',
+            'date': '',
+        })
     },
+    tahunAjaran: {
+        type: String,
+        default: ''
+    },
+    namaProyek: {
+        type: String,
+        default: ''
+    }
+},
 
     data() {
         return {
@@ -90,19 +98,18 @@ methods: {
     this.error = null;
 
     try {
-        // Ambil tahun_ajaran dan nama_proyek dari kelompok mahasiswa
-        const { tahun_ajaran, nama_proyek } = this.studentInfo; // Asumsi sudah ada di data mahasiswa
+        console.log('Tahun Ajaran:', this.tahunAjaran);
+        console.log('Nama Proyek:', this.namaProyek);
 
         const params = {
-            tahun_ajaran,
-            nama_proyek
+            tahun_ajaran: this.tahunAjaran,
+            nama_proyek: this.namaProyek
         };
 
-        // Memanggil API dengan parameter tahun_ajaran dan nama_proyek
         const response = await axios.get('/api/questions-dosen', { params });
-        
+
         console.log('API Response:', response);
-        
+
         if (response.data && Array.isArray(response.data)) {
             this.questions = response.data;
             console.log('Questions loaded:', this.questions.length);
@@ -120,6 +127,7 @@ methods: {
         this.loading = false;
     }
 },
+
         async fetchStudentsInfo() {
             try {
                 const response = await axios.get('/api/user-info-dosen');

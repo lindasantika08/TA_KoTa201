@@ -13,9 +13,7 @@
                 <div class="mb-4">
                     <Breadcrumb :items="breadcrumbs" />
                 </div>
-                <Card
-                    :title="`Self Assessment - ${namaProyek} (${tahunAjaran})`"
-                >
+                <Card :title="`Self Assessment - ${namaProyek} (${tahunAjaran})`">
                     <template #actions>
                         <div class="flex justify-end">
                             <button
@@ -234,7 +232,7 @@ export default {
 
             // Data yang ingin dikirim
             const data = {
-                QuestionId: questionId,
+                // QuestionId: questionId,
                 tahunAjaran: props.tahunAjaran,
                 namaProyek: props.namaProyek,
             };

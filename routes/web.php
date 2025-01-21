@@ -15,6 +15,9 @@ use App\Http\Controllers\Mahasiswa\SelfAssessment;
 use App\Http\Controllers\Mahasiswa\PeerAssessment;
 use App\Http\Controllers\Mahasiswa\FeedbackMahasiswa;
 use App\Http\Controllers\Mahasiswa\ReportMahasiswa;
+use App\Http\Controllers\Mahasiswa\DetailSelfMahasiswa;
+use App\Http\Controllers\Mahasiswa\DetailPeerMahasiswa;
+
 
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
@@ -68,5 +71,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/user-info', [SelfAssessment::class, 'getUserInfo'])->name('mahasiswa.info-student');
         Route::post('/peer-assessment/answers', [AssessmentMahasiswa::class, 'AnswersPeer']);
         Route::get('/peer-assessment/answers/{userId}', [AssessmentMahasiswa::class, 'getUserPeerAnswers']);
+        Route::get('/peer-assessment/peer-detail', [DetailPeerMahasiswa::class, 'showDetail']);
+        Route::get('/peer-assessment/self-detail', [DetailSelfMahasiswa::class, 'showDetail']);
     });
 });

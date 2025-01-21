@@ -9,20 +9,25 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class AnswerController extends Controller
 {
     public function answerSelf(Request $request)
     {
         $validated = $request->validate([
-            'QuestionId' => 'required|uuid',
+            // 'QuestionId' => 'required|uuid',
             'tahunAjaran' => 'required|string',
             'namaProyek' => 'required|string',
         ]);
 
-        // Lakukan proses berdasarkan data yang diterima
+        // Log tahun ajaran dan nama proyek
+        Log::info('AnswerSelf method called', [
+            'tahunAjaran' => $validated['tahunAjaran'],
+            'namaProyek' => $validated['namaProyek'],
+        ]);
+
         return Inertia::render('Dosen/AnswerSelf', [
-            'questionId' => $validated['QuestionId'],
             'tahunAjaran' => $validated['tahunAjaran'],
             'namaProyek' => $validated['namaProyek'],
         ]);
