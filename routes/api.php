@@ -8,6 +8,7 @@ use App\Http\Controllers\Dosen\AnswerController;
 use App\Http\Controllers\Dosen\ProjectController;
 use App\Http\Controllers\Dosen\KelolaProyekController;
 use App\Http\Controllers\Dosen\KelolaKelompokController;
+use App\Http\Controllers\Dosen\UsersController;
 
 use App\Http\Controllers\Mahasiswa\AssessmentMahasiswa;
 use App\Http\Controllers\Mahasiswa\SelfAssessment;
@@ -29,6 +30,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user-info-dosen', [AnswerController::class, 'getUserInfoDosen']);
     Route::get('/questions-dosen', [SelfAssessment::class, 'getQuestionsByProject']);
     Route::get('/answers/list', [AnswerController::class, 'getListAnswers']);
+    Route::get('/assessment/projects', [ProjectController::class, 'getProjectsWithAssessments']);
+    Route::get('/proyek-self-assessment', [ProjectController::class, 'getDataSelf']);
+    Route::get('/proyek-Peer-assessment', [ProjectController::class, 'getDataPeer']);
+    Route::get('/kelola-kelompok/export', [KelolaKelompokController::class, 'exportTemplate']);
+    Route::post('/kelola-kelompok/import', [KelolaKelompokController::class, 'importData']);
+
+
 
     //mahasiswa
     Route::get('/bobot', [SelfAssessment::class, 'getFilteredBobot']);
@@ -59,4 +67,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/answered-peers', [PeerAssessment::class, 'answeredPeers']);
     
     Route::get('/api/saved-answer-peer', [PeerAssessment::class, 'getSavedAnswer']);
+    Route::get('/proyek-self-assessment', [ProjectController::class, 'getDataSelf']);
+    Route::get('/proyek-Peer-assessment', [ProjectController::class, 'getDataPeer']);
+   
 });

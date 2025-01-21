@@ -120,7 +120,7 @@
         </div>
         <button @click="openModal"
             class="fixed bottom-10 right-10 bg-blue-500 text-white rounded-full p-6 shadow-lg hover:bg-blue-600 focus:outline-none">
-            <span class="text-2xl">+</span>
+            <font-awesome-icon :icon="['fas', 'plus']" />
         </button>
     </div>
 </template>

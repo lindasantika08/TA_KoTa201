@@ -89,32 +89,24 @@ export default {
         </div>
         <Card title="Kelola Kelompok">
           <!-- Container untuk Dropdown dan Button Create -->
-          <div class="flex justify-between mb-4 items-center"> <!-- 'items-center' untuk menyamakan tinggi elemen -->
-            <!-- Tombol Create Kelompok (Posisi Kanan) -->
+          <div class="flex justify-between mb-4 items-center">
+            <!-- Label "Daftar Kelompok" (Posisi Kanan) -->
             <div class="ml-4">
-              <button 
-                @click="createKelompok('/dosen/kelola-kelompok/create')"
-                class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
-                Create Kelompok
-              </button>
-            </div>
-
+              <span class="text-lg font-semibold text-black">Daftar Kelompok</span>
+            </div> 
             <!-- Dropdown Filter (Posisi Kiri) -->
             <div class="flex-1 max-w-xs">
-              <select 
-                id="projectDropdown" 
-                v-model="selectedProject"
-                class="py-2 px-2 border border-gray-300 rounded w-full" 
-                @change="applyFilter">
+              <select id="projectDropdown" v-model="selectedProject"
+                class="py-2 px-2 border border-gray-300 rounded w-full" @change="applyFilter">
                 <option value="" disabled>Pilih Tahun Ajaran - Proyek</option>
-                <option 
-                  v-for="project in projects" 
-                  :key="`${project.tahun_ajaran}-${project.nama_proyek}`"
+                <option v-for="project in projects" :key="`${project.tahun_ajaran}-${project.nama_proyek}`"
                   :value="`${project.tahun_ajaran} - ${project.nama_proyek}`">
                   {{ project.tahun_ajaran }} - {{ project.nama_proyek }}
                 </option>
               </select>
             </div>
+
+            
           </div>
 
           <!-- Data Table -->
@@ -136,6 +128,11 @@ export default {
             </template>
           </DataTable>
         </Card>
+
+        <button @click="createKelompok('/dosen/kelola-kelompok/create')"
+          class="fixed bottom-10 right-10 bg-blue-500 text-white rounded-full p-6 shadow-lg hover:bg-blue-600 focus:outline-none">
+          <font-awesome-icon :icon="['fas', 'plus']" />
+        </button>
       </main>
     </div>
   </div>
