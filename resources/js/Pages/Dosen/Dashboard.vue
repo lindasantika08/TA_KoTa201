@@ -15,7 +15,7 @@ export default {
   },
   methods: {
     goToDashboardSelf(url) {
-      router.visit("/dosen/dashboard/self"); // Menggunakan Inertia.js untuk navigasi
+      router.visit("/dosen/answers-self-assessment"); // Menggunakan Inertia.js untuk navigasi
     },
     goToDashboardPeer(url) {
       router.visit("/dosen/dashboard/peer"); // Menggunakan Inertia.js untuk navigasi

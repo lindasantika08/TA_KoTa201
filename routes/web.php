@@ -57,7 +57,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/report', [ReportController::class, 'report'])->name('report');
         Route::get('/feedback', [FeedbackController::class, 'feedback'])->name('feedback');
         Route::get('/AnswerSelf', [AnswerController::class, 'answerSelf'])->name('dosen.answerSelf');
+        Route::get('/AnswerPeer', [AnswerController::class, 'answerPeer'])->name('dosen.answerPeer');
         Route::get('/answers-self-assessment', [AnswerController::class, 'getListAnswersView']);
+        Route::get('/answers-peer-assessment', [AnswerController::class, 'getListAnswersPeerView']);
 
         Route::get('/kelola-mahasiswa', [UserManagementController::class, 'KelolaMahasiswa'])->name('KelolaMahasiswa');
         Route::get('/kelola-mahasiswa/input', [UserManagementController::class, 'InputMahasiswa'])->name('InputMahasiswa');

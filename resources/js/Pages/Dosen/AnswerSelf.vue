@@ -17,18 +17,26 @@ export default {
         ConfirmModal
     },
     props: {
-        studentInfo: {
-            type: Object,
-            default: () => ({
-                'nip': '',
-                'name': '',
-                'class': '',
-                'group': '',
-                'project': '',
-                'date': '',
-            })
-        }
+    studentInfo: {
+        type: Object,
+        default: () => ({
+            'nip': '',
+            'name': '',
+            'class': '',
+            'group': '',
+            'project': '',
+            'date': '',
+        })
     },
+    tahunAjaran: {
+        type: String,
+        default: ''
+    },
+    namaProyek: {
+        type: String,
+        default: ''
+    }
+},
 
     data() {
         return {
@@ -78,43 +86,53 @@ export default {
         },
     },
     async created() {
-        console.log('Component created - starting fetch');
-        await this.fetchQuestions();
-        await this.fetchStudentsInfo();
-    },
-    methods: {
+    await this.fetchQuestions();
+    await this.fetchStudentsInfo();
+},
 
-        async fetchQuestions() {
-            console.log('Fetching questions started');
-            this.loading = true;
-            this.error = null;
-            
-            try {
-                const response = await axios.get('/api/questions');
-                console.log('API Response:', response);
-                
-                if (response.data && Array.isArray(response.data)) {
-                    this.questions = response.data;
-                    console.log('Questions loaded:', this.questions.length);
-                    this.loading = false;
-                } else {
-                    throw new Error('Invalid response format');
-                }
-            } catch (error) {
-                console.error('Error details:', {
-                    message: error.message,
-                    response: error.response,
-                    status: error.response?.status
-                });
-                this.error = `Error loading questions: ${error.message}`;
-                this.loading = false;
-            }
-        },
+methods: {
+    async fetchQuestions() {
+    console.log('Fetching questions started');
+    this.loading = true;
+    this.error = null;
+
+    try {
+        console.log('Tahun Ajaran:', this.tahunAjaran);
+        console.log('Nama Proyek:', this.namaProyek);
+
+        const params = {
+            tahun_ajaran: this.tahunAjaran,
+            nama_proyek: this.namaProyek
+        };
+
+        const response = await axios.get('/api/questions-dosen', { params });
+
+        console.log('API Response:', response);
+
+        if (response.data && Array.isArray(response.data)) {
+            this.questions = response.data;
+            console.log('Questions loaded:', this.questions.length);
+            this.loading = false;
+        } else {
+            throw new Error('Invalid response format');
+        }
+    } catch (error) {
+        console.error('Error details:', {
+            message: error.message,
+            response: error.response,
+            status: error.response?.status
+        });
+        this.error = `Error loading questions: ${error.message}`;
+        this.loading = false;
+    }
+},
+
         async fetchStudentsInfo() {
             try {
                 const response = await axios.get('/api/user-info-dosen');
                 if (response.data) {
                     this.studentInfo = response.data;
+                    this.studentInfo.project = this.namaProyek;
                 }
             } catch (error) {
                 console.error ('Failed to fetch student info: ', error);
@@ -278,7 +296,7 @@ export default {
                             <p><strong>Kelas:</strong> {{ studentInfo.class }}</p>
                         </div>
                         <div>
-                            <p><strong>Kelompok:</strong> {{ studentInfo.group }}</p>
+                            <!-- <p><strong>Kelompok:</strong> {{ studentInfo.group }}</p> -->
                             <p><strong>Proyek:</strong> {{ studentInfo.project }}</p>
                             <p><strong>Tanggal Pengisian:</strong> {{ studentInfo.date }}</p>
                         </div>

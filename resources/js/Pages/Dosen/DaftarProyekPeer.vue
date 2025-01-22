@@ -2,7 +2,7 @@
   <div class="flex min-h-screen">
     <Sidebar role="dosen" />
     <div class="flex-1">
-      <Navbar Username="dosen" />
+      <Navbar userName="dosen" />
       <main class="p-6">
         <div class="mb-4">
           <Breadcrumb :items="breadcrumbs" />
@@ -26,6 +26,13 @@
                 >
                   <font-awesome-icon icon="fa-solid fa-eye" class="mr-2" />
                   Detail
+                </button>
+                <button
+                  @click="handleListAnswer(item)"
+                  class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ml-2"
+                >
+                  <font-awesome-icon icon="fa-solid fa-file" class="mr-2" />
+                  List Answer
                 </button>
               </template>
 
@@ -96,6 +103,15 @@ export default {
         }
       );
     },
+    handleListAnswer(item) {
+    // Pindah halaman dengan mengirimkan tahun_ajaran dan nama_proyek sebagai query params
+    router.get('/dosen/answers-peer-assessment', {
+      tahun_ajaran: item.tahun_ajaran,
+      nama_proyek: item.nama_proyek
+    }, {
+      preserveState: true
+    });
+  }
   },
   mounted() {
     axios

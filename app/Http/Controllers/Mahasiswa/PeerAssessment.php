@@ -84,7 +84,7 @@ class PeerAssessment extends Controller
             ], 201);
     
         } catch (\Exception $e) {
-            \Log::error('Error in AnswersPeer:', [
+            Log::error('Error in AnswersPeer:', [
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine()

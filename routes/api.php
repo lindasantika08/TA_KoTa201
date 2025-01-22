@@ -30,13 +30,19 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user-info-dosen', [AnswerController::class, 'getUserInfoDosen']);
     Route::get('/questions-dosen', [SelfAssessment::class, 'getQuestionsByProject']);
     Route::get('/answers/list', [AnswerController::class, 'getListAnswers']);
+    Route::get('/answersPeer/list', [AnswerController::class, 'getListAnswersPeer']);
     Route::get('/assessment/projects', [ProjectController::class, 'getProjectsWithAssessments']);
     Route::get('/proyek-self-assessment', [ProjectController::class, 'getDataSelf']);
     Route::get('/proyek-Peer-assessment', [ProjectController::class, 'getDataPeer']);
     Route::get('/kelola-kelompok/export', [KelolaKelompokController::class, 'exportTemplate']);
     Route::post('/kelola-kelompok/import', [KelolaKelompokController::class, 'importData']);
-
-
+    Route::post('/save-answer-peerDosen', [AnswerController::class, 'AnswersPeerDosen']);
+    Route::get('/users/search', [AnswerController::class, 'searchByNip']);
+    Route::get('/questions-peerDosen', [AnswerController::class, 'getQuestionsByProjectPeer']);
+    Route::get('/kelompok-dosen', [AnswerController::class, 'getKelompokDosen']);
+    Route::get('/answered-peers-dosen', [AnswerController::class, 'answeredPeersDosen']);
+    Route::get('/get-answer-peerDosen/{questionId}', [AnswerController::class, 'getAnswerPeerDosen']);
+    Route::post('/save-all-answers-peerDosen', [AnswerController::class, 'saveAllAnswersPeerDosen']);
 
     //mahasiswa
     Route::get('/bobot', [SelfAssessment::class, 'getFilteredBobot']);
@@ -65,6 +71,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/save-all-answers-peer', [PeerAssessment::class, 'saveAllAnswersPeer']);
     Route::get('/get-answer-peer/{questionId}', [PeerAssessment::class, 'getAnswerPeer']);
     Route::get('/answered-peers', [PeerAssessment::class, 'answeredPeers']);
-    
+
     Route::get('/api/saved-answer-peer', [PeerAssessment::class, 'getSavedAnswer']);
 });

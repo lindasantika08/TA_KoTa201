@@ -4,30 +4,99 @@ namespace App\Http\Controllers\Dosen;
 
 use App\Models\Kelompok;
 use App\Models\Answers;
+use App\Models\User;
+use App\Models\AnswersPeer;
 use App\Models\Assessment;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class AnswerController extends Controller
 {
     public function answerSelf(Request $request)
     {
         $validated = $request->validate([
-            'QuestionId' => 'required|uuid',
+            // 'QuestionId' => 'required|uuid',
             'tahunAjaran' => 'required|string',
             'namaProyek' => 'required|string',
         ]);
 
-        // Lakukan proses berdasarkan data yang diterima
+        // Log tahun ajaran dan nama proyek
+        Log::info('AnswerSelf method called', [
+            'tahunAjaran' => $validated['tahunAjaran'],
+            'namaProyek' => $validated['namaProyek'],
+        ]);
+
         return Inertia::render('Dosen/AnswerSelf', [
-            'questionId' => $validated['QuestionId'],
             'tahunAjaran' => $validated['tahunAjaran'],
             'namaProyek' => $validated['namaProyek'],
         ]);
     }
 
+    public function answerPeer(Request $request)
+    {
+        $validated = $request->validate([
+            // 'QuestionId' => 'required|uuid',
+            'tahunAjaran' => 'required|string',
+            'namaProyek' => 'required|string',
+        ]);
+
+        // Log tahun ajaran dan nama proyek
+        Log::info('AnswerPeer method called', [
+            'tahunAjaran' => $validated['tahunAjaran'],
+            'namaProyek' => $validated['namaProyek'],
+        ]);
+
+        return Inertia::render('Dosen/AnswerPeer', [
+            'tahunAjaran' => $validated['tahunAjaran'],
+            'namaProyek' => $validated['namaProyek'],
+        ]);
+    }
+
+    public function saveAllAnswersPeerDosen(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $validated = $request->validate([
+                'answers' => 'required|array',
+                'answers.*.question_id' => 'required|uuid',
+                'answers.*.answer' => 'required|string',
+                'answers.*.score' => 'required|integer|between:1,5',
+                'answers.*.status' => 'required|string'
+            ]);
+
+            foreach ($validated['answers'] as $answerData) {
+                AnswersPeer::updateOrCreate(
+                    [
+                        'question_id' => $answerData['question_id'],
+                        'user_id' => auth()->id()
+                    ],
+                    [
+                        'answer' => $answerData['answer'],
+                        'score' => $answerData['score'],
+                        'status' => $answerData['status']
+                    ]
+                );
+            }
+
+            DB::commit();
+            Log::info('Transaction committed');
+            return response()->json([
+                'success' => true,
+                'message' => 'Semua jawaban berhasil disimpan'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Transaction rolled back', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
     public function getQuestionId(Request $request)
     {
         $validated = $request->validate([
@@ -60,6 +129,7 @@ class AnswerController extends Controller
 
         // Menyusun informasi user yang ingin dikirimkan
         $userInfo = [
+            'id' => $user->id,
             'nip' => $user->nip,
             'name' => $user->name,
             'class' => '1B',  // Bisa disesuaikan sesuai data yang ada
@@ -72,6 +142,189 @@ class AnswerController extends Controller
     }
 
     public function getQuestionsByProject(Request $request)
+    {
+        // Ambil tahun_ajaran dan nama_proyek dari query parameter
+        $tahunAjaran = $request->query('tahun_ajaran');
+        $namaProyek = $request->query('nama_proyek');
+
+        // Pastikan filter dengan tepat
+        $assessments = Assessment::join('type_criteria', function ($join) {
+            $join->on('assessment.aspek', '=', 'type_criteria.aspek')
+                ->on('assessment.kriteria', '=', 'type_criteria.kriteria');
+        })
+            ->select(
+                'assessment.id',
+                'assessment.type',
+                'assessment.pertanyaan',
+                'assessment.aspek',
+                'assessment.kriteria',
+                'type_criteria.bobot_1',
+                'type_criteria.bobot_2',
+                'type_criteria.bobot_3',
+                'type_criteria.bobot_4',
+                'type_criteria.bobot_5'
+            )
+            ->where('assessment.tahun_ajaran', $tahunAjaran)
+            ->where('assessment.nama_proyek', $namaProyek)
+            ->where('assessment.type', 'selfAssessment')
+            ->get();
+
+        return response()->json($assessments);
+    }
+
+    public function getListAnswers(Request $request)
+    {
+        $tahunAjaran = $request->query('tahun_ajaran');
+        $namaProyek = $request->query('nama_proyek');
+
+        // Mengambil data jawaban dengan join ke tabel assessment untuk mendapatkan pertanyaan
+        $answers = Answers::select('answers.*', 'assessment.pertanyaan')  // Memilih semua kolom dari answers dan kolom pertanyaan dari assessment
+            ->join('assessment', 'answers.question_id', '=', 'assessment.id')  // Melakukan join dengan tabel assessment berdasarkan question_id
+            ->where('assessment.tahun_ajaran', $tahunAjaran)  // Menyaring berdasarkan tahun_ajaran
+            ->where('assessment.nama_proyek', $namaProyek)  // Menyaring berdasarkan nama_proyek
+            ->with('user')  // Memuat relasi user
+            ->get();
+
+        // Mengembalikan data dalam format JSON
+        return response()->json($answers);
+    }
+
+    public function getListAnswersPeer(Request $request)
+    {
+        // Menangkap query params
+        $tahunAjaran = $request->query('tahun_ajaran');
+        $namaProyek = $request->query('nama_proyek');
+    
+        // Validasi input
+        if (!$tahunAjaran || !$namaProyek) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tahun Ajaran atau Nama Proyek tidak ditemukan.'
+            ], 400);
+        }
+    
+        try {
+            // Ambil data dengan join ke tabel assessment dan user
+            $answers = AnswersPeer::select('answerspeer.*', 'assessment.pertanyaan')
+                ->join('assessment', 'answerspeer.question_id', '=', 'assessment.id') // Join dengan tabel assessment
+                ->where('assessment.tahun_ajaran', $tahunAjaran) // Filter berdasarkan tahun ajaran
+                ->where('assessment.nama_proyek', $namaProyek) // Filter berdasarkan nama proyek
+                ->with('user') // Memuat relasi dengan user (pastikan relasi ini ada pada model AnswersPeer)
+                ->get();
+    
+            // Jika data tidak ada, kembalikan response 404
+            if ($answers->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tidak ada data ditemukan.'
+                ], 404);
+            }
+    
+            return response()->json([
+                'success' => true,
+                'data' => $answers
+            ]);
+    
+        } catch (\Exception $e) {
+            // Log error dan beri respons error 500
+            Log::error('Error fetching answers: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat mengambil data.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    
+
+    public function getListAnswersView()
+    {
+        return Inertia::render('Dosen/AnswersSelfAssessment');
+    }
+
+    public function getListAnswersPeerView()
+    {
+        return Inertia::render('Dosen/AnswersPeerAssessment');
+    }
+
+    public function searchByNip(Request $request)
+    {
+        $nim = $request->query('nip');
+        $user = User::where('nip', $nim)->first(); // Cari berdasarkan nim
+
+        if ($user) {
+            return response()->json(['user_id' => $user->id]);
+        } else {
+            return response()->json(['error' => 'User not found'], 404);
+        }
+    }
+
+    public function getAnswerPeerDosen($questionId)
+    {
+        try {
+            $answer = AnswersPeer::where('question_id', $questionId)
+                ->where('user_id', auth()->id())
+                ->first();
+
+            return response()->json($answer);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+    public function answeredPeersDosen(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'user_id' => 'required|string|exists:users,id',
+                'peer_id' => 'nullable|string',  // Menambahkan validasi nullable
+                'question_id' => 'required|string|exists:assessment,id',
+                'answer' => 'required|string',
+                'score' => 'required|integer|min:1|max:5',
+                'status' => 'required|string',
+            ]);
+
+            // Pastikan jika peer_id tidak ada, set null
+            $peer_id = $validated['peer_id'] ?? null;
+
+            $existingAnswer = AnswersPeer::where([
+                'user_id' => $validated['user_id'],
+                'peer_id' => $peer_id,
+                'question_id' => $validated['question_id'],
+            ])->first();
+
+            if ($existingAnswer) {
+                $existingAnswer->update([
+                    'answer' => $validated['answer'],
+                    'score' => $validated['score'],
+                    'status' => $validated['status']
+                ]);
+                $answer = $existingAnswer;
+            } else {
+                $answer = AnswersPeer::create($validated);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Jawaban peer berhasil disimpan.',
+                'data' => $answer,
+            ], 201);
+        } catch (\Exception $e) {
+            Log::error('Error in AnswersPeer:', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat menyimpan jawaban peer.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getQuestionsByProjectPeer(Request $request)
     {
         $tahunAjaran = $request->query('tahun_ajaran');
         $namaProyek = $request->query('nama_proyek');
@@ -98,31 +351,58 @@ class AnswerController extends Controller
             ->when($namaProyek, function ($query, $namaProyek) {
                 $query->where('assessment.nama_proyek', $namaProyek);
             })
-            ->where('assessment.type', 'selfAssessment')
+            ->where('assessment.type', 'peerAssessment')
             ->get();
 
         return response()->json($assessments);
     }
 
-    public function getListAnswers(Request $request)
+    public function AnswersPeerDosen(Request $request)
     {
-        $tahunAjaran = $request->query('tahun_ajaran');
-        $namaProyek = $request->query('nama_proyek');
+        try {
+            $validated = $request->validate([
+                'user_id' => 'required|string|exists:users,id',
+                'peer_id' => '-',
+                'question_id' => 'required|string|exists:assessment,id',
+                'answer' => 'required|string',
+                'score' => 'required|integer|min:1|max:5',
+                'status' => 'required|string',
+            ]);
 
-        // Mengambil data jawaban dengan join ke tabel assessment untuk mendapatkan pertanyaan
-        $answers = Answers::select('answers.*', 'assessment.pertanyaan')  // Memilih semua kolom dari answers dan kolom pertanyaan dari assessment
-            ->join('assessment', 'answers.question_id', '=', 'assessment.id')  // Melakukan join dengan tabel assessment berdasarkan question_id
-            ->where('assessment.tahun_ajaran', $tahunAjaran)  // Menyaring berdasarkan tahun_ajaran
-            ->where('assessment.nama_proyek', $namaProyek)  // Menyaring berdasarkan nama_proyek
-            ->with('user')  // Memuat relasi user
-            ->get();
+            $existingAnswer = AnswersPeer::where([
+                'user_id' => $validated['user_id'],
+                'peer_id' => $validated['peer_id'],
+                'question_id' => $validated['question_id'],
+            ])->first();
 
-        // Mengembalikan data dalam format JSON
-        return response()->json($answers);
-    }
+            if ($existingAnswer) {
+                $existingAnswer->update([
+                    'answer' => $validated['answer'],
+                    'score' => $validated['score'],
+                    'status' => $validated['status']
+                ]);
+                $answer = $existingAnswer;
+            } else {
+                $answer = AnswersPeer::create($validated);
+            }
 
-    public function getListAnswersView()
-    {
-        return Inertia::render('Dosen/AnswersSelfAssessment');
+            return response()->json([
+                'success' => true,
+                'message' => 'Jawaban peer berhasil disimpan.',
+                'data' => $answer,
+            ], 201);
+        } catch (\Exception $e) {
+            Log::error('Error in AnswersPeer:', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat menyimpan jawaban peer.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }
