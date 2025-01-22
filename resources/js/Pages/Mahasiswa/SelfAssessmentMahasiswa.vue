@@ -17,17 +17,25 @@ export default {
         ConfirmModal
     },
     props: {
-        studentInfo: {
-            type: Object,
-            default: () => ({
-                'nim': '',
-                'name': '',
-                'class': '',
-                'group': '',
-                'project': '',
-                'date': '',
-            })
-        }
+    studentInfo: {
+        type: Object,
+        default: () => ({
+            'nip': '',
+            'name': '',
+            'class': '',
+            'group': '',
+            'project': '',
+            'date': '',
+        })
+    },
+    tahunAjaran: {
+        type: String,
+        default: ''
+    },
+    namaProyek: {
+        type: String,
+        default: ''
+    }
     },
 
     data() {
@@ -85,31 +93,40 @@ export default {
     methods: {
 
         async fetchQuestions() {
-            console.log('Fetching questions started');
-            this.loading = true;
-            this.error = null;
+    console.log('Fetching questions started');
+    this.loading = true;
+    this.error = null;
 
-            try {
-                const response = await axios.get('/api/questions');
-                console.log('API Response:', response);
+    try {
+        console.log('Tahun Ajaran:', this.tahunAjaran);
+        console.log('Nama Proyek:', this.namaProyek);
 
-                if (response.data && Array.isArray(response.data)) {
-                    this.questions = response.data;
-                    console.log('Questions loaded:', this.questions.length);
-                    this.loading = false;
-                } else {
-                    throw new Error('Invalid response format');
-                }
-            } catch (error) {
-                console.error('Error details:', {
-                    message: error.message,
-                    response: error.response,
-                    status: error.response?.status
-                });
-                this.error = `Error loading questions: ${error.message}`;
-                this.loading = false;
-            }
-        },
+        const params = {
+            tahun_ajaran: this.tahunAjaran,
+            nama_proyek: this.namaProyek
+        };
+
+        const response = await axios.get('/api/questions-dosen', { params });
+
+        console.log('API Response:', response);
+
+        if (response.data && Array.isArray(response.data)) {
+            this.questions = response.data;
+            console.log('Questions loaded:', this.questions.length);
+            this.loading = false;
+        } else {
+            throw new Error('Invalid response format');
+        }
+    } catch (error) {
+        console.error('Error details:', {
+            message: error.message,
+            response: error.response,
+            status: error.response?.status
+        });
+        this.error = `Error loading questions: ${error.message}`;
+        this.loading = false;
+    }
+},
         async fetchStudentsInfo() {
             try {
                 const response = await axios.get('/api/user-info');
