@@ -49,9 +49,9 @@ class AuthController extends Controller
         ], 401);
     }
 
-    public function logout(Request $request){
-        // dd($request->user());
-        $request->user()->currentAccessToken()->delete();
-        return response()->json(['message' => 'Logout Berhasil']);
-    }
+public function logout(Request $request) {
+    // Pastikan sudah ada pengguna yang terautentikasi
+    $request->user()->currentAccessToken()->delete();
+    return response()->json(['message' => 'Logout Berhasil']);
+}
 }

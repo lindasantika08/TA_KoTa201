@@ -2,7 +2,7 @@
   <div class="flex min-h-screen">
     <Sidebar role="dosen" />
     <div class="flex-1">
-      <Navbar Username="dosen" />
+      <Navbar userName="dosen" />
       <main class="p-6">
         <div class="mb-4">
           <Breadcrumb :items="breadcrumbs" />

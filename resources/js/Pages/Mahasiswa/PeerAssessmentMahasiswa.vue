@@ -355,8 +355,6 @@ export default {
 };
 </script>
 
-
-
 <template>
   <div class="flex min-h-screen">
     <SidebarMahasiswa role="mahasiswa" />
@@ -388,7 +386,7 @@ export default {
               </div>
             </div>
 
-            <div class="mb-6">
+            <div class="mb-6" v-if="currentQuestionIndex === 0">
               <label
                 for="select-member"
                 class="block text-sm font-medium text-gray-700 mb-2"
@@ -421,8 +419,8 @@ export default {
               </button>
             </div>
 
-            <div v-else-if="currentQuestion" class="space-y-6">
-              <!-- Rest of the template remains the same -->
+            <!-- Only show questions if a member is selected -->
+            <div v-else-if="selectedMember && currentQuestion" class="space-y-6">
               <!-- Question display section -->
               <div class="bg-gray-50 p-4 rounded-lg">
                 <h3 class="font-semibold text-lg mb-4">
