@@ -15,14 +15,15 @@ use Inertia\Inertia;
 class AuthController extends Controller
 {
 
-    public function index() {
-        
-        return Inertia::render('Auth/Login');
+    public function index()
+    {
 
+        return Inertia::render('Auth/Login');
     }
 
-    public function login(Request $request) {
-        
+    public function login(Request $request)
+    {
+
         $credentials = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required'],
@@ -38,7 +39,7 @@ class AuthController extends Controller
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
-                    'role' => $user->role 
+                    'role' => $user->role
                 ],
                 'message' => 'Login berhasil'
             ]);
@@ -49,9 +50,21 @@ class AuthController extends Controller
         ], 401);
     }
 
-    public function logout(Request $request){
-        // dd($request->user());
-        $request->user()->currentAccessToken()->delete();
+    public function logout(Request $request)
+{
+    try {
+        // Mendapatkan token yang sedang aktif
+        $token = $request->user()->currentAccessToken();
+
+        // Menghapus token yang aktif (baik itu PersonalAccessToken atau TransientToken)
+        $token->delete();  // Menghapus token
+
         return response()->json(['message' => 'Logout Berhasil']);
+    } catch (\Exception $e) {
+        Log::error('Logout Error: ' . $e->getMessage());
+        return response()->json(['message' => 'Logout gagal', 'error' => $e->getMessage()], 500);
     }
+}
+
+
 }

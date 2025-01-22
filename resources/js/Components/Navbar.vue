@@ -33,8 +33,6 @@
           />
           <span class="text-sm font-medium text-black mr-2">{{ userName }}</span>
         </button>
-       
-
         <!-- Dropdown Menu -->
         <div
           v-if="showProfileMenu"
@@ -82,15 +80,22 @@ export default {
     toggleProfileMenu() {
       this.showProfileMenu = !this.showProfileMenu;
     },
+
+    // Logout Function
     async logout() {
-      if (this.isLoggingOut) return;
+      if (this.isLoggingOut) return;  // Prevent multiple logout requests
       this.isLoggingOut = true;
 
       try {
         const token = localStorage.getItem("auth_token");
+        console.log("Token yang dikirim:", token);
+
         if (token) {
-          console.log("Token:", token);
-          await axios.put(
+          // Log token yang akan dikirim untuk verifikasi
+          console.log("Mengirim token untuk logout:", token);
+
+          // Kirim permintaan logout ke backend
+          const response = await axios.put(
             "/api/logout",
             {},
             {
@@ -99,20 +104,29 @@ export default {
               },
             }
           );
+
+          // Log response dari backend
+          console.log("Logout response:", response.data);
+        } else {
+          console.log("Token tidak ditemukan");
+          alert("You are not logged in.");
         }
       } catch (error) {
         console.error("Logout error:", error);
         alert("Logout failed. Please try again.");
       } finally {
-        localStorage.removeItem("auth_token");
-        localStorage.removeItem("user_data");
-        router.visit("/login");
+       // Hapus token dan data pengguna setelah logout berhasil
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("user_data");
+        router.visit("/login");  // Redirect to login page
         this.isLoggingOut = false;
       }
     },
+
     goToNotifications() {
       router.visit("/notifications");
     },
+
     goToProfile() {
       router.visit("/dosen/profile");
     },
