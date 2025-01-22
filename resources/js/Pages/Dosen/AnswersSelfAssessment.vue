@@ -85,7 +85,7 @@ export default {
       
       <div class="flex-1">
         <!-- Navbar -->
-        <Navbar Username="dosen" />
+        <Navbar userName="dosen" />
         
         <main class="p-6">
           <div class="mb-4">

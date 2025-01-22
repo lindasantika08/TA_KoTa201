@@ -9,20 +9,25 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class AnswerController extends Controller
 {
     public function answerSelf(Request $request)
     {
         $validated = $request->validate([
-            'QuestionId' => 'required|uuid',
+            // 'QuestionId' => 'required|uuid',
             'tahunAjaran' => 'required|string',
             'namaProyek' => 'required|string',
         ]);
 
-        // Lakukan proses berdasarkan data yang diterima
+        // Log tahun ajaran dan nama proyek
+        Log::info('AnswerSelf method called', [
+            'tahunAjaran' => $validated['tahunAjaran'],
+            'namaProyek' => $validated['namaProyek'],
+        ]);
+
         return Inertia::render('Dosen/AnswerSelf', [
-            'questionId' => $validated['QuestionId'],
             'tahunAjaran' => $validated['tahunAjaran'],
             'namaProyek' => $validated['namaProyek'],
         ]);
@@ -73,9 +78,11 @@ class AnswerController extends Controller
 
     public function getQuestionsByProject(Request $request)
     {
+        // Ambil tahun_ajaran dan nama_proyek dari query parameter
         $tahunAjaran = $request->query('tahun_ajaran');
         $namaProyek = $request->query('nama_proyek');
 
+        // Pastikan filter dengan tepat
         $assessments = Assessment::join('type_criteria', function ($join) {
             $join->on('assessment.aspek', '=', 'type_criteria.aspek')
                 ->on('assessment.kriteria', '=', 'type_criteria.kriteria');
@@ -92,12 +99,8 @@ class AnswerController extends Controller
                 'type_criteria.bobot_4',
                 'type_criteria.bobot_5'
             )
-            ->when($tahunAjaran, function ($query, $tahunAjaran) {
-                $query->where('assessment.tahun_ajaran', $tahunAjaran);
-            })
-            ->when($namaProyek, function ($query, $namaProyek) {
-                $query->where('assessment.nama_proyek', $namaProyek);
-            })
+            ->where('assessment.tahun_ajaran', $tahunAjaran)
+            ->where('assessment.nama_proyek', $namaProyek)
             ->where('assessment.type', 'selfAssessment')
             ->get();
 

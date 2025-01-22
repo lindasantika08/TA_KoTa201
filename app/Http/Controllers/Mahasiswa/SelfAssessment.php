@@ -4,22 +4,37 @@ namespace App\Http\Controllers\Mahasiswa;
 
 use App\Http\Controllers\Controller;
 use App\Models\type_criteria;
-use App\Models\Assessment;  
-use App\Models\Answers;    
-use App\Models\project;  
-use App\Models\User;  
+use App\Models\Assessment;
+use App\Models\Answers;
+use App\Models\project;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class SelfAssessment extends Controller
 {
-    public function assessment() {
-        return Inertia::render('Mahasiswa/SelfAssessmentMahasiswa');
+    public function assessment(Request $request)
+    {
+        Log::info('Request received in assessment:', $request->all());
+
+        $validated = $request->validate([
+            'tahunAjaran' => 'required|string',
+            'namaProyek' => 'required|string',
+        ]);
+
+        Log::info('Validated data:', $validated);
+
+        return Inertia::render('Mahasiswa/SelfAssessmentMahasiswa', [
+            'tahunAjaran' => $validated['tahunAjaran'],
+            'namaProyek' => $validated['namaProyek'],
+        ]);
     }
 
-    public function getQuestionsByProject(Request $request) {
+    public function getQuestionsByProject(Request $request)
+    {
         $tahunAjaran = $request->query('tahun_ajaran');
         $namaProyek = $request->query('nama_proyek');
 
@@ -52,7 +67,8 @@ class SelfAssessment extends Controller
     }
 
 
-    public function getFilteredBobot(Request $request) {
+    public function getFilteredBobot(Request $request)
+    {
         try {
             $bobot = type_criteria::where('aspek', $request->aspek)
                 ->where('kriteria', $request->kriteria)
@@ -64,7 +80,8 @@ class SelfAssessment extends Controller
         }
     }
 
-    public function saveAnswer(Request $request) {
+    public function saveAnswer(Request $request)
+    {
         DB::beginTransaction();
         try {
             $validated = $request->validate([
@@ -87,10 +104,10 @@ class SelfAssessment extends Controller
             );
 
             DB::commit();
-            
+
             return response()->json([
-                'message' => $answer->wasRecentlyCreated ? 
-                    'Answer saved successfully' : 
+                'message' => $answer->wasRecentlyCreated ?
+                    'Answer saved successfully' :
                     'Answer updated successfully',
                 'answer' => $answer
             ]);
@@ -102,7 +119,8 @@ class SelfAssessment extends Controller
         }
     }
 
-    public function getUserInfo(Request $request) {
+    public function getUserInfo(Request $request)
+    {
         $user = Auth::user();
 
         $userInfo = [
@@ -117,19 +135,21 @@ class SelfAssessment extends Controller
         return response()->json($userInfo);
     }
 
-    public function getAnswer($questionId) {
+    public function getAnswer($questionId)
+    {
         try {
             $answer = Answers::where('question_id', $questionId)
                 ->where('user_id', auth()->id())
                 ->first();
-                
+
             return response()->json($answer);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 
-    public function saveAllAnswers(Request $request) {
+    public function saveAllAnswers(Request $request)
+    {
         DB::beginTransaction();
         try {
             $validated = $request->validate([
