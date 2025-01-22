@@ -19,7 +19,7 @@ export default {
   data() {
     return {
       breadcrumbs: [
-        { text: "Assessment", href: "/assessment/self" },
+        { text: "Assessment", href: "/mahasiswa/assessment/self" },
         { text: "Self Assessment", href: null }
       ],
       headers: [

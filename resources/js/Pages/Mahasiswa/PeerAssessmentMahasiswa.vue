@@ -20,7 +20,7 @@ export default {
   data() {
     return {
       breadcrumbs: [
-        { text: "Assessment", href: "/self" },
+        { text: "Assessment", href: "/mahasiswa/assessment/peer" },
         { text: "Peer Assessment", href: null }
       ],
       headers: [
