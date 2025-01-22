@@ -155,21 +155,33 @@ export default {
     };
 
     const handleFileUpload = async (event) => {
-      const formData = new FormData();
-      formData.append("file", event.target.files[0]);
+  const file = event.target.files[0];
+  if (!file) return;
 
-      try {
-        await axios.post("/dosen/assessment/import", formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
-        alert("Data berhasil diimpor");
-      } catch (error) {
-        console.error("Import error:", error);
-        alert("Terjadi kesalahan saat mengimpor data");
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try {
+    const token = localStorage.getItem("auth_token");
+    const response = await axios.post("/dosen/assessment/import", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        "Authorization": `Bearer ${token}`
       }
-    };
+    });
+    
+    alert(response.data.message || "Data berhasil diimpor");
+    event.target.value = '';
+    
+  } catch (error) {
+    console.error("Import error:", error);
+    if (error.response?.data?.error) {
+      alert(error.response.data.error);
+    } else {
+      alert("Terjadi kesalahan saat mengimpor data");
+    }
+  }
+};
 
     onMounted(async () => {
       try {
