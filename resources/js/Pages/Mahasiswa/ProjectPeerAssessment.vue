@@ -24,7 +24,7 @@ export default {
       ],
       headers: [
         { key: 'no', label: 'No' },
-        { key: 'semester', label: 'Semester' },
+        { key: 'tahun_ajaran', label: 'Tahun Ajaran' },
         { key: 'proyek', label: 'Proyek' },
         { key: 'status', label: 'Status' },
         { key: 'tanggal', label: 'Tanggal Pengisian' },
@@ -35,13 +35,25 @@ export default {
   },
   methods: {
     handleAnswer(item) {
-      router.visit(`/mahasiswa/assessment/peer-assessment`, {
-        method: 'get',
-        preserveState: true
+      console.log('Tahun Ajaran:', item.tahun_ajaran);
+      console.log('Proyek:', item.proyek);
+
+      // Menggunakan router.get untuk mengirim data sebagai query parameters
+      router.get('/mahasiswa/assessment/peer-assessment', {
+        tahun_ajaran: item.tahun_ajaran,
+        proyek: item.proyek
+      }, {
+        preserveState: true,
+        onSuccess: (page) => {
+          console.log('Navigation successful', page);
+        },
+        onError: (errors) => {
+          console.error('Navigation failed:', errors);
+        }
       });
     },
     handleDetail(item) {
-      router.visit(`/mahasiswa/peer-assessment/peer-detail`, { // harusnya ditambah $id
+      router.visit(`/mahasiswa/peer-assessment/peer-detail`, {
         method: 'get',
         preserveState: true
       });
@@ -53,7 +65,7 @@ export default {
         this.items = response.data.map((item, index) => ({
             id: item.id,
             no: index + 1,
-            semester: item.semester,
+            tahun_ajaran: item.tahun_ajaran,
             proyek: item.nama_proyek,
             status: item.status,
             tanggal: dayjs(item.created_at).format('DD MMMM YYYY HH:mm'),
@@ -77,7 +89,7 @@ export default {
         </div>
         
         <Card 
-          title="DAFTAR HASIL PENGISIAN SELF ASSESSMENT"
+          title="DAFTAR HASIL PENGISIAN PEER ASSESSMENT"
           description=""
           class="w-full"
         >
@@ -101,7 +113,6 @@ export default {
                 <font-awesome-icon icon="fa-solid fa-eye" class="mr-2" />
                 Detail
               </button>
-              
             </template>
 
             <template #column-status="{ item }">

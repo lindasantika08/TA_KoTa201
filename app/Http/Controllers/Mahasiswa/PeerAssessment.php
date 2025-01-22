@@ -11,9 +11,12 @@ use Illuminate\Support\Facades\Log;
 
 class PeerAssessment extends Controller
 {
-    public function assessment()
+    public function PeerAssessment(Request $request)
     {
-        return Inertia::render('Mahasiswa/PeerAssessmentMahasiswa');
+        return Inertia::render('Mahasiswa/PeerAssessmentMahasiswa', [
+            'tahun_ajaran' => $request->tahun_ajaran,
+            'proyek' => $request->proyek
+        ]);
     }
 
     public function getQuestionsByProject(Request $request)
@@ -49,7 +52,8 @@ class PeerAssessment extends Controller
         return response()->json($assessments);
     }
 
-    public function AnswersPeer(Request $request) {
+    public function AnswersPeer(Request $request)
+    {
         try {
             $validated = $request->validate([
                 'user_id' => 'required|string|exists:users,id',
@@ -59,13 +63,13 @@ class PeerAssessment extends Controller
                 'score' => 'required|integer|min:1|max:5',
                 'status' => 'required|string',
             ]);
-    
+
             $existingAnswer = AnswersPeer::where([
                 'user_id' => $validated['user_id'],
                 'peer_id' => $validated['peer_id'],
                 'question_id' => $validated['question_id'],
             ])->first();
-    
+
             if ($existingAnswer) {
                 $existingAnswer->update([
                     'answer' => $validated['answer'],
@@ -76,20 +80,19 @@ class PeerAssessment extends Controller
             } else {
                 $answer = AnswersPeer::create($validated);
             }
-    
+
             return response()->json([
                 'success' => true,
                 'message' => 'Jawaban peer berhasil disimpan.',
                 'data' => $answer,
             ], 201);
-    
         } catch (\Exception $e) {
             \Log::error('Error in AnswersPeer:', [
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine()
             ]);
-    
+
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan saat menyimpan jawaban peer.',
@@ -98,16 +101,17 @@ class PeerAssessment extends Controller
         }
     }
 
-    public function answeredPeers(Request $request) {
+    public function answeredPeers(Request $request)
+    {
         try {
             $user = $request->user();
-            
+
             $answeredPeerIds = AnswersPeer::where('user_id', $user->id)
                 ->select('peer_id')
                 ->groupBy('peer_id')
                 ->havingRaw('COUNT(DISTINCT question_id) = ?', [Assessment::count()])
                 ->pluck('peer_id');
-                
+
             return response()->json($answeredPeerIds);
         } catch (\Exception $e) {
             return response()->json([
@@ -116,6 +120,4 @@ class PeerAssessment extends Controller
             ], 500);
         }
     }
-
-    
 }
