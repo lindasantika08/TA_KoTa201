@@ -221,10 +221,10 @@ export default {
             router.visit("/dosen/assessment/create");
         },
         goToSelfAssessment() {
-            router.visit("/dosen/assessment/projects");
+            router.visit("/dosen/assessment/projectsSelf");
         },
         goToPeerAssessment() {
-            router.visit("/dosen/peer");
+            router.visit("/dosen/assessment/projectsPeer");
         },
         isActive(route) {
             return this.$page.url === route;

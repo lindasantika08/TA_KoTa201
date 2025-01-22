@@ -1,6 +1,6 @@
 <script>
 import axios from "axios";
-import Sidebar from "@/Components/Sidebar.vue";
+import SidebarMahasiswa from "@/Components/SidebarMahasiswa.vue";
 import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
 import Breadcrumb from "@/Components/Breadcrumb.vue";
@@ -9,41 +9,34 @@ import Breadcrumb from "@/Components/Breadcrumb.vue";
 export default {
   name: "Profile",
   components: {
-    Sidebar,
+    SidebarMahasiswa,
     Navbar,
     Card,
     Breadcrumb,
   },
+
   data() {
     return {
       breadcrumbs: [
-        { text: "Report", href: "/dosen/report" },
+        { text: "Feedback", href: null },
       ],
-    };
-  },
+    }
+  }
 };
 </script>
 
 <template>
-  <!-- Wrapper with Flexbox Layout -->
   <div class="flex min-h-screen">
-    <!-- Sidebar -->
-    <Sidebar role="dosen" />
+    <SidebarMahasiswa role="mahasiswa" />
 
-    <!-- Main Content Area -->
     <div class="flex-1 ">
-      <!-- Navbar -->
-      <Navbar userName="Dosen" />
+      <Navbar userName="Mahasiswa" />
       <main class="p-6">
         <div class="mb-4">
           <Breadcrumb :items="breadcrumbs" />
         </div>
-        <Card title="Report">
-          <!-- You can leave the actions section here if you want, or remove it as well -->
+        <Card title="Feedback">
           <template #actions>
-            <!-- <button class="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-              Action Button
-            </button> -->
           </template>
         </Card>
       </main>
@@ -53,5 +46,4 @@ export default {
 
 
 <style scoped>
-/* Optional: Add custom styles here */
 </style>

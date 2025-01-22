@@ -19,12 +19,16 @@ class CreateUsersTable extends Migration
             $table->rememberToken();
             $table->string('nip', 18)->unique()->nullable();
             $table->string('nim', 9)->unique()->nullable();
+            $table->string('kode_dosen')->nullable();
             $table->string('photo', 2048)->nullable();
             $table->enum('role', ['mahasiswa', 'dosen'])->default('mahasiswa');
             // $table->foreignUuid('created_by')->nullable();
             // $table->foreignUuid('updated_by')->nullable();
             $table->timestamps();
             $table->softDeletes();
+
+            // Tambahkan unique key untuk kombinasi kolom
+            $table->unique(['name', 'nim', 'nip']);
         });
     }
 

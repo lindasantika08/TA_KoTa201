@@ -4,6 +4,9 @@
         <div class="flex-1">
             <Navbar userName="Dosen" />
             <main class="p-6">
+                <div class="mb-4">
+                    <Breadcrumb :items="breadcrumbs" />
+                </div>
                 <Card title="Kelola Proyek">
                     <template #actions>
                         <!-- Filter Tahun Ajaran -->
@@ -128,6 +131,7 @@ import Sidebar from "@/Components/Sidebar.vue";
 import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
 import Dropdown from "@/Components/Dropdown.vue";
+import Breadcrumb from "@/Components/Breadcrumb.vue";
 
 export default {
     name: "KelolaProyek",
@@ -136,9 +140,13 @@ export default {
         Navbar,
         Card,
         Dropdown,
+        Breadcrumb,
     },
     data() {
         return {
+            breadcrumbs: [
+                { text: "Manage Project", href: "/dosen/kelola-proyek" },
+            ],
             isModalOpen: false,
             newProject: {
                 semester: "",

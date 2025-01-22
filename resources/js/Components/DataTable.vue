@@ -15,7 +15,13 @@ export default {
     console.log('DataTable mounted')
     console.log('Headers:', this.headers)
     console.log('Items:', this.items)
-  }
+  },
+  methods: {
+    // Mengambil nilai dari kolom yang memiliki struktur lebih dalam (misal: dosen.nama)
+    getNestedValue(item, key) {
+      return key.split('.').reduce((obj, k) => (obj ? obj[k] : ''), item);
+    },
+  },
 }
 </script>
 
@@ -40,7 +46,13 @@ export default {
             />
             <!-- Default rendering jika tidak ada slot -->
             <template v-else>
-              {{ item[header.key] }}
+              <!-- Cek apakah kolom memiliki key yang lebih dalam (misal: dosen.nama) -->
+              <template v-if="header.key.includes('.')">
+                {{ getNestedValue(item, header.key) }}
+              </template>
+              <template v-else>
+                {{ item[header.key] }}
+              </template>
             </template>
           </td>
         </tr>

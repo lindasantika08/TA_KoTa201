@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('type_criteria', function (Blueprint $table) {
             $table->string('aspek', 255);
-            $table->string('kriteria', 255); // Pastikan panjangnya sama
+            $table->string('kriteria', 255);
             $table->string('bobot_1');
             $table->string('bobot_2');
             $table->string('bobot_3');

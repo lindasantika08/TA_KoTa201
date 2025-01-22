@@ -19,8 +19,8 @@ export default {
   data() {
     return {
       breadcrumbs: [
-        { text: "Assessment", href: "/assessment" },
-        { text: "Self Assessment", href: null }
+        { text: "Assessment", href: "/assessment/self" },
+        { text: "Peer Assessment", href: null }
       ],
       headers: [
         { key: 'no', label: 'No' },
@@ -34,15 +34,21 @@ export default {
     }
   },
   methods: {
+    handleAnswer(item) {
+      router.visit(`/mahasiswa/assessment/peer-assessment`, {
+        method: 'get',
+        preserveState: true
+      });
+    },
     handleDetail(item) {
-      router.visit(`/mahasiswa/self-assessment/${item.id}/detail`, {
+      router.visit(`/mahasiswa/peer-assessment/peer-detail`, { // harusnya ditambah $id
         method: 'get',
         preserveState: true
       });
     }
   },
   mounted() {
-    axios.get('/api/self-assessment')
+    axios.get('/api/peer-assessment')
     .then(response => {
         this.items = response.data.map((item, index) => ({
             id: item.id,
@@ -51,7 +57,6 @@ export default {
             proyek: item.nama_proyek,
             status: item.status,
             tanggal: dayjs(item.created_at).format('DD MMMM YYYY HH:mm'),
-            // Tidak perlu mengatur actions di sini karena kita akan menggunakan slot
         }));
     })
     .catch(error => {
@@ -81,18 +86,24 @@ export default {
             :items="items"
             class="mt-10"
           >
-            <!-- Custom template untuk kolom actions -->
             <template #column-actions="{ item }">
               <button 
-                @click="handleDetail(item)"
+                @click="handleAnswer(item)"
                 class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              >
+                <font-awesome-icon icon="fa-solid fa-pencil" class="mr-2" />
+                Answer
+              </button>
+              <button 
+                @click="handleDetail(item)"
+                class="px-3 py-1 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 ml-2"
               >
                 <font-awesome-icon icon="fa-solid fa-eye" class="mr-2" />
                 Detail
               </button>
+              
             </template>
 
-            <!-- Optional: Custom template untuk kolom status -->
             <template #column-status="{ item }">
               <span 
                 :class="[
