@@ -8,6 +8,7 @@ use App\Http\Controllers\Dosen\KelolaKelompokController;
 use App\Http\Controllers\Dosen\FeedbackController;
 use App\Http\Controllers\Dosen\ReportController;
 use App\Http\Controllers\Dosen\AnswerController;
+use App\Http\Controllers\Dosen\UserManagementController;
 
 use App\Http\Controllers\Mahasiswa\AssessmentMahasiswa;
 use App\Http\Controllers\Mahasiswa\DashboardMahasiswa;
@@ -56,7 +57,18 @@ Route::middleware('auth')->group(function () {
         Route::get('/report', [ReportController::class, 'report'])->name('report');
         Route::get('/feedback', [FeedbackController::class, 'feedback'])->name('feedback');
         Route::get('/AnswerSelf', [AnswerController::class, 'answerSelf'])->name('dosen.answerSelf');
+        Route::get('/AnswerPeer', [AnswerController::class, 'answerPeer'])->name('dosen.answerPeer');
         Route::get('/answers-self-assessment', [AnswerController::class, 'getListAnswersView']);
+        Route::get('/answers-peer-assessment', [AnswerController::class, 'getListAnswersPeerView']);
+        Route::get('/answer-list-peer', [AnswerController::class, 'getListAnswerPeer'])->name('ListAnswerPeer');
+
+        Route::get('/kelola-mahasiswa', [UserManagementController::class, 'KelolaMahasiswa'])->name('KelolaMahasiswa');
+        Route::get('/kelola-mahasiswa/input', [UserManagementController::class, 'InputMahasiswa'])->name('InputMahasiswa');
+        Route::get('/kelola-mahasiswa/export', [UserManagementController::class, 'ExportMahasiswa'])->name('ExportMahasiswa');
+        Route::post('/kelola-mahasiswa/import', [UserManagementController::class, 'ImportMahasiswa'])->name('ImportMahasiswa');
+
+        Route::get('/kelola-dosen', [UserManagementController::class, 'KelolaDosen'])->name('KelolaDosen');
+        Route::get('/answers/details', [AnswerController::class, 'getDetails']);
     });
 
     //Route untuk Mahasiswa
@@ -73,5 +85,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/peer-assessment/answers/{userId}', [AssessmentMahasiswa::class, 'getUserPeerAnswers']);
         Route::get('/peer-assessment/peer-detail', [DetailPeerMahasiswa::class, 'showDetail']);
         Route::get('/peer-assessment/self-detail', [DetailSelfMahasiswa::class, 'showDetail']);
+        Route::get('/profile', [DashboardMahasiswa::class, 'profile'])->name('profile');
     });
 });

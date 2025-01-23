@@ -1,10 +1,81 @@
+<template>
+  <div class="flex min-h-screen">
+    <Sidebar role="dosen" />
+
+    <div class="flex-1">
+      <Navbar userName="Dosen" />
+      <main class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+          <!-- Self Assessment Card dengan Klik untuk Navigasi -->
+          <Card
+            title="Self Assessment"
+            class="cursor-pointer hover:shadow-lg transition-shadow"
+            @click="handleListAnswer(selectedProject)"
+          >
+            <template #title>
+              <h3 class="text-sm font-bold">Self Assessment</h3>
+            </template>
+
+            <div v-if="selectedProject" class="mt-2">
+              <p class="text-xl font-semibold flex items-center">
+                <font-awesome-icon icon="fa-solid fa-user-check" class="mr-4 text-2xl" />
+                <span class="text-3xl">{{ totalAnswers }} / {{ totalUsers }}</span>
+              </p>
+            </div>
+
+            <div v-else class="mt-2">
+              <p class="text-lg">Pilih proyek untuk melihat statistik.</p>
+            </div>
+          </Card>
+
+          <Card title="Peer Assessment" class="cursor-pointer hover:shadow-lg transition-shadow">
+            <template #title>
+              <h3 class="text-sm font-bold">Peer Assessment</h3>
+            </template>
+            <p>Content for Card 2</p>
+          </Card>
+
+          <Card title="Project" class="cursor-pointer hover:white transition-shadow">
+            <template #title>
+              <h3 class="text-sm font-bold">Pilih Proyek</h3>
+            </template>
+
+            <div class="mt-2">
+              <label for="project-dropdown" class="block text-sm font-medium text-gray-700">Pilih Proyek</label>
+              <select
+                id="project-dropdown"
+                v-model="selectedProject"
+                @change="fetchStatistics"
+                class="block w-full mt-1 rounded-md border-2 border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-lg transition-all"
+                :class="{'border-transparent': selectedProject}"
+              >
+                <option value="" disabled selected>Pilih Proyek</option>
+                <option
+                  v-for="project in activeProjects"
+                  :key="project.nama_proyek"
+                  :value="project"
+                >
+                  {{ project.tahun_ajaran }} - {{ project.nama_proyek }}
+                </option>
+              </select>
+            </div>
+          </Card>
+        </div>
+
+        <Card title="Dashboard" class="mt-8">
+          <template #actions></template>
+        </Card>
+      </main>
+    </div>
+  </div>
+</template>
+
 <script>
 import axios from "axios";
-import { router } from "@inertiajs/vue3";
+import { router } from '@inertiajs/vue3'; // Import vue-router
 import Sidebar from "@/Components/Sidebar.vue";
 import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
-
 
 export default {
   name: "Dashboard",
@@ -13,67 +84,77 @@ export default {
     Navbar,
     Card,
   },
+  data() {
+    return {
+      activeProjects: [], // Menyimpan proyek aktif
+      selectedProject: null, // Menyimpan proyek yang dipilih
+      totalAnswers: 0, // Menyimpan total jawaban yang diterima
+      totalUsers: 0, // Menyimpan total keseluruhan pengguna yang terdaftar
+    };
+  },
+  mounted() {
+    // Ambil proyek yang dipilih dari localStorage
+    const savedProject = localStorage.getItem("selectedProject");
+    if (savedProject) {
+      this.selectedProject = JSON.parse(savedProject);
+      this.fetchStatistics(); // Ambil statistik jika proyek sudah dipilih
+    }
+    this.fetchActiveProjects();
+  },
+  watch: {
+    selectedProject: {
+      handler(newProject) {
+        // Simpan proyek yang dipilih ke localStorage
+        if (newProject) {
+          localStorage.setItem("selectedProject", JSON.stringify(newProject));
+        }
+        this.fetchStatistics();
+      },
+      immediate: true, // Memanggil handler saat pertama kali komponen dimuat
+    },
+  },
   methods: {
-    goToDashboardSelf(url) {
-      router.visit("/dosen/dashboard/self"); // Menggunakan Inertia.js untuk navigasi
+    fetchActiveProjects() {
+      axios
+        .get("/api/projects/active")
+        .then((response) => {
+          this.activeProjects = response.data;
+        })
+        .catch((error) => {
+          console.error("Error fetching active projects:", error);
+        });
     },
-    goToDashboardPeer(url) {
-      router.visit("/dosen/dashboard/peer"); // Menggunakan Inertia.js untuk navigasi
+    fetchStatistics() {
+      if (this.selectedProject) {
+        axios
+          .get("/api/answers/statistics", {
+            params: {
+              tahun_ajaran: this.selectedProject.tahun_ajaran,
+              nama_proyek: this.selectedProject.nama_proyek,
+            },
+          })
+          .then((response) => {
+            this.totalAnswers = response.data.totalSudahMengisi;
+            this.totalUsers = response.data.totalKeseluruhan;
+          })
+          .catch((error) => {
+            console.error("Error fetching statistics:", error);
+          });
+      }
     },
-    goToKelolaProyek(url) {
-      router.visit("/dosen/kelola-proyek"); // Menggunakan Inertia.js untuk navigasi
-    },
+    // Fungsi untuk menavigasi ke halaman jawaban self assessment
+    handleListAnswer(item) {
+    // Pindah halaman dengan mengirimkan tahun_ajaran dan nama_proyek sebagai query params
+    router.get('/dosen/answers-self-assessment', {
+      tahun_ajaran: item.tahun_ajaran,
+      nama_proyek: item.nama_proyek
+    }, {
+      preserveState: true
+    });
+  }
   },
 };
 </script>
-
-<template>
-  <!-- Wrapper with Flexbox Layout -->
-  <div class="flex min-h-screen">
-    <!-- Sidebar -->
-    <Sidebar role="dosen" />
-
-    <!-- Main Content Area -->
-    <div class="flex-1 ">
-      <!-- Navbar -->
-      <Navbar userName="Dosen" />
-      <main class="p-6">
-        <!-- Three Cards Section -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-          <Card title="Self Assessment" class="cursor-pointer hover:shadow-lg transition-shadow"
-            @click="goToDashboardSelf('/dosen/dashboard/self')">
-            <template #title>
-              <h3 class="text-sm font-bold">{{ title }}</h3> 
-            </template>
-            <p>Content for Card 1</p>
-          </Card>
-          <Card title="Peer Assessment" class="cursor-pointer hover:shadow-lg transition-shadow"
-            @click="goToDashboardPeer('/dosen/dashboard/peer')">
-            <template #title>
-              <h3 class="text-sm font-bold">{{ title }}</h3> 
-            </template>
-            <p>Content for Card 2</p>
-          </Card>
-          <Card title="Proyek" class="cursor-pointer hover:shadow-lg transition-shadow"
-            @click="goToKelolaProyek('/dosen/kelola-proyek')">
-            <template #title>
-              <h3 class="text-sm font-bold">{{ title }}</h3> 
-            </template>
-            <p>Content for Card 3</p>
-          </Card>
-
-        </div>
-        <Card title="Dashboard" class="mt-8">
-          <!-- You can leave the actions section here if you want, or remove it as well -->
-          <template #actions>
-
-          </template>
-        </Card>
-      </main>
-    </div>
-  </div>
-</template>
-
 
 <style scoped>
 /* Optional: Add custom styles here */

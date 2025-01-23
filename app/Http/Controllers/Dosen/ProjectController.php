@@ -8,6 +8,7 @@ use App\Models\project;
 use App\Models\Assessment;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Validator;
 
 class ProjectController extends Controller
 {
@@ -67,5 +68,64 @@ class ProjectController extends Controller
 
 
         return response()->json($projects);
+    }
+
+    public function changeStatus(Request $request)
+    {
+        // Ambil parameter dari body request
+        $tahun_ajaran = $request->tahun_ajaran;
+        $nama_proyek = $request->nama_proyek;
+
+        // Cari proyek berdasarkan tahun_ajaran dan nama_proyek
+        $project = Project::where('tahun_ajaran', $tahun_ajaran)
+            ->where('nama_proyek', $nama_proyek)
+            ->first();
+
+        if (!$project) {
+            return response()->json(['error' => 'Project not found'], 404);
+        }
+
+        // Validasi status
+        $validator = Validator::make($request->all(), [
+            'status' => 'required|in:aktif,nonaktif',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()], 422);
+        }
+
+        // Update status proyek
+        $project->status = $request->status;
+        $project->save();
+
+        return response()->json([
+            'message' => 'Project status updated successfully',
+            'project' => $project,
+        ]);
+    }
+
+    // Fungsi untuk menambah proyek
+    public function store(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'semester' => 'required|string',
+            'tahun_ajaran' => 'required|string',
+            'nama_proyek' => 'required|string',
+            'jurusan' => 'required|string',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date',
+            'status' => 'required|in:aktif,nonaktif',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()], 422);
+        }
+
+        $project = Project::create($request->all());
+
+        return response()->json([
+            'message' => 'Project created successfully',
+            'project' => $project,
+        ], 201);
     }
 }
