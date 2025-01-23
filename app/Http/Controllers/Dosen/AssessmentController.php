@@ -11,6 +11,8 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Models\Assessment;
 use App\Models\type_criteria;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 
 class AssessmentController extends Controller
@@ -60,114 +62,91 @@ class AssessmentController extends Controller
 
     public function import(Request $request)
     {
-        // Validasi input request
         $request->validate([
             'file' => 'required|mimes:xlsx,xls',
         ]);
 
-        // Mendapatkan file yang diupload
-        $file = $request->file('file');
-
         try {
-            // Membaca file Excel
-            $spreadsheet = IOFactory::load($file);
+            DB::beginTransaction();
 
-            // Ambil data dari Sheet 1 (Assessment)
-            $sheet1 = $spreadsheet->getSheet(0); // Sheet pertama
+            $spreadsheet = IOFactory::load($request->file('file'));
+
+            // Process Sheet 1 (Assessment)
+            $sheet1 = $spreadsheet->getSheet(0);
             $assessmentData = [];
-            foreach ($sheet1->getRowIterator(2) as $row) { // Dimulai dari baris 2 untuk mengabaikan header
+            foreach ($sheet1->getRowIterator(2) as $row) {
                 $cellIterator = $row->getCellIterator();
                 $cellIterator->setIterateOnlyExistingCells(false);
-
                 $rowData = [];
                 foreach ($cellIterator as $cell) {
-                    $rowData[] = $cell->getFormattedValue();
+                    $rowData[] = $cell->getValue();  // Changed from getFormattedValue()
                 }
 
-                // Pastikan ada 5 kolom (id, type, pertanyaan, aspek, kriteria)
-                if (count($rowData) >= 6) {
+                if (!empty($rowData[1])) {  // Check if row has data
                     $assessmentData[] = [
-                        'tahun_ajaran' => $rowData[1],
-                        'nama_proyek' => $rowData[2],
-                        'type' => $rowData[3],
-                        'pertanyaan' => $rowData[4],
-                        'aspek' => $rowData[5],
-                        'kriteria' => $rowData[6],
-
+                        'tahun_ajaran' => trim($rowData[1]),
+                        'nama_proyek' => trim($rowData[2]),
+                        'type' => trim($rowData[3]),
+                        'pertanyaan' => trim($rowData[4]),
+                        'aspek' => trim($rowData[5]),
+                        'kriteria' => trim($rowData[6]),
                     ];
                 }
             }
 
-            // Ambil data dari Sheet 2 (Type Criteria)
-            $sheet2 = $spreadsheet->getSheet(1); // Sheet kedua
+            // Process Sheet 2 (Type Criteria)
+            $sheet2 = $spreadsheet->getSheet(1);
             $typeCriteriaData = [];
-            foreach ($sheet2->getRowIterator(3) as $row) { // Dimulai dari baris 3 untuk mengabaikan 2 baris header
+            foreach ($sheet2->getRowIterator(3) as $row) {
                 $cellIterator = $row->getCellIterator();
                 $cellIterator->setIterateOnlyExistingCells(false);
-
                 $rowData = [];
                 foreach ($cellIterator as $cell) {
-                    $rowData[] = $cell->getFormattedValue();
+                    $rowData[] = $cell->getValue();  // Changed from getFormattedValue()
                 }
 
-                // Pastikan ada 7 kolom (aspek, kriteria, bobot_1, bobot_2, bobot_3, bobot_4, bobot_5)
-                if (count($rowData) >= 7) {
+                if (!empty($rowData[1])) {  // Check if row has data
                     $typeCriteriaData[] = [
-                        'aspek' => $rowData[1],
-                        'kriteria' => $rowData[2],
-                        'bobot_1' => $rowData[3],
-                        'bobot_2' => $rowData[4],
-                        'bobot_3' => $rowData[5],
-                        'bobot_4' => $rowData[6],
-                        'bobot_5' => $rowData[7],
+                        'aspek' => trim($rowData[1]),
+                        'kriteria' => trim($rowData[2]),
+                        'bobot_1' => floatval($rowData[3]),
+                        'bobot_2' => floatval($rowData[4]),
+                        'bobot_3' => floatval($rowData[5]),
+                        'bobot_4' => floatval($rowData[6]),
+                        'bobot_5' => floatval($rowData[7]),
                     ];
                 }
             }
 
-            // Simpan data untuk type_criteria terlebih dahulu
+            // Save Type Criteria
             foreach ($typeCriteriaData as $row) {
-                type_criteria::updateOrCreate(
-                    [
-                        'aspek' => $row['aspek'],
-                        'kriteria' => $row['kriteria']
-                    ],
-                    [
-                        'bobot_1' => $row['bobot_1'],
-                        'bobot_2' => $row['bobot_2'],
-                        'bobot_3' => $row['bobot_3'],
-                        'bobot_4' => $row['bobot_4'],
-                        'bobot_5' => $row['bobot_5'],
-                    ]
+                \App\Models\type_criteria::updateOrCreate(
+                    ['aspek' => $row['aspek'], 'kriteria' => $row['kriteria']],
+                    $row
                 );
             }
 
-            // Hapus data assessment lama yang sudah ada berdasarkan kombinasi pertanyaan, aspek, dan kriteria
+            // Save Assessment
             foreach ($assessmentData as $row) {
-                Assessment::where('pertanyaan', $row['pertanyaan'])
-                    ->where('aspek', $row['aspek'])
-                    ->where('kriteria', $row['kriteria'])
-                    ->delete();
+                \App\Models\Assessment::updateOrCreate(
+                    [
+                        'pertanyaan' => $row['pertanyaan'],
+                        'aspek' => $row['aspek'],
+                        'kriteria' => $row['kriteria']
+                    ],
+                    $row
+                );
             }
 
-            // Simpan data baru ke tabel assessment
-            foreach ($assessmentData as $row) {
-                Assessment::create([
-                    'tahun_ajaran' => $row['tahun_ajaran'],
-                    'nama_proyek' => $row['nama_proyek'],
-                    'type' => $row['type'],
-                    'pertanyaan' => $row['pertanyaan'],
-                    'aspek' => $row['aspek'],
-                    'kriteria' => $row['kriteria'],
-
-                ]);
-            }
-
-            return response()->json(['message' => 'Data berhasil diimpor'], 200);
+            DB::commit();
+            return response()->json(['message' => 'Data berhasil diimpor']);
         } catch (\Exception $e) {
-            // Jika ada error, tangkap dan tampilkan pesan error
-            return response()->json(['error' => 'Terjadi kesalahan saat mengimpor data', 'details' => $e->getMessage()], 500);
+            DB::rollBack();
+            Log::error('Import Error: ' . $e->getMessage());
+            throw $e;  // Let Laravel handle the error response
         }
     }
+
 
     public function getData()
     {

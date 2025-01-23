@@ -287,7 +287,7 @@ class AnswerController extends Controller
             ->with(['user', 'peer']) // Relasi ke tabel user dan peer
             ->get();
 
-            Log::info('Hasil query:', ['answers' => $answers->toArray()]);
+             Log::info('Hasil query:', ['answers' => $answers->toArray()]);
 
         if ($answers->isEmpty()) {
             return response()->json([

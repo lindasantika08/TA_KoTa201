@@ -76,6 +76,7 @@ export default {
         tahun_ajaran: this.tahun_ajaran, // Sertakan tahun_ajaran
         nama_proyek: this.nama_proyek, // Sertakan nama_proyek
         kelompok: item.kelompok,
+        user_ids: item.user_ids,
         id: item.id, // Jika ID juga diperlukan
       });
     },
@@ -101,6 +102,12 @@ export default {
         <!-- Title -->
         <div class="mb-6">
           <h1 class="text-xl font-semibold">Answers Peer Assessment</h1>
+        </div>
+
+        <!-- Menampilkan Tahun Ajaran, Nama Proyek, dan Kelompok -->
+        <div class="mb-6 text-sm"> <!-- Menambahkan kelas text-sm untuk memperkecil font -->
+          <p><strong>Tahun Ajaran </strong> : {{ tahun_ajaran }}</p>
+          <p><strong>Nama Proyek </strong> : {{ nama_proyek }}</p>
         </div>
 
         <!-- Tampilkan Pesan Jika Kosong -->

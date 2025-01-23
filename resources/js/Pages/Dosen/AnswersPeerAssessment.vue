@@ -1,5 +1,6 @@
 <script>
 import axios from "axios";
+import { toRaw } from "vue";
 import DataTable from "@/Components/DataTable.vue"; // Pastikan DataTable sudah terimport
 import Navbar from "@/Components/Navbar.vue"; // Pastikan Navbar sudah terimport
 import Sidebar from "@/Components/Sidebar.vue"; // Pastikan Sidebar sudah terimport
@@ -16,7 +17,8 @@ export default {
     return {
       tahun_ajaran: "", // Menyimpan tahun_ajaran
       nama_proyek: "", // Menyimpan nama_proyek
-      kelompok: "",     // Kelompok yang diterima dari query
+      kelompok: "", // Kelompok yang diterima dari query
+      user_ids: "",
       answers: [], // Menyimpan data jawaban
       breadcrumbs: [
         { text: "Peer Assessment", href: "/dosen/assessment/projectsPeer" },
@@ -54,41 +56,26 @@ export default {
   },
   methods: {
     fetchAnswers() {
-      console.log("Fetching data with params:", {
-    tahun_ajaran: this.tahun_ajaran,
-    nama_proyek: this.nama_proyek,
-    kelompok: this.kelompok,
-  });
+    axios
+      .get("/api/answersPeer/list", {
+        params: {
+          tahun_ajaran: this.tahun_ajaran,
+          nama_proyek: this.nama_proyek,
+          kelompok: this.kelompok,
+        },
+      })
+      .then((response) => {
+        console.log("Data jawaban diterima:", response.data);
 
-      // Mengambil data jawaban dari API berdasarkan tahun_ajaran dan nama_proyek
-      axios
-        .get("/api/answersPeer/list", {
-          params: {
-            tahun_ajaran: this.tahun_ajaran,
-            nama_proyek: this.nama_proyek,
-            kelompok: this.kelompok,
-          },
-        })
-        .then((response) => {
-          console.log("Data jawaban diterima:", response.data);
-          // Periksa apakah data.data adalah array
-          if (Array.isArray(response.data.data)) {
-            this.answers = response.data.data; // Ambil array dari response.data.data
-          } else {
-            console.error(
-              "Data yang diterima tidak sesuai format yang diharapkan."
-            );
-          }
-        })
-
-        .catch((error) => {
-          console.error("Error fetching answers:", error);
-        });
-    },
+        this.answers = response.data.data;
+      })
+      .catch((error) => {
+        console.error("Error fetching answers:", error);
+      });
+  },
   },
 };
 </script>
-
 
 <template>
   <div class="flex min-h-screen">
@@ -109,6 +96,13 @@ export default {
           <h1 class="text-xl font-semibold">Answers Peer Assessment</h1>
         </div>
 
+        <!-- Menampilkan Tahun Ajaran, Nama Proyek, dan Kelompok -->
+        <div class="mb-6 text-sm"> <!-- Menambahkan kelas text-sm untuk memperkecil font -->
+          <p><strong>Tahun Ajaran </strong> : {{ tahun_ajaran }}</p>
+          <p><strong>Nama Proyek </strong> : {{ nama_proyek }}</p>
+          <p><strong>Kelompok </strong> : {{ kelompok }}</p>
+        </div>
+
         <!-- Tabel untuk menampilkan data jawaban -->
         <div v-if="answers.length === 0" class="text-center text-gray-500 py-6">
           Belum ada jawaban
@@ -118,39 +112,28 @@ export default {
           <DataTable :headers="headers" :items="answers" class="mt-10">
             <template #column-status="{ item }">
               <span
-                :class="[
-                  'px-2 py-1 rounded-full text-xs font-medium',
-                  item.status === 'aktif'
-                    ? 'bg-red-100 text-red-800'
-                    : 'bg-green-100 text-green-800',
-                ]"
+                :class="[ 'px-2 py-1 rounded-full text-xs font-medium', item.status === 'aktif' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800']"
               >
                 {{ item.status }}
               </span>
             </template>
             <template #column-no="{ index }">
               {{ index + 1 }}
-              <!-- Menampilkan nomor urut -->
             </template>
             <template #column-nama_pengguna="{ item }">
               {{ item.user.name }}
-              <!-- Menampilkan nama pengguna, jika ada key 'user.name' -->
             </template>
             <template #column-nama_rekan="{ item }">
-              {{ item.peer ? item.peer.name : '-' }}
-              <!-- Menampilkan nama rekan -->
+              {{ item.peer ? item.peer.name : "-" }}
             </template>
             <template #column-pertanyaan="{ item }">
               {{ item.pertanyaan }}
-              <!-- Menampilkan pertanyaan -->
             </template>
             <template #column-skor="{ item }">
               {{ item.score }}
-              <!-- Menampilkan skor -->
             </template>
             <template #column-jawaban="{ item }">
               {{ item.answer }}
-              <!-- Menampilkan jawaban -->
             </template>
           </DataTable>
         </div>
@@ -158,4 +141,3 @@ export default {
     </div>
   </div>
 </template>
-  

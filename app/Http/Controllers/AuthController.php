@@ -51,20 +51,18 @@ class AuthController extends Controller
     }
 
     public function logout(Request $request)
-{
-    try {
-        // Mendapatkan token yang sedang aktif
-        $token = $request->user()->currentAccessToken();
+    {
+        try {
+            // Mendapatkan token yang sedang aktif
+            $token = $request->user()->currentAccessToken();
 
-        // Menghapus token yang aktif (baik itu PersonalAccessToken atau TransientToken)
-        $token->delete();  // Menghapus token
+            // Menghapus token yang aktif (baik itu PersonalAccessToken atau TransientToken)
+            $token->delete();  // Menghapus token
 
-        return response()->json(['message' => 'Logout Berhasil']);
-    } catch (\Exception $e) {
-        Log::error('Logout Error: ' . $e->getMessage());
-        return response()->json(['message' => 'Logout gagal', 'error' => $e->getMessage()], 500);
+            return response()->json(['message' => 'Logout Berhasil']);
+        } catch (\Exception $e) {
+            Log::error('Logout Error: ' . $e->getMessage());
+            return response()->json(['message' => 'Logout gagal', 'error' => $e->getMessage()], 500);
+        }
     }
-}
-
-
 }
