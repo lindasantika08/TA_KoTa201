@@ -22,7 +22,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
     //dosen
     Route::get('/export-self-assessment', [AssessmentController::class, 'exportExcel']);
-    Route::put('/logout', [AuthController::class, 'logout']);
+    Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/project', [KelolaProyekController::class, 'AddProyek']);
     Route::get('/projects', [KelolaProyekController::class, 'getProjects']);
     Route::get('/project-dropdown', [ProjectController::class, 'index']);
@@ -37,6 +37,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/kelola-kelompok/import', [KelolaKelompokController::class, 'importData']);
 
 
+    Route::get('/answers/{id}', [AnswerController::class, 'showdetail']);
 
     //mahasiswa
     Route::get('/bobot', [SelfAssessment::class, 'getFilteredBobot']);

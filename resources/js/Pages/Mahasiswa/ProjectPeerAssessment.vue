@@ -99,25 +99,30 @@ export default {
             class="mt-10"
           >
             <template #column-actions="{ item }">
-              <button 
-                @click="handleAnswer(item)"
-                class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              >
-                <font-awesome-icon icon="fa-solid fa-pencil" class="mr-2" />
-                Answer
-              </button>
-              <button 
-                @click="handleDetail(item)"
-                class="px-3 py-1 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 ml-2"
-              >
-                <font-awesome-icon icon="fa-solid fa-eye" class="mr-2" />
-                Detail
-              </button>
+              <div class="flex justify-center space-x-2">
+                <!-- Tampilkan tombol Answer hanya jika status adalah 'aktif' -->
+                <button 
+                  v-if="item.status === 'aktif'"
+                  @click="handleAnswer(item)"
+                  class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  <font-awesome-icon icon="fa-solid fa-pencil" class="mr-2" />
+                  Answer
+                </button>
+                <!-- Tombol Detail selalu tampil -->
+                <button 
+                  @click="handleDetail(item)"
+                  class="px-3 py-1 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                >
+                  <font-awesome-icon icon="fa-solid fa-eye" class="mr-2" />
+                  Detail
+                </button>
+              </div>
             </template>
 
             <template #column-status="{ item }">
               <span 
-                :class="[
+                :class="[ 
                   'px-2 py-1 rounded-full text-xs font-medium',
                   item.status === 'aktif' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                 ]"
@@ -131,3 +136,4 @@ export default {
     </div>
   </div>
 </template>
+

@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Mahasiswa;
 use App\Models\project;
 use App\Models\Kelompok;
 use App\Models\User;
+use App\Models\Assessment;
+use App\Models\AnswersPeer;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -41,6 +43,7 @@ class AssessmentMahasiswa extends Controller
                     ->whereColumn('project.nama_proyek', 'kelompok.nama_proyek')
                     ->where('kelompok.user_id', $userId); // Cek user_id di tabel kelompok
             })
+
             ->get();
 
         return response()->json($projects);
@@ -63,19 +66,17 @@ class AssessmentMahasiswa extends Controller
                     ->whereColumn('project.nama_proyek', 'kelompok.nama_proyek')
                     ->where('kelompok.user_id', $userId); // Cek user_id di tabel kelompok
             })
+
             ->get();
 
         return response()->json($projects);
     }
     public function getKelompokByUser(Request $request)
     {
-        $userId = auth()->id(); // Mengambil ID user yang sedang login
-
-        // Mengambil parameter tahun_ajaran dan nama_proyek dari request
+        $userId = auth()->id();
         $tahunAjaran = $request->input('tahun_ajaran');
         $proyek = $request->input('proyek');
 
-        // Cek apakah tahun_ajaran atau proyek kosong
         if (!$tahunAjaran || !$proyek) {
             Log::warning('Tahun Ajaran atau Proyek tidak ditemukan pada request', [
                 'tahun_ajaran' => $tahunAjaran,
@@ -84,41 +85,58 @@ class AssessmentMahasiswa extends Controller
             return response()->json(['message' => 'Tahun ajaran atau proyek tidak ditemukan'], 400);
         }
 
-        // Menambahkan log untuk melihat data yang diterima
         Log::info('Menerima request untuk getKelompokByUser', [
             'user_id' => $userId,
             'tahun_ajaran' => $tahunAjaran,
             'proyek' => $proyek
         ]);
 
-        // Query data kelompok berdasarkan user dan filter tahun ajaran serta proyek
-        $kelompok = Kelompok::with('user') // Pastikan relasi user di-load
-            ->where('kelompok', function ($query) use ($userId) {
-                // Ambil kelompok user yang sedang login
-                $query->select('kelompok')
-                    ->from('kelompok')
-                    ->where('user_id', $userId)
-                    ->limit(1);
-            })
-            ->where('tahun_ajaran', $tahunAjaran) // Menambahkan kondisi tahun_ajaran
-            ->where('nama_proyek', $proyek) // Menambahkan kondisi nama_proyek
+        // Get total number of peer assessment questions
+        $totalQuestions = Assessment::where('tahun_ajaran', $tahunAjaran)
+            ->where('nama_proyek', $proyek)
+            ->where('type', 'peerAssessment')
+            ->count();
+
+        // Get the user's group
+        $userGroup = Kelompok::where('user_id', $userId)
+            ->where('tahun_ajaran', $tahunAjaran)
+            ->where('nama_proyek', $proyek)
+            ->value('kelompok');
+
+        // Query group members
+        $kelompok = Kelompok::with('user')
+            ->where('kelompok', $userGroup)
+            ->where('tahun_ajaran', $tahunAjaran)
+            ->where('nama_proyek', $proyek)
+            ->where('user_id', '!=', $userId) // Exclude current user
             ->get();
 
-        // Menambahkan log untuk memeriksa query dan hasilnya
+        // Filter out members who have completed all peer assessments
+        $filteredKelompok = $kelompok->filter(function ($member) use ($userId, $totalQuestions) {
+            // Count completed answers for this peer
+            $completedAnswers = AnswersPeer::where('user_id', $userId)
+                ->where('peer_id', $member->user_id)
+                ->count();
+
+            // Keep member only if they haven't been fully assessed
+            return $completedAnswers < $totalQuestions;
+        });
+
         Log::info('Query untuk getKelompokByUser', [
-            'query' => $kelompok->toArray()
+            'total_questions' => $totalQuestions,
+            'original_members' => $kelompok->count(),
+            'filtered_members' => $filteredKelompok->count(),
         ]);
 
-        // Mengecek jika data kosong
-        if ($kelompok->isEmpty()) {
-            Log::warning('Tidak ada data kelompok yang ditemukan untuk user_id', [
+        if ($filteredKelompok->isEmpty()) {
+            Log::info('Tidak ada anggota kelompok yang tersisa untuk dinilai', [
                 'user_id' => $userId,
                 'tahun_ajaran' => $tahunAjaran,
                 'proyek' => $proyek
             ]);
         }
 
-        return response()->json($kelompok);
+        return response()->json($filteredKelompok->values());
     }
 
     public function searchByNim(Request $request)

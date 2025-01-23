@@ -83,33 +83,35 @@ export default {
       this.showProfileMenu = !this.showProfileMenu;
     },
     async logout() {
-      if (this.isLoggingOut) return;
-      this.isLoggingOut = true;
+  if (this.isLoggingOut) return;
+  this.isLoggingOut = true;
 
-      try {
-        const token = localStorage.getItem("auth_token");
-        if (token) {
-          console.log("Token:", token);
-          await axios.put(
-            "/api/logout",
-            {},
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
+  try {
+    const token = localStorage.getItem("auth_token");
+    if (token) {
+      console.log("Token:", token);
+      await axios.post(
+        "/api/logout",  // Pastikan menggunakan POST di sini
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         }
-      } catch (error) {
-        console.error("Logout error:", error);
-        alert("Logout failed. Please try again.");
-      } finally {
-        localStorage.removeItem("auth_token");
-        localStorage.removeItem("user_data");
-        router.visit("/login");
-        this.isLoggingOut = false;
-      }
-    },
+      );
+    }
+  } catch (error) {
+    console.error("Logout error:", error);
+    alert("Logout failed. Please try again.");
+  } finally {
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("user_data");
+    router.visit("/login");
+    this.isLoggingOut = false;
+  }
+}
+,
     goToNotifications() {
       router.visit("/notifications");
     },
