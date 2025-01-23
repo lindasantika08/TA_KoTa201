@@ -35,8 +35,8 @@
                         @click="toggleAssessmentMenu"
                         :class="{
                             'bg-white':
-                                isActive('/dosen/self') ||
-                                isActive('/dosen/peer'),
+                                isActive('/dosen/assessment/projectsSelf') ||
+                                isActive('/dosen/assessment/projectsPeer'),
                         }"
                         class="w-full text-left px-4 py-2 rounded flex justify-start hover:bg-gray-100"
                     >
@@ -68,7 +68,7 @@
                             <a
                                 @click="goToSelfAssessment"
                                 :class="{
-                                    'bg-gray-200': isActive('/dosen/self'),
+                                    'bg-gray-200': isActive('/dosen/assessment/projectsSelf'),
                                 }"
                                 class="block px-4 py-2 rounded cursor-pointer hover:bg-gray-100 text-sm"
                             >
@@ -83,7 +83,7 @@
                             <a
                                 @click="goToPeerAssessment"
                                 :class="{
-                                    'bg-gray-200': isActive('/dosen/peer'),
+                                    'bg-gray-200': isActive('/dosen/assessment/projectsPeer'),
                                 }"
                                 class="block px-4 py-2 rounded cursor-pointer hover:bg-gray-100 text-sm"
                             >
@@ -264,7 +264,7 @@ export default {
     data() {
         return {
             isAssessmentOpen:
-                this.isActive("/dosen/self") || this.isActive("/dosen/peer") || this.isActive("/dosen/assessment/create"), 
+                this.isActive("/dosen//assessment/projectsSelf") || this.isActive("/dosen//assessment/projectsPeer") || this.isActive("/dosen/assessment/create"), 
             isKelolaProyekOpen: this.isActive("/dosen/kelola-proyek") || this.isActive("/dosen/kelola-kelompok"),
             isKelolaSettingsOpen: this.isActive("/dosen/kelola-mahasiswa") || this.isActive("/dosen/kelola-dosen"),
         };
