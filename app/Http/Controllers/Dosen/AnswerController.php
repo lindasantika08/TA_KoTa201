@@ -177,55 +177,65 @@ class AnswerController extends Controller
         $tahunAjaran = $request->query('tahun_ajaran');
         $namaProyek = $request->query('nama_proyek');
 
-        // Ambil semua user_id yang terdaftar di kelompok untuk tahun ajaran dan nama proyek
+        // 1. Hitung total pertanyaan berdasarkan tahun ajaran, nama proyek, dan tipe 'selfAssessment'
+        $totalQuestions = Assessment::where('tahun_ajaran', $tahunAjaran)
+            ->where('nama_proyek', $namaProyek)
+            ->where('type', 'selfAssessment') // Menambahkan filter untuk tipe 'selfAssessment'
+            ->count();
+
+        if ($totalQuestions == 0) {
+            return response()->json(['message' => 'No self-assessment questions found for the specified year and project.'], 404);
+        }
+
+        // 2. Ambil semua user_id yang terdaftar di kelompok untuk tahun ajaran dan nama proyek
         $usersInKelompok = Kelompok::where('tahun_ajaran', $tahunAjaran)
             ->where('nama_proyek', $namaProyek)
-            ->distinct('user_id') // Pastikan menghitung user_id yang unik
             ->pluck('user_id');
 
-        // Ambil semua user_id yang sudah mengisi jawaban dari tabel Answers
-        $usersAlreadyFilled = Answers::join('kelompok', function ($join) use ($tahunAjaran, $namaProyek) {
-            $join->on('answers.user_id', '=', 'kelompok.user_id')
-                ->where('kelompok.tahun_ajaran', $tahunAjaran)
-                ->where('kelompok.nama_proyek', $namaProyek);
-        })
-            ->distinct('answers.user_id') // Pastikan menghitung user_id yang unik
-            ->pluck('answers.user_id');
-
-        // Menyaring pengguna yang belum mengisi jawaban (unsubmitted)
-        $unsubmittedUsers = $usersInKelompok->diff($usersAlreadyFilled);
-
-        // Mengambil informasi pengguna yang belum mengisi jawaban
-        $unsubmittedUserDetails = User::whereIn('id', $unsubmittedUsers)
-            ->get();
-
-        // Menambahkan status 'unsubmitted' ke pengguna yang belum mengisi
-        $unsubmittedUserDetailsWithStatus = $unsubmittedUserDetails->map(function ($user) {
-            $user->status = 'unsubmitted';  // Menambahkan status unsubmitted
-            return $user;
-        });
-
-        // Mengambil semua jawaban yang sudah ada
-        $answers = Answers::select('answers.*', 'assessment.pertanyaan')
+        // 3. Ambil semua jawaban dari tabel Answers untuk tahun ajaran dan nama proyek yang sama
+        $answers = Answers::whereIn('user_id', $usersInKelompok)
             ->join('assessment', 'answers.question_id', '=', 'assessment.id')
             ->where('assessment.tahun_ajaran', $tahunAjaran)
             ->where('assessment.nama_proyek', $namaProyek)
-            ->with('user')  // Memuat relasi user
+            ->where('assessment.type', 'selfAssessment') // Menambahkan filter untuk tipe 'selfAssessment'
             ->get();
 
-        // Menggabungkan data pengguna yang belum mengisi dengan jawaban yang sudah ada
-        foreach ($unsubmittedUserDetailsWithStatus as $user) {
-            $answers->push((object)[
-                'user' => (object)[
-                    'name' => $user['name'],
-                    'status' => $user['status']
-                ],
-                'pertanyaan' => 'Not Submitted'  // Menambahkan pertanyaan dummy untuk yang belum mengisi
-            ]);
+        // 4. Group jawaban berdasarkan user_id untuk memudahkan pengecekan
+        $userAnswers = $answers->groupBy('user_id');
+
+        $result = [];
+
+        // 5. Tentukan status untuk setiap user berdasarkan jumlah jawaban yang diisi
+        foreach ($usersInKelompok as $userId) {
+            $user = User::find($userId);
+
+            // Ambil jawaban pengguna tersebut
+            $userAnswered = isset($userAnswers[$userId]) ? $userAnswers[$userId] : collect();
+
+            // Mengambil daftar question_id yang telah dijawab oleh pengguna
+            $answeredQuestionIds = $userAnswered->pluck('question_id');
+
+            // Tentukan status berdasarkan jumlah jawaban yang diisi
+            if ($answeredQuestionIds->count() === 0) {
+                $status = 'unsubmitted'; // Belum ada jawaban yang diisi
+            } elseif ($answeredQuestionIds->count() < $totalQuestions) {
+                $status = 'on progress'; // Jumlah jawaban kurang dari total pertanyaan
+            } elseif ($answeredQuestionIds->count() === $totalQuestions) {
+                $status = 'submitted'; // Jumlah jawaban sama dengan total pertanyaan
+            } else {
+                $status = 'unsubmitted';
+            }
+
+            // Menyusun hasil akhir untuk setiap pengguna
+            $result[] = [
+                'user' => $user,
+                'status' => $status,
+                'answers' => $userAnswered,
+            ];
         }
 
-        // Mengembalikan data dalam format JSON
-        return response()->json($answers);
+        // 6. Mengembalikan data dalam format JSON
+        return response()->json($result);
     }
 
 

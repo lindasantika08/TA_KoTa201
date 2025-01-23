@@ -110,7 +110,13 @@ export default {
       }
     });
 
-    return Object.values(userGroups);
+    // Urutkan data berdasarkan status (submitted, on progress, unsubmitted)
+    const sortedAnswers = Object.values(userGroups).sort((a, b) => {
+      const statusOrder = ['submitted', 'on progress', 'unsubmitted'];
+      return statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status);
+    });
+
+    return sortedAnswers;
   }
 }
 };
@@ -160,6 +166,8 @@ export default {
                   'px-2 py-1 rounded-full text-xs font-medium', 
                   item.status === 'unsubmitted' 
                     ? 'bg-red-100 text-red-800' 
+                    : item.status === 'on progress' 
+                    ? 'bg-yellow-100 text-yellow-800' 
                     : item.status === 'submitted' 
                     ? 'bg-green-100 text-green-800'
                     : 'bg-green-100 text-green-800'
@@ -172,8 +180,9 @@ export default {
             <!-- Kolom Detail dengan class 'text-center' untuk menempatkan tombol di tengah -->
             <template #column-detail="{ item }">
               <div class="flex justify-center">
+                <!-- Tombol Detail hanya untuk yang statusnya on progress -->
                 <button 
-                  v-if="item.status === 'submitted'"  
+                v-if="item.status === 'on progress' || item.status === 'submitted'"
                   @click="showDetails(item.userName, tahun_ajaran, nama_proyek)" 
                   class="px-4 py-2 text-white bg-blue-500 rounded-lg hover:bg-blue-700"
                 >
@@ -187,5 +196,7 @@ export default {
     </div>
   </div>
 </template>
+
+
 
 
