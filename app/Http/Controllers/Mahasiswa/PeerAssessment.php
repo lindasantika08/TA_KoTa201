@@ -120,4 +120,25 @@ class PeerAssessment extends Controller
             ], 500);
         }
     }
+
+    public function getExistingPeerAnswers(Request $request) {
+        $validated = $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'peer_id' => 'required|exists:users,id',
+            'question_id' => 'sometimes|exists:assessment,id'
+        ]);
+
+        $query = AnswersPeer::where('user_id', $validated['user_id'])
+            ->where('peer_id', $validated['peer_id']);
+
+        if (isset($validated['question_id'])) {
+            $query->where('question_id', $validated['question_id']);
+        }
+
+        // dd($query);
+
+        $existingAnswers = $query->get();
+
+        return response()->json($existingAnswers);
+    }
 }

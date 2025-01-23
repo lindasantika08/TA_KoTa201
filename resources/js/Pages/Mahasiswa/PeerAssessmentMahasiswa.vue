@@ -22,7 +22,7 @@ export default {
     const page = usePage();
     const tahunAjaran = page.props.tahun_ajaran;
     const proyek = page.props.proyek;
-    
+
     return {
       tahunAjaran,
       proyek
@@ -70,16 +70,16 @@ export default {
     currentQuestion() {
       return this.questions[this.currentQuestionIndex] || null;
     },
-    
+
     allQuestionsAnswered() {
       if (!this.selectedMember || !this.temporaryAnswers[this.selectedMember]) {
         return false;
       }
-      return this.questions.every(q => 
-        this.temporaryAnswers[this.selectedMember][q.id]?.answer &&
-        this.temporaryAnswers[this.selectedMember][q.id]?.score
+      return this.questions.every(q =>
+        this.temporaryAnswers[this.selectedMember][q.id]?.answer !== undefined &&
+        this.temporaryAnswers[this.selectedMember][q.id]?.score !== undefined
       );
-    }
+    },
   },
 
   watch: {
@@ -95,7 +95,7 @@ export default {
         }
       }
     },
-    
+
     questions: {
       immediate: true,
       handler(newVal) {
@@ -139,7 +139,7 @@ export default {
         if (kelompokResponse.data?.length > 0) {
           const userKelompok = kelompokResponse.data[0];
           this.studentInfo.group = userKelompok.kelompok || "";
-          
+
           const filteredKelompok = kelompokResponse.data.filter(item =>
             item.tahun_ajaran === this.tahunAjaran &&
             item.nama_proyek === this.studentInfo.project
@@ -147,7 +147,7 @@ export default {
 
           const answeredPeersResponse = await axios.get("/api/answered-peers");
           const answeredPeerIds = answeredPeersResponse.data || [];
-          
+
           this.kelompok = filteredKelompok.filter(item =>
             item.kelompok === this.studentInfo.group &&
             item.user?.id !== currentUser.id &&
@@ -156,6 +156,8 @@ export default {
         }
 
         await this.loadQuestions();
+        await this.loadExistingAnswers();
+        await this.checkExistingAnswer();
 
       } catch (error) {
         this.error = `Error loading data: ${error.message}`;
@@ -237,6 +239,7 @@ export default {
       if (this.currentQuestionIndex < this.questions.length - 1) {
         this.currentQuestionIndex++;
         this.loadTemporaryAnswer();
+        this.loadExistingAnswers();
       }
     },
 
@@ -245,6 +248,7 @@ export default {
       if (this.currentQuestionIndex > 0) {
         this.currentQuestionIndex--;
         this.loadTemporaryAnswer();
+        this.loadExistingAnswers();
       }
     },
 
@@ -252,7 +256,7 @@ export default {
       if (!this.selectedMember || !this.currentQuestion) return;
 
       try {
-        const response = await axios.get("/api/check-answer-peer", {
+        const response = await axios.get("/api/existing-peer-answers", {
           params: {
             user_id: await this.fetchUserIdByNim(this.studentInfo.nim),
             peer_id: this.selectedMember,
@@ -260,9 +264,17 @@ export default {
           },
         });
 
-        if (response.data.exists) {
-          this.answer = response.data.answer;
-          this.score = response.data.score;
+        console.log('Check Existing Answer Response:', response.data);
+
+        if (response.data && response.data.length > 0) {
+          const existingAnswer = response.data[0];
+          this.answer = existingAnswer.answer || "";
+          this.score = existingAnswer.score || 0;
+
+          this.$nextTick(() => {
+            this.answer = this.answer;
+            this.score = this.score;
+          });
         }
       } catch (error) {
         console.error("Error checking existing answer:", error);
@@ -301,6 +313,46 @@ export default {
         this.showConfirmModal = true;
       } else {
         alert("Mohon jawab semua pertanyaan terlebih dahulu");
+      }
+    },
+    async loadExistingAnswers() {
+      if (!this.selectedMember) return;
+
+      try {
+        const user_id = await this.fetchUserIdByNim(this.studentInfo.nim);
+        if (!user_id) return;
+
+        const response = await axios.get("/api/existing-peer-answers", {
+          params: {
+            user_id: user_id,
+            peer_id: this.selectedMember,
+            question_id: this.currentQuestion.id
+          }
+        });
+
+        console.log('Existing Answer Response:', response.data);
+
+        if (response.data && response.data.length > 0) {
+          const existingAnswer = response.data[0];
+
+          this.answer = existingAnswer.answer || "";
+          this.score = existingAnswer.score || 0;
+
+          if (!this.temporaryAnswers[this.selectedMember]) {
+            this.temporaryAnswers[this.selectedMember] = {};
+          }
+          this.temporaryAnswers[this.selectedMember][this.currentQuestion.id] = {
+            answer: this.answer,
+            score: this.score
+          };
+
+          this.$nextTick(() => {
+            this.answer = this.answer;
+            this.score = this.score;
+          });
+        }
+      } catch (error) {
+        console.error("Error loading existing answers:", error);
       }
     },
 
@@ -387,23 +439,13 @@ export default {
             </div>
 
             <div class="mb-6" v-if="currentQuestionIndex === 0">
-              <label
-                for="select-member"
-                class="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label for="select-member" class="block text-sm font-medium text-gray-700 mb-2">
                 Pilih Teman Kelompok untuk Dinilai
               </label>
-              <select
-                id="select-member"
-                v-model="selectedMember"
-                class="block w-full rounded-md border border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
-              >
+              <select id="select-member" v-model="selectedMember"
+                class="block w-full rounded-md border border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
                 <option disabled value="">-- Pilih Teman Kelompok --</option>
-                <option
-                  v-for="member in kelompok"
-                  :key="member.user.id"
-                  :value="member.user.id"
-                >
+                <option v-for="member in kelompok" :key="member.user.id" :value="member.user.id">
                   {{ member.user.name }}
                 </option>
               </select>
@@ -411,10 +453,7 @@ export default {
 
             <div v-if="error" class="text-center py-8 text-red-600">
               <p>{{ error }}</p>
-              <button
-                @click="initializeData"
-                class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-              >
+              <button @click="initializeData" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
                 Coba Lagi
               </button>
             </div>
@@ -434,27 +473,19 @@ export default {
               </div>
 
               <div class="overflow-x-auto">
-                <table
-                  class="min-w-full border-collapse border border-gray-200"
-                >
+                <table class="min-w-full border-collapse border border-gray-200">
                   <thead>
                     <tr>
-                      <th
-                        v-for="header in headers"
-                        :key="header.key"
-                        class="border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700"
-                      >
+                      <th v-for="header in headers" :key="header.key"
+                        class="border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
                         {{ header.label }}
                       </th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
-                      <td
-                        v-for="header in headers"
-                        :key="header.key"
-                        class="border border-gray-200 px-4 py-2 text-sm text-center"
-                      >
+                      <td v-for="header in headers" :key="header.key"
+                        class="border border-gray-200 px-4 py-2 text-sm text-center">
                         {{ currentQuestion[header.key] }}
                       </td>
                     </tr>
@@ -470,21 +501,12 @@ export default {
                   <div class="slider-container">
                     <div class="track"></div>
                     <div class="points">
-                      <div
-                        class="point"
-                        v-for="scale in [1, 2, 3, 4, 5]"
-                        :key="scale"
-                        @click="setScore(scale)"
-                        :class="{ active: score === scale }"
-                      ></div>
+                      <div class="point" v-for="scale in [1, 2, 3, 4, 5]" :key="scale" @click="setScore(scale)"
+                        :class="{ active: score === scale }"></div>
                     </div>
                   </div>
                   <div class="values">
-                    <span
-                      v-for="scale in [1, 2, 3, 4, 5]"
-                      :key="scale"
-                      class="value"
-                    >
+                    <span v-for="scale in [1, 2, 3, 4, 5]" :key="scale" class="value">
                       {{ scale }}
                     </span>
                   </div>
@@ -493,66 +515,39 @@ export default {
 
               <form @submit.prevent="submitAnswer" class="space-y-4">
                 <div>
-                  <label
-                    for="answer"
-                    class="block text-sm font-medium text-gray-700 mb-2"
-                  >
+                  <label for="answer" class="block text-sm font-medium text-gray-700 mb-2">
                     Jawaban Anda:
                   </label>
-                  <textarea
-                    id="answer"
-                    v-model="answer"
-                    rows="4"
+                  <textarea id="answer" v-model="answer" rows="4"
                     class="block w-full rounded-md border border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
-                    placeholder="Berikan alasan..."
-                    required
-                  ></textarea>
+                    placeholder="Berikan alasan..." required></textarea>
                 </div>
 
                 <div class="flex justify-between items-center pt-4">
-                  <button
-                    type="button"
-                    @click="prevQuestion"
-                    :disabled="currentQuestionIndex === 0"
-                    class="px-4 py-2 bg-yellow-400 text-white rounded hover:bg-blue-600"
-                  >
+                  <button type="button" @click="prevQuestion" :disabled="currentQuestionIndex === 0"
+                    class="px-4 py-2 bg-yellow-400 text-white rounded hover:bg-blue-600">
                     Previous
                   </button>
 
-                  <button
-                    type="submit"
-                    class="px-4 py-2 bg-blue-400 text-white rounded hover:bg-blue-600"
-                  >
+                  <button type="submit" class="px-4 py-2 bg-blue-400 text-white rounded hover:bg-blue-600">
                     Save Answer
                   </button>
 
-                  <button
-                    v-if="currentQuestionIndex === questions.length - 1"
-                    type="button"
-                    @click="showSubmitConfirmation"
-                    :disabled="!allQuestionsAnswered || isSubmitting"
-                    class="px-4 py-2 bg-green-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {{ isSubmitting ? "Mengirim..." : "Kirim" }}
+                  <button v-if="currentQuestionIndex === questions.length - 1" type="button"
+                    @click="showSubmitConfirmation" :disabled="isSubmitting"
+                    class="px-4 py-2 bg-green-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed">
+                    {{ isSubmitting ? "Mengirim..." : "Send" }}
                   </button>
-                  <button
-                    v-else
-                    type="button"
-                    @click="nextQuestion"
+                  <button v-else type="button" @click="nextQuestion"
                     :disabled="currentQuestionIndex === questions.length - 1"
-                    class="px-4 py-2 bg-green-500 text-white rounded hover:bg-blue-600"
-                  >
+                    class="px-4 py-2 bg-green-500 text-white rounded hover:bg-blue-600">
                     Next
                   </button>
                 </div>
 
-                <ConfirmModal
-                  :show="showConfirmModal"
-                  title="Konfirmasi Pengiriman"
+                <ConfirmModal :show="showConfirmModal" title="Konfirmasi Pengiriman"
                   message="Apakah Anda yakin semua jawaban sudah sesuai? Setelah dikirim, jawaban tidak dapat diubah kembali."
-                  @close="showConfirmModal = false"
-                  @confirm="submitAllAnswers"
-                />
+                  @close="showConfirmModal = false" @confirm="submitAllAnswers" />
               </form>
             </div>
 

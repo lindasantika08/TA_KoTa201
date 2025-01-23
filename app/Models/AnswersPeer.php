@@ -11,7 +11,7 @@ class AnswersPeer extends Model
 {
     use HasFactory, HasUuids, SoftDeletes;
 
-    protected $table = 'AnswersPeer';
+    protected $table = 'answersPeer';
 
     protected $fillable = [
         'user_id',

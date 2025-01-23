@@ -88,8 +88,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/get-answer-peer/{questionId}', [PeerAssessment::class, 'getAnswerPeer']);
     Route::get('/answered-peers', [PeerAssessment::class, 'answeredPeers']);
 
-    Route::get('/api/saved-answer-peer', [PeerAssessment::class, 'getSavedAnswer']);
     Route::get('/proyek-self-assessment', [ProjectController::class, 'getDataSelf']);
     Route::get('/proyek-Peer-assessment', [ProjectController::class, 'getDataPeer']);
-   
+    Route::get('/existing-peer-answers', [PeerAssessment::class, 'getExistingPeerAnswers']);
 });
