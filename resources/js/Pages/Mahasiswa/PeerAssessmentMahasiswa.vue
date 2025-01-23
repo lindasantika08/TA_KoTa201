@@ -309,6 +309,7 @@ export default {
     },
 
     showSubmitConfirmation() {
+      this.saveTemporaryAnswer();
       if (this.allQuestionsAnswered) {
         this.showConfirmModal = true;
       } else {
@@ -357,6 +358,7 @@ export default {
     },
 
     async submitAllAnswers() {
+      this.saveTemporaryAnswer();
       try {
         this.isSubmitting = true;
 
@@ -373,6 +375,12 @@ export default {
 
         const answers = this.questions.map(question => {
           const savedAnswer = this.temporaryAnswers[this.selectedMember][question.id];
+
+          if (!savedAnswer.answer.trim()) {
+            alert(`Mohon isi jawaban untuk pertanyaan: ${question.pertanyaan}`);
+            throw new Error("Empty answer found");
+          }
+
           return {
             user_id: user_id,
             peer_id: this.selectedMember,

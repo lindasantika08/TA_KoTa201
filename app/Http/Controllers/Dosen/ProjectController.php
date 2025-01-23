@@ -49,7 +49,6 @@ class ProjectController extends Controller
                 ->whereColumn('project.nama_proyek', 'assessment.nama_proyek')
                 ->where('assessment.type', 'selfAssessment');
         })
-            // Menambahkan kondisi status aktif
             ->get();
 
         return response()->json($projects);
@@ -72,11 +71,9 @@ class ProjectController extends Controller
 
     public function changeStatus(Request $request)
     {
-        // Ambil parameter dari body request
         $tahun_ajaran = $request->tahun_ajaran;
         $nama_proyek = $request->nama_proyek;
 
-        // Cari proyek berdasarkan tahun_ajaran dan nama_proyek
         $project = Project::where('tahun_ajaran', $tahun_ajaran)
             ->where('nama_proyek', $nama_proyek)
             ->first();
@@ -85,7 +82,6 @@ class ProjectController extends Controller
             return response()->json(['error' => 'Project not found'], 404);
         }
 
-        // Validasi status
         $validator = Validator::make($request->all(), [
             'status' => 'required|in:aktif,nonaktif',
         ]);
@@ -94,7 +90,6 @@ class ProjectController extends Controller
             return response()->json(['error' => $validator->errors()], 422);
         }
 
-        // Update status proyek
         $project->status = $request->status;
         $project->save();
 
@@ -104,7 +99,6 @@ class ProjectController extends Controller
         ]);
     }
 
-    // Fungsi untuk menambah proyek
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [

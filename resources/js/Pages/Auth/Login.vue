@@ -94,7 +94,6 @@ export default {
 
 <template>
   <div class="min-h-screen flex">
-    <!-- Left Panel -->
     <div class="w-1/2 bg-sky-100 p-12">
       <h1 class="text-3xl font-bold mb-6">Self and Peer Assessment Project</h1>
       <p class="text-gray-600 leading-relaxed">
@@ -104,7 +103,6 @@ export default {
       </p>
     </div>
 
-    <!-- Right Panel - Login Form -->
     <div class="w-1/2 p-12 flex flex-col justify-center">
       <div class="max-w-md w-full mx-auto">
         <h2 class="text-3xl font-bold mb-2">Log In Account</h2>
@@ -133,13 +131,13 @@ export default {
 
           <div class="flex items-center justify-end">
             <a href="#" class="text-sm text-gray-600 hover:text-gray-900">
-              Lupa Kata Sandi?
+              Forget Password?
             </a>
           </div>
 
           <button type="submit"
             class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-400 hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-            MASUK
+            Login
           </button>
         </form>
       </div>

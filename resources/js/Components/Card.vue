@@ -1,11 +1,6 @@
 <template>
   <div class="w-full bg-white shadow-2xl rounded-lg overflow-hidden">
-    <img 
-      :src="image" 
-      alt="Card Image" 
-      v-if="image" 
-      class="w-full h-full object-cover"
-    />
+    <img :src="image" alt="Card Image" v-if="image" class="w-full h-full object-cover" />
     <div class="p-6">
       <h2 class="text-2xl font-semibold text-gray-800">{{ title }}</h2>
       <p v-if="description" class="text-gray-600 mt-4">{{ description }}</p>
@@ -29,7 +24,7 @@ export default {
     },
     description: {
       type: String,
-      default: '', 
+      default: '',
     },
     image: {
       type: String,

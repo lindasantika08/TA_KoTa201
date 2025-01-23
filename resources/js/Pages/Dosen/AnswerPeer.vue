@@ -17,26 +17,26 @@ export default {
         ConfirmModal
     },
     props: {
-    studentInfo: {
-        type: Object,
-        default: () => ({
-            'nip': '',
-            'name': '',
-            'class': '',
-            'group': '',
-            'project': '',
-            'date': '',
-        })
+        studentInfo: {
+            type: Object,
+            default: () => ({
+                'nip': '',
+                'name': '',
+                'class': '',
+                'group': '',
+                'project': '',
+                'date': '',
+            })
+        },
+        tahunAjaran: {
+            type: String,
+            default: ''
+        },
+        namaProyek: {
+            type: String,
+            default: ''
+        }
     },
-    tahunAjaran: {
-        type: String,
-        default: ''
-    },
-    namaProyek: {
-        type: String,
-        default: ''
-    }
-},
 
     data() {
         return {
@@ -87,46 +87,46 @@ export default {
         },
     },
     async created() {
-    await this.fetchQuestions();
-    await this.fetchStudentsInfo();
-},
+        await this.fetchQuestions();
+        await this.fetchStudentsInfo();
+    },
 
-methods: {
-    async fetchQuestions() {
-    console.log('Fetching questions started');
-    this.loading = true;
-    this.error = null;
+    methods: {
+        async fetchQuestions() {
+            console.log('Fetching questions started');
+            this.loading = true;
+            this.error = null;
 
-    try {
-        console.log('Tahun Ajaran:', this.tahunAjaran);
-        console.log('Nama Proyek:', this.namaProyek);
+            try {
+                console.log('Tahun Ajaran:', this.tahunAjaran);
+                console.log('Nama Proyek:', this.namaProyek);
 
-        const params = {
-            tahun_ajaran: this.tahunAjaran,
-            nama_proyek: this.namaProyek
-        };
+                const params = {
+                    tahun_ajaran: this.tahunAjaran,
+                    nama_proyek: this.namaProyek
+                };
 
-        const response = await axios.get('/api/questions-peerDosen', { params });
+                const response = await axios.get('/api/questions-peerDosen', { params });
 
-        console.log('API Response:', response);
+                console.log('API Response:', response);
 
-        if (response.data && Array.isArray(response.data)) {
-            this.questions = response.data;
-            console.log('Questions loaded:', this.questions.length);
-            this.loading = false;
-        } else {
-            throw new Error('Invalid response format');
-        }
-    } catch (error) {
-        console.error('Error details:', {
-            message: error.message,
-            response: error.response,
-            status: error.response?.status
-        });
-        this.error = `Error loading questions: ${error.message}`;
-        this.loading = false;
-    }
-},
+                if (response.data && Array.isArray(response.data)) {
+                    this.questions = response.data;
+                    console.log('Questions loaded:', this.questions.length);
+                    this.loading = false;
+                } else {
+                    throw new Error('Invalid response format');
+                }
+            } catch (error) {
+                console.error('Error details:', {
+                    message: error.message,
+                    response: error.response,
+                    status: error.response?.status
+                });
+                this.error = `Error loading questions: ${error.message}`;
+                this.loading = false;
+            }
+        },
 
         async fetchStudentsInfo() {
             try {
@@ -137,7 +137,7 @@ methods: {
                     this.studentInfo.project = this.namaProyek;
                 }
             } catch (error) {
-                console.error ('Failed to fetch student info: ', error);
+                console.error('Failed to fetch student info: ', error);
             }
         },
         setScore(value) {
@@ -150,17 +150,17 @@ methods: {
                 console.log('No current question available');
                 return;
             }
-            
+
             if (!this.score) {
                 alert('Silakan pilih nilai terlebih dahulu');
                 return;
             }
-            
+
             console.log('Submitting answer for question:', this.currentQuestion.id);
-            
+
             const payload = {
                 user_id: this.studentInfo.id,
-                peer_id: this.peer_id || null, 
+                peer_id: this.peer_id || null,
                 question_id: this.currentQuestion.id,
                 answer: this.answer,
                 score: this.score,
@@ -173,11 +173,11 @@ methods: {
             axios.post('/api/save-answer-peerDosen', payload)
                 .then((response) => {
                     console.log('Answer saved:', response);
-                    alert(response.data.message); 
+                    alert(response.data.message);
                     if (response.data.message === 'Answer saved successfully') {
                         this.nextQuestion();
-                        this.score = null; 
-                        this.answer = ''; 
+                        this.score = null;
+                        this.answer = '';
                     }
                 })
                 .catch(error => {
@@ -203,14 +203,14 @@ methods: {
         },
         async loadExistingAnswer() {
             if (!this.currentQuestion) return;
-            
+
             const tempAnswer = this.temporaryAnswers[this.currentQuestion.id];
             if (tempAnswer) {
                 this.answer = tempAnswer.answer;
                 this.score = tempAnswer.score;
                 return;
             }
-            
+
             try {
                 const response = await axios.get(`/api/get-answer-peerDosen/${this.currentQuestion.id}`);
                 if (response.data) {
@@ -233,51 +233,51 @@ methods: {
             }
         },
         checkAllAnswered() {
-            this.allAnswered = this.questions.every(question => 
-                this.temporaryAnswers[question.id] || 
+            this.allAnswered = this.questions.every(question =>
+                this.temporaryAnswers[question.id] ||
                 (this.currentQuestion?.id === question.id && this.answer && this.score)
             );
         },
         async handleSubmitAll() {
-        this.saveTemporaryAnswer();
-        
-        if (!this.canSubmitAll) {
-            alert('Mohon jawab semua pertanyaan terlebih dahulu');
-            return;
-        }
-        
-        this.showConfirmModal = true;
-    },
+            this.saveTemporaryAnswer();
 
-    async submitAllAnswers() {
-        try {
-            this.isSubmitting = true;
-            
-            const allAnswers = Object.entries(this.temporaryAnswers).map(([questionId, data]) => ({
-                question_id: questionId,
-                answer: data.answer,
-                score: data.score,
-                status: 'submitted'
-            }));
-
-            const response = await axios.post('/api/save-all-answers-peerDosen', { answers: allAnswers });
-            
-            if (response.data.success) {
-                alert('Semua jawaban berhasil disimpan!');
-                this.temporaryAnswers = {};
-                this.$inertia.visit('/dosen/assessment/projectsPeer');
+            if (!this.canSubmitAll) {
+                alert('Mohon jawab semua pertanyaan terlebih dahulu');
+                return;
             }
-        } catch (error) {
-            console.error('Error submitting answers:', error);
-            alert('Gagal menyimpan jawaban. Silakan coba lagi.');
-        } finally {
-            this.isSubmitting = false;
-            this.showConfirmModal = false;
+
+            this.showConfirmModal = true;
+        },
+
+        async submitAllAnswers() {
+            try {
+                this.isSubmitting = true;
+
+                const allAnswers = Object.entries(this.temporaryAnswers).map(([questionId, data]) => ({
+                    question_id: questionId,
+                    answer: data.answer,
+                    score: data.score,
+                    status: 'submitted'
+                }));
+
+                const response = await axios.post('/api/save-all-answers-peerDosen', { answers: allAnswers });
+
+                if (response.data.success) {
+                    alert('Semua jawaban berhasil disimpan!');
+                    this.temporaryAnswers = {};
+                    this.$inertia.visit('/dosen/assessment/projectsPeer');
+                }
+            } catch (error) {
+                console.error('Error submitting answers:', error);
+                alert('Gagal menyimpan jawaban. Silakan coba lagi.');
+            } finally {
+                this.isSubmitting = false;
+                this.showConfirmModal = false;
+            }
         }
-    }
-        
+
     },
-    
+
 };
 </script>
 
@@ -290,12 +290,8 @@ methods: {
                 <div class="mb-4">
                     <Breadcrumb :items="breadcrumbs" />
                 </div>
-                
-                <Card 
-                    title="FORMULIR PENGISIAN SELF ASSESSMENT"
-                    class="w-full"
-                >
-                    <!-- Student Information -->
+
+                <Card title="FORMULIR PENGISIAN SELF ASSESSMENT" class="w-full">
                     <div class="grid grid-cols-2 gap-6 text-sm leading-6 mb-6">
                         <div>
                             <p><strong>NIP:</strong> {{ studentInfo.nip }}</p>
@@ -303,163 +299,115 @@ methods: {
                             <p><strong>Kelas:</strong> {{ studentInfo.class }}</p>
                         </div>
                         <div>
-                            <!-- <p><strong>Kelompok:</strong> {{ studentInfo.group }}</p> -->
                             <p><strong>Proyek:</strong> {{ studentInfo.project }}</p>
                             <p><strong>Tanggal Pengisian:</strong> {{ studentInfo.date }}</p>
                         </div>
                     </div>
-                    
+
 
                     <Card>
-                    <!-- Loading State -->
-                    <div v-if="loading" class="text-center py-8">
-                        <p>Load Questions...</p>
-                    </div>
-
-                    <!-- Error State -->
-                    <div v-else-if="error" class="text-center py-8 text-red-600">
-                        <p>{{ error }}</p>
-                        <button 
-                            @click="fetchQuestions"
-                            class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                        >
-                            Try Again
-                        </button>
-                    </div>
-
-                    <!-- Questions Display -->
-                    <div v-else-if="currentQuestion" class="space-y-6">
-                        <!-- Question Information -->
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <h3 class="font-semibold text-lg mb-4">
-                                Question {{ currentQuestionIndex + 1 }} dari {{ questions.length }}
-                            </h3>
-                            <p class="mb-2"><strong>Aspek:</strong> {{ currentQuestion.aspek }}</p>
-                            <p><strong>Kriteria:</strong> {{ currentQuestion.kriteria }}</p>
+                        <div v-if="loading" class="text-center py-8">
+                            <p>Load Questions...</p>
                         </div>
 
-                        <!-- Bobot Table -->
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full border-collapse border border-gray-200">
-                                <thead>
-                                    <tr>
-                                        <th v-for="header in headers" 
-                                            :key="header.key"
-                                            class="border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700"
-                                        >
-                                            {{ header.label }}
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td v-for="header in headers" 
-                                            :key="header.key"
-                                            class="border border-gray-200 px-4 py-2 text-sm text-center"
-                                        >
-                                            {{ currentQuestion[header.key] }}
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <div v-else-if="error" class="text-center py-8 text-red-600">
+                            <p>{{ error }}</p>
+                            <button @click="fetchQuestions"
+                                class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                                Try Again
+                            </button>
                         </div>
 
-                        <!-- Question Text -->
-                        <div class="bg-white p-6 rounded-lg shadow-md">
-                            <p class="text-gray-700 mb-4">{{ currentQuestion.pertanyaan }}</p>
-                            <div class="score-container mt-4">
-                                <div class="slider-container">
-                                <div class="track"></div>
-                                <div class="points">
-                                    <div class="point" 
-                                    v-for="scale in [1, 2, 3, 4, 5]" 
-                                    :key="scale"
-                                    @click="setScore(scale)"
-                                    :class="{ active: score === scale }"
-                                    >
+                        <div v-else-if="currentQuestion" class="space-y-6">
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h3 class="font-semibold text-lg mb-4">
+                                    Question {{ currentQuestionIndex + 1 }} dari {{ questions.length }}
+                                </h3>
+                                <p class="mb-2"><strong>Aspek:</strong> {{ currentQuestion.aspek }}</p>
+                                <p><strong>Kriteria:</strong> {{ currentQuestion.kriteria }}</p>
+                            </div>
+
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full border-collapse border border-gray-200">
+                                    <thead>
+                                        <tr>
+                                            <th v-for="header in headers" :key="header.key"
+                                                class="border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
+                                                {{ header.label }}
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td v-for="header in headers" :key="header.key"
+                                                class="border border-gray-200 px-4 py-2 text-sm text-center">
+                                                {{ currentQuestion[header.key] }}
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="bg-white p-6 rounded-lg shadow-md">
+                                <p class="text-gray-700 mb-4">{{ currentQuestion.pertanyaan }}</p>
+                                <div class="score-container mt-4">
+                                    <div class="slider-container">
+                                        <div class="track"></div>
+                                        <div class="points">
+                                            <div class="point" v-for="scale in [1, 2, 3, 4, 5]" :key="scale"
+                                                @click="setScore(scale)" :class="{ active: score === scale }">
+                                            </div>
+                                        </div>
                                     </div>
+                                    <div class="values">
+                                        <span v-for="scale in [1, 2, 3, 4, 5]" :key="scale" class="value">
+                                            {{ scale }}
+                                        </span>
+                                    </div>
+
                                 </div>
-                                </div>
-                                <div class="values">
-                                <span v-for="scale in [1, 2, 3, 4, 5]" 
-                                    :key="scale" 
-                                    class="value"
-                                >
-                                    {{ scale }}
-                                </span>
-                                </div>
-                                <!-- <div class="selected-value" v-if="score">
-                                {{ score }}
-                                </div> -->
                             </div>
+
+                            <form @submit.prevent="submitAnswer" class="space-y-4">
+                                <div>
+                                    <textarea id="answer" v-model="answer" rows="4"
+                                        class="block w-full rounded-md border border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
+                                        placeholder="Berikan alasannya... (Apakah Anda menghadapi kesulitan atau kemudahan dalam mengumpulkan iklan)"
+                                        required></textarea>
+                                </div>
+
+                                <div class="flex justify-between items-center pt-4">
+                                    <button type="button" @click="prevQuestion" :disabled="currentQuestionIndex === 0"
+                                        class="px-4 py-2 bg-yellow-400 text-white rounded hover:bg-blue-600">
+                                        Previous
+                                    </button>
+
+                                    <button type="submit"
+                                        class="px-4 py-2 bg-blue-400 text-white rounded hover:bg-blue-600">
+                                        Save Answer
+                                    </button>
+
+                                    <button v-if="currentQuestionIndex === questions.length - 1" type="button"
+                                        @click="handleSubmitAll" :disabled="!canSubmitAll || isSubmitting"
+                                        class="px-4 py-2 bg-green-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        {{ isSubmitting ? 'Mengirim...' : 'Kirim' }}
+                                    </button>
+                                    <button v-else type="button" @click="nextQuestion"
+                                        :disabled="currentQuestionIndex === questions.length - 1"
+                                        class="px-4 py-2 bg-green-500 text-white rounded hover:bg-blue-600">
+                                        Next
+                                    </button>
+                                </div>
+
+                                <ConfirmModal :show="showConfirmModal" title="Konfirmasi Pengiriman"
+                                    message="Apakah Anda yakin semua jawaban sudah sesuai? Setelah dikirim, jawaban tidak dapat diubah kembali."
+                                    @close="showConfirmModal = false" @confirm="submitAllAnswers" />
+                            </form>
                         </div>
-                        
-                        <!-- Answer Form -->
-                        <form @submit.prevent="submitAnswer" class="space-y-4">
-                            <div>
-                                <textarea
-                                    id="answer"
-                                    v-model="answer"
-                                    rows="4"
-                                    class="block w-full rounded-md border border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
-                                    placeholder="Berikan alasannya... (Apakah Anda menghadapi kesulitan atau kemudahan dalam mengumpulkan iklan)"
-                                    required
-                                ></textarea>
-                            </div>
 
-                            <!-- Replace the Navigation buttons section -->
-                            <div class="flex justify-between items-center pt-4">
-                                <button
-                                    type="button"
-                                    @click="prevQuestion"
-                                    :disabled="currentQuestionIndex === 0"
-                                    class="px-4 py-2 bg-yellow-400 text-white rounded hover:bg-blue-600"
-                                >
-                                    Previous
-                                </button>
-
-                                <button
-                                    type="submit"
-                                    class="px-4 py-2 bg-blue-400 text-white rounded hover:bg-blue-600"
-                                >
-                                    Save Answer
-                                </button>
-
-                                <button
-                                    v-if="currentQuestionIndex === questions.length - 1"
-                                    type="button"
-                                    @click="handleSubmitAll"
-                                    :disabled="!canSubmitAll || isSubmitting"
-                                    class="px-4 py-2 bg-green-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    {{ isSubmitting ? 'Mengirim...' : 'Kirim' }}
-                                </button>
-                                <button
-                                    v-else
-                                    type="button"
-                                    @click="nextQuestion"
-                                    :disabled="currentQuestionIndex === questions.length - 1"
-                                    class="px-4 py-2 bg-green-500 text-white rounded hover:bg-blue-600"
-                                >
-                                    Next
-                                </button>
-                            </div>
-
-                            <!-- Add the confirmation modal -->
-                            <ConfirmModal
-                                :show="showConfirmModal"
-                                title="Konfirmasi Pengiriman"
-                                message="Apakah Anda yakin semua jawaban sudah sesuai? Setelah dikirim, jawaban tidak dapat diubah kembali."
-                                @close="showConfirmModal = false"
-                                @confirm="submitAllAnswers"
-                            />
-                        </form>
-                    </div>
-
-                    <!-- No Questions State -->
-                    <div v-else class="text-center py-8">
-                        <p>Nothing Question.</p>
-                    </div>
+                        <div v-else class="text-center py-8">
+                            <p>Nothing Question.</p>
+                        </div>
                     </Card>
                 </Card>
             </main>
@@ -470,16 +418,19 @@ methods: {
 .score-container {
     margin: 20px 0;
 }
+
 .slider-container {
     position: relative;
     margin: 40px 0;
 }
+
 .track {
     width: 100%;
     height: 4px;
     background: #ddd;
     position: relative;
 }
+
 .points {
     display: flex;
     justify-content: space-between;
@@ -487,6 +438,7 @@ methods: {
     width: 100%;
     top: -8px;
 }
+
 .point {
     width: 20px;
     height: 20px;
@@ -496,24 +448,29 @@ methods: {
     cursor: pointer;
     transition: all 0.3s ease;
 }
+
 .point.active {
     background: #8be1f3;
     transform: scale(1.2);
     border-color: #85ccda;
 }
+
 .point:hover {
     transform: scale(1.1);
 }
+
 .values {
     display: flex;
     justify-content: space-between;
     margin-top: 10px;
 }
+
 .value {
     font-size: 16px;
     color: #666;
     cursor: pointer;
 }
+
 .selected-value {
     text-align: center;
     margin-top: 20px;

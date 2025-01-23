@@ -17,7 +17,6 @@ export default {
     console.log('Items:', this.items)
   },
   methods: {
-    // Mengambil nilai dari kolom yang memiliki struktur lebih dalam (misal: dosen.nama)
     getNestedValue(item, key) {
       return key.split('.').reduce((obj, k) => (obj ? obj[k] : ''), item);
     },
@@ -38,15 +37,8 @@ export default {
       <tbody>
         <tr v-for="(item, index) in items" :key="index">
           <td v-for="header in headers" :key="header.key" class="px-4 py-2 border">
-            <!-- Menggunakan slot untuk custom rendering -->
-            <slot
-              :name="'column-' + header.key"
-              v-bind="{ item, index }"
-              v-if="$slots['column-' + header.key]"
-            />
-            <!-- Default rendering jika tidak ada slot -->
+            <slot :name="'column-' + header.key" v-bind="{ item, index }" v-if="$slots['column-' + header.key]" />
             <template v-else>
-              <!-- Cek apakah kolom memiliki key yang lebih dalam (misal: dosen.nama) -->
               <template v-if="header.key.includes('.')">
                 {{ getNestedValue(item, header.key) }}
               </template>

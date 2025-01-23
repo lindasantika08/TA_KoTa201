@@ -15,8 +15,7 @@ use Inertia\Inertia;
 class AuthController extends Controller
 {
 
-    public function index()
-    {
+    public function index() {
 
         return Inertia::render('Auth/Login');
     }
@@ -49,10 +48,10 @@ class AuthController extends Controller
         ], 401);
     }
 
-    public function logout(Request $request)
-    {
-        // Pastikan sudah ada pengguna yang terautentikasi
-        $request->user()->currentAccessToken()->delete();
+    public function logout(Request $request) {
+
+        $user = $request->user();
+        $user->tokens()->delete();
         return response()->json(['message' => 'Logout Berhasil']);
     }
 }

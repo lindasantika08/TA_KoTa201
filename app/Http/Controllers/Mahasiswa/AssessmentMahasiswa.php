@@ -28,9 +28,8 @@ class AssessmentMahasiswa extends Controller
 
     public function getDataSelf()
     {
-        $userId = Auth::id(); // ID user yang sedang login
+        $userId = Auth::id();
 
-        // Ambil proyek hanya jika user terdaftar di kelompok proyek tersebut
         $projects = Project::whereExists(function ($query) {
             $query->from('assessment')
                 ->whereColumn('project.tahun_ajaran', 'assessment.tahun_ajaran')
@@ -41,7 +40,7 @@ class AssessmentMahasiswa extends Controller
                 $query->from('kelompok')
                     ->whereColumn('project.tahun_ajaran', 'kelompok.tahun_ajaran')
                     ->whereColumn('project.nama_proyek', 'kelompok.nama_proyek')
-                    ->where('kelompok.user_id', $userId); // Cek user_id di tabel kelompok
+                    ->where('kelompok.user_id', $userId);
             })
 
             ->get();
@@ -51,9 +50,8 @@ class AssessmentMahasiswa extends Controller
 
     public function getDataPeer()
     {
-        $userId = Auth::id(); // ID user yang sedang login
+        $userId = Auth::id();
 
-        // Ambil proyek hanya jika user terdaftar di kelompok proyek tersebut
         $projects = Project::whereExists(function ($query) {
             $query->from('assessment')
                 ->whereColumn('project.tahun_ajaran', 'assessment.tahun_ajaran')
@@ -64,7 +62,7 @@ class AssessmentMahasiswa extends Controller
                 $query->from('kelompok')
                     ->whereColumn('project.tahun_ajaran', 'kelompok.tahun_ajaran')
                     ->whereColumn('project.nama_proyek', 'kelompok.nama_proyek')
-                    ->where('kelompok.user_id', $userId); // Cek user_id di tabel kelompok
+                    ->where('kelompok.user_id', $userId);
             })
 
             ->get();
@@ -91,34 +89,28 @@ class AssessmentMahasiswa extends Controller
             'proyek' => $proyek
         ]);
 
-        // Get total number of peer assessment questions
         $totalQuestions = Assessment::where('tahun_ajaran', $tahunAjaran)
             ->where('nama_proyek', $proyek)
             ->where('type', 'peerAssessment')
             ->count();
 
-        // Get the user's group
         $userGroup = Kelompok::where('user_id', $userId)
             ->where('tahun_ajaran', $tahunAjaran)
             ->where('nama_proyek', $proyek)
             ->value('kelompok');
 
-        // Query group members
         $kelompok = Kelompok::with('user')
             ->where('kelompok', $userGroup)
             ->where('tahun_ajaran', $tahunAjaran)
             ->where('nama_proyek', $proyek)
-            ->where('user_id', '!=', $userId) // Exclude current user
+            ->where('user_id', '!=', $userId)
             ->get();
 
-        // Filter out members who have completed all peer assessments
         $filteredKelompok = $kelompok->filter(function ($member) use ($userId, $totalQuestions) {
-            // Count completed answers for this peer
             $completedAnswers = AnswersPeer::where('user_id', $userId)
                 ->where('peer_id', $member->user_id)
                 ->count();
 
-            // Keep member only if they haven't been fully assessed
             return $completedAnswers < $totalQuestions;
         });
 
@@ -142,7 +134,7 @@ class AssessmentMahasiswa extends Controller
     public function searchByNim(Request $request)
     {
         $nim = $request->query('nim');
-        $user = User::where('nim', $nim)->first(); // Cari berdasarkan nim
+        $user = User::where('nim', $nim)->first();
 
         if ($user) {
             return response()->json(['user_id' => $user->id]);

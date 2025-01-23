@@ -19,7 +19,7 @@ export default {
     Dropdown,
   },
   props: {
-    kelompok: Array, // Data kelompok yang sudah diolah di controller
+    kelompok: Array,
   },
   data() {
     return {
@@ -34,15 +34,15 @@ export default {
         { label: "Anggota Kelompok", key: "anggota" },
         { label: "Aksi", key: "aksi" },
       ],
-      projects: [], // Data project dari /project-dropdown
-      selectedProject: "", // Pilihan dropdown
-      filteredKelompok: [], // Data kelompok yang sudah difilter
+      projects: [],
+      selectedProject: "",
+      filteredKelompok: [],
     };
   },
   mounted() {
     console.log("Data Kelompok:", this.kelompok);
     this.fetchProjects();
-    this.filteredKelompok = this.kelompok; // Default tampilkan semua data kelompok
+    this.filteredKelompok = this.kelompok;
   },
   methods: {
     async fetchProjects() {
@@ -55,7 +55,7 @@ export default {
     },
     applyFilter() {
       if (!this.selectedProject) {
-        this.filteredKelompok = this.kelompok; // Reset ke data awal
+        this.filteredKelompok = this.kelompok;
         return;
       }
 
@@ -71,12 +71,11 @@ export default {
       this.$inertia.get(route("DetailKelompok", { id: kelompokId }));
     },
     createKelompok(url) {
-      router.visit("/dosen/kelola-kelompok/create"); // Menggunakan Inertia.js untuk navigasi
+      router.visit("/dosen/kelola-kelompok/create");
     },
     goToProfile(user_id) {
-    // Arahkan ke halaman profile mahasiswa dengan user_id
-    router.visit(`/dosen/kelola-kelompok/profile-mhs?user_id=${user_id}`);
-  }
+      router.visit(`/dosen/kelola-kelompok/profile-mhs?user_id=${user_id}`);
+    }
   },
 };
 </script>
@@ -92,13 +91,10 @@ export default {
           <Breadcrumb :items="breadcrumbs" />
         </div>
         <Card title="Kelola Kelompok">
-          <!-- Container untuk Dropdown dan Button Create -->
           <div class="flex justify-between mb-4 items-center">
-            <!-- Label "Daftar Kelompok" (Posisi Kanan) -->
             <div class="ml-4">
               <span class="text-lg font-semibold text-black">Daftar Kelompok</span>
             </div>
-            <!-- Dropdown Filter (Posisi Kiri) -->
             <div class="flex-1 max-w-xs">
               <select id="projectDropdown" v-model="selectedProject"
                 class="py-2 px-2 border border-gray-300 rounded w-full" @change="applyFilter">
@@ -113,13 +109,10 @@ export default {
 
           </div>
 
-          <!-- Data Table -->
           <DataTable :headers="headers" :items="filteredKelompok">
-            <!-- Slot untuk Anggota Kelompok -->
             <template v-slot:column-anggota="{ item }">
               <ul>
                 <li v-for="(anggota, index) in item.anggota" :key="index">
-                  <!-- Klik nama anggota untuk pergi ke profile mahasiswa -->
                   <a href="#" @click.prevent="goToProfile(anggota.user_id)" class="text-blue-900 hover:underline">
                     - {{ anggota.name }}
                   </a>
@@ -127,7 +120,6 @@ export default {
               </ul>
             </template>
 
-            <!-- Slot untuk Kolom Aksi -->
             <template v-slot:column-aksi="{ item }">
               <button @click="showDetail(item.id)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
                 Detail

@@ -34,8 +34,8 @@ export default {
     this.tahun_ajaran = query.get("tahun_ajaran");
     this.nama_proyek = query.get("nama_proyek");
 
-    console.log("tahun_ajaran:", this.tahun_ajaran); // Debug
-    console.log("nama_proyek:", this.nama_proyek); // Debug
+    console.log("tahun_ajaran:", this.tahun_ajaran);
+    console.log("nama_proyek:", this.nama_proyek);
 
     if (this.tahun_ajaran && this.nama_proyek) {
       this.fetchAnswers();
@@ -55,10 +55,10 @@ export default {
         .then((response) => {
           if (response.data.success && Array.isArray(response.data.data)) {
             this.answers = response.data.data.map((item) => ({
-              kelompok: item.nama_kelompok, // Nama kelompok
-              jumlah_user: `${item.total_filled}/${item.total_mahasiswa}`, // Format jumlah user
-              user_ids: item.user_ids, // Menyimpan daftar user_id
-              id: item.user_id, // User ID untuk navigasi
+              kelompok: item.nama_kelompok,
+              jumlah_user: `${item.total_filled}/${item.total_mahasiswa}`,
+              user_ids: item.user_ids,
+              id: item.user_id,
             }));
           } else {
             console.error(
@@ -73,11 +73,11 @@ export default {
 
     handleDetail(item) {
       router.get("/dosen/answers-peer-assessment", {
-        tahun_ajaran: this.tahun_ajaran, // Sertakan tahun_ajaran
-        nama_proyek: this.nama_proyek, // Sertakan nama_proyek
+        tahun_ajaran: this.tahun_ajaran,
+        nama_proyek: this.nama_proyek,
         kelompok: item.kelompok,
         user_ids: item.user_ids,
-        id: item.id, // Jika ID juga diperlukan
+        id: item.id,
       });
     },
   },
@@ -86,44 +86,34 @@ export default {
 
 <template>
   <div class="flex min-h-screen">
-    <!-- Sidebar -->
     <Sidebar role="dosen" />
 
     <div class="flex-1">
-      <!-- Navbar -->
       <Navbar userName="dosen" />
 
       <main class="p-6">
-        <!-- Breadcrumb -->
         <div class="mb-4">
           <Breadcrumb :items="breadcrumbs" />
         </div>
 
-        <!-- Title -->
         <div class="mb-6">
           <h1 class="text-xl font-semibold">Answers Peer Assessment</h1>
         </div>
 
-        <!-- Menampilkan Tahun Ajaran, Nama Proyek, dan Kelompok -->
-        <div class="mb-6 text-sm"> <!-- Menambahkan kelas text-sm untuk memperkecil font -->
+        <div class="mb-6 text-sm">
           <p><strong>Tahun Ajaran </strong> : {{ tahun_ajaran }}</p>
           <p><strong>Nama Proyek </strong> : {{ nama_proyek }}</p>
         </div>
 
-        <!-- Tampilkan Pesan Jika Kosong -->
         <div v-if="answers.length === 0" class="text-center text-gray-500 py-6">
           Belum ada jawaban
         </div>
 
-        <!-- DataTable -->
         <div v-else>
           <DataTable :headers="headers" :items="answers" class="mt-10">
-            <!-- Kolom Actions -->
             <template #column-actions="{ item }">
-              <button
-                @click="handleDetail(item)"
-                class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              >
+              <button @click="handleDetail(item)"
+                class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                 Detail
               </button>
             </template>
@@ -133,4 +123,3 @@ export default {
     </div>
   </div>
 </template>
-  

@@ -26,28 +26,23 @@ export default {
   },
   methods: {
     inputMahasiswa(url) {
-      router.visit("/dosen/kelola-mahasiswa/input"); // Menggunakan Inertia.js untuk navigasi
+      router.visit("/dosen/kelola-mahasiswa/input");
     },
   },
 };
 </script>
 
 <template>
-  <!-- Wrapper with Flexbox Layout -->
   <div class="flex min-h-screen">
-    <!-- Sidebar -->
     <Sidebar role="dosen" />
 
-    <!-- Main Content Area -->
     <div class="flex-1 ">
-      <!-- Navbar -->
       <Navbar userName="Dosen" />
       <main class="p-6">
         <div class="mb-4">
           <Breadcrumb :items="breadcrumbs" />
         </div>
         <Card title="Kelola Mahasiswa">
-          <!-- You can leave the actions section here if you want, or remove it as well -->
           <template #actions>
 
           </template>
@@ -64,5 +59,4 @@ export default {
 
 
 <style scoped>
-/* Optional: Add custom styles here */
 </style>

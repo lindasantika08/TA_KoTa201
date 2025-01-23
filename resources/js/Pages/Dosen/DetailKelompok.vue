@@ -11,7 +11,7 @@ export default {
     Card,
   },
   props: {
-    kelompok: Object, // Properti untuk menerima data kelompok
+    kelompok: Object,
   },
 };
 </script>
@@ -38,6 +38,4 @@ export default {
   </div>
 </template>
 
-<style scoped>
-/* Tambahkan styling jika perlu */
-</style>
+<style scoped></style>

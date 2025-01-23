@@ -5,12 +5,12 @@ namespace App\Http\Controllers\Dosen;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use App\Models\Project;  // Model untuk mengambil data proyek
-use App\Models\Kelompok; // Model untuk tabel kelompok
+use App\Models\Project; 
+use App\Models\Kelompok;
 use App\Models\User;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Imports\KelompokImport; // Untuk import data Excel
-use App\Exports\KelompokExport; // Untuk export template
+use App\Imports\KelompokImport; 
+use App\Exports\KelompokExport;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Illuminate\Support\Facades\Log;
 
@@ -23,11 +23,10 @@ class KelolaKelompokController extends Controller
         Log::info('Data Kelompok yang Dikirim:', ['kelompok' => $kelompokData]);
 
 
-        // Transformasi data
         $kelompok = $kelompokData
             ->groupBy(function ($item) {
                 return $item->tahun_ajaran . '-' . $item->kelompok;
-            }) // Mengelompokkan data berdasarkan kombinasi tahun ajaran dan nama kelompok
+            })
             ->map(function ($items) {
                 $first = $items->first();
                 return [
@@ -35,17 +34,17 @@ class KelolaKelompokController extends Controller
                     'tahun_ajaran' => $first->tahun_ajaran,
                     'nama_proyek' => $first->nama_proyek,
                     'kelompok' => $first->kelompok,
-                    'dosen' => $first->dosen->name ?? '-', // Nama dosen
+                    'dosen' => $first->dosen->name ?? '-',
                     'anggota' => $items->map(function ($item) {
                     return [
                         'name' => $item->user->name,
-                        'user_id' => $item->user->id // Ambil user_id
+                        'user_id' => $item->user->id 
                     ];
                 })->unique('user_id')->toArray(), 
                 ];
             })
-            ->sortBy('kelompok') // Urutkan kelompok dari kecil ke besar
-            ->values(); // Reset index agar menjadi array numerik
+            ->sortBy('kelompok')
+            ->values();
 
         return Inertia::render('Dosen/KelolaKelompok', [
             'kelompok' => $kelompok,

@@ -1,61 +1,3 @@
-<template>
-  <div class="flex min-h-screen">
-    <Sidebar role="dosen" />
-    <div class="flex-1">
-      <Navbar userName="dosen" />
-      <main class="p-6">
-        <div class="mb-4">
-          <Breadcrumb :items="breadcrumbs" />
-        </div>
-
-        <Card
-          title="DAFTAR PROYEK PEER ASSESSMENT"
-          description=""
-          class="w-full"
-        >
-          <!-- Cek apakah items kosong -->
-          <div v-if="items.length === 0" class="text-center text-gray-500 py-6">
-            Belum ada assessment
-          </div>
-          <div v-else>
-            <DataTable :headers="headers" :items="items" class="mt-10">
-              <template #column-actions="{ item }">
-                <button
-                  @click="handleDetail(item)"
-                  class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                >
-                  <font-awesome-icon icon="fa-solid fa-eye" class="mr-2" />
-                  Detail
-                </button>
-                <button
-                  @click="handleListAnswer(item)"
-                  class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ml-2"
-                >
-                  <font-awesome-icon icon="fa-solid fa-file" class="mr-2" />
-                  List Answer
-                </button>
-              </template>
-
-              <template #column-status="{ item }">
-                <span
-                  :class="[ 
-                    'px-2 py-1 rounded-full text-xs font-medium', 
-                    item.status === 'aktif' 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-red-100 text-red-800'
-                  ]"
-                >
-                  {{ item.status }}
-                </span>
-              </template>
-            </DataTable>
-          </div>
-        </Card>
-      </main>
-    </div>
-  </div>
-</template>
-
 <script>
 import axios from "axios";
 import DataTable from "@/Components/DataTable.vue";
@@ -104,14 +46,13 @@ export default {
       );
     },
     handleListAnswer(item) {
-    // Pindah halaman dengan mengirimkan tahun_ajaran dan nama_proyek sebagai query params
-    router.get('/dosen/answer-list-peer ', {
-      tahun_ajaran: item.tahun_ajaran,
-      nama_proyek: item.nama_proyek
-    }, {
-      preserveState: true
-    });
-  }
+      router.get('/dosen/answer-list-peer ', {
+        tahun_ajaran: item.tahun_ajaran,
+        nama_proyek: item.nama_proyek
+      }, {
+        preserveState: true
+      });
+    }
   },
   mounted() {
     axios
@@ -131,3 +72,50 @@ export default {
   },
 };
 </script>
+
+<template>
+  <div class="flex min-h-screen">
+    <Sidebar role="dosen" />
+    <div class="flex-1">
+      <Navbar userName="dosen" />
+      <main class="p-6">
+        <div class="mb-4">
+          <Breadcrumb :items="breadcrumbs" />
+        </div>
+
+        <Card title="DAFTAR PROYEK PEER ASSESSMENT" description="" class="w-full">
+          <div v-if="items.length === 0" class="text-center text-gray-500 py-6">
+            Belum ada assessment
+          </div>
+          <div v-else>
+            <DataTable :headers="headers" :items="items" class="mt-10">
+              <template #column-actions="{ item }">
+                <button @click="handleDetail(item)"
+                  class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                  <font-awesome-icon icon="fa-solid fa-eye" class="mr-2" />
+                  Detail
+                </button>
+                <button @click="handleListAnswer(item)"
+                  class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ml-2">
+                  <font-awesome-icon icon="fa-solid fa-file" class="mr-2" />
+                  List Answer
+                </button>
+              </template>
+
+              <template #column-status="{ item }">
+                <span :class="[
+                  'px-2 py-1 rounded-full text-xs font-medium',
+                  item.status === 'aktif'
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-red-100 text-red-800'
+                ]">
+                  {{ item.status }}
+                </span>
+              </template>
+            </DataTable>
+          </div>
+        </Card>
+      </main>
+    </div>
+  </div>
+</template>

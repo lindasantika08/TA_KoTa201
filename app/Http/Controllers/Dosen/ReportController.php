@@ -12,8 +12,5 @@ class ReportController extends Controller
     {
         return Inertia::render('Dosen/Report');
     }
-
     
-
-   
 }

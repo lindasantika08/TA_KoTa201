@@ -37,13 +37,10 @@ class KelolaProyekController extends Controller
     public function getProjects()
     {
         try {
-            // Mengambil semua data proyek
             $projects = Project::all();
 
-            // Mengembalikan response dengan data proyek
             return response()->json($projects);
         } catch (\Exception $e) {
-            // Menangani jika ada error dalam proses pengambilan data
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }

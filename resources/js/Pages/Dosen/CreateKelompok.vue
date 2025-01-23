@@ -1,53 +1,3 @@
-<template>
-  <div class="flex min-h-screen">
-    <Sidebar role="dosen" />
-
-    <div class="flex-1">
-      <Navbar userName="Dosen" />
-      <main class="p-6">
-        <div class="mb-4">
-          <Breadcrumb :items="breadcrumbs" />
-        </div>
-        <Card title="Buat Kelompok Mahasiswa">
-          <template #actions>
-            <!-- Dropdown untuk memilih Tahun Ajaran dan Nama Proyek (Untuk Export) -->
-            <div class="mt-4">
-              <label for="project-select" class="block text-sm font-medium text-gray-700">
-                Pilih Tahun Ajaran dan Nama Proyek
-              </label>
-              <select id="project-select" v-model="selectedProject"
-                class="mt-2 p-2 border border-gray-300 rounded w-full" required>
-                <option value="" disabled selected>Pilih Proyek</option>
-                <option v-for="project in projects" :key="`${project.tahun_ajaran}-${project.nama_proyek}`"
-                  :value="project">
-                  {{ project.tahun_ajaran }} - {{ project.nama_proyek }}
-                </option>
-              </select>
-            </div>
-
-            <!-- Tombol untuk mendownload template -->
-            <div class="mt-4">
-              <button @click="downloadTemplate" class="px-4 py-2 mt-2 bg-blue-500 text-white rounded"
-                :disabled="!selectedProject.tahun_ajaran || !selectedProject.nama_proyek">
-                Download Template Kelompok
-              </button>
-            </div>
-
-            <!-- Import Data Excel -->
-            <div class="mt-4">
-              <label for="file-upload" class="block text-sm font-medium text-gray-700">
-                Import Data Excel (File .xlsx/.xls)
-              </label>
-              <input type="file" id="file-upload" accept=".xlsx, .xls" @change="handleFileUpload"
-                class="mt-2 p-2 border border-gray-300 rounded" />
-            </div>
-          </template>
-        </Card>
-      </main>
-    </div>
-  </div>
-</template>
-
 <script>
 import { ref, onMounted } from "vue";
 import axios from "axios";
@@ -72,10 +22,9 @@ export default {
     };
   },
   setup() {
-    const projects = ref([]); // Menyimpan daftar proyek
-    const selectedProject = ref({ tahun_ajaran: "", nama_proyek: "" }); // Menyimpan pilihan proyek
+    const projects = ref([]);
+    const selectedProject = ref({ tahun_ajaran: "", nama_proyek: "" });
 
-    // Fungsi untuk mendownload template kelompok
     const downloadTemplate = async () => {
       if (!selectedProject.value.tahun_ajaran || !selectedProject.value.nama_proyek) {
         alert("Pilih Tahun Ajaran dan Nama Proyek terlebih dahulu.");
@@ -117,7 +66,6 @@ export default {
       }
     };
 
-    // Fungsi untuk menghandle upload file Excel
     const handleFileUpload = async (event) => {
       const formData = new FormData();
       formData.append("file", event.target.files[0]);
@@ -137,11 +85,10 @@ export default {
       }
     };
 
-    // Mengambil data proyek saat komponen dipasang
     onMounted(async () => {
       try {
         const response = await axios.get("/api/projects");
-        projects.value = response.data; // Menyimpan daftar proyek
+        projects.value = response.data;
       } catch (error) {
         console.error("Error fetching projects:", error);
       }
@@ -156,3 +103,50 @@ export default {
   },
 };
 </script>
+
+<template>
+  <div class="flex min-h-screen">
+    <Sidebar role="dosen" />
+
+    <div class="flex-1">
+      <Navbar userName="Dosen" />
+      <main class="p-6">
+        <div class="mb-4">
+          <Breadcrumb :items="breadcrumbs" />
+        </div>
+        <Card title="Buat Kelompok Mahasiswa">
+          <template #actions>
+            <div class="mt-4">
+              <label for="project-select" class="block text-sm font-medium text-gray-700">
+                Pilih Tahun Ajaran dan Nama Proyek
+              </label>
+              <select id="project-select" v-model="selectedProject"
+                class="mt-2 p-2 border border-gray-300 rounded w-full" required>
+                <option value="" disabled selected>Pilih Proyek</option>
+                <option v-for="project in projects" :key="`${project.tahun_ajaran}-${project.nama_proyek}`"
+                  :value="project">
+                  {{ project.tahun_ajaran }} - {{ project.nama_proyek }}
+                </option>
+              </select>
+            </div>
+
+            <div class="mt-4">
+              <button @click="downloadTemplate" class="px-4 py-2 mt-2 bg-blue-500 text-white rounded"
+                :disabled="!selectedProject.tahun_ajaran || !selectedProject.nama_proyek">
+                Download Template Kelompok
+              </button>
+            </div>
+
+            <div class="mt-4">
+              <label for="file-upload" class="block text-sm font-medium text-gray-700">
+                Import Data Excel (File .xlsx/.xls)
+              </label>
+              <input type="file" id="file-upload" accept=".xlsx, .xls" @change="handleFileUpload"
+                class="mt-2 p-2 border border-gray-300 rounded" />
+            </div>
+          </template>
+        </Card>
+      </main>
+    </div>
+  </div>
+</template>

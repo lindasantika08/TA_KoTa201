@@ -33,7 +33,6 @@ export default{
       items : [],
   }
 },
-//method
 methods: {
   handleDetail(item){
     router.get('/dosen/assessment/data-with-bobot-self', {
@@ -44,7 +43,6 @@ methods: {
     });
   },
   handleListAnswer(item) {
-    // Pindah halaman dengan mengirimkan tahun_ajaran dan nama_proyek sebagai query params
     router.get('/dosen/answers-self-assessment', {
       tahun_ajaran: item.tahun_ajaran,
       nama_proyek: item.nama_proyek
@@ -63,7 +61,6 @@ mounted() {
             nama_proyek: item.nama_proyek,
             status: item.status,
             tanggal: dayjs(item.created_at).format('DD MMMM YYYY HH:mm'),
-            // Tidak perlu mengatur actions di sini karena kita akan menggunakan slot
         }));
     })
     .catch(error => {
@@ -88,7 +85,6 @@ mounted() {
           description=""
           class="w-full"
         >
-          <!-- Cek apakah items kosong -->
           <div v-if="items.length === 0" class="text-center text-gray-500 py-6">
             Belum ada assessment
           </div>

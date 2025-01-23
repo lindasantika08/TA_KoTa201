@@ -135,8 +135,6 @@ class PeerAssessment extends Controller
             $query->where('question_id', $validated['question_id']);
         }
 
-        // dd($query);
-
         $existingAnswers = $query->get();
 
         return response()->json($existingAnswers);

@@ -34,27 +34,21 @@ class AssessmentController extends Controller
 
     public function exportExcel(Request $request)
     {
-        // Ambil pilihan tahun_ajaran dan nama_proyek
         $tahunAjaran = $request->input('tahun_ajaran');
         $namaProyek = $request->input('nama_proyek');
 
-        // Validasi input
         $request->validate([
             'tahun_ajaran' => 'required|string',
             'nama_proyek' => 'required|string',
         ]);
 
-        // Cek apakah ada data di assessment dengan tahun_ajaran dan nama_proyek
         $assessments = Assessment::where('tahun_ajaran', $tahunAjaran)
             ->where('nama_proyek', $namaProyek)
             ->get();
 
-        // Kirim data ke AssessmentExport
         if ($assessments->isEmpty()) {
-            // Tidak ada data, kirim template kosong
             return Excel::download(new AssessmentExport($tahunAjaran, $namaProyek), 'template-assessment.xlsx');
         } else {
-            // Ada data, kirim template dengan data
             return Excel::download(new AssessmentExport($tahunAjaran, $namaProyek), 'template-assessment.xlsx');
         }
     }
@@ -71,7 +65,6 @@ class AssessmentController extends Controller
 
             $spreadsheet = IOFactory::load($request->file('file'));
 
-            // Process Sheet 1 (Assessment)
             $sheet1 = $spreadsheet->getSheet(0);
             $assessmentData = [];
             foreach ($sheet1->getRowIterator(2) as $row) {
@@ -79,10 +72,10 @@ class AssessmentController extends Controller
                 $cellIterator->setIterateOnlyExistingCells(false);
                 $rowData = [];
                 foreach ($cellIterator as $cell) {
-                    $rowData[] = $cell->getValue();  // Changed from getFormattedValue()
+                    $rowData[] = $cell->getValue();
                 }
 
-                if (!empty($rowData[1])) {  // Check if row has data
+                if (!empty($rowData[1])) {
                     $assessmentData[] = [
                         'tahun_ajaran' => trim($rowData[1]),
                         'nama_proyek' => trim($rowData[2]),
@@ -94,7 +87,6 @@ class AssessmentController extends Controller
                 }
             }
 
-            // Process Sheet 2 (Type Criteria)
             $sheet2 = $spreadsheet->getSheet(1);
             $typeCriteriaData = [];
             foreach ($sheet2->getRowIterator(3) as $row) {
@@ -102,10 +94,10 @@ class AssessmentController extends Controller
                 $cellIterator->setIterateOnlyExistingCells(false);
                 $rowData = [];
                 foreach ($cellIterator as $cell) {
-                    $rowData[] = $cell->getValue();  // Changed from getFormattedValue()
+                    $rowData[] = $cell->getValue();
                 }
 
-                if (!empty($rowData[1])) {  // Check if row has data
+                if (!empty($rowData[1])) {
                     $typeCriteriaData[] = [
                         'aspek' => trim($rowData[1]),
                         'kriteria' => trim($rowData[2]),
@@ -118,7 +110,6 @@ class AssessmentController extends Controller
                 }
             }
 
-            // Save Type Criteria
             foreach ($typeCriteriaData as $row) {
                 \App\Models\type_criteria::updateOrCreate(
                     ['aspek' => $row['aspek'], 'kriteria' => $row['kriteria']],
@@ -126,7 +117,6 @@ class AssessmentController extends Controller
                 );
             }
 
-            // Save Assessment
             foreach ($assessmentData as $row) {
                 \App\Models\Assessment::updateOrCreate(
                     [
@@ -143,15 +133,15 @@ class AssessmentController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Import Error: ' . $e->getMessage());
-            throw $e;  // Let Laravel handle the error response
+            throw $e;
         }
     }
 
 
     public function getData()
     {
-        $assessments = Assessment::all(); // Ambil semua data assessment
-        return response()->json($assessments); // Kembalikan sebagai response JSON
+        $assessments = Assessment::all(); 
+        return response()->json($assessments); 
     }
 
     public function getAssessmentsWithBobotSelf(Request $request)
@@ -159,7 +149,6 @@ class AssessmentController extends Controller
         $tahunAjaran = $request->query('tahun_ajaran');
         $namaProyek = $request->query('nama_proyek');
 
-        // Menggunakan join untuk mengambil data dari tabel assessment dan type_criteria
         $assessments = Assessment::join('type_criteria', function ($join) {
             $join->on('assessment.aspek', '=', 'type_criteria.aspek')
                 ->on('assessment.kriteria', '=', 'type_criteria.kriteria');
@@ -197,7 +186,6 @@ class AssessmentController extends Controller
         $tahunAjaran = $request->query('tahun_ajaran');
         $namaProyek = $request->query('nama_proyek');
 
-        // Menggunakan join untuk mengambil data dari tabel assessment dan type_criteria
         $assessments = Assessment::join('type_criteria', function ($join) {
             $join->on('assessment.aspek', '=', 'type_criteria.aspek')
                 ->on('assessment.kriteria', '=', 'type_criteria.kriteria');
@@ -233,7 +221,6 @@ class AssessmentController extends Controller
 
     public function CreteProyek()
     {
-        // Ambil data tahun ajaran dan nama proyek dari database
         $tahunAjaranList = Assessment::distinct()->pluck('tahun_ajaran');
         $namaProyekList = Assessment::distinct()->pluck('nama_proyek');
 

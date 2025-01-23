@@ -12,7 +12,7 @@ export default {
   components: {
     DataTable,
     Navbar,
-    Card, 
+    Card,
     SidebarMahasiswa,
     Breadcrumb
   },
@@ -38,7 +38,6 @@ export default {
       console.log('Tahun Ajaran:', item.tahun_ajaran);
       console.log('Proyek:', item.proyek);
 
-      // Menggunakan router.get untuk mengirim data sebagai query parameters
       router.get('/mahasiswa/assessment/peer-assessment', {
         tahun_ajaran: item.tahun_ajaran,
         proyek: item.proyek
@@ -61,19 +60,19 @@ export default {
   },
   mounted() {
     axios.get('/api/peer-assessment')
-    .then(response => {
+      .then(response => {
         this.items = response.data.map((item, index) => ({
-            id: item.id,
-            no: index + 1,
-            tahun_ajaran: item.tahun_ajaran,
-            proyek: item.nama_proyek,
-            status: item.status,
-            tanggal: dayjs(item.created_at).format('DD MMMM YYYY HH:mm'),
+          id: item.id,
+          no: index + 1,
+          tahun_ajaran: item.tahun_ajaran,
+          proyek: item.nama_proyek,
+          status: item.status,
+          tanggal: dayjs(item.created_at).format('DD MMMM YYYY HH:mm'),
         }));
-    })
-    .catch(error => {
+      })
+      .catch(error => {
         console.error('There something when reach data:', error);
-    });
+      });
   }
 }
 </script>
@@ -87,33 +86,18 @@ export default {
         <div class="mb-4">
           <Breadcrumb :items="breadcrumbs" />
         </div>
-        
-        <Card 
-          title="DAFTAR HASIL PENGISIAN PEER ASSESSMENT"
-          description=""
-          class="w-full"
-        >
-          <DataTable 
-            :headers="headers"
-            :items="items"
-            class="mt-10"
-          >
+
+        <Card title="DAFTAR HASIL PENGISIAN PEER ASSESSMENT" description="" class="w-full">
+          <DataTable :headers="headers" :items="items" class="mt-10">
             <template #column-actions="{ item }">
               <div class="flex justify-center space-x-2">
-                <!-- Tampilkan tombol Answer hanya jika status adalah 'aktif' -->
-                <button 
-                  v-if="item.status === 'aktif'"
-                  @click="handleAnswer(item)"
-                  class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                >
+                <button v-if="item.status === 'aktif'" @click="handleAnswer(item)"
+                  class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                   <font-awesome-icon icon="fa-solid fa-pencil" class="mr-2" />
                   Answer
                 </button>
-                <!-- Tombol Detail selalu tampil -->
-                <button 
-                  @click="handleDetail(item)"
-                  class="px-3 py-1 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-                >
+                <button @click="handleDetail(item)"
+                  class="px-3 py-1 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
                   <font-awesome-icon icon="fa-solid fa-eye" class="mr-2" />
                   Detail
                 </button>
@@ -121,12 +105,10 @@ export default {
             </template>
 
             <template #column-status="{ item }">
-              <span 
-                :class="[ 
-                  'px-2 py-1 rounded-full text-xs font-medium',
-                  item.status === 'aktif' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                ]"
-              >
+              <span :class="[
+                'px-2 py-1 rounded-full text-xs font-medium',
+                item.status === 'aktif' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+              ]">
                 {{ item.status }}
               </span>
             </template>
@@ -136,4 +118,3 @@ export default {
     </div>
   </div>
 </template>
-

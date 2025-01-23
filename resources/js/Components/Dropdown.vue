@@ -41,22 +41,21 @@ export default {
     },
     data() {
         return {
-            localValue: this.modelValue, // Gunakan nilai awal dari prop
+            localValue: this.modelValue,
         };
     },
     watch: {
         modelValue(newValue) {
-            this.localValue = newValue; // Sinkronisasi nilai dari parent jika berubah
+            this.localValue = newValue;
         },
     },
     methods: {
         updateValue() {
-            this.$emit("update:modelValue", this.localValue); // Emit event ke parent
+            this.$emit("update:modelValue", this.localValue);
         },
     },
 };
 </script>
 
 <style scoped>
-/* Tambahkan styling sesuai kebutuhan */
 </style>

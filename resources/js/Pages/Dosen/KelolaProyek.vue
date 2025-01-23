@@ -1,3 +1,139 @@
+<script>
+import axios from "axios";
+import Sidebar from "@/Components/Sidebar.vue";
+import Navbar from "@/Components/Navbar.vue";
+import Card from "@/Components/Card.vue";
+import Dropdown from "@/Components/Dropdown.vue";
+import Breadcrumb from "@/Components/Breadcrumb.vue";
+
+export default {
+    name: "KelolaProyek",
+    components: {
+        Sidebar,
+        Navbar,
+        Card,
+        Dropdown,
+        Breadcrumb,
+    },
+    data() {
+        return {
+            breadcrumbs: [
+                { text: "Manage Project", href: "/dosen/kelola-proyek" },
+            ],
+            isModalOpen: false,
+            newProject: {
+                semester: "",
+                tahun_ajaran: "",
+                nama_proyek: "",
+                jurusan: "",
+                start_date: "",
+                end_date: "",
+                status: "",
+            },
+            projects: [],
+            filteredProjects: [],
+            years: [],
+            selectedYear: "",
+        };
+    },
+    mounted() {
+        this.getProjects();
+    },
+    methods: {
+        openModal() {
+            this.isModalOpen = true;
+        },
+        closeModal() {
+            this.isModalOpen = false;
+        },
+        async addProject() {
+            try {
+                const response = await axios.post(
+                    "/api/project",
+                    this.newProject,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem(
+                                "auth_token"
+                            )}`,
+                        },
+                    }
+                );
+                alert("Proyek berhasil ditambahkan!");
+                this.closeModal();
+                this.getProjects();
+            } catch (error) {
+                console.error("Error adding project:", error);
+                alert("Terjadi kesalahan saat menambahkan proyek.");
+            }
+        },
+        async getProjects() {
+            try {
+                const response = await axios.get("/api/projects", {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem(
+                            "auth_token"
+                        )}`,
+                    },
+                });
+                this.projects = response.data;
+                this.filteredProjects = this.projects;
+
+                this.years = [...new Set(this.projects.map((p) => p.tahun_ajaran))];
+            } catch (error) {
+                console.error("Error fetching projects:", error);
+                alert("Terjadi kesalahan saat mengambil data proyek.");
+            }
+        },
+        filterProjects() {
+            if (this.selectedYear) {
+                this.filteredProjects = this.projects.filter(
+                    (project) => project.tahun_ajaran === this.selectedYear
+                );
+            } else {
+                this.filteredProjects = this.projects;
+            }
+        },
+
+        async changeProjectStatus(project) {
+            try {
+                const newStatus = project.status === 'aktif' ? 'nonaktif' : 'aktif';
+                const response = await axios.post(
+                    '/api/changeStatus',
+                    {
+                        tahun_ajaran: project.tahun_ajaran,
+                        nama_proyek: project.nama_proyek,
+                        status: newStatus,
+                    },
+                    {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+                        },
+                    }
+                );
+                project.status = newStatus; 
+                alert("Status proyek berhasil diperbarui!");
+            } catch (error) {
+                console.error("Error changing project status:", error);
+                alert("Terjadi kesalahan saat mengubah status proyek.");
+            }
+        }
+        ,
+
+        confirmStatusChange(project) {
+            const confirmChange = window.confirm(
+                `Apakah Anda yakin ingin mengubah status proyek "${project.nama_proyek}" menjadi ${project.status === 'aktif' ? 'nonaktif' : 'aktif'
+                }?`
+            );
+
+            if (confirmChange) {
+                this.changeProjectStatus(project);
+            }
+        },
+    },
+};
+</script>
+
 <template>
     <div class="flex min-h-screen">
         <Sidebar role="dosen" />
@@ -9,13 +145,11 @@
                 </div>
                 <Card title="Kelola Proyek">
                     <template #actions>
-                        <!-- Filter Tahun Ajaran -->
                         <Dropdown title="Daftar Proyek" :options="years.map((year) => ({ label: year, value: year }))"
                             v-model="selectedYear" @update:modelValue="filterProjects"
                             :defaultOption="{ label: 'Semua Tahun Ajaran', value: '' }"
                             class="flex justify-between items-center mb-4" />
 
-                        <!-- Tabel Daftar Proyek -->
                         <div>
                             <table class="min-w-full border-collapse table-auto">
                                 <thead>
@@ -34,16 +168,13 @@
                                         <td class="px-4 py-2 border">{{ project.tahun_ajaran }}</td>
                                         <td class="px-4 py-2 border">{{ project.jurusan }}</td>
                                         <td class="px-4 py-2 border">
-                                    <button
-        @click="confirmStatusChange(project)"
-        class="text-sm font-medium"
-        :class="{
-            'text-blue-500 hover:text-blue-700': project.status === 'aktif',
-            'text-red-500 hover:text-red-700': project.status === 'nonaktif'
-        }"
-    >
-        {{ project.status === 'aktif' ? 'Aktif' : 'Nonaktif' }}
-    </button>
+                                            <button @click="confirmStatusChange(project)" class="text-sm font-medium"
+                                                :class="{
+                                                    'text-blue-500 hover:text-blue-700': project.status === 'aktif',
+                                                    'text-red-500 hover:text-red-700': project.status === 'nonaktif'
+                                                }">
+                                                {{ project.status === 'aktif' ? 'Aktif' : 'Nonaktif' }}
+                                            </button>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -52,7 +183,6 @@
                     </template>
                 </Card>
 
-                <!-- Modal -->
                 <div v-if="isModalOpen"
                     class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
                     <div class="bg-white p-6 rounded-lg w-1/2">
@@ -135,142 +265,3 @@
         </button>
     </div>
 </template>
-
-<script>
-import axios from "axios";
-import Sidebar from "@/Components/Sidebar.vue";
-import Navbar from "@/Components/Navbar.vue";
-import Card from "@/Components/Card.vue";
-import Dropdown from "@/Components/Dropdown.vue";
-import Breadcrumb from "@/Components/Breadcrumb.vue";
-
-export default {
-    name: "KelolaProyek",
-    components: {
-        Sidebar,
-        Navbar,
-        Card,
-        Dropdown,
-        Breadcrumb,
-    },
-    data() {
-        return {
-            breadcrumbs: [
-                { text: "Manage Project", href: "/dosen/kelola-proyek" },
-            ],
-            isModalOpen: false,
-            newProject: {
-                semester: "",
-                tahun_ajaran: "",
-                nama_proyek: "",
-                jurusan: "",
-                start_date: "",
-                end_date: "",
-                status: "",
-            },
-            projects: [],
-            filteredProjects: [],
-            years: [],
-            selectedYear: "",
-        };
-    },
-    mounted() {
-        this.getProjects();
-    },
-    methods: {
-        openModal() {
-            this.isModalOpen = true;
-        },
-        closeModal() {
-            this.isModalOpen = false;
-        },
-        async addProject() {
-            try {
-                const response = await axios.post(
-                    "/api/project",
-                    this.newProject,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${localStorage.getItem(
-                                "auth_token"
-                            )}`,
-                        },
-                    }
-                );
-                alert("Proyek berhasil ditambahkan!");
-                this.closeModal();
-                this.getProjects();
-            } catch (error) {
-                console.error("Error adding project:", error);
-                alert("Terjadi kesalahan saat menambahkan proyek.");
-            }
-        },
-        async getProjects() {
-            try {
-                const response = await axios.get("/api/projects", {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem(
-                            "auth_token"
-                        )}`,
-                    },
-                });
-                this.projects = response.data;
-                this.filteredProjects = this.projects;
-
-                // Extract unique tahun ajaran
-                this.years = [...new Set(this.projects.map((p) => p.tahun_ajaran))];
-            } catch (error) {
-                console.error("Error fetching projects:", error);
-                alert("Terjadi kesalahan saat mengambil data proyek.");
-            }
-        },
-        filterProjects() {
-            if (this.selectedYear) {
-                this.filteredProjects = this.projects.filter(
-                    (project) => project.tahun_ajaran === this.selectedYear
-                );
-            } else {
-                this.filteredProjects = this.projects;
-            }
-        },
-        
-        async changeProjectStatus(project) {
-    try {
-        const newStatus = project.status === 'aktif' ? 'nonaktif' : 'aktif';
-        const response = await axios.post(
-            '/api/changeStatus',
-            {
-                tahun_ajaran: project.tahun_ajaran,
-                nama_proyek: project.nama_proyek,
-                status: newStatus,
-            },
-            {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-                },
-            }
-        );
-        project.status = newStatus;  // Update status secara lokal setelah berhasil
-        alert("Status proyek berhasil diperbarui!");
-    } catch (error) {
-        console.error("Error changing project status:", error);
-        alert("Terjadi kesalahan saat mengubah status proyek.");
-    }
-}
-,
-
-        // Fungsi untuk mengonfirmasi perubahan status
-        confirmStatusChange(project) {
-            const confirmChange = window.confirm(
-                `Apakah Anda yakin ingin mengubah status proyek "${project.nama_proyek}" menjadi ${
-                    project.status === 'aktif' ? 'nonaktif' : 'aktif'
-                }?`
-            );
-            
-            if (confirmChange) {
-                this.changeProjectStatus(project);
-            }
-        },
-    },
-};
-</script>

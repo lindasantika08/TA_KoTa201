@@ -13,8 +13,8 @@ export default {
     Breadcrumb,
   },
   props: {
-    user_id: Number,  // Menerima user_id dari controller
-    user_name: String, // Menerima user_name dari controller
+    user_id: Number,
+    user_name: String,
   },
   data() {
     return {
@@ -37,7 +37,7 @@ export default {
         <div class="mb-4">
           <Breadcrumb :items="breadcrumbs" />
         </div>
-        <Card :title="'Profile Mhs - ' + user_name"> <!-- Menampilkan nama mahasiswa di title -->
+        <Card :title="'Profile Mhs - ' + user_name">
           <template #actions></template>
         </Card>
       </main>
@@ -46,5 +46,4 @@ export default {
 </template>
 
 <style scoped>
-/* Optional: Add custom styles here */
 </style>

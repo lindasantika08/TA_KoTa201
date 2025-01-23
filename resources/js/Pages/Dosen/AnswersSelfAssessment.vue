@@ -52,16 +52,16 @@ export default {
           nama_proyek: this.nama_proyek
         }
       })
-      .then(response => {
-        if (Array.isArray(response.data)) {
-          this.answers = response.data;
-        } else {
-          console.error("Data yang diterima tidak sesuai format yang diharapkan.");
-        }
-      })
-      .catch(error => {
-        console.error('Error fetching answers:', error);
-      });
+        .then(response => {
+          if (Array.isArray(response.data)) {
+            this.answers = response.data;
+          } else {
+            console.error("Data yang diterima tidak sesuai format yang diharapkan.");
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching answers:', error);
+        });
     },
     fetchStatistics() {
       axios.get('/api/answers/statistics', {
@@ -70,55 +70,52 @@ export default {
           nama_proyek: this.nama_proyek
         }
       })
-      .then(response => {
-        this.totalKeseluruhan = response.data.totalKeseluruhan;
-        this.totalSudahMengisi = response.data.totalSudahMengisi;
-      })
-      .catch(error => {
-        console.error('Error fetching statistics:', error);
-      });
+        .then(response => {
+          this.totalKeseluruhan = response.data.totalKeseluruhan;
+          this.totalSudahMengisi = response.data.totalSudahMengisi;
+        })
+        .catch(error => {
+          console.error('Error fetching statistics:', error);
+        });
     },
 
-  showDetails(userName, tahunAjaran, namaProyek) {
-  console.log(`Menampilkan detail untuk pengguna: ${userName}`);
-  console.log(`Tahun Ajaran: ${tahunAjaran}, Nama Proyek: ${namaProyek}`);
+    showDetails(userName, tahunAjaran, namaProyek) {
+      console.log(`Menampilkan detail untuk pengguna: ${userName}`);
+      console.log(`Tahun Ajaran: ${tahunAjaran}, Nama Proyek: ${namaProyek}`);
 
-  router.visit(`/dosen/answers/details?userName=${userName}&tahun_ajaran=${tahunAjaran}&nama_proyek=${namaProyek}`);
+      router.visit(`/dosen/answers/details?userName=${userName}&tahun_ajaran=${tahunAjaran}&nama_proyek=${namaProyek}`);
 
-  // Log the data being sent to Inertia
-  console.log("Data yang dikirim:", {
-    userName,
-    tahunAjaran,
-    namaProyek
-  });
-},
+      console.log("Data yang dikirim:", {
+        userName,
+        tahunAjaran,
+        namaProyek
+      });
+    },
   },
   computed: {
     groupedAnswers() {
-    const userGroups = {};
-    let globalIndex = 1;
+      const userGroups = {};
+      let globalIndex = 1;
 
-    // Group answers by user name and keep only unique entries
-    this.answers.forEach(answer => {
-      const userName = answer.user.name;
-      if (!userGroups[userName]) {
-        userGroups[userName] = {
-          index: globalIndex++,
-          userName,
-          status: answer.status || 'unsubmitted'  // Default to 'unsubmitted' if no status
-        };
-      }
-    });
+      this.answers.forEach(answer => {
+        const userName = answer.user.name;
+        if (!userGroups[userName]) {
+          userGroups[userName] = {
+            index: globalIndex++,
+            userName,
+            status: answer.status || 'unsubmitted'
+          };
+        }
+      });
 
-    // Urutkan data berdasarkan status (submitted, on progress, unsubmitted)
-    const sortedAnswers = Object.values(userGroups).sort((a, b) => {
-      const statusOrder = ['submitted', 'on progress', 'unsubmitted'];
-      return statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status);
-    });
+      const sortedAnswers = Object.values(userGroups).sort((a, b) => {
+        const statusOrder = ['submitted', 'on progress', 'unsubmitted'];
+        return statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status);
+      });
 
-    return sortedAnswers;
+      return sortedAnswers;
+    }
   }
-}
 };
 </script>
 
@@ -135,7 +132,6 @@ export default {
         <div class="mb-6 text-sm font-semibold">
           <h1 class="text-xl font-semibold mb-6 ">Answers Self Assessment</h1>
 
-          <!-- Menampilkan Tahun Ajaran dan Nama Proyek dengan label bold -->
           <p><strong>Tahun Ajaran : </strong> {{ tahun_ajaran }}</p>
           <p><strong>Nama Proyek : </strong> {{ nama_proyek }}</p>
 
@@ -159,33 +155,28 @@ export default {
               {{ item.userName }}
             </template>
 
-            <!-- Kolom Status dengan class 'text-center' untuk menempatkan di tengah -->
             <template #column-status="{ item }">
               <div class="flex justify-center">
-                <span :class="[ 
-                  'px-2 py-1 rounded-full text-xs font-medium', 
-                  item.status === 'unsubmitted' 
-                    ? 'bg-red-100 text-red-800' 
-                    : item.status === 'on progress' 
-                    ? 'bg-yellow-100 text-yellow-800' 
-                    : item.status === 'submitted' 
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-green-100 text-green-800'
+                <span :class="[
+                  'px-2 py-1 rounded-full text-xs font-medium',
+                  item.status === 'unsubmitted'
+                    ? 'bg-red-100 text-red-800'
+                    : item.status === 'on progress'
+                      ? 'bg-yellow-100 text-yellow-800'
+                      : item.status === 'submitted'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-green-100 text-green-800'
                 ]">
                   {{ item.status }}
                 </span>
               </div>
             </template>
 
-            <!-- Kolom Detail dengan class 'text-center' untuk menempatkan tombol di tengah -->
             <template #column-detail="{ item }">
               <div class="flex justify-center">
-                <!-- Tombol Detail hanya untuk yang statusnya on progress -->
-                <button 
-                v-if="item.status === 'on progress' || item.status === 'submitted'"
-                  @click="showDetails(item.userName, tahun_ajaran, nama_proyek)" 
-                  class="px-4 py-2 text-white bg-blue-500 rounded-lg hover:bg-blue-700"
-                >
+                <button v-if="item.status === 'on progress' || item.status === 'submitted'"
+                  @click="showDetails(item.userName, tahun_ajaran, nama_proyek)"
+                  class="px-4 py-2 text-white bg-blue-500 rounded-lg hover:bg-blue-700">
                   Detail
                 </button>
               </div>
@@ -196,7 +187,3 @@ export default {
     </div>
   </div>
 </template>
-
-
-
-

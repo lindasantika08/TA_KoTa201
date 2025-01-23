@@ -1,77 +1,3 @@
-<template>
-  <div class="flex min-h-screen">
-    <Sidebar role="dosen" />
-
-    <div class="flex-1">
-      <Navbar userName="Dosen" />
-      <main class="p-6">
-        <div class="mb-4">
-          <Breadcrumb :items="breadcrumbs" />
-        </div>
-        <Card title="Create Assessment">
-          <template #actions>
-            <div class="grid grid-cols-2 gap-8">
-              <!-- Active Project Section -->
-              <div class="border-r pr-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                  Proyek Aktif
-                </label>
-                <select v-model="selectedActiveProject" class="mt-2 p-2 border border-gray-300 rounded w-full" required>
-                  <option value="" disabled selected>Pilih Proyek Aktif</option>
-                  <option v-for="project in activeProjects"
-                    :key="`active-${project.tahun_ajaran}-${project.nama_proyek}`" :value="project">
-                    {{ project.tahun_ajaran }} - {{ project.nama_proyek }}
-                  </option>
-                </select>
-                <div class="mt-4">
-                  <button @click="downloadActiveTemplate"
-                    class="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    :disabled="!selectedActiveProject.tahun_ajaran">
-                    <font-awesome-icon :icon="['fas', 'file-excel']" class="mr-2" />
-                    Download Template Aktif
-                  </button>
-                </div>
-              </div>
-
-              <!-- Inactive Project Section -->
-              <div class="pl-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                  Proyek Tidak Aktif
-                </label>
-                <select v-model="selectedInactiveProject" class="mt-2 p-2 border border-gray-300 rounded w-full"
-                  required>
-                  <option value="" disabled selected>Pilih Proyek Tidak Aktif</option>
-                  <option v-for="project in inactiveProjects"
-                    :key="`inactive-${project.tahun_ajaran}-${project.nama_proyek}`" :value="project">
-                    {{ project.tahun_ajaran }} - {{ project.nama_proyek }}
-                  </option>
-                </select>
-                <div class="mt-4">
-                  <button @click="downloadInactiveTemplate"
-                    class="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    :disabled="!selectedInactiveProject.tahun_ajaran">
-                    <font-awesome-icon :icon="['fas', 'file-excel']" class="mr-2" />
-                    Download Template Tidak Aktif
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Import Data Excel -->
-            <div class="mt-8">
-              <label for="file-upload" class="block text-sm font-medium text-gray-700">
-                Import Data Excel (File .xlsx/.xls)
-              </label>
-              <input type="file" id="file-upload" accept=".xlsx, .xls" @change="handleFileUpload"
-                class="mt-2 p-2 border border-gray-300 rounded w-full" />
-            </div>
-          </template>
-        </Card>
-      </main>
-    </div>
-  </div>
-</template>
-
 <script>
 import { ref, onMounted, computed } from "vue";
 import axios from "axios";
@@ -155,33 +81,33 @@ export default {
     };
 
     const handleFileUpload = async (event) => {
-  const file = event.target.files[0];
-  if (!file) return;
+      const file = event.target.files[0];
+      if (!file) return;
 
-  const formData = new FormData();
-  formData.append("file", file);
+      const formData = new FormData();
+      formData.append("file", file);
 
-  try {
-    const token = localStorage.getItem("auth_token");
-    const response = await axios.post("/dosen/assessment/import", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-        "Authorization": `Bearer ${token}`
+      try {
+        const token = localStorage.getItem("auth_token");
+        const response = await axios.post("/dosen/assessment/import", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            "Authorization": `Bearer ${token}`
+          }
+        });
+
+        alert(response.data.message || "Data berhasil diimpor");
+        event.target.value = '';
+
+      } catch (error) {
+        console.error("Import error:", error);
+        if (error.response?.data?.error) {
+          alert(error.response.data.error);
+        } else {
+          alert("Terjadi kesalahan saat mengimpor data");
+        }
       }
-    });
-    
-    alert(response.data.message || "Data berhasil diimpor");
-    event.target.value = '';
-    
-  } catch (error) {
-    console.error("Import error:", error);
-    if (error.response?.data?.error) {
-      alert(error.response.data.error);
-    } else {
-      alert("Terjadi kesalahan saat mengimpor data");
-    }
-  }
-};
+    };
 
     onMounted(async () => {
       try {
@@ -205,3 +131,75 @@ export default {
   },
 };
 </script>
+
+<template>
+  <div class="flex min-h-screen">
+    <Sidebar role="dosen" />
+
+    <div class="flex-1">
+      <Navbar userName="Dosen" />
+      <main class="p-6">
+        <div class="mb-4">
+          <Breadcrumb :items="breadcrumbs" />
+        </div>
+        <Card title="Create Assessment">
+          <template #actions>
+            <div class="grid grid-cols-2 gap-8">
+              <!-- Active Project Section -->
+              <div class="border-r pr-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Proyek Aktif
+                </label>
+                <select v-model="selectedActiveProject" class="mt-2 p-2 border border-gray-300 rounded w-full" required>
+                  <option value="" disabled selected>Pilih Proyek Aktif</option>
+                  <option v-for="project in activeProjects"
+                    :key="`active-${project.tahun_ajaran}-${project.nama_proyek}`" :value="project">
+                    {{ project.tahun_ajaran }} - {{ project.nama_proyek }}
+                  </option>
+                </select>
+                <div class="mt-4">
+                  <button @click="downloadActiveTemplate"
+                    class="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    :disabled="!selectedActiveProject.tahun_ajaran">
+                    <font-awesome-icon :icon="['fas', 'file-excel']" class="mr-2" />
+                    Download Template Aktif
+                  </button>
+                </div>
+              </div>
+
+              <div class="pl-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Proyek Tidak Aktif
+                </label>
+                <select v-model="selectedInactiveProject" class="mt-2 p-2 border border-gray-300 rounded w-full"
+                  required>
+                  <option value="" disabled selected>Pilih Proyek Tidak Aktif</option>
+                  <option v-for="project in inactiveProjects"
+                    :key="`inactive-${project.tahun_ajaran}-${project.nama_proyek}`" :value="project">
+                    {{ project.tahun_ajaran }} - {{ project.nama_proyek }}
+                  </option>
+                </select>
+                <div class="mt-4">
+                  <button @click="downloadInactiveTemplate"
+                    class="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    :disabled="!selectedInactiveProject.tahun_ajaran">
+                    <font-awesome-icon :icon="['fas', 'file-excel']" class="mr-2" />
+                    Download Template Tidak Aktif
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-8">
+              <label for="file-upload" class="block text-sm font-medium text-gray-700">
+                Import Data Excel (File .xlsx/.xls)
+              </label>
+              <input type="file" id="file-upload" accept=".xlsx, .xls" @change="handleFileUpload"
+                class="mt-2 p-2 border border-gray-300 rounded w-full" />
+            </div>
+          </template>
+        </Card>
+      </main>
+    </div>
+  </div>
+</template>

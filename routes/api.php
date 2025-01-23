@@ -28,9 +28,10 @@ Route::middleware('auth:sanctum')->group(function () {
         $user = Auth::user();
         return response()->json(['role' => $user->role]);
     })->middleware('auth:sanctum');
+
     //dosen
     Route::get('/export-self-assessment', [AssessmentController::class, 'exportExcel']);
-    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::put('/logout', [AuthController::class, 'logout']);
     Route::post('/project', [KelolaProyekController::class, 'AddProyek']);
     Route::get('/projects', [KelolaProyekController::class, 'getProjects']);
     Route::get('/project-dropdown', [ProjectController::class, 'index']);
@@ -56,8 +57,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('projects/active', [DashboardDosen::class, 'getActiveProjects']);
     Route::post('/changeStatus', [ProjectController::class, 'changeStatus']);
     Route::get('/answers/get-details', [AnswerController::class, 'getDetailsAnswer']);
-
-
     Route::get('/answers/{id}', [AnswerController::class, 'showdetail']);
 
     //mahasiswa

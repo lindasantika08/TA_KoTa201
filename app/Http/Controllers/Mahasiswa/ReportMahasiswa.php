@@ -9,6 +9,7 @@ use Inertia\Inertia;
 class ReportMahasiswa extends Controller
 {
     public function reportMahasiswa() {
+        
         return Inertia::render('Mahasiswa/ReportMahasiswa');
     }
 }
