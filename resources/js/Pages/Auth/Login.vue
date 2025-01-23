@@ -17,14 +17,15 @@ export default {
           email: email.value,
           password: password.value
         })
-        
+
         if (response.data.token) {
           localStorage.setItem('auth_token', response.data.token)
           localStorage.setItem('user_data', JSON.stringify(response.data.user))
-          
+
           axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`
-          
+
           const role = response.data.user.role
+          isRedirecting.value = true
           if (role === 'dosen') {
             router.visit('/dosen/dashboard')
           } else if (role === 'mahasiswa') {
@@ -35,28 +36,27 @@ export default {
         error.value = err.response?.data?.message || 'Login gagal'
         localStorage.removeItem('auth_token')
         localStorage.removeItem('user_data')
+      } finally {
+        isRedirecting.value = false
       }
     }
 
     const checkAuthAndRedirect = async () => {
       if (isRedirecting.value) return
-      
+
       const token = localStorage.getItem('auth_token')
-      if (!token) {
-        if (window.location.pathname !== '/login') {
-          router.visit('/login')
-        }
-        return
-      }
-      
+      if (!token) return
+
       try {
+        isRedirecting.value = true
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
         const userData = JSON.parse(localStorage.getItem('user_data') || 'null')
         if (!userData) {
-          throw new Error('No user data')
+          isRedirecting.value = false;
+          return;
         }
 
-        await axios.get('/api/user') 
+        await axios.get('/api/user')
 
         const role = userData.role
         if (role === 'dosen') {
@@ -68,12 +68,19 @@ export default {
         localStorage.removeItem('auth_token')
         localStorage.removeItem('user_data')
         router.visit('/login')
+      } finally {
+        isRedirecting.value = false
       }
     }
 
     onMounted(() => {
-      checkAuthAndRedirect()
+      if (window.location.pathname === '/login' && localStorage.getItem('auth_token')) {
+        checkAuthAndRedirect()
+      }
     })
+
+    console.log('Function checkAuthAndRedirect executed');
+
 
     return {
       email,
@@ -107,29 +114,21 @@ export default {
           <div v-if="error" class="bg-red-50 text-red-500 p-3 rounded-md mb-4">
             {{ error }}
           </div>
-          
+
           <div>
             <label class="block text-sm font-medium text-gray-700">
               Email <span class="text-red-500">*</span>
             </label>
-            <input
-              type="email"
-              v-model="email"
-              required
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            />
+            <input type="email" v-model="email" required
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
           </div>
 
           <div>
             <label class="block text-sm font-medium text-gray-700">
               Password <span class="text-red-500">*</span>
             </label>
-            <input
-              type="password"
-              v-model="password"
-              required
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            />
+            <input type="password" v-model="password" required
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
           </div>
 
           <div class="flex items-center justify-end">
@@ -138,10 +137,8 @@ export default {
             </a>
           </div>
 
-          <button
-            type="submit"
-            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-400 hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
+          <button type="submit"
+            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-400 hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
             MASUK
           </button>
         </form>

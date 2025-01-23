@@ -17,25 +17,25 @@ export default {
         ConfirmModal
     },
     props: {
-    studentInfo: {
-        type: Object,
-        default: () => ({
-            'nip': '',
-            'name': '',
-            'class': '',
-            'group': '',
-            'project': '',
-            'date': '',
-        })
-    },
-    tahunAjaran: {
-        type: String,
-        default: ''
-    },
-    namaProyek: {
-        type: String,
-        default: ''
-    }
+        studentInfo: {
+            type: Object,
+            default: () => ({
+                'nip': '',
+                'name': '',
+                'class': '',
+                'group': '',
+                'project': '',
+                'date': '',
+            })
+        },
+        tahunAjaran: {
+            type: String,
+            default: ''
+        },
+        namaProyek: {
+            type: String,
+            default: ''
+        }
     },
 
     data() {
@@ -71,10 +71,15 @@ export default {
             return this.questions[this.currentQuestionIndex] || null;
         },
         canSubmitAll() {
-            return this.questions.every(question => {
-                const temp = this.temporaryAnswers[question.id];
-                return temp?.answer && temp?.score;
-            });
+            // Pastikan semua pertanyaan sudah terjawab
+            return this.questions.length > 0 &&
+                this.questions.every(question => {
+                    const savedAnswer = this.temporaryAnswers[question.id];
+                    return savedAnswer &&
+                        savedAnswer.answer &&
+                        savedAnswer.answer.trim() !== '' &&
+                        savedAnswer.score !== null;
+                });
         },
         currentProgress() {
             const answered = Object.keys(this.temporaryAnswers).length;
@@ -89,44 +94,46 @@ export default {
         console.log('Component created - starting fetch');
         await this.fetchQuestions();
         await this.fetchStudentsInfo();
+        await this.loadExistingAnswer();
     },
     methods: {
 
         async fetchQuestions() {
-    console.log('Fetching questions started');
-    this.loading = true;
-    this.error = null;
+            console.log('Fetching questions started');
+            this.loading = true;
+            this.error = null;
 
-    try {
-        console.log('Tahun Ajaran:', this.tahunAjaran);
-        console.log('Nama Proyek:', this.namaProyek);
+            try {
+                console.log('Tahun Ajaran:', this.tahunAjaran);
+                console.log('Nama Proyek:', this.namaProyek);
 
-        const params = {
-            tahun_ajaran: this.tahunAjaran,
-            nama_proyek: this.namaProyek
-        };
+                const params = {
+                    tahun_ajaran: this.tahunAjaran,
+                    nama_proyek: this.namaProyek
+                };
 
-        const response = await axios.get('/api/questions-dosen', { params });
+                const response = await axios.get('/api/questions-dosen', { params });
 
-        console.log('API Response:', response);
+                console.log('API Response:', response);
 
-        if (response.data && Array.isArray(response.data)) {
-            this.questions = response.data;
-            console.log('Questions loaded:', this.questions.length);
-            this.loading = false;
-        } else {
-            throw new Error('Invalid response format');
-        }
-    } catch (error) {
-        console.error('Error details:', {
-            message: error.message,
-            response: error.response,
-            status: error.response?.status
-        });
-        this.error = `Error loading questions: ${error.message}`;
-        this.loading = false;
-    }
-},
+                if (response.data && Array.isArray(response.data)) {
+                    this.questions = response.data;
+                    console.log('Questions loaded:', this.questions.length);
+                    this.loading = false;
+                    await this.loadExistingAnswer();
+                } else {
+                    throw new Error('Invalid response format');
+                }
+            } catch (error) {
+                console.error('Error details:', {
+                    message: error.message,
+                    response: error.response,
+                    status: error.response?.status
+                });
+                this.error = `Error loading questions: ${error.message}`;
+                this.loading = false;
+            }
+        },
         async fetchStudentsInfo() {
             try {
                 const response = await axios.get('/api/user-info');
@@ -178,12 +185,11 @@ export default {
                 });
         },
         async nextQuestion() {
-            this.saveTemporaryAnswer();
+            await this.saveTemporaryAnswer();
+
             if (this.currentQuestionIndex < this.questions.length - 1) {
                 this.currentQuestionIndex++;
                 await this.loadExistingAnswer();
-            } else {
-                this.checkAllAnswered();
             }
         },
         async prevQuestion() {
@@ -206,22 +212,26 @@ export default {
             try {
                 const response = await axios.get(`/api/get-answer/${this.currentQuestion.id}`);
                 if (response.data) {
-                    this.answer = response.data.answer;
-                    this.score = response.data.score;
+                    this.answer = response.data.answer || '';
+                    this.score = response.data.score || null;
                 } else {
                     this.answer = '';
                     this.score = null;
                 }
             } catch (error) {
                 console.error('Error loading existing answer:', error);
+                this.answer = '';
+                this.score = null;
             }
         },
         saveTemporaryAnswer() {
             if (this.currentQuestion) {
-                this.temporaryAnswers[this.currentQuestion.id] = {
-                    answer: this.answer,
-                    score: this.score
-                };
+                if (this.answer && this.answer.trim() !== '' && this.score !== null) {
+                    this.temporaryAnswers[this.currentQuestion.id] = {
+                        answer: this.answer,
+                        score: this.score
+                    };
+                }
             }
         },
         checkAllAnswered() {
@@ -233,8 +243,12 @@ export default {
         async handleSubmitAll() {
             this.saveTemporaryAnswer();
 
+            console.log('Temporary Answers:', this.temporaryAnswers);
+            console.log('Can Submit All:', this.canSubmitAll);
+            console.log('Questions:', this.questions);
+
             if (!this.canSubmitAll) {
-                alert('Mohon jawab semua pertanyaan terlebih dahulu');
+                alert('Mohon lengkapi semua jawaban terlebih dahulu');
                 return;
             }
 
@@ -242,13 +256,22 @@ export default {
         },
 
         async submitAllAnswers() {
-            try {
-                this.isSubmitting = true;
+            this.saveTemporaryAnswer();
 
-                const allAnswers = Object.entries(this.temporaryAnswers).map(([questionId, data]) => ({
-                    question_id: questionId,
-                    answer: data.answer,
-                    score: data.score,
+            try {
+                this.questions.forEach(question => {
+                    if (!this.temporaryAnswers[question.id]) {
+                        this.temporaryAnswers[question.id] = {
+                            answer: this.answer,
+                            score: this.score
+                        };
+                    }
+                });
+
+                const allAnswers = this.questions.map(question => ({
+                    question_id: question.id,
+                    answer: this.temporaryAnswers[question.id].answer,
+                    score: this.temporaryAnswers[question.id].score,
                     status: 'submitted'
                 }));
 
@@ -266,7 +289,7 @@ export default {
                 this.isSubmitting = false;
                 this.showConfirmModal = false;
             }
-        }
+        },
 
     },
 
@@ -387,10 +410,10 @@ export default {
                                         Save Answer
                                     </button>
 
-                                    <button v-if="currentQuestionIndex === questions.length - 1" type="button"
-                                        @click="handleSubmitAll" :disabled="!canSubmitAll || isSubmitting"
+                                    <button v-if="currentQuestionIndex === questions.length-1" type="button"
+                                        @click="handleSubmitAll" :disabled="isSubmitting"
                                         class="px-4 py-2 bg-green-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed">
-                                        {{ isSubmitting ? 'Mengirim...' : 'Kirim' }}
+                                        {{ isSubmitting ? 'Mengirim...' : 'Send' }}
                                     </button>
                                     <button v-else type="button" @click="nextQuestion"
                                         :disabled="currentQuestionIndex === questions.length - 1"
