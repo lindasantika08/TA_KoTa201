@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Project;  // Model untuk mengambil data proyek
 use App\Models\Kelompok; // Model untuk tabel kelompok
-use App\Models\GroupMember;
+use App\Models\User;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\KelompokImport; // Untuk import data Excel
 use App\Exports\KelompokExport; // Untuk export template
@@ -36,7 +36,12 @@ class KelolaKelompokController extends Controller
                     'nama_proyek' => $first->nama_proyek,
                     'kelompok' => $first->kelompok,
                     'dosen' => $first->dosen->name ?? '-', // Nama dosen
-                    'anggota' => $items->pluck('user.name')->unique()->toArray(), // Nama anggota unik
+                    'anggota' => $items->map(function ($item) {
+                    return [
+                        'name' => $item->user->name,
+                        'user_id' => $item->user->id // Ambil user_id
+                    ];
+                })->unique('user_id')->toArray(), 
                 ];
             })
             ->sortBy('kelompok') // Urutkan kelompok dari kecil ke besar
@@ -51,9 +56,16 @@ class KelolaKelompokController extends Controller
         return Inertia::render('Dosen/CreateKelompok');
     }
 
-    public function ProfileMhs()
+    public function ProfileMhs(Request $request)
     {
-        return Inertia::render('Dosen/DetailProfilMhs');
+        $userId = $request->input('user_id');
+        $user = User::find($userId); // Ambil user berdasarkan user_id
+        Log::info('user id:', ['user_id' => $userId]);
+
+        return Inertia::render('Dosen/DetailProfilMhs', [
+            'user_id' => $userId,
+            'user_name' => $user ? $user->name : 'User Not Found', // Kirimkan nama user
+        ]);
     }
 
     public function showDetail($id)

@@ -73,13 +73,10 @@ export default {
     createKelompok(url) {
       router.visit("/dosen/kelola-kelompok/create"); // Menggunakan Inertia.js untuk navigasi
     },
-    goToProfile(anggota) {
-      // Arahkan ke halaman /profile-mhs dengan informasi anggota sebagai query parameter
-      router.visit('/dosen/kelola-kelompok/profile-mhs', {
-        method: 'get',
-        data: anggota, // Simpan data anggota dalam state atau query
-      });
-    }
+    goToProfile(user_id) {
+    // Arahkan ke halaman profile mahasiswa dengan user_id
+    router.visit(`/dosen/kelola-kelompok/profile-mhs?user_id=${user_id}`);
+  }
   },
 };
 </script>
@@ -123,8 +120,8 @@ export default {
               <ul>
                 <li v-for="(anggota, index) in item.anggota" :key="index">
                   <!-- Klik nama anggota untuk pergi ke profile mahasiswa -->
-                  <a href="#" @click.prevent="goToProfile(anggota)" class="text-blue-900 hover:underline">
-                    - {{ anggota }}
+                  <a href="#" @click.prevent="goToProfile(anggota.user_id)" class="text-blue-900 hover:underline">
+                    - {{ anggota.name }}
                   </a>
                 </li>
               </ul>
