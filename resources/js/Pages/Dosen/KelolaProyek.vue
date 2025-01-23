@@ -33,7 +33,18 @@
                                         <td class="px-4 py-2 border">{{ project.semester }}</td>
                                         <td class="px-4 py-2 border">{{ project.tahun_ajaran }}</td>
                                         <td class="px-4 py-2 border">{{ project.jurusan }}</td>
-                                        <td class="px-4 py-2 border">{{ project.status }}</td>
+                                        <td class="px-4 py-2 border">
+                                    <button
+        @click="confirmStatusChange(project)"
+        class="text-sm font-medium"
+        :class="{
+            'text-blue-500 hover:text-blue-700': project.status === 'aktif',
+            'text-red-500 hover:text-red-700': project.status === 'nonaktif'
+        }"
+    >
+        {{ project.status === 'aktif' ? 'Aktif' : 'Nonaktif' }}
+    </button>
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -220,6 +231,44 @@ export default {
                 );
             } else {
                 this.filteredProjects = this.projects;
+            }
+        },
+        
+        async changeProjectStatus(project) {
+    try {
+        const newStatus = project.status === 'aktif' ? 'nonaktif' : 'aktif';
+        const response = await axios.post(
+            '/api/changeStatus',
+            {
+                tahun_ajaran: project.tahun_ajaran,
+                nama_proyek: project.nama_proyek,
+                status: newStatus,
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+                },
+            }
+        );
+        project.status = newStatus;  // Update status secara lokal setelah berhasil
+        alert("Status proyek berhasil diperbarui!");
+    } catch (error) {
+        console.error("Error changing project status:", error);
+        alert("Terjadi kesalahan saat mengubah status proyek.");
+    }
+}
+,
+
+        // Fungsi untuk mengonfirmasi perubahan status
+        confirmStatusChange(project) {
+            const confirmChange = window.confirm(
+                `Apakah Anda yakin ingin mengubah status proyek "${project.nama_proyek}" menjadi ${
+                    project.status === 'aktif' ? 'nonaktif' : 'aktif'
+                }?`
+            );
+            
+            if (confirmChange) {
+                this.changeProjectStatus(project);
             }
         },
     },

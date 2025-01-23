@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Dosen;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Models\project;
 
 class DashboardDosen extends Controller
 {
@@ -32,7 +33,11 @@ class DashboardDosen extends Controller
     {
         return Inertia::render('Dosen/AnswerPeer');
     }
-    
 
-   
+    public function getActiveProjects(Request $request)
+    {
+        $projects = Project::where('status', 'aktif')->get();
+
+        return response()->json($projects);
+    }
 }

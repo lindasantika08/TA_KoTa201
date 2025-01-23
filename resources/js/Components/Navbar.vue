@@ -128,8 +128,24 @@ export default {
     },
 
     goToProfile() {
-      router.visit("/dosen/profile");
-    },
+  axios.get('/api/user-role') // API untuk mendapatkan role pengguna
+    .then(response => {
+      const role = response.data.role;
+
+      if (role === 'dosen') {
+        router.visit('/dosen/profile');
+      } else if (role === 'mahasiswa') {
+        router.visit('/mahasiswa/profile');
+      } else {
+        alert('Role tidak dikenali.');
+      }
+    })
+    .catch(error => {
+      console.error('Gagal mendapatkan role pengguna:', error);
+      alert('Terjadi kesalahan. Silakan coba lagi.');
+    });
+},
+
   },
 };
 </script>

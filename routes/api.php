@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Dosen\AssessmentController;
 use App\Http\Controllers\Dosen\AnswerController;
+use App\Http\Controllers\Dosen\DashboardDosen;
 use App\Http\Controllers\Dosen\ProjectController;
 use App\Http\Controllers\Dosen\KelolaProyekController;
 use App\Http\Controllers\Dosen\KelolaKelompokController;
@@ -14,12 +15,19 @@ use App\Http\Controllers\Mahasiswa\AssessmentMahasiswa;
 use App\Http\Controllers\Mahasiswa\SelfAssessment;
 use App\Http\Controllers\Mahasiswa\PeerAssessment;
 use App\Models\AnswersPeer;
+use Illuminate\Support\Facades\Auth;
+use SebastianBergmann\CodeCoverage\Report\Html\Dashboard;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function () {
         return auth()->user();
     });
+
+    Route::get('/user-role', function () {
+        $user = Auth::user();
+        return response()->json(['role' => $user->role]);
+    })->middleware('auth:sanctum');
     //dosen
     Route::get('/export-self-assessment', [AssessmentController::class, 'exportExcel']);
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -44,6 +52,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/answered-peers-dosen', [AnswerController::class, 'answeredPeersDosen']);
     Route::get('/get-answer-peerDosen/{questionId}', [AnswerController::class, 'getAnswerPeerDosen']);
     Route::post('/save-all-answers-peerDosen', [AnswerController::class, 'saveAllAnswersPeerDosen']);
+    Route::get('/answers/statistics', [AnswerController::class, 'getStatistics']);
+    Route::get('projects/active', [DashboardDosen::class, 'getActiveProjects']);
+    Route::post('/changeStatus', [ProjectController::class, 'changeStatus']);
+    Route::get('/answers/get-details', [AnswerController::class, 'getDetailsAnswer']);
+
 
     //mahasiswa
     Route::get('/bobot', [SelfAssessment::class, 'getFilteredBobot']);

@@ -51,6 +51,11 @@ class KelolaKelompokController extends Controller
         return Inertia::render('Dosen/CreateKelompok');
     }
 
+    public function ProfileMhs()
+    {
+        return Inertia::render('Dosen/DetailProfilMhs');
+    }
+
     public function showDetail($id)
     {
         $kelompok = Kelompok::with('user', 'dosen')->findOrFail($id);
