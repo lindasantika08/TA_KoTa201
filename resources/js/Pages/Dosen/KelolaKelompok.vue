@@ -73,6 +73,10 @@ export default {
     createKelompok(url) {
       router.visit("/dosen/kelola-kelompok/create"); // Menggunakan Inertia.js untuk navigasi
     },
+    goToProfile(user_id) {
+    // Arahkan ke halaman profile mahasiswa dengan user_id
+    router.visit(`/dosen/kelola-kelompok/profile-mhs?user_id=${user_id}`);
+  }
   },
 };
 </script>
@@ -93,7 +97,7 @@ export default {
             <!-- Label "Daftar Kelompok" (Posisi Kanan) -->
             <div class="ml-4">
               <span class="text-lg font-semibold text-black">Daftar Kelompok</span>
-            </div> 
+            </div>
             <!-- Dropdown Filter (Posisi Kiri) -->
             <div class="flex-1 max-w-xs">
               <select id="projectDropdown" v-model="selectedProject"
@@ -106,7 +110,7 @@ export default {
               </select>
             </div>
 
-            
+
           </div>
 
           <!-- Data Table -->
@@ -115,7 +119,10 @@ export default {
             <template v-slot:column-anggota="{ item }">
               <ul>
                 <li v-for="(anggota, index) in item.anggota" :key="index">
-                  - {{ anggota }}
+                  <!-- Klik nama anggota untuk pergi ke profile mahasiswa -->
+                  <a href="#" @click.prevent="goToProfile(anggota.user_id)" class="text-blue-900 hover:underline">
+                    - {{ anggota.name }}
+                  </a>
                 </li>
               </ul>
             </template>

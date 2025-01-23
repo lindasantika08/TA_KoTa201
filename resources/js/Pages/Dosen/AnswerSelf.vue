@@ -86,7 +86,6 @@ export default {
         },
     },
     async created() {
-    console.log('Component created - starting fetch');
     await this.fetchQuestions();
     await this.fetchStudentsInfo();
 },
@@ -297,7 +296,7 @@ methods: {
                             <p><strong>Kelas:</strong> {{ studentInfo.class }}</p>
                         </div>
                         <div>
-                            <p><strong>Kelompok:</strong> {{ studentInfo.group }}</p>
+                            <!-- <p><strong>Kelompok:</strong> {{ studentInfo.group }}</p> -->
                             <p><strong>Proyek:</strong> {{ studentInfo.project }}</p>
                             <p><strong>Tanggal Pengisian:</strong> {{ studentInfo.date }}</p>
                         </div>

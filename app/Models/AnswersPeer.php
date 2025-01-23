@@ -29,4 +29,19 @@ class AnswersPeer extends Model
         'question_id' => 'string',
         'score' => 'integer',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id', 'id');
+    }
+
+    public function kelompok()
+    {
+        return $this->belongsTo(Kelompok::class, 'user_id', 'user_id');
+    }
+
+    public function peer()
+    {
+        return $this->belongsTo(User::class, 'peer_id', 'id');
+    }
 }

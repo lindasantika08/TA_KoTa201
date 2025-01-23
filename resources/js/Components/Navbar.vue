@@ -33,8 +33,6 @@
           />
           <span class="text-sm font-medium text-black mr-2">{{ userName }}</span>
         </button>
-       
-
         <!-- Dropdown Menu -->
         <div
           v-if="showProfileMenu"
@@ -82,42 +80,72 @@ export default {
     toggleProfileMenu() {
       this.showProfileMenu = !this.showProfileMenu;
     },
-    async logout() {
-  if (this.isLoggingOut) return;
-  this.isLoggingOut = true;
 
-  try {
-    const token = localStorage.getItem("auth_token");
-    if (token) {
-      console.log("Token:", token);
-      await axios.post(
-        "/api/logout",  // Pastikan menggunakan POST di sini
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+    // Logout Function
+    async logout() {
+      if (this.isLoggingOut) return;  // Prevent multiple logout requests
+      this.isLoggingOut = true;
+
+      try {
+        const token = localStorage.getItem("auth_token");
+        console.log("Token yang dikirim:", token);
+
+        if (token) {
+          // Log token yang akan dikirim untuk verifikasi
+          console.log("Mengirim token untuk logout:", token);
+
+          // Kirim permintaan logout ke backend
+          const response = await axios.put(
+            "/api/logout",
+            {},
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          // Log response dari backend
+          console.log("Logout response:", response.data);
+        } else {
+          console.log("Token tidak ditemukan");
+          alert("You are not logged in.");
         }
-      );
-    }
-  } catch (error) {
-    console.error("Logout error:", error);
-    alert("Logout failed. Please try again.");
-  } finally {
+      } catch (error) {
+        console.error("Logout error:", error);
+        alert("Logout failed. Please try again.");
+      } finally {
+       // Hapus token dan data pengguna setelah logout berhasil
     localStorage.removeItem("auth_token");
     localStorage.removeItem("user_data");
-    router.visit("/login");
-    this.isLoggingOut = false;
-  }
-}
-,
+        router.visit("/login");  // Redirect to login page
+        this.isLoggingOut = false;
+      }
+    },
+
     goToNotifications() {
       router.visit("/notifications");
     },
+
     goToProfile() {
-      router.visit("/dosen/profile");
-    },
+  axios.get('/api/user-role') // API untuk mendapatkan role pengguna
+    .then(response => {
+      const role = response.data.role;
+
+      if (role === 'dosen') {
+        router.visit('/dosen/profile');
+      } else if (role === 'mahasiswa') {
+        router.visit('/mahasiswa/profile');
+      } else {
+        alert('Role tidak dikenali.');
+      }
+    })
+    .catch(error => {
+      console.error('Gagal mendapatkan role pengguna:', error);
+      alert('Terjadi kesalahan. Silakan coba lagi.');
+    });
+},
+
   },
 };
 </script>

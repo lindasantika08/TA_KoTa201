@@ -15,6 +15,15 @@
                 </div>
                 <Card :title="`Peer Assessment - ${namaProyek} (${tahunAjaran})`">
                     <template #actions>
+                        <div class="flex justify-end">
+                            <button
+                                @click="handleAnswers()"
+                                class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                            >
+                                <font-awesome-icon icon="fa-solid fa-pencil" />
+                                Attempt
+                            </button>
+                        </div>
                         <!-- Container untuk assessment yang dikelompokkan berdasarkan aspek -->
                         <div class="mt-6 space-y-8">
                             <div v-for="(group, aspek) in groupedAssessments" :key="aspek">
@@ -90,11 +99,12 @@
 
 <script>
 import { ref, computed } from "vue";
-import { usePage } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 import Sidebar from "@/Components/Sidebar.vue";
 import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
 import Breadcrumb from "@/Components/Breadcrumb.vue";
+import axios from "axios";
 
 export default {
     components: {
@@ -139,12 +149,56 @@ export default {
             return groups;
         });
 
+        const fetchQuestionId = async () => {
+            try {
+                const response = await axios.get("/api/get-question-id", {
+                    params: {
+                        tahun_ajaran: props.tahunAjaran,
+                        nama_proyek: props.namaProyek,
+                    },
+                });
+
+                if (response.data) {
+                    return response.data.questionId;
+                }
+            } catch (error) {
+                console.error("Error fetching QuestionId:", error);
+                alert(
+                    "Gagal mendapatkan QuestionId. Periksa kembali data Anda."
+                );
+                return null;
+            }
+        };
+
+        const handleAnswers = async () => {
+            // Ambil QuestionId dari backend
+            const questionId = await fetchQuestionId();
+            if (!questionId) return;
+
+            // Data yang ingin dikirim
+            const data = {
+                // QuestionId: questionId,
+                tahunAjaran: props.tahunAjaran,
+                namaProyek: props.namaProyek,
+            };
+
+            // Log data ke konsol untuk debugging
+            console.log("Data yang akan dikirim:", data);
+
+            // Navigasi ke halaman pengisian assessment
+            router.visit("/dosen/AnswerPeer", {
+                method: "get",
+                data: data,
+            });
+        };
+
         return {
             toggleDropdown,
             showDropdown,
             groupedAssessments,
             tahunAjaran: props.tahunAjaran,
-            namaProyek: props.namaProyek
+            namaProyek: props.namaProyek,
+            handleAnswers,
         };
     },
 };
