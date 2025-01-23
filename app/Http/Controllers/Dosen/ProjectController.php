@@ -47,7 +47,9 @@ class ProjectController extends Controller
                 ->whereColumn('project.tahun_ajaran', 'assessment.tahun_ajaran')
                 ->whereColumn('project.nama_proyek', 'assessment.nama_proyek')
                 ->where('assessment.type', 'selfAssessment');
-        })->get();
+        })
+            // Menambahkan kondisi status aktif
+            ->get();
 
         return response()->json($projects);
     }
@@ -59,7 +61,10 @@ class ProjectController extends Controller
                 ->whereColumn('project.tahun_ajaran', 'assessment.tahun_ajaran')
                 ->whereColumn('project.nama_proyek', 'assessment.nama_proyek')
                 ->where('assessment.type', 'peerAssessment');
-        })->get();
+        })
+
+            ->get();
+
 
         return response()->json($projects);
     }

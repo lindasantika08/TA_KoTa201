@@ -41,8 +41,9 @@ export default {
     data() {
         return {
             breadcrumbs: [
-                { text: "Assessment", href: "/peer" },
-                { text: "Peer Assessment", href: null }
+                { text: "Peer Assessment", href: "/dosen/assessment/projectsPeer" },
+                { text: "Detail", href: "/dosen/assessment/data-with-bobot-peer" },
+                { text: "Attempt", href: null }
             ],
             headers: [
                 { key: 'bobot_1', label: 'Bobot 1' },

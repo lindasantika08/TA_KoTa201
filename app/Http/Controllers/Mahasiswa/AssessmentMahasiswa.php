@@ -41,6 +41,7 @@ class AssessmentMahasiswa extends Controller
                     ->whereColumn('project.nama_proyek', 'kelompok.nama_proyek')
                     ->where('kelompok.user_id', $userId); // Cek user_id di tabel kelompok
             })
+            ->where('project.status', 'aktif')
             ->get();
 
         return response()->json($projects);
@@ -63,6 +64,7 @@ class AssessmentMahasiswa extends Controller
                     ->whereColumn('project.nama_proyek', 'kelompok.nama_proyek')
                     ->where('kelompok.user_id', $userId); // Cek user_id di tabel kelompok
             })
+            ->where('project.status', 'aktif')
             ->get();
 
         return response()->json($projects);

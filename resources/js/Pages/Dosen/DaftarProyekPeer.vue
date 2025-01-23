@@ -105,7 +105,7 @@ export default {
     },
     handleListAnswer(item) {
     // Pindah halaman dengan mengirimkan tahun_ajaran dan nama_proyek sebagai query params
-    router.get('/dosen/answers-peer-assessment', {
+    router.get('/dosen/answer-list-peer ', {
       tahun_ajaran: item.tahun_ajaran,
       nama_proyek: item.nama_proyek
     }, {

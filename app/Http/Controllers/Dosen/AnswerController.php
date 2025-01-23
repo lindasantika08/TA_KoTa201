@@ -188,8 +188,7 @@ class AnswerController extends Controller
         // Mengembalikan data dalam format JSON
         return response()->json($answers);
     }
-
-    public function getListAnswersPeer(Request $request)
+    public function getListAnswersKelompokPeer(Request $request)
     {
         // Menangkap query params
         $tahunAjaran = $request->query('tahun_ajaran');
@@ -204,21 +203,38 @@ class AnswerController extends Controller
         }
     
         try {
-            // Ambil data dengan join ke tabel assessment dan user
-            $answers = AnswersPeer::select('answerspeer.*', 'assessment.pertanyaan')
-                ->join('assessment', 'answerspeer.question_id', '=', 'assessment.id') // Join dengan tabel assessment
-                ->where('assessment.tahun_ajaran', $tahunAjaran) // Filter berdasarkan tahun ajaran
-                ->where('assessment.nama_proyek', $namaProyek) // Filter berdasarkan nama proyek
-                ->with('user') // Memuat relasi dengan user (pastikan relasi ini ada pada model AnswersPeer)
+            // Mengambil data jawaban yang terisi dan jumlah mahasiswa beserta user_id
+            $answers = DB::table('kelompok')
+                ->select(
+                    'kelompok.kelompok as nama_kelompok',
+                    'kelompok.tahun_ajaran',
+                    'kelompok.nama_proyek',
+                    DB::raw('COUNT(DISTINCT answerspeer.user_id) as total_filled'), // Unik
+                    DB::raw('COUNT(DISTINCT kelompok.user_id) as total_mahasiswa'), // Unik
+                    DB::raw('GROUP_CONCAT(DISTINCT kelompok.user_id) as user_ids') // Unik
+                )
+                ->leftJoin('answerspeer', function ($join) {
+                    $join->on('answerspeer.user_id', '=', 'kelompok.user_id')
+                        ->whereNotNull('answerspeer.status'); // Menghitung yang sudah mengisi
+                })
+                ->where('kelompok.tahun_ajaran', $tahunAjaran)
+                ->where('kelompok.nama_proyek', $namaProyek)
+                ->groupBy('kelompok.kelompok', 'kelompok.tahun_ajaran', 'kelompok.nama_proyek')
                 ->get();
     
-            // Jika data tidak ada, kembalikan response 404
+            // Jika data kosong, kembalikan response 404
             if ($answers->isEmpty()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Tidak ada data ditemukan.'
                 ], 404);
             }
+    
+            // Menambahkan user_id dalam bentuk array (menghapus koma)
+            $answers = $answers->map(function ($item) {
+                $item->user_ids = explode(',', $item->user_ids); // Mengubah string menjadi array
+                return $item;
+            });
     
             return response()->json([
                 'success' => true,
@@ -236,7 +252,68 @@ class AnswerController extends Controller
         }
     }
     
-    
+
+
+
+
+    public function getListAnswersPeer(Request $request)
+{
+    $tahunAjaran = $request->query('tahun_ajaran');
+    $namaProyek = $request->query('nama_proyek');
+    $kelompok = $request->query('kelompok'); // Parameter kelompok
+
+    Log::info('Parameter diterima:', [
+        'tahun_ajaran' => $tahunAjaran,
+        'nama_proyek' => $namaProyek,
+        'kelompok' => $kelompok,
+    ]);
+
+    // Validasi input
+    if (!$tahunAjaran || !$namaProyek || !$kelompok) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Parameter tidak lengkap.',
+        ], 400);
+    }
+
+    try {
+        // Ambil data dengan join ke tabel kelompok dan filter sesuai parameter
+        $answers = AnswersPeer::select('answerspeer.*', 'assessment.pertanyaan')
+            ->join('assessment', 'answerspeer.question_id', '=', 'assessment.id') // Join dengan tabel assessment
+            ->join('kelompok', 'answerspeer.user_id', '=', 'kelompok.user_id') // Join dengan tabel kelompok
+            ->where('assessment.tahun_ajaran', $tahunAjaran) // Filter berdasarkan tahun ajaran
+            ->where('assessment.nama_proyek', $namaProyek)   // Filter berdasarkan nama proyek
+            ->where('kelompok.kelompok', $kelompok)     // Filter berdasarkan nama kelompok
+            ->with(['user', 'peer']) // Relasi ke tabel user dan peer
+            ->get();
+
+            Log::info('Hasil query:', ['answers' => $answers->toArray()]);
+
+        if ($answers->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak ada data ditemukan.',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $answers,
+        ]);
+    } catch (\Exception $e) {
+        Log::error('Error fetching answers: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Terjadi kesalahan saat mengambil data.',
+            'error' => $e->getMessage(),
+        ], 500);
+    }
+}
+
+    public function getListAnswerPeer()
+    {
+        return Inertia::render('Dosen/ListAnswerPeer');
+    }
 
     public function getListAnswersView()
     {

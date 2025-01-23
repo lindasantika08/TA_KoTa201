@@ -16,13 +16,16 @@ export default {
     return {
       tahun_ajaran: "", // Menyimpan tahun_ajaran
       nama_proyek: "", // Menyimpan nama_proyek
+      kelompok: "",     // Kelompok yang diterima dari query
       answers: [], // Menyimpan data jawaban
       breadcrumbs: [
         { text: "Peer Assessment", href: "/dosen/assessment/projectsPeer" },
+        { text: "List Answer", href: null },
       ], // Breadcrumbs untuk navigasi
       headers: [
         { key: "no", label: "No" },
         { key: "nama_pengguna", label: "Nama Pengguna" },
+        { key: "nama_rekan", label: "Nama Rekan" }, // Kolom baru
         { key: "pertanyaan", label: "Pertanyaan" },
         { key: "skor", label: "Skor" },
         { key: "jawaban", label: "Jawaban" },
@@ -36,22 +39,26 @@ export default {
     const query = new URLSearchParams(window.location.search);
     this.tahun_ajaran = query.get("tahun_ajaran");
     this.nama_proyek = query.get("nama_proyek");
+    this.kelompok = query.get("kelompok");
 
     // Debugging: Menampilkan tahun_ajaran dan nama_proyek
     console.log("Tahun Ajaran:", this.tahun_ajaran);
     console.log("Nama Proyek:", this.nama_proyek);
+    console.log("Kelompok:", this.kelompok);
 
-    if (this.tahun_ajaran && this.nama_proyek) {
+    if (this.tahun_ajaran && this.nama_proyek && this.kelompok) {
       this.fetchAnswers(); // Ambil data jawaban berdasarkan tahun ajaran dan nama proyek
     } else {
-      console.error("Tahun Ajaran atau Nama Proyek tidak ditemukan!");
+      console.error("Parameter tidak lengkap!");
     }
   },
   methods: {
     fetchAnswers() {
-      // Debugging: Menampilkan query params sebelum membuat request
-      console.log("Tahun Ajaran:", this.tahun_ajaran);
-      console.log("Nama Proyek:", this.nama_proyek);
+      console.log("Fetching data with params:", {
+    tahun_ajaran: this.tahun_ajaran,
+    nama_proyek: this.nama_proyek,
+    kelompok: this.kelompok,
+  });
 
       // Mengambil data jawaban dari API berdasarkan tahun_ajaran dan nama_proyek
       axios
@@ -59,6 +66,7 @@ export default {
           params: {
             tahun_ajaran: this.tahun_ajaran,
             nama_proyek: this.nama_proyek,
+            kelompok: this.kelompok,
           },
         })
         .then((response) => {
@@ -113,8 +121,8 @@ export default {
                 :class="[
                   'px-2 py-1 rounded-full text-xs font-medium',
                   item.status === 'aktif'
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-red-100 text-red-800',
+                    ? 'bg-red-100 text-red-800'
+                    : 'bg-green-100 text-green-800',
                 ]"
               >
                 {{ item.status }}
@@ -127,6 +135,10 @@ export default {
             <template #column-nama_pengguna="{ item }">
               {{ item.user.name }}
               <!-- Menampilkan nama pengguna, jika ada key 'user.name' -->
+            </template>
+            <template #column-nama_rekan="{ item }">
+              {{ item.peer ? item.peer.name : '-' }}
+              <!-- Menampilkan nama rekan -->
             </template>
             <template #column-pertanyaan="{ item }">
               {{ item.pertanyaan }}
