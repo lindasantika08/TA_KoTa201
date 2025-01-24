@@ -51,23 +51,35 @@ export default {
         });
     },
     fetchStatistics() {
-      if (this.selectedProject) {
-        axios
-          .get("/api/answers/statistics", {
-            params: {
-              tahun_ajaran: this.selectedProject.tahun_ajaran,
-              nama_proyek: this.selectedProject.nama_proyek,
-            },
-          })
-          .then((response) => {
-            this.totalAnswers = response.data.totalSudahMengisi;
-            this.totalUsers = response.data.totalKeseluruhan;
-          })
-          .catch((error) => {
-            console.error("Error fetching statistics:", error);
-          });
-      }
-    },
+  if (this.selectedProject) {
+    // Log data yang akan dikirim dalam permintaan
+    console.log("Fetching statistics with parameters:");
+    console.log("Tahun Ajaran:", this.selectedProject.tahun_ajaran);
+    console.log("Nama Proyek:", this.selectedProject.nama_proyek);
+
+    axios
+      .get("/api/answers/statistics", {
+        params: {
+          tahun_ajaran: this.selectedProject.tahun_ajaran,
+          nama_proyek: this.selectedProject.nama_proyek,
+        },
+      })
+      .then((response) => {
+        // Log respons data untuk memastikan data diterima
+        console.log("Statistics response:", response.data);
+
+        this.totalAnswers = response.data.totalSudahMengisi;
+        this.totalUsers = response.data.totalKeseluruhan;
+      })
+      .catch((error) => {
+        // Log error jika terjadi masalah saat fetch
+        console.error("Error fetching statistics:", error);
+      });
+  } else {
+    console.log("No project selected. Skipping fetch.");
+  }
+},
+
     handleListAnswer(item) {
       router.get('/dosen/answers-self-assessment', {
         tahun_ajaran: item.tahun_ajaran,

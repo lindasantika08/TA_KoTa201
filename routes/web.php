@@ -71,6 +71,7 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/kelola-dosen', [UserManagementController::class, 'KelolaDosen'])->name('KelolaDosen');
         Route::get('/answers/details', [AnswerController::class, 'getDetails']);
+        Route::get('/kelompok/report-detail', [ReportController::class, 'getScoreKelompok']);
     });
 
     //Route untuk Mahasiswa

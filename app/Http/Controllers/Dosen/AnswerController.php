@@ -124,8 +124,8 @@ class AnswerController extends Controller
             'id' => $user->id,
             'nip' => $user->nip,
             'name' => $user->name,
-            'class' => '1B',  
-            'group' => $kelompok ? $kelompok->kelompok : 'Tidak Ditemukan', 
+            'class' => '1B',
+            'group' => $kelompok ? $kelompok->kelompok : 'Tidak Ditemukan',
             'project' => $kelompok ? $kelompok->nama_proyek : 'Tidak Ditemukan',
             'date' => now()->format('d F Y')
         ];
@@ -201,9 +201,9 @@ class AnswerController extends Controller
             if ($answeredQuestionIds->count() === 0) {
                 $status = 'unsubmitted';
             } elseif ($answeredQuestionIds->count() < $totalQuestions) {
-                $status = 'on progress'; 
+                $status = 'on progress';
             } elseif ($answeredQuestionIds->count() === $totalQuestions) {
-                $status = 'submitted'; 
+                $status = 'submitted';
             } else {
                 $status = 'unsubmitted';
             }
@@ -237,9 +237,9 @@ class AnswerController extends Controller
                     'kelompok.kelompok as nama_kelompok',
                     'kelompok.tahun_ajaran',
                     'kelompok.nama_proyek',
-                    DB::raw('COUNT(DISTINCT answerspeer.user_id) as total_filled'), 
-                    DB::raw('COUNT(DISTINCT kelompok.user_id) as total_mahasiswa'), 
-                    DB::raw('GROUP_CONCAT(DISTINCT kelompok.user_id) as user_ids') 
+                    DB::raw('COUNT(DISTINCT answerspeer.user_id) as total_filled'),
+                    DB::raw('COUNT(DISTINCT kelompok.user_id) as total_mahasiswa'),
+                    DB::raw('GROUP_CONCAT(DISTINCT kelompok.user_id) as user_ids')
                 )
                 ->leftJoin('answerspeer', function ($join) {
                     $join->on('answerspeer.user_id', '=', 'kelompok.user_id')
@@ -258,7 +258,7 @@ class AnswerController extends Controller
             }
 
             $answers = $answers->map(function ($item) {
-                $item->user_ids = explode(',', $item->user_ids); 
+                $item->user_ids = explode(',', $item->user_ids);
                 return $item;
             });
 
@@ -297,15 +297,15 @@ class AnswerController extends Controller
 
         try {
             $answers = AnswersPeer::select('answerspeer.*', 'assessment.pertanyaan')
-                ->join('assessment', 'answerspeer.question_id', '=', 'assessment.id') 
-                ->join('kelompok', 'answerspeer.user_id', '=', 'kelompok.user_id') 
-                ->where('assessment.tahun_ajaran', $tahunAjaran) 
-                ->where('assessment.nama_proyek', $namaProyek)   
-                ->where('kelompok.kelompok', $kelompok)     
+                ->join('assessment', 'answerspeer.question_id', '=', 'assessment.id')
+                ->join('kelompok', 'answerspeer.user_id', '=', 'kelompok.user_id')
+                ->where('assessment.tahun_ajaran', $tahunAjaran)
+                ->where('assessment.nama_proyek', $namaProyek)
+                ->where('kelompok.kelompok', $kelompok)
                 ->with(['user', 'peer'])
                 ->get();
 
-             Log::info('Hasil query:', ['answers' => $answers->toArray()]);
+            Log::info('Hasil query:', ['answers' => $answers->toArray()]);
 
             if ($answers->isEmpty()) {
                 return response()->json([
@@ -371,7 +371,7 @@ class AnswerController extends Controller
         try {
             $validated = $request->validate([
                 'user_id' => 'required|string|exists:users,id',
-                'peer_id' => 'nullable|string', 
+                'peer_id' => 'nullable|string',
                 'question_id' => 'required|string|exists:assessment,id',
                 'answer' => 'required|string',
                 'score' => 'required|integer|min:1|max:5',
@@ -501,39 +501,67 @@ class AnswerController extends Controller
 
     public function getStatistics(Request $request)
     {
-        $tahunAjaran = $request->query('tahun_ajaran');
-        $namaProyek = $request->query('nama_proyek');
+        try {
+            $tahunAjaran = urldecode($request->query('tahun_ajaran'));
+            $namaProyek = urldecode($request->query('nama_proyek'));
 
-        Log::info('Mendapatkan Statistik:', ['tahun_ajaran' => $tahunAjaran, 'nama_proyek' => $namaProyek]);
+            Log::info('Input Statistics:', [
+                'tahun_ajaran' => $tahunAjaran,
+                'nama_proyek' => $namaProyek
+            ]);
 
-        $usersInKelompok = Kelompok::where('tahun_ajaran', $tahunAjaran)
-            ->where('nama_proyek', $namaProyek)
-            ->distinct('user_id')
-            ->pluck('user_id');
+            // Cari kelompok untuk proyek spesifik
+            $kelompok = Kelompok::where('tahun_ajaran', $tahunAjaran)
+                ->where('nama_proyek', $namaProyek)
+                ->get();
 
-        $usersAlreadyFilled = Answers::join('kelompok', function ($join) use ($tahunAjaran, $namaProyek) {
-            $join->on('answers.user_id', '=', 'kelompok.user_id')
-                ->where('kelompok.tahun_ajaran', $tahunAjaran)
-                ->where('kelompok.nama_proyek', $namaProyek);
-        })
-            ->distinct('answers.user_id')
-            ->pluck('answers.user_id');
+            Log::info('Kelompok Debug', [
+                'total' => $kelompok->count(),
+                'user_ids' => $kelompok->pluck('user_id')
+            ]);
 
-        $totalKeseluruhan = $usersInKelompok->count();
-        Log::info('Total Keseluruhan user_id:', ['totalKeseluruhan' => $totalKeseluruhan]);
+            // Cari jawaban yang terkait dengan proyek spesifik
+            $usersAlreadyFilled = Answers::whereHas('question', function ($query) use ($tahunAjaran, $namaProyek) {
+                $query->where('tahun_ajaran', $tahunAjaran)
+                    ->where('nama_proyek', $namaProyek);
+            })
+                ->whereIn('user_id', $kelompok->pluck('user_id'))
+                ->distinct('user_id')
+                ->count();
 
-        $totalSudahMengisi = $usersAlreadyFilled->count();
-        Log::info('Total Sudah Mengisi user_id:', ['totalSudahMengisi' => $totalSudahMengisi]);
+            Log::info('Jawaban Debug', [
+                'total_filled' => $usersAlreadyFilled
+            ]);
 
-        $unsubmittedUsers = $usersInKelompok->diff($usersAlreadyFilled);
+            // Siapkan detail user yang belum mengisi
+            $unsubmittedUsers = $kelompok->map(function ($item) use ($tahunAjaran, $namaProyek) {
+                $isSubmitted = Answers::whereHas('question', function ($query) use ($tahunAjaran, $namaProyek) {
+                    $query->where('tahun_ajaran', $tahunAjaran)
+                        ->where('nama_proyek', $namaProyek);
+                })
+                    ->where('user_id', $item->user_id)
+                    ->exists();
 
-        $finalStats = [
-            'totalKeseluruhan' => $totalKeseluruhan,
-            'totalSudahMengisi' => $totalSudahMengisi,
-            'unsubmittedUsers' => $unsubmittedUsers->count(),
-        ];
+                return [
+                    'index' => $item->id,
+                    'userName' => $item->user->name,
+                    'status' => $isSubmitted ? 'submitted' : 'unsubmitted'
+                ];
+            });
 
-        return response()->json($finalStats);
+            return response()->json([
+                'totalKeseluruhan' => $kelompok->count(),
+                'totalSudahMengisi' => $usersAlreadyFilled,
+                'unsubmittedUsers' => $unsubmittedUsers
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Statistik Error: ' . $e->getMessage() . ' Trace: ' . $e->getTraceAsString());
+
+            return response()->json([
+                'error' => 'Fatal Error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
 
