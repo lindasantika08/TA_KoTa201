@@ -217,7 +217,49 @@ class AnswerController extends Controller
 
         return response()->json($result);
     }
+    public function getStatisticsPeer(Request $request)
+    {
+        $tahunAjaran = $request->query('tahun_ajaran');
+        $namaProyek = $request->query('nama_proyek');
 
+        Log::info('Mendapatkan Statistik:', ['tahun_ajaran' => $tahunAjaran, 'nama_proyek' => $namaProyek]);
+
+        // Ambil semua data kelompok berdasarkan tahun ajaran dan nama proyek
+        $kelompokData = Kelompok::where('tahun_ajaran', $tahunAjaran)
+            ->where('nama_proyek', $namaProyek)
+            ->get()
+            ->groupBy('kelompok');
+
+        Log::info('Data Kelompok:', ['kelompok' => $kelompokData]);
+
+
+        $kelompokStats = $kelompokData->map(function ($kelompok) {
+            $userIds = $kelompok->pluck('user_id'); // Semua user_id dalam kelompok
+            Log::info('User IDs dalam Kelompok:', ['userIds' => $userIds]);
+            $isSubmitted = $userIds->every(function ($userId) use ($userIds) {
+                // Periksa apakah user ini sudah mengisi untuk semua anggota kelompok lain
+                $filledCount = AnswersPeer::where('user_id', $userId)
+                    ->whereIn('peer_id', $userIds->whereNotIn('id', [$userId]))
+                    ->distinct('peer_id')
+                    ->count();
+                Log::info("User $userId Filled Count:", ['filledCount' => $filledCount]);
+                return $filledCount === $userIds->count() - 1; // Semua anggota kecuali dirinya
+            });
+            return $isSubmitted;
+        });
+
+        // Hitung kelompok yang sudah lengkap
+        $kelompokSudahLengkap = $kelompokStats->filter(fn($isSubmitted) => $isSubmitted)->count();
+        $totalKelompok = $kelompokStats->count();
+
+        $finalStats = [
+            'totalKelompok' => $totalKelompok,
+            'kelompokSudahLengkap' => $kelompokSudahLengkap,
+            'kelompokBelumLengkap' => $totalKelompok - $kelompokSudahLengkap,
+        ];
+        Log::info('Final Stats:', $finalStats);
+        return response()->json($finalStats);
+    }
 
     public function getListAnswersKelompokPeer(Request $request)
     {
@@ -232,39 +274,47 @@ class AnswerController extends Controller
         }
 
         try {
-            $answers = DB::table('kelompok')
-                ->select(
-                    'kelompok.kelompok as nama_kelompok',
-                    'kelompok.tahun_ajaran',
-                    'kelompok.nama_proyek',
-                    DB::raw('COUNT(DISTINCT answerspeer.user_id) as total_filled'),
-                    DB::raw('COUNT(DISTINCT kelompok.user_id) as total_mahasiswa'),
-                    DB::raw('GROUP_CONCAT(DISTINCT kelompok.user_id) as user_ids')
-                )
-                ->leftJoin('answerspeer', function ($join) {
-                    $join->on('answerspeer.user_id', '=', 'kelompok.user_id')
-                        ->whereNotNull('answerspeer.status');
-                })
-                ->where('kelompok.tahun_ajaran', $tahunAjaran)
-                ->where('kelompok.nama_proyek', $namaProyek)
-                ->groupBy('kelompok.kelompok', 'kelompok.tahun_ajaran', 'kelompok.nama_proyek')
-                ->get();
+            // Get unique groups for this academic year and project
+            $groups = Kelompok::where('tahun_ajaran', $tahunAjaran)
+                ->where('nama_proyek', $namaProyek)
+                ->distinct('kelompok')
+                ->pluck('kelompok');
 
-            if ($answers->isEmpty()) {
+            $results = $groups->map(function ($kelompok) use ($tahunAjaran, $namaProyek) {
+                // Find all users in this group
+                $groupUsers = Kelompok::where('kelompok', $kelompok)
+                    ->where('tahun_ajaran', $tahunAjaran)
+                    ->where('nama_proyek', $namaProyek)
+                    ->pluck('user_id');
+
+                // Count total members
+                $totalMahasiswa = $groupUsers->count();
+
+                // Count members who have completed assessments
+                $totalFilled = AnswersPeer::whereIn('user_id', $groupUsers)
+                    ->whereNotNull('status')
+                    ->distinct('user_id')
+                    ->count();
+
+                return [
+                    'nama_kelompok' => $kelompok,
+                    'total_mahasiswa' => $totalMahasiswa,
+                    'total_filled' => $totalFilled,
+                    'user_ids' => $groupUsers->toArray(),
+                    'user_id' => $groupUsers->first() ?? null
+                ];
+            });
+
+            if ($results->isEmpty()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Tidak ada data ditemukan.'
                 ], 404);
             }
 
-            $answers = $answers->map(function ($item) {
-                $item->user_ids = explode(',', $item->user_ids);
-                return $item;
-            });
-
             return response()->json([
                 'success' => true,
-                'data' => $answers
+                'data' => $results
             ]);
         } catch (\Exception $e) {
             Log::error('Error fetching answers: ' . $e->getMessage());
@@ -301,6 +351,8 @@ class AnswerController extends Controller
                 ->join('kelompok', 'answerspeer.user_id', '=', 'kelompok.user_id')
                 ->where('assessment.tahun_ajaran', $tahunAjaran)
                 ->where('assessment.nama_proyek', $namaProyek)
+                ->where('kelompok.tahun_ajaran', $tahunAjaran)
+                ->where('kelompok.nama_proyek', $namaProyek)
                 ->where('kelompok.kelompok', $kelompok)
                 ->with(['user', 'peer'])
                 ->get();
@@ -311,7 +363,7 @@ class AnswerController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Tidak ada data ditemukan.',
-                ], );
+                ], 404);
             }
 
             return response()->json([
@@ -499,49 +551,7 @@ class AnswerController extends Controller
         }
     }
 
-    public function getStatisticsPeer(Request $request)
-{
-    $tahunAjaran = $request->query('tahun_ajaran');
-    $namaProyek = $request->query('nama_proyek');
 
-    Log::info('Mendapatkan Statistik:', ['tahun_ajaran' => $tahunAjaran, 'nama_proyek' => $namaProyek]);
-
-    // Ambil semua data kelompok berdasarkan tahun ajaran dan nama proyek
-    $kelompokData = Kelompok::where('tahun_ajaran', $tahunAjaran)
-        ->where('nama_proyek', $namaProyek)
-        ->get()
-        ->groupBy('kelompok');
-    
-        Log::info('Data Kelompok:', ['kelompok' => $kelompokData]);
-
-
-    $kelompokStats = $kelompokData->map(function ($kelompok) {
-        $userIds = $kelompok->pluck('user_id'); // Semua user_id dalam kelompok
-        Log::info('User IDs dalam Kelompok:', ['userIds' => $userIds]);
-        $isSubmitted = $userIds->every(function ($userId) use ($userIds) {
-            // Periksa apakah user ini sudah mengisi untuk semua anggota kelompok lain
-            $filledCount = AnswersPeer::where('user_id', $userId)
-                ->whereIn('peer_id', $userIds->whereNotIn('id', [$userId]))
-                ->distinct('peer_id')
-                ->count();
-                Log::info("User $userId Filled Count:", ['filledCount' => $filledCount]);
-            return $filledCount === $userIds->count() - 1; // Semua anggota kecuali dirinya
-        });
-        return $isSubmitted;
-    });
-
-    // Hitung kelompok yang sudah lengkap
-    $kelompokSudahLengkap = $kelompokStats->filter(fn($isSubmitted) => $isSubmitted)->count();
-    $totalKelompok = $kelompokStats->count();
-
-    $finalStats = [
-        'totalKelompok' => $totalKelompok,
-        'kelompokSudahLengkap' => $kelompokSudahLengkap,
-        'kelompokBelumLengkap' => $totalKelompok - $kelompokSudahLengkap,
-    ];
-    Log::info('Final Stats:', $finalStats);
-    return response()->json($finalStats);
-}
 
 
 
