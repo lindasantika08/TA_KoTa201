@@ -24,16 +24,21 @@ export default {
     },
     methods: {
         // Fetch dropdown options directly from controller
-        fetchDropdownOptions() {
-            axios
-                .get("/api/dropdown-options")
-                .then((response) => {
-                    this.combinedOptions = response.data.options || []; // Use the provided data
-                })
-                .catch((error) => {
-                    console.error("Error fetching dropdown options:", error);
-                });
-        },
+       fetchDropdownOptions() {
+    axios
+        .get("/api/dropdown-options")
+        .then((response) => {
+            this.combinedOptions = response.data.options || []; 
+            
+            // Jika sudah ada selectedOption tersimpan, langsung panggil fetchKelompok
+            if (this.selectedOption) {
+                this.fetchKelompok();
+            }
+        })
+        .catch((error) => {
+            console.error("Error fetching dropdown options:", error);
+        });
+},
         // Fetch kelompok data based on selected option
         fetchKelompok() {
             if (!this.selectedOption) {
@@ -95,9 +100,12 @@ export default {
         }
     },
     mounted() {
-        this.fetchDropdownOptions();
-        handleReportKelompokDetail(kelompok);
-    },
+    this.fetchDropdownOptions();
+    // Tambahkan kondisi untuk menjalankan fetchKelompok jika ada selectedOption dari localStorage
+    if (this.selectedOption) {
+        this.fetchKelompok();
+    }
+},
 };
 </script>
 
