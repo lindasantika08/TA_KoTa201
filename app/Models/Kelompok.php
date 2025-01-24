@@ -55,9 +55,6 @@ class Kelompok extends Model
     // Definisikan relasi dengan model Project
     public function project()
     {
-        // return $this->belongsTo(Project::class);
-        // return $this->belongsTo(Project::class, 'tahun_ajaran', 'tahun_ajaran')
-        //         ->where('nama_proyek', $this->nama_proyek); // Menambahkan filter untuk 'nama_proyek'
-        return $this->belongsTo(Project::class, 'tahun_ajaran', 'nama_proyek');
+        return $this->belongsTo(Project::class, ['tahun_ajaran', 'nama_proyek'], ['tahun_ajaran', 'nama_proyek']);
     }
 }

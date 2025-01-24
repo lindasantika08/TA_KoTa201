@@ -547,39 +547,67 @@ class AnswerController extends Controller
 
     public function getStatistics(Request $request)
     {
-        $tahunAjaran = $request->query('tahun_ajaran');
-        $namaProyek = $request->query('nama_proyek');
+        try {
+            $tahunAjaran = urldecode($request->query('tahun_ajaran'));
+            $namaProyek = urldecode($request->query('nama_proyek'));
 
-        Log::info('Mendapatkan Statistik:', ['tahun_ajaran' => $tahunAjaran, 'nama_proyek' => $namaProyek]);
+            Log::info('Input Statistics:', [
+                'tahun_ajaran' => $tahunAjaran,
+                'nama_proyek' => $namaProyek
+            ]);
 
-        $usersInKelompok = Kelompok::where('tahun_ajaran', $tahunAjaran)
-            ->where('nama_proyek', $namaProyek)
-            ->distinct('user_id')
-            ->pluck('user_id');
+            // Cari kelompok untuk proyek spesifik
+            $kelompok = Kelompok::where('tahun_ajaran', $tahunAjaran)
+                ->where('nama_proyek', $namaProyek)
+                ->get();
 
-        $usersAlreadyFilled = Answers::join('kelompok', function ($join) use ($tahunAjaran, $namaProyek) {
-            $join->on('answers.user_id', '=', 'kelompok.user_id')
-                ->where('kelompok.tahun_ajaran', $tahunAjaran)
-                ->where('kelompok.nama_proyek', $namaProyek);
-        })
-            ->distinct('answers.user_id')
-            ->pluck('answers.user_id');
+            Log::info('Kelompok Debug', [
+                'total' => $kelompok->count(),
+                'user_ids' => $kelompok->pluck('user_id')
+            ]);
 
-        $totalKeseluruhan = $usersInKelompok->count();
-        Log::info('Total Keseluruhan user_id:', ['totalKeseluruhan' => $totalKeseluruhan]);
+            // Cari jawaban yang terkait dengan proyek spesifik
+            $usersAlreadyFilled = Answers::whereHas('question', function ($query) use ($tahunAjaran, $namaProyek) {
+                $query->where('tahun_ajaran', $tahunAjaran)
+                    ->where('nama_proyek', $namaProyek);
+            })
+                ->whereIn('user_id', $kelompok->pluck('user_id'))
+                ->distinct('user_id')
+                ->count();
 
-        $totalSudahMengisi = $usersAlreadyFilled->count();
-        Log::info('Total Sudah Mengisi user_id:', ['totalSudahMengisi' => $totalSudahMengisi]);
+            Log::info('Jawaban Debug', [
+                'total_filled' => $usersAlreadyFilled
+            ]);
 
-        $unsubmittedUsers = $usersInKelompok->diff($usersAlreadyFilled);
+            // Siapkan detail user yang belum mengisi
+            $unsubmittedUsers = $kelompok->map(function ($item) use ($tahunAjaran, $namaProyek) {
+                $isSubmitted = Answers::whereHas('question', function ($query) use ($tahunAjaran, $namaProyek) {
+                    $query->where('tahun_ajaran', $tahunAjaran)
+                        ->where('nama_proyek', $namaProyek);
+                })
+                    ->where('user_id', $item->user_id)
+                    ->exists();
 
-        $finalStats = [
-            'totalKeseluruhan' => $totalKeseluruhan,
-            'totalSudahMengisi' => $totalSudahMengisi,
-            'unsubmittedUsers' => $unsubmittedUsers->count(),
-        ];
+                return [
+                    'index' => $item->id,
+                    'userName' => $item->user->name,
+                    'status' => $isSubmitted ? 'submitted' : 'unsubmitted'
+                ];
+            });
 
-        return response()->json($finalStats);
+            return response()->json([
+                'totalKeseluruhan' => $kelompok->count(),
+                'totalSudahMengisi' => $usersAlreadyFilled,
+                'unsubmittedUsers' => $unsubmittedUsers
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Statistik Error: ' . $e->getMessage() . ' Trace: ' . $e->getTraceAsString());
+
+            return response()->json([
+                'error' => 'Fatal Error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
 

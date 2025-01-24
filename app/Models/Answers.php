@@ -47,4 +47,9 @@ class Answers extends Model
     {
         return $this->belongsTo(Assessment::class, 'question_id');
     }
+
+    public function project()
+    {
+        return $this->belongsTo(Project::class, ['tahun_ajaran', 'nama_proyek'], ['tahun_ajaran', 'nama_proyek']);
+    }
 }

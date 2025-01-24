@@ -9,6 +9,7 @@ use App\Http\Controllers\Dosen\DashboardDosen;
 use App\Http\Controllers\Dosen\ProjectController;
 use App\Http\Controllers\Dosen\KelolaProyekController;
 use App\Http\Controllers\Dosen\KelolaKelompokController;
+use App\Http\Controllers\Dosen\ReportController;
 use App\Http\Controllers\Dosen\UsersController;
 
 use App\Http\Controllers\Mahasiswa\AssessmentMahasiswa;
@@ -59,6 +60,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/changeStatus', [ProjectController::class, 'changeStatus']);
     Route::get('/answers/get-details', [AnswerController::class, 'getDetailsAnswer']);
     Route::get('/answers/{id}', [AnswerController::class, 'showdetail']);
+    Route::get('/dropdown-options', [ReportController::class, 'getDropdownOptions']);
+    Route::get('/kelompok/report', [ReportController::class, 'getKelompokReport']);
+    Route::get('/kelompok/report-detail', [ReportController::class, 'getScoreKelompok']);
+    Route::get('/report/kelompok/answers', [ReportController::class, 'getKelompokAnswers']);
+
 
     //mahasiswa
     Route::get('/bobot', [SelfAssessment::class, 'getFilteredBobot']);
