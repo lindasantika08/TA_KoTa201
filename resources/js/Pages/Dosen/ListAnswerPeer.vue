@@ -17,6 +17,7 @@ export default {
     return {
       tahun_ajaran: "",
       nama_proyek: "",
+      user_ids: "",
       answers: [],
       breadcrumbs: [
         { text: "Peer Assessment", href: "/dosen/assessment/projectsPeer" },

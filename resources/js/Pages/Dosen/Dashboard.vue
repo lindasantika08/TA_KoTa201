@@ -18,6 +18,8 @@ export default {
       selectedProject: null,
       totalAnswers: 0,
       totalUsers: 0,
+      totalGroups: 0,
+      completedGroups: 0,
     };
   },
   mounted() {
@@ -25,6 +27,7 @@ export default {
     if (savedProject) {
       this.selectedProject = JSON.parse(savedProject);
       this.fetchStatistics();
+      this.fetchPeerStatistics();
     }
     this.fetchActiveProjects();
   },
@@ -35,6 +38,7 @@ export default {
           localStorage.setItem("selectedProject", JSON.stringify(newProject));
         }
         this.fetchStatistics();
+        this.fetchPeerStatistics();
       },
       immediate: true,
     },
@@ -49,6 +53,24 @@ export default {
         .catch((error) => {
           console.error("Error fetching active projects:", error);
         });
+    },
+    fetchPeerStatistics() {
+      if (this.selectedProject) {
+        axios
+          .get("/api/answers/statistics-peer", {
+            params: {
+              tahun_ajaran: this.selectedProject.tahun_ajaran,
+              nama_proyek: this.selectedProject.nama_proyek,
+            },
+          })
+          .then((response) => {
+            this.totalGroups = response.data.totalKelompok;
+            this.completedGroups = response.data.kelompokSudahLengkap;
+          })
+          .catch((error) => {
+            console.error("Error fetching peer statistics:", error);
+          });
+      }
     },
     fetchStatistics() {
       if (this.selectedProject) {
@@ -106,11 +128,23 @@ export default {
             </div>
           </Card>
 
+          <!-- Card Peer Assessment -->
           <Card title="Peer Assessment" class="cursor-pointer hover:shadow-lg transition-shadow">
             <template #title>
               <h3 class="text-sm font-bold">Peer Assessment</h3>
             </template>
-            <p>Content for Card 2</p>
+
+            <div v-if="selectedProject" class="mt-2">
+              
+              <p class="text-xl font-semibold flex items-center">
+                <font-awesome-icon icon="fa-solid fa-user-check" class="mr-4 text-2xl" />
+                <span  class="text-3xl">{{ completedGroups }} / {{ totalGroups }}</span>
+              </p>
+            </div>
+
+            <div v-else class="mt-2">
+              <p class="text-lg">Pilih proyek untuk melihat statistik.</p>
+            </div>
           </Card>
 
           <Card title="Project" class="cursor-pointer hover:white transition-shadow">
