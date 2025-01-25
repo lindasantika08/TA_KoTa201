@@ -17,6 +17,7 @@ export default {
     return {
       tahun_ajaran: "",
       nama_proyek: "",
+      user_ids: "",
       answers: [],
       breadcrumbs: [
         { text: "Peer Assessment", href: "/dosen/assessment/projectsPeer" },
@@ -45,31 +46,38 @@ export default {
   },
   methods: {
     fetchAnswers() {
-      axios
-        .get("/api/answersKelompokPeer/list", {
-          params: {
-            tahun_ajaran: this.tahun_ajaran,
-            nama_proyek: this.nama_proyek,
-          },
-        })
-        .then((response) => {
-          if (response.data.success && Array.isArray(response.data.data)) {
-            this.answers = response.data.data.map((item) => ({
-              kelompok: item.nama_kelompok,
-              jumlah_user: `${item.total_filled}/${item.total_mahasiswa}`,
-              user_ids: item.user_ids,
-              id: item.user_id,
-            }));
-          } else {
-            console.error(
-              "Data yang diterima tidak sesuai format yang diharapkan."
-            );
-          }
-        })
-        .catch((error) => {
-          console.error("Error fetching answers:", error);
-        });
-    },
+    axios
+      .get("/api/answersKelompokPeer/list", {
+        params: {
+          tahun_ajaran: this.tahun_ajaran,
+          nama_proyek: this.nama_proyek,
+        },
+      })
+      .then((response) => {
+        if (response.data.success && Array.isArray(response.data.data)) {
+          this.answers = response.data.data.map((item) => ({
+            kelompok: item.nama_kelompok,
+            jumlah_user: `${item.total_filled}/${item.total_mahasiswa}`,
+            user_ids: item.user_ids,
+            id: item.user_id,
+          }));
+        } else {
+          // More detailed error handling
+          console.error(
+            "Data yang diterima tidak sesuai format yang diharapkan.",
+            response.data
+          );
+          // Optional: show user-friendly notification
+          alert(response.data.message || "Gagal memuat data");
+        }
+      })
+      .catch((error) => {
+        // Improved error logging
+        console.error("Error fetching answers:", error.response?.data || error);
+        // Optional: show user-friendly error message
+        alert(error.response?.data?.message || "Terjadi kesalahan");
+      });
+  },
 
     handleDetail(item) {
       router.get("/dosen/answers-peer-assessment", {

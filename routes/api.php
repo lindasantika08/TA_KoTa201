@@ -58,6 +58,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/get-answer-peerDosen/{questionId}', [AnswerController::class, 'getAnswerPeerDosen']);
     Route::post('/save-all-answers-peerDosen', [AnswerController::class, 'saveAllAnswersPeerDosen']);
     Route::get('/answers/statistics', [AnswerController::class, 'getStatistics']);
+    Route::get('/answers/statistics-peer', [AnswerController::class, 'getStatisticsPeer']);
     Route::get('projects/active', [DashboardDosen::class, 'getActiveProjects']);
     Route::post('/changeStatus', [ProjectController::class, 'changeStatus']);
     Route::get('/answers/get-details', [AnswerController::class, 'getDetailsAnswer']);
