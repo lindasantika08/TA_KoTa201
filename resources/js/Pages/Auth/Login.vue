@@ -43,27 +43,39 @@ export default {
 
     const checkAuthAndRedirect = async () => {
       if (isRedirecting.value) return
-
       const token = localStorage.getItem('auth_token')
       if (!token) return
 
       try {
         isRedirecting.value = true
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+
+        const response = await axios.get('/api/validate-token')
+
+        if (!response.data.valid) {
+          localStorage.removeItem('auth_token')
+          localStorage.removeItem('user_data')
+          router.visit('/login')
+          return
+        }
+
         const userData = JSON.parse(localStorage.getItem('user_data') || 'null')
         if (!userData) {
-          isRedirecting.value = false;
-          return;
+          router.visit('/login')
+          return
         }
-
-        await axios.get('/api/user')
 
         const role = userData.role
-        if (role === 'dosen') {
-          router.visit('/dosen/dashboard')
-        } else if (role === 'mahasiswa') {
-          router.visit('/mahasiswa/dashboard')
+        const routeMap = {
+          'dosen': '/dosen/dashboard',
+          'mahasiswa': '/mahasiswa/dashboard'
         }
+
+        if (routeMap[role]) {
+          router.visit(routeMap[role])
+        } else {
+          router.visit('/login')
+        }
+
       } catch (err) {
         localStorage.removeItem('auth_token')
         localStorage.removeItem('user_data')

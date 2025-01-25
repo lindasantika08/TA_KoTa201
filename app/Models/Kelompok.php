@@ -12,11 +12,9 @@ class Kelompok extends Model
 
     protected $table = 'kelompok';
 
-    // Atur $keyType dan $incrementing untuk UUID
     protected $keyType = 'string';
     public $incrementing = false;
 
-    // Kolom yang dapat diisi secara massal
     protected $fillable = [
         'id',
         'tahun_ajaran',
@@ -26,17 +24,15 @@ class Kelompok extends Model
         'kelompok',
     ];
 
-    // Menghasilkan UUID untuk kolom id secara otomatis
     protected static function boot()
     {
         parent::boot();
 
         static::creating(function ($kelompok) {
-            $kelompok->id = (string) Str::uuid(); // Menetapkan UUID ke kolom id
+            $kelompok->id = (string) Str::uuid(); 
         });
     }
 
-    // Relasi ke User (Mahasiswa/Dosen)
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
@@ -49,10 +45,9 @@ class Kelompok extends Model
 
     public function members()
     {
-        return $this->hasMany(User::class, 'user_id'); // Relasi ke tabel users
+        return $this->hasMany(User::class, 'user_id');
     }
 
-    // Definisikan relasi dengan model Project
     public function project()
     {
         return $this->belongsTo(Project::class, ['tahun_ajaran', 'nama_proyek'], ['tahun_ajaran', 'nama_proyek']);
