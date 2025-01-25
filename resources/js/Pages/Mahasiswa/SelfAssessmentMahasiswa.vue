@@ -71,7 +71,6 @@ export default {
             return this.questions[this.currentQuestionIndex] || null;
         },
         canSubmitAll() {
-            // Pastikan semua pertanyaan sudah terjawab
             return this.questions.length > 0 &&
                 this.questions.every(question => {
                     const savedAnswer = this.temporaryAnswers[question.id];
@@ -307,7 +306,6 @@ export default {
                 </div>
 
                 <Card title="FORMULIR PENGISIAN SELF ASSESSMENT" class="w-full">
-                    <!-- Student Information -->
                     <div class="grid grid-cols-2 gap-6 text-sm leading-6 mb-6">
                         <div>
                             <p><strong>NIM:</strong> {{ studentInfo.nim }}</p>
@@ -322,12 +320,10 @@ export default {
                     </div>
 
                     <Card>
-                        <!-- Loading State -->
                         <div v-if="loading" class="text-center py-8">
                             <p>Load Questions...</p>
                         </div>
 
-                        <!-- Error State -->
                         <div v-else-if="error" class="text-center py-8 text-red-600">
                             <p>{{ error }}</p>
                             <button @click="fetchQuestions"
@@ -336,9 +332,7 @@ export default {
                             </button>
                         </div>
 
-                        <!-- Questions Display -->
                         <div v-else-if="currentQuestion" class="space-y-6">
-                            <!-- Question Information -->
                             <div class="bg-gray-50 p-4 rounded-lg">
                                 <h3 class="font-semibold text-lg mb-4">
                                     Question {{ currentQuestionIndex + 1 }} dari {{ questions.length }}
@@ -347,7 +341,6 @@ export default {
                                 <p><strong>Kriteria:</strong> {{ currentQuestion.kriteria }}</p>
                             </div>
 
-                            <!-- Bobot Table -->
                             <div class="overflow-x-auto">
                                 <table class="min-w-full border-collapse border border-gray-200">
                                     <thead>
@@ -369,7 +362,6 @@ export default {
                                 </table>
                             </div>
 
-                            <!-- Question Text -->
                             <div class="bg-white p-6 rounded-lg shadow-md">
                                 <p class="text-gray-700 mb-4">{{ currentQuestion.pertanyaan }}</p>
                                 <div class="score-container mt-4">
@@ -389,7 +381,6 @@ export default {
                                 </div>
                             </div>
 
-                            <!-- Answer Form -->
                             <form @submit.prevent="submitAnswer" class="space-y-4">
                                 <div>
                                     <textarea id="answer" v-model="answer" rows="4"
@@ -398,7 +389,6 @@ export default {
                                         required></textarea>
                                 </div>
 
-                                <!-- Replace the Navigation buttons section -->
                                 <div class="flex justify-between items-center pt-4">
                                     <button type="button" @click="prevQuestion" :disabled="currentQuestionIndex === 0"
                                         class="px-4 py-2 bg-yellow-400 text-white rounded hover:bg-blue-600">
@@ -428,7 +418,6 @@ export default {
                             </form>
                         </div>
 
-                        <!-- No Questions State -->
                         <div v-else class="text-center py-8">
                             <p>Nothing Question.</p>
                         </div>

@@ -16,7 +16,7 @@ use App\Http\Controllers\Mahasiswa\AssessmentMahasiswa;
 use App\Http\Controllers\Mahasiswa\DashboardMahasiswa;
 use App\Http\Controllers\Mahasiswa\SelfAssessment;
 use App\Http\Controllers\Mahasiswa\PeerAssessment;
-use App\Models\AnswersPeer;
+use App\Http\Controllers\Mahasiswa\DetailSelfMahasiswa;
 use Illuminate\Support\Facades\Auth;
 // use SebastianBergmann\CodeCoverage\Report\Html\Dashboard;
 
@@ -101,5 +101,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/projects-user', [DashboardMahasiswa::class, 'getUserProject']);
     Route::get('/assessment-status', [DashboardMahasiswa::class, 'getSelfAssessmentStatus']);
     Route::get('/count-peer', [DashboardMahasiswa::class, 'getPeerAssessmentDetails']);
+
+    Route::get('/user-detail-answer', [DetailSelfMahasiswa::class, 'getUserInfo']);
+    Route::get('/detail-answer-self', [DetailSelfMahasiswa::class, 'getAnswerSelf']);
     
 });
