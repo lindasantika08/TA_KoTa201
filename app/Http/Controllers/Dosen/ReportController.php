@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Project;
 use App\Models\Answers;
+use App\Models\AnswersPeer;
 use App\Models\User;
 use App\Models\Assessment;
 use Illuminate\Support\Facades\Log;
@@ -137,31 +138,92 @@ class ReportController extends Controller
         $namaProyek = $request->input('nama_proyek');
         $kelompok = $request->input('kelompok');
 
-        // Ambil user_id dari kelompok yang sesuai
-        $userIds = Kelompok::where('tahun_ajaran', $tahunAjaran)
-            ->where('nama_proyek', $namaProyek)
-            ->where('kelompok', $kelompok)
-            ->pluck('user_id');
+        try {
+            $userIds = Kelompok::where('tahun_ajaran', $tahunAjaran)
+                ->where('nama_proyek', $namaProyek)
+                ->where('kelompok', $kelompok)
+                ->pluck('user_id');
 
-        // Ambil nama pengguna
-        $userNames = User::whereIn('id', $userIds)->pluck('name', 'id');
+            if ($userIds->isEmpty()) {
+                return response()->json([], 200);
+            }
 
-        // Ambil semua assessment untuk proyek ini
-        $assessments = Assessment::where('tahun_ajaran', $tahunAjaran)
-            ->where('nama_proyek', $namaProyek)
-            ->where('type', 'selfAssessment')
-            ->get();
+            $userNames = User::whereIn('id', $userIds)->pluck('name', 'id');
 
-        // Kumpulkan hasil analisis per aspek dan kriteria
-        $aspekKriteriaAnalysis = $assessments->groupBy(function ($assessment) {
+            $userResults = $userIds->mapWithKeys(function ($userId) use ($tahunAjaran, $namaProyek, $userNames) {
+                $selfAssessments = Assessment::where('tahun_ajaran', $tahunAjaran)
+                    ->where('nama_proyek', $namaProyek)
+                    ->where('type', 'selfAssessment')
+                    ->get();
+
+                $selfAspekKriteriaAnalysis = $this->analyzeAssessments($selfAssessments, $userId, 'selfAssessment');
+
+                $peerAssessments = Assessment::where('tahun_ajaran', $tahunAjaran)
+                    ->where('nama_proyek', $namaProyek)
+                    ->where('type', 'peerAssessment')
+                    ->get();
+
+                $peerAspekKriteriaAnalysis = $this->analyzeAssessments($peerAssessments, $userId, 'peerAssessment');
+
+                // Ambil informasi siapa saja yang menilai sebagai peer
+                $peerEvaluations = AnswersPeer::where('peer_id', $userId)
+                    ->get()
+                    ->groupBy('user_id')
+                    ->map(function ($answers, $peerUserId) use ($userNames) {
+                        return [
+                            'user_id' => $peerUserId,
+                            'name' => $userNames[$peerUserId] ?? 'Tidak dikenal', // Pastikan nama ada atau gunakan default
+                            'total_score' => $answers->avg('score'),
+                            'answers' => $answers->map(function ($answer) {
+                                return [
+                                    'question_id' => $answer->question_id,
+                                    'score' => $answer->score,
+                                    'answer' => $answer->answer,
+                                ];
+                            }),
+                        ];
+                    })->values();
+
+
+                return [
+                    $userId => [
+                        'user_id' => $userId,
+                        'name' => $userNames[$userId] ?? 'Tidak dikenal',
+                        'self_assessment' => $selfAspekKriteriaAnalysis->values(),
+                        'peer_assessment' => $peerAspekKriteriaAnalysis->values(),
+                        'evaluated_by_peers' => $peerEvaluations,
+                    ],
+                ];
+            });
+
+            return response()->json($userResults);
+        } catch (\Exception $e) {
+            Log::error('Error in getKelompokAnswers: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat memproses data.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
+    // Helper method untuk menganalisis assessment
+    private function analyzeAssessments($assessments, $userId, $assessmentType)
+    {
+        return $assessments->groupBy(function ($assessment) {
             return $assessment->aspek . '_' . $assessment->kriteria;
-        })->map(function ($groupAssessments) use ($userIds, $userNames) {
-            // Ambil question_id yang terkait dengan aspek dan kriteria
+        })->map(function ($groupAssessments) use ($userId, $assessmentType) {
+            // Ambil ID pertanyaan
             $questionIds = $groupAssessments->pluck('id');
 
-            // Hitung skor rata-rata untuk pertanyaan dengan aspek dan kriteria yang sama
-            $answers = Answers::whereIn('question_id', $questionIds)
-                ->whereIn('user_id', $userIds)
+            // Ambil jawaban berdasarkan jenis assessment
+            $answers = $assessmentType === 'selfAssessment'
+                ? Answers::whereIn('question_id', $questionIds)
+                ->where('user_id', $userId)
+                ->get()
+                : AnswersPeer::whereIn('question_id', $questionIds)
+                ->where('peer_id', $userId)
                 ->get();
 
             return [
@@ -169,31 +231,16 @@ class ReportController extends Controller
                 'kriteria' => $groupAssessments->first()->kriteria,
                 'total_score' => $answers->avg('score'),
                 'total_answers' => $answers->count(),
-                'users' => $userIds->map(function ($userId) use ($userNames) {
-                    return [
-                        'user_id' => $userId,
-                        'name' => $userNames[$userId] ?? 'Tidak dikenal'
-                    ];
-                }),
-                'questions' => $groupAssessments->map(function ($assessment) use ($answers, $userIds, $userNames) {
-                    $relatedAnswers = $answers->where('question_id', $assessment->id);
+                'questions' => $groupAssessments->map(function ($assessment) use ($answers) {
+                    $relatedAnswer = $answers->where('question_id', $assessment->id)->first();
                     return [
                         'question_id' => $assessment->id,
                         'pertanyaan' => $assessment->pertanyaan,
-                        'answers_count' => $relatedAnswers->count(),
-                        'average_score' => $relatedAnswers->avg('score'),
-                        'user_answers' => $relatedAnswers->map(function ($answer) use ($userNames) {
-                            return [
-                                'user_id' => $answer->user_id,
-                                'user_name' => $userNames[$answer->user_id] ?? 'Tidak dikenal',
-                                'score' => $answer->score
-                            ];
-                        })
+                        'score' => $relatedAnswer ? $relatedAnswer->score : null,
+                        'answer' => $relatedAnswer ? $relatedAnswer->answer : null
                     ];
                 })
             ];
         });
-
-        return response()->json($aspekKriteriaAnalysis->values());
     }
 }
