@@ -44,4 +44,8 @@ class AnswersPeer extends Model
     {
         return $this->belongsTo(User::class, 'peer_id', 'id');
     }
+
+    public function question() {
+        return $this->belongsTo(Assessment::class, 'question_id');
+    }
 }

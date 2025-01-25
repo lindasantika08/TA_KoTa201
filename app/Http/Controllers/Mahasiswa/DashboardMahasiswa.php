@@ -27,86 +27,116 @@ class DashboardMahasiswa extends Controller
     }
 
     public function getUserProject() {
-
         $user = Auth::user();
-        $kelompok = Kelompok::where('user_id', $user->id)->first();
-        if (!$kelompok) {
+        $kelompok = Kelompok::where('user_id', $user->id)->get();
+        
+        if ($kelompok->isEmpty()) {
             return response()->json(['projects' => []]);
         }
-        $projects = Project::where('tahun_ajaran', $kelompok->tahun_ajaran)
+        
+        $projects = Project::whereIn('tahun_ajaran', $kelompok->pluck('tahun_ajaran'))
             ->where('status', 'aktif')
             ->get();
+        
         return response()->json(['projects' => $projects]);
     }
 
     public function getSelfAssessmentStatus() {
         $user = Auth::user();
         
-        $kelompok = Kelompok::where('user_id', $user->id)->first();
-    
-        if (!$kelompok) {
+        $userProjects = Kelompok::where('user_id', $user->id)
+            ->select('tahun_ajaran', 'nama_proyek', 'kelompok')
+            ->distinct()
+            ->get();
+        
+        if ($userProjects->isEmpty()) {
             return response()->json([
                 'selfAssessmentStatus' => 'Not Started',
-                'peerAssessmentStatus' => 'Not Started'
+                'peerAssessmentStatus' => 'Not Started',
+                'projects' => []
             ]);
         }
-    
-        $project = Project::where([
-            'tahun_ajaran' => $kelompok->tahun_ajaran, 
-            'nama_proyek' => $kelompok->nama_proyek
-        ])->first();
-    
-        if (!$project) {
-            return response()->json([
-                'selfAssessmentStatus' => 'Not Started',
-                'peerAssessmentStatus' => 'Not Started'
-            ]);
-        }
-    
+        
         $selfAssessmentQuestions = Assessment::where('type', 'selfAssessment')->count();
-        $selfAssessmentCount = Answers::where('user_id', $user->id)->count();
-    
-        $groupPeers = Kelompok::where([
-            'tahun_ajaran' => $kelompok->tahun_ajaran,
-            'nama_proyek' => $kelompok->nama_proyek,
-            'kelompok' => $kelompok->kelompok 
-        ])->where('user_id', '!=', $user->id)->pluck('user_id');
-    
         $peerAssessmentQuestions = Assessment::where('type', 'peerAssessment')->count();
-        $totalExpectedPeerAnswers = $peerAssessmentQuestions * count($groupPeers);
-    
-        $peerAssessmentCount = AnswersPeer::where('user_id', $user->id)
-            ->count();
-    
-        $selfAssessmentStatus = $selfAssessmentCount == 0 
-            ? 'Not Started' 
-            : ($selfAssessmentCount < $selfAssessmentQuestions ? 'Pending' : 'Completed');
-    
-        $peerAssessmentStatus = $peerAssessmentCount == 0 
-            ? 'Not Started' 
-            : ($peerAssessmentCount < $totalExpectedPeerAnswers ? 'Pending' : 'Completed');
-    
+        
+        $projectStatuses = $userProjects->map(function($kelompok) use ($user, $selfAssessmentQuestions, $peerAssessmentQuestions) {
+            $groupPeers = Kelompok::where([
+                'tahun_ajaran' => $kelompok->tahun_ajaran,
+                'nama_proyek' => $kelompok->nama_proyek,
+                'kelompok' => $kelompok->kelompok 
+            ])->where('user_id', '!=', $user->id)->pluck('user_id');
+        
+            $selfAssessmentCount = Answers::whereHas('question', function($query) use ($kelompok) {
+                    $query->where('type', 'selfAssessment')
+                          ->where('tahun_ajaran', $kelompok->tahun_ajaran)
+                          ->where('nama_proyek', $kelompok->nama_proyek);
+                })
+                ->where('user_id', $user->id)
+                ->count();
+        
+            $totalExpectedPeerAnswers = $peerAssessmentQuestions * count($groupPeers);
+        
+            $peerAssessmentCount = AnswersPeer::where('user_id', $user->id)
+                ->whereHas('kelompok', function($query) use ($kelompok) {
+                    $query->where('tahun_ajaran', $kelompok->tahun_ajaran)
+                          ->where('nama_proyek', $kelompok->nama_proyek);
+                })
+                ->count();
+        
+            $selfAssessmentStatus = $selfAssessmentCount == 0 
+                ? 'Not Started' 
+                : ($selfAssessmentCount < $selfAssessmentQuestions ? 'Pending' : 'Completed');
+        
+            $peerAssessmentStatus = $peerAssessmentCount == 0 
+                ? 'Not Started' 
+                : ($peerAssessmentCount < $totalExpectedPeerAnswers ? 'Pending' : 'Completed');
+        
+            return [
+                'tahun_ajaran' => $kelompok->tahun_ajaran,
+                'nama_proyek' => $kelompok->nama_proyek,
+                'selfAssessmentStatus' => $selfAssessmentStatus,
+                'peerAssessmentStatus' => $peerAssessmentStatus,
+                'selfAssessmentCount' => $selfAssessmentCount,
+                'peerAssessmentCount' => $peerAssessmentCount,
+                'selfAssessmentQuestions' => $selfAssessmentQuestions,
+                'totalExpectedPeerAnswers' => $totalExpectedPeerAnswers,
+                'groupPeersCount' => count($groupPeers)
+            ];
+        });
+        
+        $overallSelfAssessmentStatus = $projectStatuses->every(function($status) {
+            return $status['selfAssessmentStatus'] === 'Completed';
+        }) ? 'Completed' : 'Pending';
+        
+        $overallPeerAssessmentStatus = $projectStatuses->every(function($status) {
+            return $status['peerAssessmentStatus'] === 'Completed';
+        }) ? 'Completed' : 'Pending';
+        
         return response()->json([
-            'selfAssessmentStatus' => $selfAssessmentStatus,
-            'peerAssessmentStatus' => $peerAssessmentStatus,
-            'totalQuestions' => $selfAssessmentQuestions + $peerAssessmentQuestions,
-            'selfAssessmentCount' => $selfAssessmentCount,
-            'peerAssessmentCount' => $peerAssessmentCount,
-            'selfAssessmentQuestions' => $selfAssessmentQuestions,
-            'totalExpectedPeerAnswers' => $totalExpectedPeerAnswers,
-            'groupPeersCount' => count($groupPeers)
+            'overallSelfAssessmentStatus' => $overallSelfAssessmentStatus,
+            'overallPeerAssessmentStatus' => $overallPeerAssessmentStatus,
+            'projects' => $projectStatuses
         ]);
     }
 
-    public function getPeerAssessmentDetails() {
+    public function getPeerAssessmentDetails(Request $request) {
         $user = Auth::user();
-        $kelompok = Kelompok::where('user_id', $user->id)->first();
+        
+        $selectedProject = $request->input('project');
+        
+        $query = Kelompok::where('user_id', $user->id);
+        if ($selectedProject) {
+            $query->where('nama_proyek', $selectedProject);
+        }
+        
+        $kelompok = $query->first();
         
         if (!$kelompok) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Kelompok not found'
-            ]);
+                'message' => 'No projects found'
+            ], 404);
         }
         
         $groupPeers = Kelompok::where([
@@ -118,24 +148,26 @@ class DashboardMahasiswa extends Controller
         $groupPeerIds = $groupPeers->pluck('user_id');
         $peerAssessmentQuestions = Assessment::where('type', 'peerAssessment')->count();
         
-        $peerCompletedCount = 0;
-        
-        $completedPeerAssessments = $groupPeerIds->mapWithKeys(function($peerId) use ($user, $peerAssessmentQuestions, &$peerCompletedCount) {
+        $completedPeerAssessments = $groupPeerIds->mapWithKeys(function($peerId) use ($user, $kelompok, $peerAssessmentQuestions) {
             $completedCount = AnswersPeer::where('user_id', $user->id)
                 ->where('peer_id', $peerId)
+                ->whereHas('kelompok', function($query) use ($kelompok) {
+                    $query->where('tahun_ajaran', $kelompok->tahun_ajaran)
+                          ->where('nama_proyek', $kelompok->nama_proyek);
+                })
                 ->count();
             
             $isCompleted = $completedCount == $peerAssessmentQuestions;
-            
-            if ($isCompleted) {
-                $peerCompletedCount++;
-            }
             
             return [$peerId => [
                 'total_completed' => $completedCount,
                 'is_completed' => $isCompleted
             ]];
         });
+        
+        $peerCompletedCount = $completedPeerAssessments->filter(function($peer) {
+            return $peer['is_completed'];
+        })->count();
         
         return response()->json([
             'group_size' => $groupPeers->count(),

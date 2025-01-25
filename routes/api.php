@@ -18,7 +18,7 @@ use App\Http\Controllers\Mahasiswa\SelfAssessment;
 use App\Http\Controllers\Mahasiswa\PeerAssessment;
 use App\Models\AnswersPeer;
 use Illuminate\Support\Facades\Auth;
-use SebastianBergmann\CodeCoverage\Report\Html\Dashboard;
+// use SebastianBergmann\CodeCoverage\Report\Html\Dashboard;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->get('/validate-token', [AuthController::class, 'validateToken']);
@@ -97,10 +97,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/get-answer-peer/{questionId}', [PeerAssessment::class, 'getAnswerPeer']);
     Route::get('/answered-peers', [PeerAssessment::class, 'answeredPeers']);
 
-    Route::get('/proyek-self-assessment', [ProjectController::class, 'getDataSelf']);
-    Route::get('/proyek-Peer-assessment', [ProjectController::class, 'getDataPeer']);
     Route::get('/existing-peer-answers', [PeerAssessment::class, 'getExistingPeerAnswers']);
-    Route::get('/projects', [DashboardMahasiswa::class, 'getUserProject']);
+    Route::get('/projects-user', [DashboardMahasiswa::class, 'getUserProject']);
     Route::get('/assessment-status', [DashboardMahasiswa::class, 'getSelfAssessmentStatus']);
     Route::get('/count-peer', [DashboardMahasiswa::class, 'getPeerAssessmentDetails']);
     

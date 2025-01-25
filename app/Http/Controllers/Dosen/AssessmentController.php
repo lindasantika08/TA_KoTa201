@@ -101,11 +101,11 @@ class AssessmentController extends Controller
                     $typeCriteriaData[] = [
                         'aspek' => trim($rowData[1]),
                         'kriteria' => trim($rowData[2]),
-                        'bobot_1' => floatval($rowData[3]),
-                        'bobot_2' => floatval($rowData[4]),
-                        'bobot_3' => floatval($rowData[5]),
-                        'bobot_4' => floatval($rowData[6]),
-                        'bobot_5' => floatval($rowData[7]),
+                        'bobot_1' => trim($rowData[3]),
+                        'bobot_2' => trim($rowData[4]),
+                        'bobot_3' => trim($rowData[5]),
+                        'bobot_4' => trim($rowData[6]),
+                        'bobot_5' => trim($rowData[7]),
                     ];
                 }
             }
