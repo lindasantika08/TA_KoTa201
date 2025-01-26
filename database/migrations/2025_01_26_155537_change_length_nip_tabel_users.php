@@ -12,10 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->year('angkatan')->nullable()->after('role'); // Tahun masuk
-            $table->string('class', 10)->nullable()->after('angkatan'); // Kelas
-            $table->string('prodi', 100)->nullable()->after('class'); // Program Studi
-            $table->string('jurusan', 100)->nullable()->after('prodi'); // Jurusan
+            $table->string('nip', 21)->nullable()->change(); // Perbarui panjang kolom
         });
     }
 
@@ -25,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn(['angkatan', 'class', 'prodi', 'jurusan']);
+            $table->string('nip', 18)->nullable()->change(); // Kembalikan panjang kolom semula
         });
     }
 };

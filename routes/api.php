@@ -10,7 +10,7 @@ use App\Http\Controllers\Dosen\ProjectController;
 use App\Http\Controllers\Dosen\KelolaProyekController;
 use App\Http\Controllers\Dosen\KelolaKelompokController;
 use App\Http\Controllers\Dosen\ReportController;
-use App\Http\Controllers\Dosen\UsersController;
+use App\Http\Controllers\Dosen\UserManagementController;
 
 use App\Http\Controllers\Mahasiswa\AssessmentMahasiswa;
 use App\Http\Controllers\Mahasiswa\SelfAssessment;
@@ -65,6 +65,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/kelompok/report-detail', [ReportController::class, 'getScoreKelompok']);
     Route::get('/report/kelompok/answers', [ReportController::class, 'getKelompokAnswers']);
 
+    Route::get('/get-mahasiswa', [UserManagementController::class, 'getMahasiswa']);
+    Route::get('/get-dosen', [UserManagementController::class, 'getDosen']);
+    Route::get('/get-jurusan', [UserManagementController::class, 'getJurusanList']);
+    Route::get('/get-angkatan', [UserManagementController::class, 'getAngkatan']);
+    Route::get('/get-class', [UserManagementController::class, 'getClass']);
+
 
     //mahasiswa
     Route::get('/bobot', [SelfAssessment::class, 'getFilteredBobot']);
@@ -76,8 +82,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/save-answer', [SelfAssessment::class, 'saveAnswer']);
     Route::get('/proyek-self-assessment', [ProjectController::class, 'getDataSelf']);
     Route::get('/proyek-Peer-assessment', [ProjectController::class, 'getDataPeer']);
-    Route::get('/kelola-kelompok/export', [KelolaKelompokController::class, 'exportTemplate']);
-    Route::post('/kelola-kelompok/import', [KelolaKelompokController::class, 'importData']);
 
     Route::post('/save-answer-peer', [PeerAssessment::class, 'AnswersPeer']);
     Route::get('/kelompok', [AssessmentMahasiswa::class, 'getKelompokByUser']);
@@ -88,8 +92,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/proyek-Peer-assessment', [ProjectController::class, 'getDataPeer']);
     Route::get('/get-answer/{questionId}', [SelfAssessment::class, 'getAnswer']);
     Route::post('/save-all-answers', [SelfAssessment::class, 'saveAllAnswers']);
-    Route::get('/kelola-kelompok/export', [KelolaKelompokController::class, 'exportTemplate']);
-    Route::post('/kelola-kelompok/import', [KelolaKelompokController::class, 'importData']);
     Route::post('/save-all-answers-peer', [PeerAssessment::class, 'saveAllAnswersPeer']);
     Route::get('/get-answer-peer/{questionId}', [PeerAssessment::class, 'getAnswerPeer']);
     Route::get('/answered-peers', [PeerAssessment::class, 'answeredPeers']);

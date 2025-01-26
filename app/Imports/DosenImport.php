@@ -8,7 +8,7 @@ use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Illuminate\Support\Facades\Log;
 
-class MahasiswaImport implements ToModel, WithHeadingRow
+class DosenImport implements ToModel, WithHeadingRow
 {
 
     public function model(array $row)
@@ -18,7 +18,7 @@ class MahasiswaImport implements ToModel, WithHeadingRow
             Log::info('Memproses baris import: ', $row);
 
             // Periksa kolom yang diperlukan
-            $requiredColumns = ['nim', 'email', 'name'];
+            $requiredColumns = ['nip', 'email', 'name', 'kode_dosen'];
             foreach ($requiredColumns as $column) {
                 if (empty($row[$column])) {
                     Log::warning("Kolom {$column} kosong. Melewati baris.");
@@ -33,14 +33,12 @@ class MahasiswaImport implements ToModel, WithHeadingRow
             $user = new User([
                 'id' => Str::uuid(), // Tambahkan UUID untuk ID
                 'name' => $row['name'],
+                'kode_dosen' => $row['kode_dosen'],
                 'email' => $row['email'],
                 'password' => bcrypt($password),
-                'nim' => $row['nim'],
-                'role' => 'mahasiswa',
+                'nip' => $row['nip'],
+                'role' => 'dosen',
                 'jurusan' => $row['jurusan'] ?? null,
-                'prodi' => $row['prodi'] ?? null,
-                'angkatan' => $row['angkatan'] ?? null,
-                'class' => $row['class'] ?? null,
 
             ]);
 
@@ -49,7 +47,7 @@ class MahasiswaImport implements ToModel, WithHeadingRow
                 'id' => $user->id,
                 'password' => $user->password,
                 'role' => $user->role,
-                'nim' => $user->nim, 
+                'nip' => $user->nip, 
                 'email' => $user->email
             ]);
 

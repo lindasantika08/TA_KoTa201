@@ -22,6 +22,7 @@ export default {
     };
   },
   setup() {
+    const inputMode = ref("export");
     const projects = ref([]);
     const selectedProject = ref({ tahun_ajaran: "", nama_proyek: "" });
 
@@ -99,6 +100,7 @@ export default {
       handleFileUpload,
       projects,
       selectedProject,
+      inputMode,
     };
   },
 };
@@ -116,6 +118,43 @@ export default {
         </div>
         <Card title="Buat Kelompok Mahasiswa">
           <template #actions>
+            <!-- Segmented Radio Buttons -->
+            <div class="flex w-full mb-4">
+              <label
+                class="w-1/2 text-center py-2 border cursor-pointer"
+                :class="{
+                  'bg-blue-500 text-white': inputMode === 'export',
+                  'bg-white text-gray-700 border-gray-300':
+                    inputMode !== 'export',
+                }"
+              >
+                <input
+                  type="radio"
+                  v-model="inputMode"
+                  value="export"
+                  class="hidden"
+                />
+                Export
+              </label>
+              <label
+                class="w-1/2 text-center py-2 border cursor-pointer"
+                :class="{
+                  'bg-blue-500 text-white': inputMode === 'import',
+                  'bg-white text-gray-700 border-gray-300':
+                    inputMode !== 'import',
+                }"
+              >
+                <input
+                  type="radio"
+                  v-model="inputMode"
+                  value="import"
+                  class="hidden"
+                />
+                Import
+              </label>
+            </div>
+
+            <div v-if="inputMode === 'export'">
             <div class="mt-4">
               <label for="project-select" class="block text-sm font-medium text-gray-700">
                 Pilih Tahun Ajaran dan Nama Proyek
@@ -136,8 +175,9 @@ export default {
                 Download Template Kelompok
               </button>
             </div>
+          </div>
 
-            <div class="mt-4">
+            <div v-if="inputMode === 'import'" class="mt-4">
               <label for="file-upload" class="block text-sm font-medium text-gray-700">
                 Import Data Excel (File .xlsx/.xls)
               </label>

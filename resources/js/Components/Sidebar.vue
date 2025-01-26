@@ -104,8 +104,8 @@
                 <li class="mb-4">
                     <button @click="toggleKelolaSettingsMenu" :class="{
                         'bg-white':
-                            isActive('/dosen/kelola-mahasiswa') ||
-                            isActive('/dosen/kelola-dosen'),
+                            isActive('/dosen/manage-mahasiswa') ||
+                            isActive('/dosen/manage-dosen'),
                     }" class="w-full text-left px-4 py-2 rounded flex justify-start hover:bg-gray-100">
                         <font-awesome-icon icon="fa-solid fa-cogs" class="mr-4" />
                         <span class="text-base font-medium">Manage Users</span>
@@ -116,7 +116,7 @@
                         <li>
                             <a @click="goToKelolaMahasiswa" :class="{
                                 'bg-gray-200': isActive(
-                                    '/dosen/kelola-mahasiswa'
+                                    '/dosen/manage-mahasiswa'
                                 ),
                             }" class="block px-4 py-2 rounded cursor-pointer hover:bg-gray-100 text-sm">
                                 <font-awesome-icon icon="fa-solid fa-project-diagram" class="mr-4" />
@@ -126,7 +126,7 @@
                         <li v-if="role === 'dosen'">
                             <a @click="goToKelolaDosen" :class="{
                                 'bg-gray-200': isActive(
-                                    '/dosen/kelola-dosen'
+                                    '/dosen/manage-dosen'
                                 ),
                             }" class="block px-4 py-2 rounded cursor-pointer hover:bg-gray-100 text-sm">
                                 <font-awesome-icon icon="fa-solid fa-tasks" class="mr-4" />
@@ -159,7 +159,7 @@ export default {
             isAssessmentOpen:
                 this.isActive("/dosen//assessment/projectsSelf") || this.isActive("/dosen//assessment/projectsPeer") || this.isActive("/dosen/assessment/create"),
             isKelolaProyekOpen: this.isActive("/dosen/kelola-proyek") || this.isActive("/dosen/kelola-kelompok"),
-            isKelolaSettingsOpen: this.isActive("/dosen/kelola-mahasiswa") || this.isActive("/dosen/kelola-dosen"),
+            isKelolaSettingsOpen: this.isActive("/dosen/manage-mahasiswa") || this.isActive("/dosen/manage-dosen"),
         };
     },
     methods: {
@@ -191,10 +191,10 @@ export default {
             router.visit("/dosen/kelola-kelompok");
         },
         goToKelolaMahasiswa() {
-            router.visit("/dosen/kelola-mahasiswa");
+            router.visit("/dosen/manage-mahasiswa");
         },
         goToKelolaDosen() {
-            router.visit("/dosen/kelola-dosen");
+            router.visit("/dosen/manage-dosen");
         },
     },
 };

@@ -16,8 +16,8 @@ export default {
   data() {
     return {
       breadcrumbs: [
-        { text: "Manage Mahasiswa", href: "/dosen/kelola-mahasiswa" },
-        { text: "Input", href: "/dosen/kelola-mahasiswa/input" },
+        { text: "Manage Mahasiswa", href: "/dosen/manage-mahasiswa" },
+        { text: "Input", href: "/dosen/manage-mahasiswa/input" },
       ],
     };
   },
@@ -26,95 +26,9 @@ export default {
     const selectedProject = ref({ tahun_ajaran: "", nama_proyek: "" });
     const angkatanOptions = ref([]);
     const selectedAngkatan = ref("");
+    const inputMode = ref("export");
 
-    const jurusanList = ref([
-      {
-        jurusan: "Teknik Sipil",
-        prodi: [
-          "D-3 Teknik Konstruksi Sipil",
-          "D-3 Teknik Konstruksi Gedung",
-          "D-4 Teknik Perancangan Jalan dan Jembatan",
-          "D-4 Teknik Perawatan dan Perbaikan Gedung",
-          "S-2 Rekayasa Infrastruktur",
-        ],
-      },
-      {
-        jurusan: "Teknik Mesin",
-        prodi: [
-          "D-3 Teknik Mesin",
-          "D-3 Teknik Aeronautika",
-          "D-4 Teknik Perancangan dan Konstruksi Mesin",
-          "D-4 Proses Manufaktur",
-        ],
-      },
-      {
-        jurusan: "Teknik Refrigasi dan Tata Udara",
-        prodi: [
-          "D-3 Teknik Pendingin dan Tata Udara",
-          "D-4 Teknik Pendingin dan Tata Udara",
-        ],
-      },
-      {
-        jurusan: "Teknik Konversi Energi",
-        prodi: [
-          "D-3 Teknik Konversi Energi",
-          "D-4 Teknologi Pembangkit Tenaga Listrik",
-          "D-4 Teknik Konservasi Energi",
-        ],
-      },
-      {
-        jurusan: "Teknik Elektro",
-        prodi: [
-          "D-3 Teknik Elektronika",
-          "D-3 Teknik Listrik",
-          "D-3 Teknik Telekomunikasi",
-          "D-4 Teknik Elektronika",
-          "D-4 Teknik Telekomunikasi",
-          "D-4 Teknik Otomasi Industri",
-        ],
-      },
-      {
-        jurusan: "Teknik Kimia",
-        prodi: [
-          "D-3 Teknik Kimia",
-          "D-3 Analis Kimia",
-          "D-4 Teknik Kimia Produksi Bersih",
-        ],
-      },
-      {
-        jurusan: "Teknik Komputer dan Informatika",
-        prodi: ["D-3 Teknik Informatika", "D-4 Teknik Informatika"],
-      },
-      {
-        jurusan: "Akuntansi",
-        prodi: [
-          "D-3 Akuntansi",
-          "D-3 Keuangan dan Perbankan",
-          "D-4 Akuntansi Manajemen Pemerintahan",
-          "D-4 Akuntansi",
-          "D-4 Keuangan Syariah",
-          "S-2 Keuangan & Perbankan Syariah",
-        ],
-      },
-      {
-        jurusan: "Administrasi Niaga",
-        prodi: [
-          "D-3 Administrasi Bisnis",
-          "D-3 Manajemen Pemasaran",
-          "D-3 Usaha Perjalanan Wisata",
-          "D-3 Manajemen Aset",
-          "D-4 Manajemen Aset",
-          "D-4 Administrasi Bisnis",
-          "D-4 Manajemen Pemasaran",
-          "D-4 Destinasi Pariwisata",
-        ],
-      },
-      {
-        jurusan: "Bahasa Inggris",
-        prodi: ["D-3 Bahasa Inggris"],
-      },
-    ]);
-
+    const jurusanList = ref([]);
     const selectedJurusan = ref("");
     const selectedProdi = ref("");
     const filteredProdi = ref([]);
@@ -138,19 +52,27 @@ export default {
     const downloadTemplate = async () => {
       if (
         !selectedProject.value.tahun_ajaran ||
-        !selectedProject.value.nama_proyek
+        !selectedProject.value.nama_proyek ||
+        !selectedJurusan.value ||
+        !selectedProdi.value ||
+        !selectedAngkatan.value
       ) {
-        alert("Pilih Tahun Ajaran dan Nama Proyek terlebih dahulu.");
+        alert(
+          "Harap lengkapi semua pilihan: Tahun Ajaran, Nama Proyek, Jurusan, Prodi, dan Angkatan."
+        );
         return;
       }
 
       try {
         const token = localStorage.getItem("auth_token");
 
-        const response = await axios.get("/dosen/kelola-mahasiswa/export", {
+        const response = await axios.get("/dosen/manage-mahasiswa/export", {
           params: {
             tahun_ajaran: selectedProject.value.tahun_ajaran,
             nama_proyek: selectedProject.value.nama_proyek,
+            jurusan: selectedJurusan.value,
+            prodi: selectedProdi.value,
+            angkatan: selectedAngkatan.value,
           },
           headers: {
             Authorization: `Bearer ${token}`,
@@ -184,7 +106,7 @@ export default {
       formData.append("file", event.target.files[0]);
 
       try {
-        await axios.post("/dosen/kelola-mahasiswa/import", formData, {
+        await axios.post("/dosen/manage-mahasiswa/import", formData, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
@@ -192,16 +114,20 @@ export default {
 
         alert("Data kelompok berhasil diimpor");
       } catch (error) {
-        console.error("Import error:", error);
-        const errorMessage = error.response
-          ? error.response.data.error
-          : "Terjadi kesalahan saat mengimpor data";
-        alert(`Error: ${errorMessage}`);
+        console.error("Import error detail:", error.response?.data);
+        alert(
+          `Error: ${
+            error.response?.data?.message ||
+            "Terjadi kesalahan saat mengimpor data"
+          }`
+        );
       }
     };
 
     onMounted(() => {
       generateAngkatanOptions();
+      
+      // Fetch projects
       axios
         .get("/api/projects")
         .then((response) => {
@@ -209,6 +135,16 @@ export default {
         })
         .catch((error) => {
           console.error("Error fetching projects:", error);
+        });
+
+      // Fetch jurusan list from API
+      axios
+        .get("/api/get-jurusan")
+        .then((response) => {
+          jurusanList.value = response.data;
+        })
+        .catch((error) => {
+          console.error("Error fetching jurusan:", error);
         });
     });
 
@@ -224,6 +160,7 @@ export default {
       selectedProdi,
       filteredProdi,
       onJurusanChange,
+      inputMode,
     };
   },
 };
@@ -241,115 +178,155 @@ export default {
         </div>
         <Card title="Input Data Mahasiswa">
           <template #actions>
-            <div class="mt-4">
+            <!-- Segmented Radio Buttons -->
+            <div class="flex w-full mb-4">
               <label
-                for="project-select"
-                class="block text-sm font-medium text-gray-700"
+                class="w-1/2 text-center py-2 border cursor-pointer"
+                :class="{
+                  'bg-blue-500 text-white': inputMode === 'export',
+                  'bg-white text-gray-700 border-gray-300':
+                    inputMode !== 'export',
+                }"
               >
-                Pilih Tahun Ajaran dan Nama Proyek
+                <input
+                  type="radio"
+                  v-model="inputMode"
+                  value="export"
+                  class="hidden"
+                />
+                Export
               </label>
-              <select
-                id="project-select"
-                v-model="selectedProject"
-                class="mt-2 p-2 border border-gray-300 rounded w-full"
-                required
-              >
-                <option value="" disabled selected>Pilih Proyek</option>
-                <option
-                  v-for="project in projects"
-                  :key="`${project.tahun_ajaran}-${project.nama_proyek}`"
-                  :value="project"
-                >
-                  {{ project.tahun_ajaran }} - {{ project.nama_proyek }}
-                </option>
-              </select>
-            </div>
-            <div class="mt-4">
               <label
-                for="angkatan-select"
-                class="block text-sm font-medium text-gray-700"
+                class="w-1/2 text-center py-2 border cursor-pointer"
+                :class="{
+                  'bg-blue-500 text-white': inputMode === 'import',
+                  'bg-white text-gray-700 border-gray-300':
+                    inputMode !== 'import',
+                }"
               >
-                Pilih Angkatan
+                <input
+                  type="radio"
+                  v-model="inputMode"
+                  value="import"
+                  class="hidden"
+                />
+                Import
               </label>
-              <select
-                id="angkatan-select"
-                v-model="selectedAngkatan"
-                class="mt-2 p-2 border border-gray-300 rounded w-full"
-                required
-              >
-                <option value="" disabled selected>Pilih Angkatan</option>
-                <option
-                  v-for="angkatan in angkatanOptions"
-                  :key="angkatan"
-                  :value="angkatan"
-                >
-                  {{ angkatan }}
-                </option>
-              </select>
             </div>
 
-            <div class="mt-4">
-              <label
-                for="jurusan-select"
-                class="block text-sm font-medium text-gray-700"
-              >
-                Pilih Jurusan
-              </label>
-              <select
-                id="jurusan-select"
-                v-model="selectedJurusan"
-                @change="onJurusanChange"
-                class="mt-2 p-2 border border-gray-300 rounded w-full"
-              >
-                <option value="" disabled selected>Pilih Jurusan</option>
-                <option
-                  v-for="jurusan in jurusanList"
-                  :key="jurusan.jurusan"
-                  :value="jurusan.jurusan"
+            <!-- Export Section -->
+            <div v-if="inputMode === 'export'">
+              <div class="mt-4">
+                <label
+                  for="project-select"
+                  class="block text-sm font-medium text-gray-700"
                 >
-                  {{ jurusan.jurusan }}
-                </option>
-              </select>
-            </div>
-
-            <!-- Dropdown Prodi -->
-            <div class="mt-4">
-              <label
-                for="prodi-select"
-                class="block text-sm font-medium text-gray-700"
-              >
-                Pilih Prodi
-              </label>
-              <select
-                id="prodi-select"
-                v-model="selectedProdi"
-                class="mt-2 p-2 border border-gray-300 rounded w-full"
-                :disabled="!filteredProdi.length"
-              >
-                <option value="" disabled selected>Pilih Prodi</option>
-                <option
-                  v-for="prodi in filteredProdi"
-                  :key="prodi"
-                  :value="prodi"
+                  Pilih Tahun Ajaran dan Nama Proyek
+                </label>
+                <select
+                  id="project-select"
+                  v-model="selectedProject"
+                  class="mt-2 p-2 border border-gray-300 rounded w-full"
+                  required
                 >
-                  {{ prodi }}
-                </option>
-              </select>
+                  <option value="" disabled selected>Pilih Proyek</option>
+                  <option
+                    v-for="project in projects"
+                    :key="`${project.tahun_ajaran}-${project.nama_proyek}`"
+                    :value="project"
+                  >
+                    {{ project.tahun_ajaran }} - {{ project.nama_proyek }}
+                  </option>
+                </select>
+              </div>
+              <div class="mt-4">
+                <label
+                  for="angkatan-select"
+                  class="block text-sm font-medium text-gray-700"
+                >
+                  Pilih Angkatan
+                </label>
+                <select
+                  id="angkatan-select"
+                  v-model="selectedAngkatan"
+                  class="mt-2 p-2 border border-gray-300 rounded w-full"
+                  required
+                >
+                  <option value="" disabled selected>Pilih Angkatan</option>
+                  <option
+                    v-for="angkatan in angkatanOptions"
+                    :key="angkatan"
+                    :value="angkatan"
+                  >
+                    {{ angkatan }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="mt-4">
+                <label
+                  for="jurusan-select"
+                  class="block text-sm font-medium text-gray-700"
+                >
+                  Pilih Jurusan
+                </label>
+                <select
+                  id="jurusan-select"
+                  v-model="selectedJurusan"
+                  @change="onJurusanChange"
+                  class="mt-2 p-2 border border-gray-300 rounded w-full"
+                >
+                  <option value="" disabled selected>Pilih Jurusan</option>
+                  <option
+                    v-for="jurusan in jurusanList"
+                    :key="jurusan.jurusan"
+                    :value="jurusan.jurusan"
+                  >
+                    {{ jurusan.jurusan }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="mt-4">
+                <label
+                  for="prodi-select"
+                  class="block text-sm font-medium text-gray-700"
+                >
+                  Pilih Prodi
+                </label>
+                <select
+                  id="prodi-select"
+                  v-model="selectedProdi"
+                  class="mt-2 p-2 border border-gray-300 rounded w-full"
+                  :disabled="!filteredProdi.length"
+                >
+                  <option value="" disabled selected>Pilih Prodi</option>
+                  <option
+                    v-for="prodi in filteredProdi"
+                    :key="prodi"
+                    :value="prodi"
+                  >
+                    {{ prodi }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="mt-4">
+                <button
+                  @click="downloadTemplate"
+                  class="px-4 py-2 mt-2 bg-blue-500 text-white rounded"
+                  :disabled="
+                    !selectedProject.tahun_ajaran ||
+                    !selectedProject.nama_proyek
+                  "
+                >
+                  Download Template Kelompok
+                </button>
+              </div>
             </div>
 
-            <div class="mt-4">
-              <button
-                @click="downloadTemplate"
-                class="px-4 py-2 mt-2 bg-blue-500 text-white rounded"
-                :disabled="
-                  !selectedProject.tahun_ajaran || !selectedProject.nama_proyek
-                "
-              >
-                Download Template Kelompok
-              </button>
-            </div>
-
-            <div class="mt-4">
+            <!-- Import Section -->
+            <div v-if="inputMode === 'import'" class="mt-4">
               <label
                 for="file-upload"
                 class="block text-sm font-medium text-gray-700"
@@ -361,7 +338,7 @@ export default {
                 id="file-upload"
                 accept=".xlsx, .xls"
                 @change="handleFileUpload"
-                class="mt-2 p-2 border border-gray-300 rounded"
+                class="mt-2 p-2 border border-gray-300 rounded w-full"
               />
             </div>
           </template>

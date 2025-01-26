@@ -22,8 +22,12 @@ class UserSeeder extends Seeder
                 'nim' => null,
                 'kode_dosen' => 'LS',
                 'role' => 'dosen',
-                'remember_token' => null, // jika perlu
-                'photo' => null, // jika perlu
+                'angkatan' => null,
+                'class' => null,
+                'prodi' => null,
+                'jurusan' => 'Teknik Komputer dan Informatika',
+                'remember_token' => null,
+                'photo' => null,
             ],
             [
                 'id' => 'ea483968-7f8c-4c02-af8a-936823bf6bcx',
@@ -34,6 +38,10 @@ class UserSeeder extends Seeder
                 'nim' => null,
                 'kode_dosen' => 'RS',
                 'role' => 'dosen',
+                'angkatan' => null,
+                'class' => null,
+                'prodi' => null,
+                'jurusan' => 'Teknik Komputer dan Informatika',
                 'remember_token' => null, // jika perlu
                 'photo' => null, // jika perlu
             ],
@@ -46,6 +54,10 @@ class UserSeeder extends Seeder
                 'nim' => null,
                 'kode_dosen' => 'NA',
                 'role' => 'dosen',
+                'angkatan' => null,
+                'class' => null,
+                'prodi' => null,
+                'jurusan' => 'Teknik Komputer dan Informatika',
                 'remember_token' => null, // jika perlu
                 'photo' => null, // jika perlu
             ],
@@ -58,8 +70,12 @@ class UserSeeder extends Seeder
                 'nim' => '123456789',
                 'role' => 'mahasiswa',
                 'kode_dosen' => null,
-                'remember_token' => null, // jika perlu
-                'photo' => null, // jika perlu
+                'angkatan' => '2021',
+                'class' => 'A',
+                'prodi' => 'D-3 Teknik Informatika',
+                'jurusan' => 'Teknik Komputer dan Informatika',
+                'remember_token' => null,
+                'photo' => null,
             ],
             [
                 'id' => 'ra483968-7f8c-4c02-af8a-936823bf6bce',
@@ -67,9 +83,13 @@ class UserSeeder extends Seeder
                 'email' => 'danen@proyek.com',
                 'password' => bcrypt("qwerty123"),
                 'nip' => null,
-                'nim' => '221511046',
+                'nim' => '231511046',
                 'role' => 'mahasiswa',
                 'kode_dosen' => null,
+                'angkatan' => '2021',
+                'class' => 'A',
+                'prodi' => 'D-3 Teknik Informatika',
+                'jurusan' => 'Teknik Komputer dan Informatika',
                 'remember_token' => null, // jika perlu
                 'photo' => null, // jika perlu
             ],
@@ -79,9 +99,13 @@ class UserSeeder extends Seeder
                 'email' => 'adhiya@proyek.com',
                 'password' => bcrypt("qwerty123"),
                 'nip' => null,
-                'nim' => '221511034',
+                'nim' => '231511034',
                 'role' => 'mahasiswa',
                 'kode_dosen' => null,
+                'angkatan' => '2021',
+                'class' => 'A',
+                'prodi' => 'D-3 Teknik Informatika',
+                'jurusan' => 'Teknik Komputer dan Informatika',
                 'remember_token' => null, // jika perlu
                 'photo' => null, // jika perlu
             ],
@@ -91,9 +115,13 @@ class UserSeeder extends Seeder
                 'email' => 'shaka@proyek.com',
                 'password' => bcrypt("qwerty123"),
                 'nip' => null,
-                'nim' => '221511099',
+                'nim' => '241511099',
                 'role' => 'mahasiswa',
                 'kode_dosen' => null,
+                'angkatan' => '2021',
+                'class' => 'A',
+                'prodi' => 'D-3 Teknik Informatika',
+                'jurusan' => 'Teknik Komputer dan Informatika',
                 'remember_token' => null, // jika perlu
                 'photo' => null, // jika perlu
             ],
@@ -103,9 +131,13 @@ class UserSeeder extends Seeder
                 'email' => 'adinda@proyek.com',
                 'password' => bcrypt("qwerty123"),
                 'nip' => null,
-                'nim' => '221511035',
+                'nim' => '231511035',
                 'role' => 'mahasiswa',
                 'kode_dosen' => null,
+                'angkatan' => '2021',
+                'class' => 'A',
+                'prodi' => 'D-3 Teknik Informatika',
+                'jurusan' => 'Teknik Komputer dan Informatika',
                 'remember_token' => null, // jika perlu
                 'photo' => null, // jika perlu
             ],
@@ -115,9 +147,13 @@ class UserSeeder extends Seeder
                 'email' => 'alya@proyek.com',
                 'password' => bcrypt("qwerty123"),
                 'nip' => null,
-                'nim' => '221511055',
+                'nim' => '231511055',
                 'role' => 'mahasiswa',
                 'kode_dosen' => null,
+                'angkatan' => '2021',
+                'class' => 'A',
+                'prodi' => 'D-3 Teknik Informatika',
+                'jurusan' => 'Teknik Komputer dan Informatika',
                 'remember_token' => null, // jika perlu
                 'photo' => null, // jika perlu
             ],
@@ -127,9 +163,13 @@ class UserSeeder extends Seeder
                 'email' => 'fadel@proyek.com',
                 'password' => bcrypt("qwerty123"),
                 'nip' => null,
-                'nim' => '221511060',
+                'nim' => '231511060',
                 'role' => 'mahasiswa',
                 'kode_dosen' => null,
+                'angkatan' => '2021',
+                'class' => 'A',
+                'prodi' => 'D-3 Teknik Informatika',
+                'jurusan' => 'Teknik Komputer dan Informatika',
                 'remember_token' => null, // jika perlu
                 'photo' => null, // jika perlu
             ],
@@ -139,9 +179,13 @@ class UserSeeder extends Seeder
                 'email' => 'barry@proyek.com',
                 'password' => bcrypt("qwerty123"),
                 'nip' => null,
-                'nim' => '221511033',
+                'nim' => '231511033',
                 'role' => 'mahasiswa',
                 'kode_dosen' => null,
+                'angkatan' => '2021',
+                'class' => 'A',
+                'prodi' => 'D-3 Teknik Informatika',
+                'jurusan' => 'Teknik Komputer dan Informatika',
                 'remember_token' => null, // jika perlu
                 'photo' => null, // jika perlu
             ],

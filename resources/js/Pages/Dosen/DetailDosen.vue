@@ -7,7 +7,7 @@ import Breadcrumb from "@/Components/Breadcrumb.vue";
 
 
 export default {
-  name: "KelolaDosen",
+  name: "DetailDosen",
   components: {
     Sidebar,
     Navbar,
@@ -17,7 +17,8 @@ export default {
   data() {
     return {
       breadcrumbs: [
-        { text: "Manage Dosen", href: "/dosen/kelola-mahasiswa" },
+        { text: "Manage Dosen", href: "/dosen/manage-dosen" },
+        { text: "Detail", href: "/dosen/manage-dosen/detail" },
       ],
     };
   },
@@ -34,7 +35,7 @@ export default {
         <div class="mb-4">
           <Breadcrumb :items="breadcrumbs" />
         </div>
-        <Card title="Kelola Dosen">
+        <Card title="Detail Dosen">
           <template #actions>
 
           </template>
@@ -45,5 +46,4 @@ export default {
 </template>
 
 
-<style scoped>
-</style>
+<style scoped></style>

@@ -64,12 +64,18 @@ Route::middleware('auth')->group(function () {
         Route::get('/answers-peer-assessment', [AnswerController::class, 'getListAnswersPeerView']);
         Route::get('/answer-list-peer', [AnswerController::class, 'getListAnswerPeer'])->name('ListAnswerPeer');
 
-        Route::get('/kelola-mahasiswa', [UserManagementController::class, 'KelolaMahasiswa'])->name('KelolaMahasiswa');
-        Route::get('/kelola-mahasiswa/input', [UserManagementController::class, 'InputMahasiswa'])->name('InputMahasiswa');
-        Route::get('/kelola-mahasiswa/export', [UserManagementController::class, 'ExportMahasiswa'])->name('ExportMahasiswa');
-        Route::post('/kelola-mahasiswa/import', [UserManagementController::class, 'ImportMahasiswa'])->name('ImportMahasiswa');
+        Route::get('/manage-mahasiswa', [UserManagementController::class, 'ManageMahasiswa'])->name('ManageMahasiswa');
+        Route::get('/manage-mahasiswa/input', [UserManagementController::class, 'InputMahasiswa'])->name('InputMahasiswa');
+        Route::get('/manage-mahasiswa/detail', [UserManagementController::class, 'DetailMahasiswa'])->name('DetailMahasiswa');
+        Route::get('/manage-mahasiswa/export', [UserManagementController::class, 'ExportMahasiswa'])->name('ExportMahasiswa');
+        Route::post('/manage-mahasiswa/import', [UserManagementController::class, 'ImportMahasiswa'])->name('ImportMahasiswa');
 
-        Route::get('/kelola-dosen', [UserManagementController::class, 'KelolaDosen'])->name('KelolaDosen');
+        Route::get('/manage-dosen', [UserManagementController::class, 'ManageDosen'])->name('ManageDosen');
+        Route::get('/manage-dosen/input', [UserManagementController::class, 'InputDosen'])->name('InputDosen');
+        Route::get('/manage-dosen/detail', [UserManagementController::class, 'DetailDosen'])->name('DetailDosen');
+        Route::get('/manage-dosen/export', [UserManagementController::class, 'ExportDosen'])->name('ExportDosen');
+        Route::post('/manage-dosen/import', [UserManagementController::class, 'ImportDosen'])->name('ImportDosen');
+
         Route::get('/answers/details', [AnswerController::class, 'getDetails']);
         Route::get('/kelompok/report-detail', [ReportController::class, 'getScoreKelompok']);
     });

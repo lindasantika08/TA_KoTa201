@@ -22,6 +22,7 @@ export default {
   },
   setup() {
     const projects = ref([]);
+    const inputMode = ref("export");
     const selectedActiveProject = ref({ tahun_ajaran: "", nama_proyek: "" });
     const selectedInactiveProject = ref({ tahun_ajaran: "", nama_proyek: "" });
 
@@ -127,6 +128,7 @@ export default {
       downloadActiveTemplate,
       downloadInactiveTemplate,
       handleFileUpload,
+      inputMode,
     };
   },
 };
@@ -144,53 +146,76 @@ export default {
         </div>
         <Card title="Create Assessment">
           <template #actions>
-            <div class="grid grid-cols-2 gap-8">
-              <!-- Active Project Section -->
-              <div class="border-r pr-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                  Proyek Aktif
-                </label>
-                <select v-model="selectedActiveProject" class="mt-2 p-2 border border-gray-300 rounded w-full" required>
-                  <option value="" disabled selected>Pilih Proyek Aktif</option>
-                  <option v-for="project in activeProjects"
-                    :key="`active-${project.tahun_ajaran}-${project.nama_proyek}`" :value="project">
-                    {{ project.tahun_ajaran }} - {{ project.nama_proyek }}
-                  </option>
-                </select>
-                <div class="mt-4">
-                  <button @click="downloadActiveTemplate"
-                    class="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    :disabled="!selectedActiveProject.tahun_ajaran">
-                    <font-awesome-icon :icon="['fas', 'file-excel']" class="mr-2" />
-                    Download Template Aktif
-                  </button>
-                </div>
-              </div>
+            <!-- Segmented Radio Buttons -->
+            <div class="flex w-full mb-4">
+              <label class="w-1/2 text-center py-2 border cursor-pointer" :class="{
+                'bg-blue-500 text-white': inputMode === 'export',
+                'bg-white text-gray-700 border-gray-300':
+                  inputMode !== 'export',
+              }">
+                <input type="radio" v-model="inputMode" value="export" class="hidden" />
+                Export
+              </label>
+              <label class="w-1/2 text-center py-2 border cursor-pointer" :class="{
+                'bg-blue-500 text-white': inputMode === 'import',
+                'bg-white text-gray-700 border-gray-300':
+                  inputMode !== 'import',
+              }">
+                <input type="radio" v-model="inputMode" value="import" class="hidden" />
+                Import
+              </label>
+            </div>
 
-              <div class="pl-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                  Proyek Tidak Aktif
-                </label>
-                <select v-model="selectedInactiveProject" class="mt-2 p-2 border border-gray-300 rounded w-full"
-                  required>
-                  <option value="" disabled selected>Pilih Proyek Tidak Aktif</option>
-                  <option v-for="project in inactiveProjects"
-                    :key="`inactive-${project.tahun_ajaran}-${project.nama_proyek}`" :value="project">
-                    {{ project.tahun_ajaran }} - {{ project.nama_proyek }}
-                  </option>
-                </select>
-                <div class="mt-4">
-                  <button @click="downloadInactiveTemplate"
-                    class="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    :disabled="!selectedInactiveProject.tahun_ajaran">
-                    <font-awesome-icon :icon="['fas', 'file-excel']" class="mr-2" />
-                    Download Template Tidak Aktif
-                  </button>
+            <div v-if="inputMode === 'export'">
+              <div class="grid grid-cols-2 gap-8">
+                <!-- Active Project Section -->
+                <div class="border-r pr-4">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Proyek Aktif
+                  </label>
+                  <select v-model="selectedActiveProject" class="mt-2 p-2 border border-gray-300 rounded w-full"
+                    required>
+                    <option value="" disabled selected>Pilih Proyek Aktif</option>
+                    <option v-for="project in activeProjects"
+                      :key="`active-${project.tahun_ajaran}-${project.nama_proyek}`" :value="project">
+                      {{ project.tahun_ajaran }} - {{ project.nama_proyek }}
+                    </option>
+                  </select>
+                  <div class="mt-4">
+                    <button @click="downloadActiveTemplate"
+                      class="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      :disabled="!selectedActiveProject.tahun_ajaran">
+                      <font-awesome-icon :icon="['fas', 'file-excel']" class="mr-2" />
+                      Download Template Aktif
+                    </button>
+                  </div>
+                </div>
+
+                <div class="pl-4">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Proyek Tidak Aktif
+                  </label>
+                  <select v-model="selectedInactiveProject" class="mt-2 p-2 border border-gray-300 rounded w-full"
+                    required>
+                    <option value="" disabled selected>Pilih Proyek Tidak Aktif</option>
+                    <option v-for="project in inactiveProjects"
+                      :key="`inactive-${project.tahun_ajaran}-${project.nama_proyek}`" :value="project">
+                      {{ project.tahun_ajaran }} - {{ project.nama_proyek }}
+                    </option>
+                  </select>
+                  <div class="mt-4">
+                    <button @click="downloadInactiveTemplate"
+                      class="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      :disabled="!selectedInactiveProject.tahun_ajaran">
+                      <font-awesome-icon :icon="['fas', 'file-excel']" class="mr-2" />
+                      Download Template Tidak Aktif
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div class="mt-8">
+            <div v-if="inputMode === 'import'" class="mt-8">
               <label for="file-upload" class="block text-sm font-medium text-gray-700">
                 Import Data Excel (File .xlsx/.xls)
               </label>

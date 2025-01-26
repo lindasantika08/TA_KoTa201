@@ -121,7 +121,9 @@ export default {
             </template>
 
             <template v-slot:column-aksi="{ item }">
-              <button @click="showDetail(item.id)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+              <button @click="showDetail(item.id)"
+                class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                <font-awesome-icon icon="fa-solid fa-eye" class="mr-2" />
                 Detail
               </button>
             </template>

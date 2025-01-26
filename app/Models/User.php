@@ -36,6 +36,11 @@ class User extends Authenticatable
         'role',
         'nip',
         'nim',
+        'kode_dosen',
+        'angkatan',
+        'class',
+        'prodi',
+        'jurusan',
     ];
 
     /**
