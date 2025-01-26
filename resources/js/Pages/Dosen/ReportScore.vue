@@ -36,6 +36,15 @@ export default {
       peerQuestions: {},
     };
   },
+  mounted() {
+    if (this.tahunAjaran && this.namaProyek && this.kelompok) {
+      this.fetchQuestions();
+      this.fetchPeerQuestions();
+      this.fetchKelompokAnalysis();
+    } else {
+      this.error = "Tahun Ajaran, Nama Proyek, atau Kelompok tidak valid";
+    }
+  },
   methods: {
     async fetchKelompokAnalysis() {
       this.loading = true;
@@ -142,16 +151,40 @@ export default {
         };
       });
     },
-  },
-  async mounted() {
-    if (this.tahunAjaran && this.namaProyek && this.kelompok) {
-      await this.fetchQuestions();
-      await this.fetchPeerQuestions();
-      await this.fetchKelompokAnalysis();
-    } else {
-      this.error = "Tahun Ajaran, Nama Proyek, atau Kelompok tidak valid";
+    calculateAnalysisScores(userData) {
+      if (!userData.self_assessment || !userData.evaluated_by_peers) return [];
+
+      const analysisScores = userData.self_assessment.map(selfAspect => {
+        // Calculate average peer score for this aspect
+        const peerEvaluations = userData.evaluated_by_peers.filter(
+          peer => peer.aspek === selfAspect.aspek
+        );
+        
+        const averagePeerScore = peerEvaluations.length > 0
+          ? peerEvaluations.reduce((sum, peer) => sum + (peer.total_score || 0), 0) / peerEvaluations.length
+          : 0;
+
+        const selfScore = selfAspect.total_score || 0;
+        const scoreDifference = selfScore - averagePeerScore;
+
+        let status;
+        if (scoreDifference > 0.5) status = 'Over';
+        else if (scoreDifference < -0.5) status = 'Under';
+        else status = 'Match';
+
+        return {
+          aspek: selfAspect.aspek,
+          kriteria: selfAspect.kriteria,
+          selfScore: selfScore.toFixed(2),
+          averagePeerScore: averagePeerScore.toFixed(2),
+          scoreDifference: scoreDifference.toFixed(2),
+          status: status
+        };
+      });
+
+      return analysisScores;
     }
-  },
+  }
 };
 </script>
 
@@ -164,6 +197,7 @@ export default {
         <div class="mb-4">
           <Breadcrumb :items="breadcrumbs" />
         </div>
+        
         <Card title="Detail Kelompok">
           <div v-if="tahunAjaran && namaProyek && kelompok">
             <p><strong>Tahun Ajaran:</strong> {{ tahunAjaran }}</p>
@@ -174,17 +208,15 @@ export default {
             <p>Tidak ada data yang tersedia</p>
           </div>
         </Card>
+        
         <div v-if="loading" class="text-center mt-4">Memuat...</div>
         <div v-else-if="error" class="text-red-500 mt-4">{{ error }}</div>
         <div v-else>
           <template v-for="(userData, userId) in userAnalysis" :key="userId">
             <Card :title="`Analisis Jawaban - ${userData.name}`" class="mt-4">
               <!-- Self Assessment Section -->
-              <div
-                v-if="
-                  userData.self_assessment && userData.self_assessment.length
-                "
-              >
+              <div v-if="userData.self_assessment && userData.self_assessment.length">
+                <h3 class="font-bold mb-2">Self Assessment</h3>
                 <table class="w-full border-collapse">
                   <thead>
                     <tr class="bg-gray-200">
@@ -195,18 +227,11 @@ export default {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr
-                      v-for="(aspek, index) in userData.self_assessment"
-                      :key="index"
-                    >
+                    <tr v-for="(aspek, index) in userData.self_assessment" :key="index">
                       <td class="border p-2">{{ aspek.aspek }}</td>
                       <td class="border p-2">{{ aspek.kriteria }}</td>
                       <td class="border p-2">
-                        {{
-                          aspek.total_score
-                            ? aspek.total_score.toFixed(2)
-                            : "N/A"
-                        }}
+                        {{ aspek.total_score ? aspek.total_score.toFixed(2) : "N/A" }}
                       </td>
                       <td class="border p-2">
                         <table class="w-full">
@@ -218,10 +243,7 @@ export default {
                             </tr>
                           </thead>
                           <tbody>
-                            <tr
-                              v-for="pertanyaan in aspek.questions"
-                              :key="pertanyaan.question_id"
-                            >
+                            <tr v-for="pertanyaan in aspek.questions" :key="pertanyaan.question_id">
                               <td>{{ pertanyaan.pertanyaan }}</td>
                               <td>{{ pertanyaan.score || "N/A" }}</td>
                               <td>{{ pertanyaan.answer || "-" }}</td>
@@ -239,20 +261,14 @@ export default {
               <div class="mt-4">
                 <div class="flex items-center mb-2">
                   <h3 class="font-bold mr-2">Evaluasi dari Peer</h3>
-                  <span class="text-gray-600"
-                    >(Total Average: {{ calculateTotalAverage(userId) }})</span
-                  >
+                  <span class="text-gray-600">
+                    (Total Average: {{ calculateTotalAverage(userId) }})
+                  </span>
                 </div>
-                <div
-                  v-if="
-                    userData.evaluated_by_peers &&
-                    userData.evaluated_by_peers.length
-                  "
-                >
-                  <template
-                    v-for="(peerGroup, index) in groupPeerEvaluations(
-                      userData.evaluated_by_peers
-                    )"
+                
+                <div v-if="userData.evaluated_by_peers && userData.evaluated_by_peers.length">
+                  <template 
+                    v-for="(peerGroup, index) in groupPeerEvaluations(userData.evaluated_by_peers)" 
                     :key="index"
                   >
                     <div class="bg-white shadow rounded-lg overflow-hidden mb-4">
@@ -324,6 +340,41 @@ export default {
                 </div>
                 <p v-else class="text-center text-gray-500">Tidak ada data evaluasi peer</p>
               </div>
+
+              <!-- Analysis Score Section -->
+              <div class="mt-4">
+                <h3 class="font-bold mb-2">Analysis Score</h3>
+                <table class="w-full border-collapse">
+                  <thead class="bg-gray-200">
+                    <tr>
+                      <th class="border p-2">Aspek</th>
+                      <th class="border p-2">Kriteria</th>
+                      <th class="border p-2">Skor Total (Self)</th>
+                      <th class="border p-2">Average Skor (Peer)</th>
+                      <th class="border p-2">Selisih Skor</th>
+                      <th class="border p-2">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr 
+                      v-for="(score, index) in calculateAnalysisScores(userData)" 
+                      :key="index"
+                      :class="{
+                        'bg-green-100': score.status === 'Over',
+                        'bg-yellow-100': score.status === 'Match',
+                        'bg-red-100': score.status === 'Under'
+                      }"
+                    >
+                      <td class="border p-2">{{ score.aspek }}</td>
+                      <td class="border p-2">{{ score.kriteria }}</td>
+                      <td class="border p-2">{{ score.selfScore }}</td>
+                      <td class="border p-2">{{ score.averagePeerScore }}</td>
+                      <td class="border p-2">{{ score.scoreDifference }}</td>
+                      <td class="border p-2 font-bold">{{ score.status }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </Card>
           </template>
         </div>
@@ -338,5 +389,20 @@ export default {
 }
 .text-red-500 {
   color: #f56565;
+}
+.bg-green-100 {
+  background-color: #f0fff4;
+}
+.bg-yellow-100 {
+  background-color: #fffff0;
+}
+.bg-red-100 {
+  background-color: #fff5f5;
+}
+.border {
+  border: 1px solid #e2e8f0;
+}
+.hover\:bg-gray-50:hover {
+  background-color: #f9fafb;
 }
 </style>
