@@ -192,33 +192,34 @@ class ReportController extends Controller
                     ->map(function ($answers, $aspekKriteria) use ($userNames) {
                         list($aspek, $kriteria) = explode('_', $aspekKriteria);
 
-                        $filteredAnswers = $answers->filter(function ($answer) {
-                            return $answer->score !== null;
-                        });
+                        // Group by user to capture all evaluators and their answers
+                        $evaluatorGroups = $answers->groupBy('user_id');
 
-                        if ($filteredAnswers->isEmpty()) {
-                            return null;
-                        }
+                        $processedEvaluators = $evaluatorGroups->map(function ($userAnswers) use ($userNames) {
+                            $userName = $userNames[$userAnswers->first()->user_id] ?? 'Tidak dikenal';
 
-                        return [
-                            'aspek' => $aspek,
-                            'kriteria' => $kriteria,
-                            'total_score' => $filteredAnswers->avg('score'),
-                            'total_answers' => $filteredAnswers->count(),
-                            'evaluated_by' => $filteredAnswers->mapWithKeys(function ($answer) use ($userNames) {
-                                return [$answer->user_id => [
-                                    'name' => $userNames[$answer->user_id] ?? 'Tidak dikenal',
-                                    'total_score' => $answer->score,
-                                    'answers' => [[
+                            return [
+                                'name' => $userName,
+                                'total_score' => $userAnswers->avg('score'),
+                                'answers' => $userAnswers->map(function ($answer) {
+                                    return [
                                         'question_id' => $answer->question_id,
                                         'pertanyaan' => $answer->pertanyaan,
                                         'score' => $answer->score,
                                         'answer' => $answer->answer,
                                         'aspek' => $answer->aspek,
                                         'kriteria' => $answer->kriteria,
-                                    ]]
-                                ]];
-                            })
+                                    ];
+                                })
+                            ];
+                        });
+
+                        return [
+                            'aspek' => $aspek,
+                            'kriteria' => $kriteria,
+                            'total_score' => $answers->avg('score'),
+                            'total_answers' => $answers->count(),
+                            'evaluated_by' => $processedEvaluators
                         ];
                     })->filter()
                     ->values();

@@ -37,79 +37,60 @@ export default {
     };
   },
   methods: {
-    fetchKelompokAnalysis() {
+    async fetchKelompokAnalysis() {
       this.loading = true;
       this.error = null;
 
       if (this.tahunAjaran && this.namaProyek && this.kelompok) {
-        axios
-          .get("/api/report/kelompok/answers", {
+        try {
+          const response = await axios.get("/api/report/kelompok/answers", {
             params: {
               tahun_ajaran: this.tahunAjaran,
               nama_proyek: this.namaProyek,
               kelompok: this.kelompok,
             },
-          })
-          .then((response) => {
-            this.userAnalysis = response.data;
-            this.loading = false;
-          })
-          .catch((error) => {
-            console.error("Gagal mengambil analisis:", error);
-            this.error = "Gagal memuat data";
-            this.loading = false;
           });
+          this.userAnalysis = response.data;
+        } catch (error) {
+          console.error("Gagal mengambil analisis:", error);
+          this.error = "Gagal memuat data";
+        } finally {
+          this.loading = false;
+        }
       } else {
         this.error = "Tahun Ajaran, Nama Proyek, atau Kelompok tidak valid";
         this.loading = false;
       }
     },
-    fetchQuestions() {
-      axios
-        .get("/api/questions")
-        .then((response) => {
-          this.questions = response.data;
-        })
-        .catch((error) => {
-          console.error("Gagal memuat pertanyaan:", error);
-        });
+    async fetchQuestions() {
+      try {
+        const response = await axios.get("/api/questions");
+        this.questions = response.data;
+      } catch (error) {
+        console.error("Gagal memuat pertanyaan:", error);
+      }
     },
-    fetchPeerQuestions() {
-      console.log("Fetching Peer Questions with Parameters:", {
-        tahunAjaran: this.tahunAjaran,
-        namaProyek: this.namaProyek,
-      });
-      axios
-        .get("/api/questions-peer", {
+    async fetchPeerQuestions() {
+      try {
+        const response = await axios.get("/api/questions-peer", {
           params: {
             tahun_ajaran: this.tahunAjaran,
             nama_proyek: this.namaProyek,
           },
-        })
-        .then((response) => {
-          console.log("Peer Questions Response:", response.data);
-          this.peerQuestions = response.data.reduce((acc, question) => {
-            acc[question.id] = question.pertanyaan;
-            return acc;
-          }, {});
-        })
-        .catch((error) => {
-          console.error("Gagal memuat pertanyaan peer:", error);
-          console.log("Error Parameters:", {
-            tahunAjaran: this.tahunAjaran,
-            namaProyek: this.namaProyek,
-          });
         });
+        this.peerQuestions = response.data.reduce((acc, question) => {
+          acc[question.id] = question.pertanyaan;
+          return acc;
+        }, {});
+      } catch (error) {
+        console.error("Gagal memuat pertanyaan peer:", error);
+      }
     },
     getQuestionText(questionId) {
       return this.questions[questionId] || "Pertanyaan tidak ditemukan";
     },
     getPeerQuestionText(questionId) {
-      if (!this.peerQuestions || !this.peerQuestions[questionId]) {
-        console.warn(`Pertanyaan dengan ID ${questionId} tidak ditemukan`);
-        return "Pertanyaan tidak ditemukan";
-      }
-      return this.peerQuestions[questionId];
+      return this.peerQuestions[questionId] || "Pertanyaan tidak ditemukan";
     },
     calculateTotalAverage(userId) {
       const userData = this.userAnalysis[userId];
@@ -130,16 +111,26 @@ export default {
     },
     groupPeerEvaluations(evaluatedByPeers) {
       if (!evaluatedByPeers || !Array.isArray(evaluatedByPeers)) {
-        return {};
+        return [];
       }
 
       return evaluatedByPeers.map((group) => {
-        const names = Object.keys(group.evaluated_by || {}).map(
-          (userId) => group.evaluated_by[userId].name
-        );
+        const evaluatorDetails = Object.values(group.evaluated_by || {})
+          .flatMap(evaluator => {
+            if (evaluator.evaluated_by) {
+              return Object.values(evaluator.evaluated_by);
+            }
+            return [evaluator];
+          });
 
-        const answers = Object.values(group.evaluated_by || {}).flatMap(
-          (evaluator) => evaluator.answers
+        const names = evaluatorDetails.map((evaluator) => evaluator.name);
+
+        const processedAnswers = evaluatorDetails.flatMap((evaluator) => 
+          evaluator.answers.map((answer) => ({
+            ...answer,
+            evaluator_name: evaluator.name,
+            pertanyaan: this.getPeerQuestionText(answer.question_id)
+          }))
         );
 
         return {
@@ -147,23 +138,22 @@ export default {
           kriteria: group.kriteria,
           names: names,
           total_score: group.total_score,
-          answers: answers,
+          answers: processedAnswers,
         };
       });
     },
   },
-  mounted() {
+  async mounted() {
     if (this.tahunAjaran && this.namaProyek && this.kelompok) {
-      this.fetchKelompokAnalysis();
-      this.fetchQuestions();
-      this.fetchPeerQuestions();
+      await this.fetchQuestions();
+      await this.fetchPeerQuestions();
+      await this.fetchKelompokAnalysis();
     } else {
       this.error = "Tahun Ajaran, Nama Proyek, atau Kelompok tidak valid";
     }
   },
 };
 </script>
-
 
 <template>
   <div class="flex min-h-screen">
@@ -259,65 +249,80 @@ export default {
                     userData.evaluated_by_peers.length
                   "
                 >
-                  <table class="w-full border-collapse">
-                    <thead>
-                      <tr class="bg-gray-200">
-                        <th class="border p-2">Aspek</th>
-                        <th class="border p-2">Kriteria</th>
-                        <th class="border p-2">Skor Total</th>
-                        <th class="border p-2">Dievaluasi Oleh</th>
-                        <th class="border p-2">Detail Pertanyaan</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr
-                        v-for="(peerGroup, index) in groupPeerEvaluations(
-                          userData.evaluated_by_peers
-                        )"
-                        :key="index"
-                      >
-                        <td class="border p-2">{{ peerGroup.aspek }}</td>
-                        <td class="border p-2">{{ peerGroup.kriteria }}</td>
-                        <td class="border p-2">
-                          {{
-                            peerGroup.total_score
-                              ? peerGroup.total_score.toFixed(2)
-                              : "N/A"
-                          }}
-                        </td>
-                        <td class="border p-2">
-                          {{ peerGroup.names.join(", ") }}
-                        </td>
-                        <td class="border p-2">
-                          <table class="w-full">
-                            <thead>
-                              <tr>
-                                <th>Pertanyaan</th>
-                                <th>Skor</th>
-                                <th>Jawaban</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              <tr
-                                v-for="pertanyaan in peerGroup.answers"
-                                :key="pertanyaan.question_id"
-                              >
-                                <td>
-                                  {{
-                                    getPeerQuestionText(pertanyaan.question_id)
-                                  }}
-                                </td>
-                                <td>{{ pertanyaan.score || "N/A" }}</td>
-                                <td>{{ pertanyaan.answer || "-" }}</td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+                  <template
+                    v-for="(peerGroup, index) in groupPeerEvaluations(
+                      userData.evaluated_by_peers
+                    )"
+                    :key="index"
+                  >
+                    <div class="bg-white shadow rounded-lg overflow-hidden mb-4">
+                      <div class="bg-gray-100 p-3 flex justify-between items-center">
+                        <div>
+                          <p class="font-semibold text-gray-700">
+                            <span class="font-bold">Aspek:</span> {{ peerGroup.aspek }}
+                          </p>
+                          <p class="text-gray-600">
+                            <span class="font-bold">Kriteria:</span> {{ peerGroup.kriteria }}
+                          </p>
+                        </div>
+                        <div class="text-right">
+                          <p class="text-sm text-gray-600">
+                            <span class="font-bold">Total Skor:</span> 
+                            {{ peerGroup.total_score ? peerGroup.total_score.toFixed(2) : 'N/A' }}
+                          </p>
+                          <p class="text-sm text-gray-500">
+                            Dievaluasi Oleh: {{ peerGroup.names.join(", ") }}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div class="overflow-x-auto">
+                        <table class="w-full">
+                          <thead class="bg-gray-200">
+                            <tr>
+                              <th class="p-3 text-left">Penilai</th>
+                              <th class="p-3 text-left">Pertanyaan</th>
+                              <th class="p-3 text-center">Skor</th>
+                              <th class="p-3 text-left">Jawaban</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr
+                              v-for="(answer, idx) in peerGroup.answers"
+                              :key="idx"
+                              class="border-b hover:bg-gray-50 transition-colors"
+                            >
+                              <td class="p-3 text-sm">
+                                <span class="font-medium text-gray-700">
+                                  {{ answer.evaluator_name }}
+                                </span>
+                              </td>
+                              <td class="p-3 text-sm text-gray-600">
+                                {{ answer.pertanyaan }}
+                              </td>
+                              <td class="p-3 text-center">
+                                <span 
+                                  :class="[
+                                    'px-2 py-1 rounded text-xs font-semibold',
+                                    answer.score >= 4 ? 'bg-green-100 text-green-800' : 
+                                    answer.score >= 2 ? 'bg-yellow-100 text-yellow-800' : 
+                                    'bg-red-100 text-red-800'
+                                  ]"
+                                >
+                                  {{ answer.score || 'N/A' }}
+                                </span>
+                              </td>
+                              <td class="p-3 text-sm text-gray-700">
+                                {{ answer.answer || '-' }}
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </template>
                 </div>
-                <p v-else class="text-center">Tidak ada data evaluasi peer</p>
+                <p v-else class="text-center text-gray-500">Tidak ada data evaluasi peer</p>
               </div>
             </Card>
           </template>
@@ -327,7 +332,7 @@ export default {
   </div>
 </template>
 
-<style>
+<style scoped>
 .text-center {
   text-align: center;
 }
