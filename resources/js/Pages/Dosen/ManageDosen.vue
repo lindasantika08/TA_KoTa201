@@ -23,11 +23,11 @@ export default {
       ],
       users: [],
       headers: [
+        { key: "jurusan", label: "Jurusan" },
         { key: "name", label: "Nama" },
         { key: "kode_dosen", label: "Kode Dosen" },
-        { key: "email", label: "Email" },
         { key: "nip", label: "NIP" },
-        { key: "jurusan", label: "Jurusan" },
+        { key: "email", label: "Email" },
         { key: "actions", label: "Actions" },
       ],
     };
