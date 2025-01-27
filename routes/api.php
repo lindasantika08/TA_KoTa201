@@ -17,6 +17,7 @@ use App\Http\Controllers\Mahasiswa\DashboardMahasiswa;
 use App\Http\Controllers\Mahasiswa\SelfAssessment;
 use App\Http\Controllers\Mahasiswa\PeerAssessment;
 use App\Http\Controllers\Mahasiswa\DetailSelfMahasiswa;
+use App\Http\Controllers\Mahasiswa\ReportMahasiswa;
 use Illuminate\Support\Facades\Auth;
 // use SebastianBergmann\CodeCoverage\Report\Html\Dashboard;
 
@@ -106,5 +107,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/user-detail-answer', [DetailSelfMahasiswa::class, 'getUserInfo']);
     Route::get('/detail-answer-self', [DetailSelfMahasiswa::class, 'getAnswerSelf']);
-    
+
+    //mahasiswa Report
+    Route::get('/mahasiswa/projects', [ReportMahasiswa::class, 'getProjects']);
+    Route::get('/project-score-details', [ReportMahasiswa::class, 'getProjectScoreDetails']);
 });

@@ -98,5 +98,6 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/projects', [ProjectController::class, 'getUserProjects']);
         Route::get('/assessment-status', [ProjectController::class, 'getAssessmentStatus']);
+        route::get('/project/report-detail', [ReportMahasiswa::class, 'getReportScoreView']);
     });
 });
