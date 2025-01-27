@@ -48,6 +48,34 @@ class AuthController extends Controller
         ], 401);
     }
 
+    public function validateToken(Request $request) {
+        try {
+            $user = $request->user();
+
+            if (!$user) {
+                return response()->json([
+                    'valid' => false,
+                    'message' => 'Token invalid'
+                ], 401);
+            }
+
+            return response()->json([
+                'valid' => true,
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->role
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'valid' => false,
+                'message' => 'Token validation error'
+            ], 500);
+        }
+    }
+
     public function logout(Request $request) {
 
         $user = $request->user();

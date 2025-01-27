@@ -95,5 +95,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/peer-assessment/peer-detail', [DetailPeerMahasiswa::class, 'showDetail']);
         Route::get('/peer-assessment/self-detail', [DetailSelfMahasiswa::class, 'showDetail']);
         Route::get('/profile', [DashboardMahasiswa::class, 'profile'])->name('profile');
+
+        Route::get('/projects', [ProjectController::class, 'getUserProjects']);
+        Route::get('/assessment-status', [ProjectController::class, 'getAssessmentStatus']);
     });
 });
