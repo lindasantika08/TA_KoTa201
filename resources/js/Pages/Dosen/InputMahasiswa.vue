@@ -22,8 +22,6 @@ export default {
     };
   },
   setup() {
-    const projects = ref([]);
-    const selectedProject = ref({ tahun_ajaran: "", nama_proyek: "" });
     const angkatanOptions = ref([]);
     const selectedAngkatan = ref("");
     const inputMode = ref("export");
@@ -51,8 +49,6 @@ export default {
 
     const downloadTemplate = async () => {
       if (
-        !selectedProject.value.tahun_ajaran ||
-        !selectedProject.value.nama_proyek ||
         !selectedJurusan.value ||
         !selectedProdi.value ||
         !selectedAngkatan.value
@@ -68,8 +64,6 @@ export default {
 
         const response = await axios.get("/dosen/manage-mahasiswa/export", {
           params: {
-            tahun_ajaran: selectedProject.value.tahun_ajaran,
-            nama_proyek: selectedProject.value.nama_proyek,
             jurusan: selectedJurusan.value,
             prodi: selectedProdi.value,
             angkatan: selectedAngkatan.value,
@@ -126,16 +120,6 @@ export default {
 
     onMounted(() => {
       generateAngkatanOptions();
-      
-      // Fetch projects
-      axios
-        .get("/api/projects")
-        .then((response) => {
-          projects.value = response.data;
-        })
-        .catch((error) => {
-          console.error("Error fetching projects:", error);
-        });
 
       // Fetch jurusan list from API
       axios
@@ -151,8 +135,6 @@ export default {
     return {
       downloadTemplate,
       handleFileUpload,
-      projects,
-      selectedProject,
       angkatanOptions,
       selectedAngkatan,
       jurusanList,
@@ -216,29 +198,7 @@ export default {
 
             <!-- Export Section -->
             <div v-if="inputMode === 'export'">
-              <div class="mt-4">
-                <label
-                  for="project-select"
-                  class="block text-sm font-medium text-gray-700"
-                >
-                  Pilih Tahun Ajaran dan Nama Proyek
-                </label>
-                <select
-                  id="project-select"
-                  v-model="selectedProject"
-                  class="mt-2 p-2 border border-gray-300 rounded w-full"
-                  required
-                >
-                  <option value="" disabled selected>Pilih Proyek</option>
-                  <option
-                    v-for="project in projects"
-                    :key="`${project.tahun_ajaran}-${project.nama_proyek}`"
-                    :value="project"
-                  >
-                    {{ project.tahun_ajaran }} - {{ project.nama_proyek }}
-                  </option>
-                </select>
-              </div>
+              
               <div class="mt-4">
                 <label
                   for="angkatan-select"
@@ -315,10 +275,7 @@ export default {
                 <button
                   @click="downloadTemplate"
                   class="px-4 py-2 mt-2 bg-blue-500 text-white rounded"
-                  :disabled="
-                    !selectedProject.tahun_ajaran ||
-                    !selectedProject.nama_proyek
-                  "
+                  :disabled="!selectedJurusan || !selectedProdi || !selectedAngkatan"
                 >
                   Download Template Kelompok
                 </button>

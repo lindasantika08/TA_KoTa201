@@ -70,8 +70,6 @@ class UserManagementController extends Controller
     {
 
         return Excel::download(new MahasiswaExport(
-            $request->tahun_ajaran,
-            $request->nama_proyek,
             $request->jurusan,
             $request->prodi,
             $request->angkatan
