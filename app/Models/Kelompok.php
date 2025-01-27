@@ -29,7 +29,7 @@ class Kelompok extends Model
         parent::boot();
 
         static::creating(function ($kelompok) {
-            $kelompok->id = (string) Str::uuid(); 
+            $kelompok->id = (string) Str::uuid();
         });
     }
 
