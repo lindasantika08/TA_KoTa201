@@ -7,20 +7,16 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Answers extends Model
+class Mahasiswa extends Model
 {
     use HasFactory, HasUuids, SoftDeletes;
 
-    protected $table = 'answers';
+    protected $table = 'mahasiswa';
 
     protected $fillable = [
-        'id',
-        'mahasiswa_id',
-        'question_id',
-        'dosen_id',
-        'answer',
-        'score',
-        'status',
+        'user_id',
+        'class_id',
+        'nim',
     ];
 
     /**
@@ -37,18 +33,13 @@ class Answers extends Model
      */
     protected $keyType = 'string';
 
-    public function mahasiswa()
+    public function user()
     {
-        return $this->belongsTo(Mahasiswa::class, 'mahasiswa_id', 'id');
+        return $this->belongsTo(User::class);
     }
 
-    public function question()
+    public function classRoom()
     {
-        return $this->belongsTo(Assessment::class, 'question_id', 'id');
-    }
-
-    public function dosen()
-    {
-        return $this->belongsTo(Dosen::class, 'dosen_id', 'id');
+        return $this->belongsTo(ClassRoom::class, 'class_id');
     }
 }

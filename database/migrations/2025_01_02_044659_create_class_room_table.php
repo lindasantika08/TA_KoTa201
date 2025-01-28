@@ -11,11 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('notification', function (Blueprint $table) {
+        Schema::create('class_room', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->date('date_reminder');
-            $table->timestamps();
+            $table->string('class_name');
+            $table->foreignUuid('prodi_id')->constrained('prodi');
+            $table->string('batch_year');
             $table->softDeletes();
+            $table->timestamps();
         });
     }
 
@@ -24,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('notification');
+        Schema::dropIfExists('class_room');
     }
 };

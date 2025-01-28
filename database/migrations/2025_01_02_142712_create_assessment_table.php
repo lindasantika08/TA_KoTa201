@@ -13,23 +13,14 @@ return new class extends Migration
     {
         Schema::create('assessment', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->string('tahun_ajaran');
-            $table->string('nama_proyek');
+            $table->string('batch_year');
+            $table->foreignUuid('project_id')->constrained('project');
             $table->char('type', 255);
-            $table->string('pertanyaan', 255);
-            $table->string('aspek', 255);
-            $table->string('kriteria', 255);
+            $table->string('question', 255);
+            $table->foreignUuid('criteria_id')->constrained('type_criteria');
             $table->timestamps();
+            $table->softDeletes();
 
-            $table->foreign(['aspek', 'kriteria'])
-                ->references(['aspek', 'kriteria'])
-                ->on('type_criteria')
-                ->onDelete('cascade'); 
-
-            $table->foreign(['tahun_ajaran', 'nama_proyek'])
-                ->references(['tahun_ajaran', 'nama_proyek'])
-                ->on('project')
-                ->onDelete('cascade'); 
         });
     }
 

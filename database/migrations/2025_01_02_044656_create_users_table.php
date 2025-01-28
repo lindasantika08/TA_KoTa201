@@ -11,24 +11,17 @@ class CreateUsersTable extends Migration
      */
     public function up(): void
     {
+        
         Schema::create('users', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('name');
             $table->string('email')->unique();
             $table->string('password');
             $table->rememberToken();
-            $table->string('nip', 18)->unique()->nullable();
-            $table->string('nim', 9)->unique()->nullable();
-            $table->string('kode_dosen')->nullable();
             $table->string('photo', 2048)->nullable();
             $table->enum('role', ['mahasiswa', 'dosen'])->default('mahasiswa');
-            // $table->foreignUuid('created_by')->nullable();
-            // $table->foreignUuid('updated_by')->nullable();
             $table->timestamps();
             $table->softDeletes();
-
-            // Tambahkan unique key untuk kombinasi kolom
-            $table->unique(['name', 'nim', 'nip']);
         });
     }
 

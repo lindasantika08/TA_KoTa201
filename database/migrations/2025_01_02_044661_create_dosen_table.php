@@ -11,14 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('criteria', function (Blueprint $table) {
+        Schema::create('dosen', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->string('name');
-            $table->string('desc');
-            $table->char('type_assessment', 255);
-            // $table->foreign('type_assessment')->references('type')->on('assessment');
-            $table->timestamps();
+            $table->foreignUuid('user_id')->constrained('users');
+            $table->string('nip', 18)->unique();
+            $table->string('kode_dosen')->unique();
             $table->softDeletes();
+            $table->timestamps();
         });
     }
 
@@ -27,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('criteria');
+        Schema::dropIfExists('dosen');
     }
 };

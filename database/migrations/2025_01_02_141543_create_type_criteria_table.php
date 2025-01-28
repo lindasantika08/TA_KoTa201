@@ -12,8 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('type_criteria', function (Blueprint $table) {
-            $table->string('aspek', 255);
-            $table->string('kriteria', 255);
+            $table->uuid('id')->primary();
+            $table->string('aspect', 255);
+            $table->string('criteria', 255);
             $table->string('bobot_1');
             $table->string('bobot_2');
             $table->string('bobot_3');
@@ -21,8 +22,6 @@ return new class extends Migration
             $table->string('bobot_5');
             $table->timestamps();
             $table->softDeletes();
-
-            $table->primary(['aspek', 'kriteria']);
         });
     }
 

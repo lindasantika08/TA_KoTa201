@@ -11,16 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('log_assessment', function (Blueprint $table) {
+        Schema::create('groups', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->uuid('assessment_id');
-            $table->foreign('assessment_id')->references('id')->on('assessment');
-            $table->string('quantitative_result');
-            $table->integer('qualitative_result');
-            $table->string('nip')->nullable();
-            $table->string('nim')->nullable();
+            $table->string('batch_year');
+            $table->foreignUuid('project_id')->constrained('project');
+            $table->foreignUuid('mahasiswa_id')->constrained('mahasiswa');
+            $table->string('group'); 
+            $table->foreignUuid('dosen_id')->constrained('dosen');
             $table->timestamps();
             $table->softDeletes();
+
+            // $table->unique(['mahasiswa_id', 'project_id']);
         });
     }
 
@@ -29,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('log_assessment');
+        Schema::dropIfExists('groups');
     }
 };
