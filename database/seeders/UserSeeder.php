@@ -20,7 +20,7 @@ class UserSeeder extends Seeder
                 'password' => bcrypt("qwerty123"),
                 'role' => 'dosen',
                 'remember_token' => null,
-                'photo' => null,
+
             ],
             [
                 'id' => 'ea483968-7f8c-4c02-af8a-936823bf6bcx',
@@ -29,7 +29,7 @@ class UserSeeder extends Seeder
                 'password' => bcrypt("qwerty123"),
                 'role' => 'dosen',
                 'remember_token' => null,
-                'photo' => null, 
+
             ],
             [
                 'id' => 'ea483968-7f8c-4c02-af8a-936823bf6bcl',
@@ -37,8 +37,8 @@ class UserSeeder extends Seeder
                 'email' => 'arsy@proyek.com',
                 'password' => bcrypt("qwerty123"),
                 'role' => 'dosen',
-                'remember_token' => null, 
-                'photo' => null, 
+                'remember_token' => null,
+
             ],
             [
                 'id' => 'ra483968-7f8c-4c02-af8a-936823bf6bcd',
@@ -47,7 +47,7 @@ class UserSeeder extends Seeder
                 'password' => bcrypt("qwerty123"),
                 'role' => 'mahasiswa',
                 'remember_token' => null,
-                'photo' => null,
+
             ],
             [
                 'id' => 'ra483968-7f8c-4c02-af8a-936823bf6bce',
@@ -55,8 +55,8 @@ class UserSeeder extends Seeder
                 'email' => 'danen@proyek.com',
                 'password' => bcrypt("qwerty123"),
                 'role' => 'mahasiswa',
-                'remember_token' => null, 
-                'photo' => null, 
+                'remember_token' => null,
+
             ],
             [
                 'id' => 'ra483968-7f8c-4c02-af8a-936823bf6bcf',
@@ -64,8 +64,8 @@ class UserSeeder extends Seeder
                 'email' => 'adhiya@proyek.com',
                 'password' => bcrypt("qwerty123"),
                 'role' => 'mahasiswa',
-                'remember_token' => null, 
-                'photo' => null, 
+                'remember_token' => null,
+
             ],
             [
                 'id' => 'ra483968-7f8c-4c02-af8a-936823bf6bcg',
@@ -73,8 +73,8 @@ class UserSeeder extends Seeder
                 'email' => 'shaka@proyek.com',
                 'password' => bcrypt("qwerty123"),
                 'role' => 'mahasiswa',
-                'remember_token' => null, 
-                'photo' => null, 
+                'remember_token' => null,
+
             ],
             [
                 'id' => 'ra483968-7f8c-4c02-af8a-936825bf6bcg',
@@ -82,8 +82,8 @@ class UserSeeder extends Seeder
                 'email' => 'adinda@proyek.com',
                 'password' => bcrypt("qwerty123"),
                 'role' => 'mahasiswa',
-                'remember_token' => null, 
-                'photo' => null, 
+                'remember_token' => null,
+
             ],
             [
                 'id' => 'ra483968-7f8n-4c02-af8b-936823bf6bcg',
@@ -91,8 +91,8 @@ class UserSeeder extends Seeder
                 'email' => 'alya@proyek.com',
                 'password' => bcrypt("qwerty123"),
                 'role' => 'mahasiswa',
-                'remember_token' => null, 
-                'photo' => null, 
+                'remember_token' => null,
+
             ],
             [
                 'id' => 'ra483968-7f8c-4c02-af8a-936823cf6bcg',
@@ -100,8 +100,8 @@ class UserSeeder extends Seeder
                 'email' => 'fadel@proyek.com',
                 'password' => bcrypt("qwerty123"),
                 'role' => 'mahasiswa',
-                'remember_token' => null, 
-                'photo' => null, 
+                'remember_token' => null,
+
             ],
             [
                 'id' => 'ra483968-7f8c-4c02-af8a-936823bf3bcg',
@@ -109,8 +109,8 @@ class UserSeeder extends Seeder
                 'email' => 'barry@proyek.com',
                 'password' => bcrypt("qwerty123"),
                 'role' => 'mahasiswa',
-                'remember_token' => null, 
-                'photo' => null, 
+                'remember_token' => null,
+
             ],
 
         ]);

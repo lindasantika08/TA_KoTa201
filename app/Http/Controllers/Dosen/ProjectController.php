@@ -71,33 +71,41 @@ class ProjectController extends Controller
 
     public function changeStatus(Request $request)
     {
+        // Ambil data dari request
         $tahun_ajaran = $request->tahun_ajaran;
         $nama_proyek = $request->nama_proyek;
 
-        $project = Project::where('tahun_ajaran', $tahun_ajaran)
-            ->where('nama_proyek', $nama_proyek)
+        // Cari proyek berdasarkan tahun ajaran dan nama proyek
+        $project = Project::where('batch_year', $tahun_ajaran)  // Pastikan nama kolom sesuai
+            ->where('project_name', $nama_proyek)  // Pastikan nama kolom sesuai
             ->first();
 
+        // Jika proyek tidak ditemukan
         if (!$project) {
             return response()->json(['error' => 'Project not found'], 404);
         }
 
+        // Validasi status
         $validator = Validator::make($request->all(), [
-            'status' => 'required|in:aktif,nonaktif',
+            'status' => 'required|in:Active,NonActive',  // Pastikan status yang diterima adalah 'aktif' atau 'nonaktif'
         ]);
 
+        // Jika validasi gagal
         if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()], 422);
         }
 
-        $project->status = $request->status;
-        $project->save();
+        // Update status proyek
+        $project->status = $request->status; // Mengubah status proyek
+        $project->save(); // Simpan perubahan ke database
 
+        // Kembalikan respons sukses
         return response()->json([
             'message' => 'Project status updated successfully',
             'project' => $project,
         ]);
     }
+
 
     public function store(Request $request)
     {
