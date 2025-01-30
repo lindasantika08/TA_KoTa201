@@ -92,6 +92,7 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
                 // Membuat daftar dosen untuk dropdown
                 $dosenList = DB::table('users')
                     ->where('role', 'dosen')
+                    ->whereNull('deleted_at')
                     ->pluck('name', 'kode_dosen')
                     ->map(function ($name, $kode_dosen) {
                         return $name . ' - ' . $kode_dosen; // Format nama dosen dan kode_dosen

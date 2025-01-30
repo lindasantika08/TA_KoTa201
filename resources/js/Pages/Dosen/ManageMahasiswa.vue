@@ -23,13 +23,14 @@ export default {
       ],
       users: [],
       headers: [
-        { key: "name", label: "Nama" },
-        { key: "email", label: "Email" },
-        { key: "nim", label: "NIM" },
-        { key: "jurusan", label: "Jurusan" },
-        { key: "prodi", label: "Prodi" },
+        { key: "no", label: "No" },
         { key: "angkatan", label: "Angkatan" },
         { key: "class", label: "Kelas" },
+        { key: "name", label: "Nama" },
+        { key: "nim", label: "NIM" },
+        { key: "email", label: "Email" },
+        // { key: "jurusan", label: "Jurusan" },
+        // { key: "prodi", label: "Prodi" },
         { key: "actions", label: "Actions" },
       ],
       selectedAngkatan: null,
@@ -59,7 +60,11 @@ export default {
             class: this.selectedClass,
           },
         });
-        this.users = response.data;
+        // Add numbering to each user object
+        this.users = response.data.map((user, index) => ({
+          ...user,
+          no: index + 1, // Add number starting from 1
+        }));
       } catch (error) {
         console.error("Error fetching users:", error);
       }
@@ -134,63 +139,99 @@ export default {
             <div class="grid grid-cols-4 gap-4 mb-6">
               <!-- Dropdown Angkatan -->
               <div>
-                <label for="angkatan-select" class="block text-sm font-medium text-gray-700">
+                <label
+                  for="angkatan-select"
+                  class="block text-sm font-medium text-gray-700"
+                >
                   Filter Angkatan
                 </label>
-                <select id="angkatan-select" v-model="selectedAngkatan" @change="filterJurusan"
-                  class="mt-2 p-2 border border-gray-300 rounded w-full">
-                  <option value="" disabled>
-                    Pilih Angkatan
-                  </option>
-                  <option v-for="angkatan in angkatanList" :key="angkatan" :value="angkatan">
+                <select
+                  id="angkatan-select"
+                  v-model="selectedAngkatan"
+                  @change="filterJurusan"
+                  class="mt-2 p-2 border border-gray-300 rounded w-full"
+                >
+                  <option value="" disabled>Pilih Angkatan</option>
+                  <option
+                    v-for="angkatan in angkatanList"
+                    :key="angkatan"
+                    :value="angkatan"
+                  >
                     {{ angkatan }}
                   </option>
                 </select>
               </div>
 
               <!-- Dropdown Jurusan -->
-              <div>
-                <label for="jurusan-select" class="block text-sm font-medium text-gray-700">
+              <!-- <div>
+                <label
+                  for="jurusan-select"
+                  class="block text-sm font-medium text-gray-700"
+                >
                   Filter Jurusan
                 </label>
-                <select id="jurusan-select" v-model="selectedJurusan" @change="onJurusanChange"
-                  class="mt-2 p-2 border border-gray-300 rounded w-full">
-                  <option value="" disabled selected>
-                    Pilih Jurusan
-                  </option>
-                  <option v-for="item in jurusanList" :key="item.jurusan" :value="item.jurusan">
+                <select
+                  id="jurusan-select"
+                  v-model="selectedJurusan"
+                  @change="onJurusanChange"
+                  class="mt-2 p-2 border border-gray-300 rounded w-full"
+                >
+                  <option value="" disabled selected>Pilih Jurusan</option>
+                  <option
+                    v-for="item in jurusanList"
+                    :key="item.jurusan"
+                    :value="item.jurusan"
+                  >
                     {{ item.jurusan }}
                   </option>
                 </select>
-              </div>
+              </div> -->
 
               <!-- Dropdown Prodi -->
-              <div>
-                <label for="prodi-select" class="block text-sm font-medium text-gray-700">
+              <!-- <div>
+                <label
+                  for="prodi-select"
+                  class="block text-sm font-medium text-gray-700"
+                >
                   Filter Prodi
                 </label>
-                <select id="prodi-select" v-model="selectedProdi" @change="fetchUsers"
-                  class="mt-2 p-2 border border-gray-300 rounded w-full">
-                  <option value="" disabled selected>
-                    Pilih Prodi
-                  </option>
-                  <option v-for="prodi in prodiList" :key="prodi" :value="prodi">
+                <select
+                  id="prodi-select"
+                  v-model="selectedProdi"
+                  @change="fetchUsers"
+                  class="mt-2 p-2 border border-gray-300 rounded w-full"
+                >
+                  <option value="" disabled selected>Pilih Prodi</option>
+                  <option
+                    v-for="prodi in prodiList"
+                    :key="prodi"
+                    :value="prodi"
+                  >
                     {{ prodi }}
                   </option>
                 </select>
-              </div>
+              </div> -->
 
               <!-- New Class Dropdown -->
               <div>
-                <label for="class-select" class="block text-sm font-medium text-gray-700">
+                <label
+                  for="class-select"
+                  class="block text-sm font-medium text-gray-700"
+                >
                   Filter Kelas
                 </label>
-                <select id="class-select" v-model="selectedClass" @change="fetchUsers"
-                  class="mt-2 p-2 border border-gray-300 rounded w-full">
-                  <option value="" disabled selected>
-                    Pilih Kelas
-                  </option>
-                  <option v-for="classItem in classList" :key="classItem" :value="classItem">
+                <select
+                  id="class-select"
+                  v-model="selectedClass"
+                  @change="fetchUsers"
+                  class="mt-2 p-2 border border-gray-300 rounded w-full"
+                >
+                  <option value="" disabled selected>Pilih Kelas</option>
+                  <option
+                    v-for="classItem in classList"
+                    :key="classItem"
+                    :value="classItem"
+                  >
                     {{ classItem }}
                   </option>
                 </select>
@@ -200,20 +241,22 @@ export default {
             <!-- Data Table -->
             <DataTable :headers="headers" :items="users" class="mt-10">
               <template #column-actions="{ item }">
-                  <button 
-                    @click="detailUser(item)" 
-                    class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                  >
+                <button
+                  @click="detailUser(item)"
+                  class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
                   <font-awesome-icon icon="fa-solid fa-eye" class="mr-2" />
-                    Detail
-                  </button>
+                  Detail
+                </button>
               </template>
             </DataTable>
           </template>
         </Card>
 
-        <button @click="inputMahasiswa"
-          class="fixed bottom-10 right-10 bg-blue-500 text-white rounded-full p-6 shadow-lg hover:bg-blue-600 focus:outline-none">
+        <button
+          @click="inputMahasiswa"
+          class="fixed bottom-10 right-10 bg-blue-500 text-white rounded-full p-6 shadow-lg hover:bg-blue-600 focus:outline-none"
+        >
           <font-awesome-icon :icon="['fas', 'plus']" />
         </button>
       </main>

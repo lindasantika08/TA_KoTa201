@@ -2,6 +2,7 @@
 
 namespace App\Exports;
 
+use App\Models\User;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithTitle;
@@ -9,10 +10,10 @@ use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
+use Illuminate\Support\Collection;
 
 class MahasiswaExport implements FromCollection, WithHeadings, WithTitle, WithStyles
 {
-
     protected $jurusan;
     protected $prodi;
     protected $angkatan;
@@ -26,9 +27,41 @@ class MahasiswaExport implements FromCollection, WithHeadings, WithTitle, WithSt
 
     public function collection()
     {
-        $data = [];
+        // Cek apakah ada data mahasiswa dengan kriteria yang diberikan
+        $existingData = User::where('role', 'mahasiswa')
+            ->where('jurusan', $this->jurusan)
+            ->where('prodi', $this->prodi)
+            ->where('angkatan', $this->angkatan)
+            ->whereNotNull('class')
+            ->whereNotNull('name')
+            ->whereNotNull('nim')
+            ->whereNotNull('email')
+            ->orderBy('class')
+            ->orderBy('name')
+            ->get();
+
+        // Jika ada data yang memenuhi kriteria
+        if ($existingData->count() > 0) {
+            $data = [];
+            foreach ($existingData as $index => $user) {
+                $data[] = [
+                    'no' => $index + 1,
+                    'jurusan' => $user->jurusan,
+                    'prodi' => $user->prodi,
+                    'angkatan' => $user->angkatan,
+                    'class' => $user->class,
+                    'name' => $user->name,
+                    'nim' => $user->nim,
+                    'email' => $user->email
+                ];
+            }
+            return new Collection($data);
+        }
+
+        // Jika tidak ada data, return template kosong
+        $templateData = [];
         for ($i = 1; $i <= 30; $i++) {
-            $data[] = [
+            $templateData[] = [
                 'no' => $i,
                 'jurusan' => $this->jurusan,
                 'prodi' => $this->prodi,
@@ -39,7 +72,7 @@ class MahasiswaExport implements FromCollection, WithHeadings, WithTitle, WithSt
                 'email' => null
             ];
         }
-        return collect($data);
+        return new Collection($templateData);
     }
 
     public function headings(): array
@@ -59,7 +92,8 @@ class MahasiswaExport implements FromCollection, WithHeadings, WithTitle, WithSt
     public function styles(Worksheet $sheet)
     {
         // Border and alignment for entire table
-        $sheet->getStyle('A1:H31')->applyFromArray([
+        $lastRow = $sheet->getHighestRow();
+        $sheet->getStyle('A1:H' . $lastRow)->applyFromArray([
             'borders' => [
                 'allBorders' => [
                     'borderStyle' => Border::BORDER_THIN,
@@ -85,26 +119,31 @@ class MahasiswaExport implements FromCollection, WithHeadings, WithTitle, WithSt
         ]);
 
         // Center align No column
-        $sheet->getStyle('A2:A31')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('A2:A' . $lastRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
         // Left align other columns
-        $sheet->getStyle('B2:B31')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
-        $sheet->getStyle('C2:C31')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
-        $sheet->getStyle('D2:D31')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
-        $sheet->getStyle('E2:E31')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
-        $sheet->getStyle('F2:F31')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
-        $sheet->getStyle('G2:G31')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
-        $sheet->getStyle('H2:H31')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+        $columns = ['B', 'C', 'D', 'E', 'F', 'G', 'H'];
+        foreach ($columns as $column) {
+            $sheet->getStyle($column . '2:' . $column . $lastRow)
+                ->getAlignment()
+                ->setHorizontal(Alignment::HORIZONTAL_LEFT);
+        }
 
         // Set column widths
-        $sheet->getColumnDimension('A')->setWidth(5);  // No
-        $sheet->getColumnDimension('B')->setWidth(20); // Jurusan
-        $sheet->getColumnDimension('C')->setWidth(20); // Prodi
-        $sheet->getColumnDimension('D')->setWidth(10); // Angkatan
-        $sheet->getColumnDimension('E')->setWidth(15); // Kelas
-        $sheet->getColumnDimension('F')->setWidth(20); // Nama
-        $sheet->getColumnDimension('G')->setWidth(15); // NIM
-        $sheet->getColumnDimension('H')->setWidth(25); // Email
+        $columnWidths = [
+            'A' => 5,   // No
+            'B' => 20,  // Jurusan
+            'C' => 20,  // Prodi
+            'D' => 10,  // Angkatan
+            'E' => 15,  // Kelas
+            'F' => 20,  // Nama
+            'G' => 15,  // NIM
+            'H' => 25   // Email
+        ];
+
+        foreach ($columnWidths as $column => $width) {
+            $sheet->getColumnDimension($column)->setWidth($width);
+        }
     }
 
     public function title(): string
