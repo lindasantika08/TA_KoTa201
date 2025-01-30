@@ -81,7 +81,7 @@ export default {
                 this.projects = response.data;
                 this.filteredProjects = this.projects;
 
-                this.years = [...new Set(this.projects.map((p) => p.tahun_ajaran))];
+                this.years = [...new Set(this.projects.map((p) => p.batch_year))];
             } catch (error) {
                 console.error("Error fetching projects:", error);
                 alert("Terjadi kesalahan saat mengambil data proyek.");
@@ -90,7 +90,7 @@ export default {
         filterProjects() {
             if (this.selectedYear) {
                 this.filteredProjects = this.projects.filter(
-                    (project) => project.tahun_ajaran === this.selectedYear
+                    (project) => project.batch_year === this.selectedYear
                 );
             } else {
                 this.filteredProjects = this.projects;
