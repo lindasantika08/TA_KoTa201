@@ -11,10 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('answersPeer', function (Blueprint $table) {
+        Schema::create('answers_peer', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->uuid('user_id');
-            $table->uuid('peer_id');
+            $table->foreignUuid('mahasiswa_id')->constrained('mahasiswa');
+            $table->foreignUuid('peer_id')->constrained('mahasiswa');
             $table->uuid('question_id');
             $table->text('answer');
             $table->integer('score');
@@ -22,10 +22,8 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->foreign('user_id')->references('id')->on('users');
-            $table->foreign('peer_id')->references('id')->on('users');
             $table->foreign('question_id')->references('id')->on('assessment');
-            $table->unique(['question_id', 'user_id', 'peer_id'], 'unique_user_question');
+            $table->unique(['question_id', 'mahasiswa_id', 'peer_id'], 'unique_user_question');
 
         });
     }
@@ -35,6 +33,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('answersPeer');
+        Schema::dropIfExists('answers_peer');
     }
 };

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
-class Project extends Model
+class TypeCriteria extends Model
 {
     use HasFactory, SoftDeletes, HasUuids;
 
@@ -16,7 +16,7 @@ class Project extends Model
      *
      * @var string
      */
-    protected $table = 'project';
+    protected $table = 'type_criteria';
 
     /**
      * The attributes that are mass assignable.
@@ -24,13 +24,13 @@ class Project extends Model
      * @var array
      */
     protected $fillable = [
-        'semester',
-        'batch_year',
-        'project_name',
-        'major_id',
-        'start_date',
-        'end_date',
-        'status',
+        'aspect',
+        'criteria',
+        'bobot_1',
+        'bobot_2',
+        'bobot_3',
+        'bobot_4',
+        'bobot_5',
     ];
 
     /**
@@ -39,18 +39,8 @@ class Project extends Model
      * @var array
      */
     protected $dates = [
-        'start_date',
-        'end_date',
         'deleted_at',
     ];
-
-    /**
-     * Get the major associated with the project.
-     */
-    public function major()
-    {
-        return $this->belongsTo(Major::class, 'major_id');
-    }
 
     public function setKeysForSaveQuery($query)
     {

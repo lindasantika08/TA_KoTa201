@@ -24,7 +24,7 @@ export default {
       ],
       headers: [
         { key: 'no', label: 'No' },
-        { key: 'tahunAjaran', label: 'tahunAjaran' },
+        { key: 'tahunAjaran', label: 'Tahun Ajaran' },
         { key: 'proyek', label: 'Proyek' },
         { key: 'status', label: 'Status' },
         { key: 'tanggal', label: 'Tanggal Pengisian' },

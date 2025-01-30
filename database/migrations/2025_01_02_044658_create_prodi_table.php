@@ -11,8 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->string('nip', 21)->nullable()->change(); // Perbarui panjang kolom
+        Schema::create('prodi', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->foreignUuid('major_id')->constrained('major');
+            $table->string('prodi_name');
+            $table->timestamps();
+            $table->softDeletes();
         });
     }
 
@@ -21,8 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->string('nip', 18)->nullable()->change(); // Kembalikan panjang kolom semula
-        });
+        Schema::dropIfExists('prodi');
     }
 };
