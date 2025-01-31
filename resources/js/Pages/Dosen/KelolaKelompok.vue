@@ -42,7 +42,14 @@ export default {
   mounted() {
     console.log("Data Kelompok:", this.kelompok);
     this.fetchProjects();
-    this.filteredKelompok = this.kelompok;
+
+    // Flatten the nested structure
+    this.filteredKelompok = this.kelompok.flatMap(dosenGroup =>
+      dosenGroup.projects.map(project => ({
+        ...project,
+        dosen: dosenGroup.dosen_name
+      }))
+    );
   },
   methods: {
     async fetchProjects() {
@@ -55,15 +62,26 @@ export default {
     },
     applyFilter() {
       if (!this.selectedProject) {
-        this.filteredKelompok = this.kelompok;
+        this.filteredKelompok = this.kelompok.flatMap(dosenGroup =>
+          dosenGroup.projects.map(project => ({
+            ...project,
+            dosen: dosenGroup.dosen_name
+          }))
+        );
         return;
       }
 
       const [batch_year, project_name] = this.selectedProject.split(" - ");
-      this.filteredKelompok = this.kelompok.filter(
-        (item) =>
-          item.batch_year === batch_year &&
-          item.project_name === project_name
+      this.filteredKelompok = this.kelompok.flatMap(dosenGroup =>
+        dosenGroup.projects
+          .filter(project =>
+            project.batch_year === batch_year &&
+            project.project_name === project_name
+          )
+          .map(project => ({
+            ...project,
+            dosen: dosenGroup.dosen_name
+          }))
       );
     },
     showDetail(kelompokId) {

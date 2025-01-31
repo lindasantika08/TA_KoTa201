@@ -42,4 +42,9 @@ class Mahasiswa extends Model
     {
         return $this->belongsTo(ClassRoom::class, 'class_id');
     }
+
+    public function group()
+    {
+        return $this->hasMany(Group::class, 'mahasiswa_id');
+    }
 }

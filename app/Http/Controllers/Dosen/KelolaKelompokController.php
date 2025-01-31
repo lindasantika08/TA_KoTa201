@@ -19,30 +19,71 @@ class KelolaKelompokController extends Controller
 {
     public function KelolaKelompok()
     {
-        $kelompokData = Group::with(['mahasiswa.user', 'dosen.user', 'project'])
-            ->get()
-            ->groupBy(['project_id', 'group'])
-            ->map(function ($projectGroups) {
-                $firstGroup = $projectGroups->first()->first();
-                $allMembers = $projectGroups->flatten()->map(function ($item) {
-                    return [
-                        'name' => $item->mahasiswa->user->name,
-                        'user_id' => $item->mahasiswa->user->id
-                    ];
-                })->unique('user_id')->values();
+        $allGroups = Group::select('group', 'project_id', 'dosen_id')
+            ->with(['project', 'dosen.user'])
+            ->distinct('group')
+            ->get();
 
+        Log::info('All Unique Groups', 
+            $allGroups->map(function($group) {
                 return [
-                    'id' => $firstGroup->id,
-                    'batch_year' => $firstGroup->project->batch_year,
-                    'project_name' => $firstGroup->project->project_name,
-                    'group' => $firstGroup->group,
-                    'dosen' => $firstGroup->dosen ? $firstGroup->dosen->user->name : '-',
-                    'anggota' => $allMembers,
+                    'group' => $group->group,
+                    'project_name' => optional($group->project)->project_name,
+                    'dosen_name' => optional($group->dosen->user)->name
                 ];
-            })
-            ->values();
+            })->toArray()
+        );
 
-        Log::info('Data Kelompok yang Dikirim:', ['kelompok' => $kelompokData]);
+        $group2Details = Group::where('group', '2')
+            ->with(['mahasiswa.user', 'dosen.user', 'project'])
+            ->get();
+
+        Log::info('Group 2 Details', 
+            $group2Details->map(function($group) {
+                return [
+                    'id' => $group->id,
+                    'mahasiswa_name' => optional($group->mahasiswa->user)->name,
+                    'dosen_name' => optional($group->dosen->user)->name,
+                    'project_name' => optional($group->project)->project_name
+                ];
+            })->toArray()
+        );
+
+        $kelompokData = Group::with([
+            'mahasiswa.user', 
+            'dosen.user', 
+            'project'
+        ])
+        ->get()
+        ->groupBy('group') 
+        ->sortKeys()
+        ->map(function ($sameGroupItems) {
+            if ($sameGroupItems->isEmpty()) {
+                return null;
+            }
+
+            $firstGroup = $sameGroupItems->first();
+            
+            $members = $sameGroupItems->map(function ($group) {
+                return [
+                    'name' => optional($group->mahasiswa->user)->name ?? 'Unnamed',
+                    'nim' => optional($group->mahasiswa)->nim ?? 'N/A',
+                    'user_id' => optional($group->mahasiswa->user)->id ?? null
+                ];
+            })->unique('nim')->values();
+
+            return [
+                'dosen_name' => optional($firstGroup->dosen->user)->name ?? 'Unnamed Dosen',
+                'projects' => [[
+                    'project_name' => optional($firstGroup->project)->project_name ?? 'N/A',
+                    'batch_year' => optional($firstGroup->project)->batch_year ?? 'N/A',
+                    'group' => $firstGroup->group,
+                    'anggota' => $members
+                ]]
+            ];
+        })
+        ->filter()
+        ->values();
 
         return Inertia::render('Dosen/KelolaKelompok', [
             'kelompok' => $kelompokData,
