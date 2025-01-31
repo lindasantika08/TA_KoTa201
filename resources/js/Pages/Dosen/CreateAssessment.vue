@@ -23,37 +23,40 @@ export default {
   setup() {
     const projects = ref([]);
     const inputMode = ref("export");
-    const selectedActiveProject = ref({ tahun_ajaran: "", nama_proyek: "" });
-    const selectedInactiveProject = ref({ tahun_ajaran: "", nama_proyek: "" });
+    const selectedActiveProject = ref(null);
+    const selectedInactiveProject = ref(null);
 
     const activeProjects = computed(() => {
-      return projects.value.filter(project => project.status === 'aktif');
+      return projects.value.filter(project => project.status === 'Active');
     });
 
     const inactiveProjects = computed(() => {
-      return projects.value.filter(project => project.status !== 'aktif');
+      return projects.value.filter(project => project.status !== 'Active');
     });
 
     const downloadActiveTemplate = async () => {
-      await downloadTemplate(selectedActiveProject.value, 'active');
+      if (selectedActiveProject.value) {
+        await downloadTemplate(selectedActiveProject.value, 'Active');
+      } else {
+        alert("Please select an active project.");
+      }
     };
 
     const downloadInactiveTemplate = async () => {
-      await downloadTemplate(selectedInactiveProject.value, 'inactive');
+      if (selectedInactiveProject.value) {
+        await downloadTemplate(selectedInactiveProject.value, 'NonActive');
+      } else {
+        alert("Please select a non-active project.");
+      }
     };
 
     const downloadTemplate = async (project, type) => {
-      if (!project.tahun_ajaran || !project.nama_proyek) {
-        alert(`Pilih Proyek ${type === 'active' ? 'Aktif' : 'Tidak Aktif'} terlebih dahulu.`);
-        return;
-      }
-
       try {
         const token = localStorage.getItem("auth_token");
         const response = await axios.get("/api/export-self-assessment", {
           params: {
-            tahun_ajaran: project.tahun_ajaran,
-            nama_proyek: project.nama_proyek,
+            batch_year: project.batch_year,
+            project_name: project.project_name,
             type: type
           },
           headers: {
@@ -77,7 +80,7 @@ export default {
         window.URL.revokeObjectURL(url);
       } catch (error) {
         console.error("Download error:", error);
-        alert("Terjadi kesalahan saat mengunduh file excel");
+        alert("There was an error downloading the Excel file.");
       }
     };
 
@@ -97,16 +100,11 @@ export default {
           }
         });
 
-        alert(response.data.message || "Data berhasil diimpor");
+        alert(response.data.message || "Data imported successfully.");
         event.target.value = '';
-
       } catch (error) {
         console.error("Import error:", error);
-        if (error.response?.data?.error) {
-          alert(error.response.data.error);
-        } else {
-          alert("Terjadi kesalahan saat mengimpor data");
-        }
+        alert("There was an error importing the data.");
       }
     };
 
@@ -137,7 +135,6 @@ export default {
 <template>
   <div class="flex min-h-screen">
     <Sidebar role="dosen" />
-
     <div class="flex-1">
       <Navbar userName="Dosen" />
       <main class="p-6">
@@ -177,14 +174,14 @@ export default {
                     required>
                     <option value="" disabled selected>Pilih Proyek Aktif</option>
                     <option v-for="project in activeProjects"
-                      :key="`active-${project.tahun_ajaran}-${project.nama_proyek}`" :value="project">
-                      {{ project.tahun_ajaran }} - {{ project.nama_proyek }}
+                      :key="`active-${project.batch_year}-${project.project_name}`" :value="project">
+                      {{ project.batch_year }} - {{ project.project_name }}
                     </option>
                   </select>
                   <div class="mt-4">
                     <button @click="downloadActiveTemplate"
                       class="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      :disabled="!selectedActiveProject.tahun_ajaran">
+                      :disabled="!selectedActiveProject">
                       <font-awesome-icon :icon="['fas', 'file-excel']" class="mr-2" />
                       Download Template Aktif
                     </button>
@@ -199,14 +196,14 @@ export default {
                     required>
                     <option value="" disabled selected>Pilih Proyek Tidak Aktif</option>
                     <option v-for="project in inactiveProjects"
-                      :key="`inactive-${project.tahun_ajaran}-${project.nama_proyek}`" :value="project">
-                      {{ project.tahun_ajaran }} - {{ project.nama_proyek }}
+                      :key="`inactive-${project.batch_year}-${project.project_name}`" :value="project">
+                      {{ project.batch_year }} - {{ project.project_name }}
                     </option>
                   </select>
                   <div class="mt-4">
                     <button @click="downloadInactiveTemplate"
                       class="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      :disabled="!selectedInactiveProject.tahun_ajaran">
+                      :disabled="!selectedInactiveProject">
                       <font-awesome-icon :icon="['fas', 'file-excel']" class="mr-2" />
                       Download Template Tidak Aktif
                     </button>

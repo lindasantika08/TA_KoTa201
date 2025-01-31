@@ -65,4 +65,8 @@ class Project extends Model
 
         return $query;
     }
+    public function assessments()
+    {
+        return $this->hasMany(Assessment::class, 'project_id');
+    }
 }

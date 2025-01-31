@@ -58,12 +58,19 @@ class User extends Authenticatable
         ];
     }
 
-    public function isDosen() {
+
+    public function dosen()
+    {
+        return $this->hasOne(Dosen::class, 'user_id');
+    }
+
+    public function isDosen()
+    {
         return $this->role === 'dosen';
     }
 
-    public function isMahasiswa() {
+    public function isMahasiswa()
+    {
         return $this->role === 'mahasiswa';
     }
-
 }

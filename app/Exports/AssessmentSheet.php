@@ -13,76 +13,65 @@ use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
 
 class AssessmentSheet implements FromCollection, WithHeadings, WithEvents, ShouldAutoSize
 {
-    protected $tahunAjaran;
-    protected $namaProyek;
+    protected $batchYear;
+    protected $projectName;
+    protected $projectId;
+    protected $assessments;
 
-    public function __construct($tahunAjaran, $namaProyek)
+    public function __construct($batchYear, $projectName, $projectId, $assessments = null)
     {
-        $this->tahunAjaran = $tahunAjaran;
-        $this->namaProyek = $namaProyek;
+        $this->batchYear = $batchYear;
+        $this->projectName = $projectName;
+        $this->projectId = $projectId;
+        $this->assessments = $assessments;
     }
 
-    /**
-     * Ambil data dari database atau buat template kosong jika tidak ada data
-     */
     public function collection()
     {
-        // Cek apakah ada data di tabel assessment dengan tahun_ajaran dan nama_proyek
-        $assessments = Assessment::where('tahun_ajaran', $this->tahunAjaran)
-            ->where('nama_proyek', $this->namaProyek)
-            ->get();
-
-        if ($assessments->isEmpty()) {
-            // Jika tidak ada data, buat 10 baris template kosong
+        if (!$this->assessments || $this->assessments->isEmpty()) {
+            // Template kosong dengan 10 baris
             $data = [];
             for ($i = 1; $i <= 10; $i++) {
                 $data[] = [
                     'no' => $i,
-                    'tahun_ajaran' => $this->tahunAjaran,
-                    'nama_proyek' => $this->namaProyek,
+                    'batch_year' => $this->batchYear,
+                    'project_name' => $this->projectName,
                     'type' => '',
-                    'pertanyaan' => '',
-                    'aspek' => '',
-                    'kriteria' => '',
+                    'question' => '',
+                    'aspect' => '',    // Menambahkan kolom aspect
+                    'criteria' => '',   // Menambahkan kolom criteria
                 ];
             }
-        } else {
-            // Jika ada data, map data yang ada
-            $data = $assessments->map(function ($item, $key) {
-                return [
-                    'no' => $key + 1,
-                    'tahun_ajaran' => $this->tahunAjaran,
-                    'nama_proyek' => $this->namaProyek,
-                    'type' => $item->type,
-                    'pertanyaan' => $item->pertanyaan,
-                    'aspek' => $item->aspek,
-                    'kriteria' => $item->kriteria,
-                ];
-            })->toArray();
+            return collect($data);
         }
 
-        return collect($data);
+        // Map data yang ada dengan mengambil aspek dan kriteria dari relasi
+        return $this->assessments->map(function ($item, $key) {
+            return [
+                'no' => $key + 1,
+                'batch_year' => $this->batchYear,
+                'project_name' => $this->projectName,
+                'type' => $item->type,
+                'question' => $item->question,
+                'aspect' => $item->typeCriteria ? $item->typeCriteria->aspect : '',
+                'criteria' => $item->typeCriteria ? $item->typeCriteria->criteria : '',
+            ];
+        });
     }
 
-    /**
-     * Judul kolom di Excel
-     */
     public function headings(): array
     {
         return [
             'No',
-            'Tahun Ajaran',
-            'Nama Proyek',
+            'Batch Year',
+            'Project Name',
             'Type',
-            'Pertanyaan',
-            'Aspek',
-            'Kriteria',
+            'Question',
+            'Aspect',
+            'Criteria'
         ];
     }
 
-    /**
-     * Menambahkan format dan event setelah sheet selesai diisi
-     */
     public function registerEvents(): array
     {
         return [
@@ -90,27 +79,39 @@ class AssessmentSheet implements FromCollection, WithHeadings, WithEvents, Shoul
                 $worksheet = $event->sheet->getDelegate();
                 $lastRow = $worksheet->getHighestRow();
 
-                // Tambahkan border untuk semua sel termasuk header dan data
-                $worksheet->getStyle('A1:G' . $lastRow)->getBorders()->getAllBorders()->setBorderStyle('thin');
+                // Border untuk semua sel
+                $worksheet->getStyle('A1:G' . $lastRow)
+                    ->getBorders()
+                    ->getAllBorders()
+                    ->setBorderStyle('thin');
 
-                // Membuat header menjadi tebal
-                $worksheet->getStyle('A1:G1')->getFont()->setBold(true);
+                // Header bold
+                $worksheet->getStyle('A1:G1')
+                    ->getFont()
+                    ->setBold(true);
 
-                // Meratakan header ke tengah
-                $worksheet->getStyle('A1:G1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                // Header center
+                $worksheet->getStyle('A1:G1')
+                    ->getAlignment()
+                    ->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-                // Meratakan kolom No ke tengah
-                $worksheet->getStyle('A2:A' . $lastRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                // Nomor center
+                $worksheet->getStyle('A2:A' . $lastRow)
+                    ->getAlignment()
+                    ->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-                // Meratakan kolom lainnya ke kiri
-                $worksheet->getStyle('B2:G' . $lastRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+                // Kolom lain left align
+                $worksheet->getStyle('B2:G' . $lastRow)
+                    ->getAlignment()
+                    ->setHorizontal(Alignment::HORIZONTAL_LEFT);
 
-                // Menyesuaikan ukuran kolom secara otomatis
+                // Auto-size columns
                 foreach (range('A', 'G') as $col) {
-                    $worksheet->getColumnDimension($col)->setAutoSize(true);
+                    $worksheet->getColumnDimension($col)
+                        ->setAutoSize(true);
                 }
 
-                // Menambahkan dropdown pada kolom 'Type' (Kolom D) mulai dari baris kedua hingga terakhir
+                // Dropdown untuk Type
                 for ($i = 2; $i <= $lastRow; $i++) {
                     $validation = $worksheet->getCell("D$i")->getDataValidation();
                     $validation->setType(DataValidation::TYPE_LIST);

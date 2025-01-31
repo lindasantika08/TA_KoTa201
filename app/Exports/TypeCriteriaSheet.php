@@ -2,7 +2,7 @@
 
 namespace App\Exports;
 
-use App\Models\type_criteria;
+use App\Models\TypeCriteria;
 use App\Models\Assessment;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -14,42 +14,44 @@ use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 
 class TypeCriteriaSheet implements FromCollection, WithHeadings, WithEvents, WithTitle, ShouldAutoSize
 {
+    protected $projectId;
+    protected $batchYear;
+    protected $projectName;
 
-    protected $tahunAjaran;
-    protected $namaProyek;
-
-    public function __construct($tahunAjaran, $namaProyek)
+    public function __construct($projectId, $batchYear, $projectName)
     {
-        $this->tahunAjaran = $tahunAjaran;
-        $this->namaProyek = $namaProyek;
+        $this->projectId = $projectId;
+        $this->batchYear = $batchYear;
+        $this->projectName = $projectName;
     }
 
     public function collection()
     {
-        $typeCriterias = Assessment::select(
-            'assessment.aspek',
-            'assessment.kriteria',
-            'type_criteria.bobot_1',
-            'type_criteria.bobot_2',
-            'type_criteria.bobot_3',
-            'type_criteria.bobot_4',
-            'type_criteria.bobot_5'
-        )
-            ->where('assessment.tahun_ajaran', $this->tahunAjaran)
-            ->where('assessment.nama_proyek', $this->namaProyek)
-            ->join('type_criteria', function ($join) {
-                $join->on('assessment.aspek', '=', 'type_criteria.aspek')
-                    ->on('assessment.kriteria', '=', 'type_criteria.kriteria');
-            })
+        // Get criteria IDs used in assessments for this project
+        $criteriaIds = Assessment::where('project_id', $this->projectId)
+            ->pluck('criteria_id')
+            ->unique();
+
+        // Get type criteria for this project only
+        $typeCriterias = TypeCriteria::whereIn('id', $criteriaIds)
+            ->select(
+                'aspect',
+                'criteria',
+                'bobot_1',
+                'bobot_2',
+                'bobot_3',
+                'bobot_4',
+                'bobot_5'
+            )
             ->get();
 
         if ($typeCriterias->isEmpty()) {
-            // Jika tidak ada data, buat 5 baris template kosong
+            // Create empty template
             $data = collect(range(1, 5))->map(function ($i) {
                 return [
                     'no' => $i,
-                    'aspek' => '',
-                    'kriteria' => '',
+                    'aspect' => '',
+                    'criteria' => '',
                     'bobot_1' => '',
                     'bobot_2' => '',
                     'bobot_3' => '',
@@ -58,12 +60,12 @@ class TypeCriteriaSheet implements FromCollection, WithHeadings, WithEvents, Wit
                 ];
             });
         } else {
-            // Jika ada data, map data yang ada
+            // Map existing data
             $data = $typeCriterias->map(function ($item, $key) {
                 return [
                     'no' => $key + 1,
-                    'aspek' => $item->aspek,
-                    'kriteria' => $item->kriteria,
+                    'aspect' => $item->aspect,
+                    'criteria' => $item->criteria,
                     'bobot_1' => $item->bobot_1,
                     'bobot_2' => $item->bobot_2,
                     'bobot_3' => $item->bobot_3,
@@ -73,90 +75,57 @@ class TypeCriteriaSheet implements FromCollection, WithHeadings, WithEvents, Wit
             });
         }
 
-        return collect($data);
+        return $data;
     }
 
-
-    /**
-     * @return array
-     */
     public function headings(): array
     {
         return [
-            // First row
-            [
-                'No',
-                'Aspek',
-                'Kriteria',
-                'Bobot',
-                '',
-                '',
-                '',
-                ''
-            ],
-            // Second row
-            [
-                '',
-                '',
-                '',
-                'Bobot 1',
-                'Bobot 2',
-                'Bobot 3',
-                'Bobot 4',
-                'Bobot 5'
-            ]
+            ['No', 'Aspect', 'Criteria', 'Bobot', '', '', '', ''],
+            ['', '', '', 'Bobot 1', 'Bobot 2', 'Bobot 3', 'Bobot 4', 'Bobot 5']
         ];
     }
 
-    /**
-     * @return array
-     */
     public function registerEvents(): array
     {
         return [
             AfterSheet::class => function (AfterSheet $event) {
-                // Get worksheet
                 $worksheet = $event->sheet->getDelegate();
 
-                // Merge cells for No, Aspek, and Kriteria
-                $worksheet->mergeCells('A1:A2');
-                $worksheet->mergeCells('B1:B2');
-                $worksheet->mergeCells('C1:C2');
+                // Add project info at the top
+                $worksheet->insertNewRowBefore(1, 2);
+                $worksheet->setCellValue('A1', 'Batch Year: ' . $this->batchYear);
+                $worksheet->setCellValue('A2', 'Project Name: ' . $this->projectName);
 
-                // Merge cells for Bobot header
-                $worksheet->mergeCells('D1:H1');
+                // Merge header cells (adjusted for new rows)
+                $worksheet->mergeCells('A3:A4');
+                $worksheet->mergeCells('B3:B4');
+                $worksheet->mergeCells('C3:C4');
+                $worksheet->mergeCells('D3:H3');
 
-                // Set text alignment for all headers
-                $worksheet->getStyle('A1:H2')->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
-                $worksheet->getStyle('A1:H2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-
-                // Add borders to the headers
-                $worksheet->getStyle('A1:H2')->getBorders()->getAllBorders()->setBorderStyle('thin');
-
-                // Make headers bold
+                // Center align and bold headers
                 $worksheet->getStyle('A1:H2')->getFont()->setBold(true);
+                $worksheet->getStyle('A3:H4')->getAlignment()
+                    ->setVertical(Alignment::VERTICAL_CENTER)
+                    ->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $worksheet->getStyle('A3:H4')->getFont()->setBold(true);
+
+                // Add borders
+                $lastRow = $worksheet->getHighestRow();
+                $worksheet->getStyle('A3:H' . $lastRow)->getBorders()->getAllBorders()->setBorderStyle('thin');
+
+                // Center align specific columns
+                $worksheet->getStyle('A5:A' . $lastRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $worksheet->getStyle('D5:H' . $lastRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
                 // Auto-size columns
                 foreach (range('A', 'H') as $col) {
                     $worksheet->getColumnDimension($col)->setAutoSize(true);
                 }
-
-                // Get the last row number
-                $lastRow = $worksheet->getHighestRow();
-
-                // Add borders to all data cells
-                $worksheet->getStyle('A3:H' . $lastRow)->getBorders()->getAllBorders()->setBorderStyle('thin');
-
-                // Center align the No column and Bobot columns
-                $worksheet->getStyle('A3:A' . $lastRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-                $worksheet->getStyle('D3:H' . $lastRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
             }
         ];
     }
 
-    /**
-     * @return string
-     */
     public function title(): string
     {
         return 'Type Criteria';
