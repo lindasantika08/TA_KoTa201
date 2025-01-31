@@ -14,7 +14,7 @@ class ProjectController extends Controller
 {
     public function index()
     {
-        return response()->json(Project::select('tahun_ajaran', 'nama_proyek')->get());
+        return response()->json(Project::select('batch_year', 'semester', 'project_name')->get());
     }
 
     public function getProjectsWithAssessmentsSelf()

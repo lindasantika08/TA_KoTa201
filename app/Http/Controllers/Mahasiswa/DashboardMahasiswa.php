@@ -26,6 +26,16 @@ class DashboardMahasiswa extends Controller
         return Inertia::render('Mahasiswa/Profile');
     }
 
+    public function getMahasiswaByClass($classId) {
+        $mahasiswaKelas = User::whereHas('mahasiswa', function($query) use ($classId) {
+            $query->where('class_id', $classId);
+        })->get();
+
+        return response()->json([
+            'data' => $mahasiswaKelas
+        ]);
+    }
+
     public function getUserProject() {
         $user = Auth::user();
         $kelompok = Kelompok::where('user_id', $user->id)->get();
