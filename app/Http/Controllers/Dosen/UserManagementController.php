@@ -3,6 +3,10 @@
 namespace App\Http\Controllers\Dosen;
 
 use App\Models\User;
+use App\Models\Mahasiswa;
+use App\Models\Major;
+use App\Models\Prodi;
+use App\Models\ClassRoom;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\MahasiswaExport;
@@ -11,6 +15,7 @@ use App\Exports\DosenExport;
 use App\Imports\DosenImport;
 use Inertia\Inertia;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Validator;
 
 
 class UserManagementController extends Controller
@@ -30,35 +35,42 @@ class UserManagementController extends Controller
 
     public function getMahasiswa(Request $request)
     {
-        $query = User::where('role', 'mahasiswa');
-
-        // Filter berdasarkan angkatan jika dipilih
-        if ($request->has('angkatan') && $request->angkatan) {
-            $query->where('angkatan', $request->angkatan);
+        // Ambil parameter dari request
+        $angkatan = $request->get('batch_year');
+        $class = $request->get('class_name');
+    
+        // Mulai query untuk mengambil data mahasiswa
+        $query = Mahasiswa::with(['classRoom', 'user']);
+    
+        // Filter berdasarkan angkatan (batch_year)
+        if ($angkatan) {
+            $query->whereHas('classRoom', function ($q) use ($angkatan) {
+                $q->where('batch_year', $angkatan);
+            });
         }
-
-        // Filter berdasarkan jurusan jika dipilih
-        if ($request->has('jurusan') && $request->jurusan) {
-            $query->where('jurusan', $request->jurusan);
+    
+        // Filter berdasarkan kelas
+        if ($class) {
+            $query->whereHas('classRoom', function ($q) use ($class) {
+                $q->where('class_name', $class);
+            });
         }
-        
-        // Filter berdasarkan prodi jika dipilih
-        if ($request->has('prodi') && $request->prodi) {
-            $query->where('prodi', $request->prodi);
-        }
-
-        // Filter berdasarkan class jika dipilih
-        if ($request->has('class') && $request->class) {
-            $query->where('class', $request->class);
-        }
-
-        $users = $query->select('id', 'name', 'email', 'nim', 'jurusan', 'prodi', 'angkatan', 'class')
-            ->get();
-
-        return response()->json($users);
+    
+        // Ambil data mahasiswa
+        $mahasiswa = $query->get();
+    
+        // Format data agar sesuai dengan yang dibutuhkan (misalnya menambahkan nomor urut)
+        $mahasiswa = $mahasiswa->map(function ($item, $index) {
+            $item->no = $index + 1;
+            return $item;
+        });
+    
+        // Kirim data ke frontend
+        return response()->json($mahasiswa);
     }
+    
 
-   
+
 
     public function InputMahasiswa()
     {
@@ -66,14 +78,36 @@ class UserManagementController extends Controller
         return Inertia::render('Dosen/InputMahasiswa');
     }
 
-    public function ExportMahasiswa(Request $request)
+    public function exportMahasiswa(Request $request)
     {
+        try {
+            // Validate request
+            $validator = Validator::make($request->all(), [
+                'jurusan' => 'required|exists:major,id',
+                'prodi' => 'required|exists:prodi,id',
+                'angkatan' => 'required|integer|min:2000|max:' . (date('Y') + 1),
+            ]);
 
-        return Excel::download(new MahasiswaExport(
-            $request->jurusan,
-            $request->prodi,
-            $request->angkatan
-        ), 'Data_Mahasiswa.xlsx');
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            return Excel::download(
+                new MahasiswaExport(
+                    $request->prodi,
+                    $request->angkatan
+                ),
+                'data-mahasiswa.xlsx'
+            );
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error exporting data',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function ImportMahasiswa(Request $request)
@@ -87,6 +121,7 @@ class UserManagementController extends Controller
 
         return redirect()->route('ManageMahasiswa')->with('success', 'Data mahasiswa berhasil diimpor!');
     }
+
 
     public function ManageDosen(Request $request)
     {
@@ -115,7 +150,7 @@ class UserManagementController extends Controller
         return response()->json($users);
     }
 
-   
+
 
     public function InputDosen()
     {
@@ -146,117 +181,87 @@ class UserManagementController extends Controller
 
     public function getAngkatan()
     {
-        $angkatan = User::where('role', 'mahasiswa')
+        // Ambil batch_year yang unik berdasarkan mahasiswa dengan role 'mahasiswa'
+        $angkatan = Mahasiswa::join('users', 'users.id', '=', 'mahasiswa.user_id') // Join dengan tabel users
+            ->join('class_room', 'class_room.id', '=', 'mahasiswa.class_id') // Join dengan tabel class_room
+            ->where('users.role', 'mahasiswa') // Pastikan role adalah 'mahasiswa'
             ->distinct()
-            ->pluck('angkatan');
-
+            ->pluck('class_room.batch_year'); // Ambil batch_year dari class_room
+    
         return response()->json($angkatan);
     }
+    
 
     public function getClass()
     {
-        $angkatan = User::where('role', 'mahasiswa')
+        // Ambil class_name yang unik berdasarkan mahasiswa dengan role 'mahasiswa'
+        $kelas = Mahasiswa::join('users', 'users.id', '=', 'mahasiswa.user_id') // Join dengan tabel users
+            ->join('class_room', 'class_room.id', '=', 'mahasiswa.class_id') // Join dengan tabel class_room
+            ->where('users.role', 'mahasiswa') // Pastikan role adalah 'mahasiswa'
             ->distinct()
-            ->pluck('class');
+            ->pluck('class_room.class_name'); // Ambil class_name dari class_room
+    
+        return response()->json($kelas);
+    }
+    
 
-        return response()->json($angkatan);
+
+    public function getProdiByMajor(string $majorId)
+    {
+        try {
+            $prodiList = Prodi::where('major_id', $majorId)
+                ->select('id', 'prodi_name')
+                ->orderBy('prodi_name', 'asc')
+                ->get();
+
+            if ($prodiList->isEmpty()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'No study programs found for this major',
+                    'data' => []
+                ], 404);
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Study programs retrieved successfully',
+                'data' => $prodiList
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to retrieve study programs',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function getJurusanList()
     {
-        $jurusanList = [
-            [
-                'jurusan' => "Teknik Sipil",
-                'prodi' => [
-                    "D-3 Teknik Konstruksi Sipil",
-                    "D-3 Teknik Konstruksi Gedung",
-                    "D-4 Teknik Perancangan Jalan dan Jembatan",
-                    "D-4 Teknik Perawatan dan Perbaikan Gedung",
-                    "S-2 Rekayasa Infrastruktur",
-                ],
-            ],
-            [
-                'jurusan' => "Teknik Mesin",
-                'prodi' => [
-                    "D-3 Teknik Mesin",
-                    "D-3 Teknik Aeronautika",
-                    "D-4 Teknik Perancangan dan Konstruksi Mesin",
-                    "D-4 Proses Manufaktur",
-                ],
-            ],
-            [
-                'jurusan' => "Teknik Refrigasi dan Tata Udara",
-                'prodi' => [
-                    "D-3 Teknik Pendingin dan Tata Udara",
-                    "D-4 Teknik Pendingin dan Tata Udara",
-                ],
-            ],
-            [
-                'jurusan' => "Teknik Konversi Energi",
-                'prodi' => [
-                    "D-3 Teknik Konversi Energi",
-                    "D-4 Teknologi Pembangkit Tenaga Listrik",
-                    "D-4 Teknik Konservasi Energi",
-                ],
-            ],
-            [
-                'jurusan' => "Teknik Elektro",
-                'prodi' => [
-                    "D-3 Teknik Elektronika",
-                    "D-3 Teknik Listrik",
-                    "D-3 Teknik Telekomunikasi",
-                    "D-4 Teknik Elektronika",
-                    "D-4 Teknik Telekomunikasi",
-                    "D-4 Teknik Otomasi Industri",
-                ],
-            ],
-            [
-                'jurusan' => "Teknik Kimia",
-                'prodi' => [
-                    "D-3 Teknik Kimia",
-                    "D-3 Analis Kimia",
-                    "D-4 Teknik Kimia Produksi Bersih",
-                ],
-            ],
-            [
-                'jurusan' => "Teknik Komputer dan Informatika",
-                'prodi' => [
-                    "D-3 Teknik Informatika",
-                    "D-4 Teknik Informatika"
-                ],
-            ],
-            [
-                'jurusan' => "Akuntansi",
-                'prodi' => [
-                    "D-3 Akuntansi",
-                    "D-3 Keuangan dan Perbankan",
-                    "D-4 Akuntansi Manajemen Pemerintahan",
-                    "D-4 Akuntansi",
-                    "D-4 Keuangan Syariah",
-                    "S-2 Keuangan & Perbankan Syariah",
-                ],
-            ],
-            [
-                'jurusan' => "Administrasi Niaga",
-                'prodi' => [
-                    "D-3 Administrasi Bisnis",
-                    "D-3 Manajemen Pemasaran",
-                    "D-3 Usaha Perjalanan Wisata",
-                    "D-3 Manajemen Aset",
-                    "D-4 Manajemen Aset",
-                    "D-4 Administrasi Bisnis",
-                    "D-4 Manajemen Pemasaran",
-                    "D-4 Destinasi Pariwisata",
-                ],
-            ],
-            [
-                'jurusan' => "Bahasa Inggris",
-                'prodi' => [
-                    "D-3 Bahasa Inggris"
-                ],
-            ],
-        ];
+        try {
+            $majors = Major::select('id', 'major_name')
+                ->orderBy('major_name', 'asc')
+                ->get();
 
-        return response()->json($jurusanList);
+            if ($majors->isEmpty()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'No majors found',
+                    'data' => []
+                ], 404);
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Majors retrieved successfully',
+                'data' => $majors
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to retrieve majors',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

@@ -3,25 +3,25 @@
 namespace App\Imports;
 
 use App\Models\User;
+use App\Models\Mahasiswa;
+use App\Models\ClassRoom;
+use App\Models\Prodi;
+use App\Models\Major;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\WithBatchInserts;
-use Maatwebsite\Excel\Concerns\OnEachRow;
-use Maatwebsite\Excel\Row;
 
-class MahasiswaImport implements ToModel, WithHeadingRow, WithBatchInserts, OnEachRow
+class MahasiswaImport implements ToModel, WithHeadingRow, WithBatchInserts
 {
     private $processedNims = [];
 
     public function model(array $row)
     {
         try {
-            Log::info('Memproses baris import: ', $row);
-
-            // Periksa kolom yang diperlukan
-            $requiredColumns = ['nim', 'email', 'name'];
+            // Validasi data wajib
+            $requiredColumns = ['nim', 'email', 'nama_mahasiswa', 'jurusan', 'prodi', 'angkatan', 'kelas'];
             foreach ($requiredColumns as $column) {
                 if (empty($row[$column])) {
                     Log::warning("Kolom {$column} kosong. Melewati baris.");
@@ -29,92 +29,65 @@ class MahasiswaImport implements ToModel, WithHeadingRow, WithBatchInserts, OnEa
                 }
             }
 
-            // Tambahkan NIM ke daftar yang telah diproses
             $this->processedNims[] = $row['nim'];
 
-            // Cek apakah user dengan NIM atau email sudah ada
-            $existingUser = User::where('nim', $row['nim'])
-                              ->orWhere('email', $row['email'])
-                              ->first();
+            // Cek atau buat Major
+            $major = Major::firstOrCreate(['major_name' => $row['jurusan']]);
 
-            if ($existingUser) {
-                // Jika user sudah ada, cek perubahan data
-                $hasChanges = false;
+            // Cek atau buat Prodi
+            $prodi = Prodi::firstOrCreate([
+                'major_id' => $major->id,
+                'prodi_name' => $row['prodi']
+            ]);
+
+            // Cek atau buat ClassRoom
+            $classRoom = ClassRoom::firstOrCreate([
+                'class_name' => $row['kelas'],
+                'prodi_id' => $prodi->id,
+                'batch_year' => $row['angkatan']
+            ]);
+
+            // Cek apakah user sudah ada
+            $user = User::where('email', $row['email'])->first();
+
+            if ($user) {
+                // Cek apakah ada perubahan data
                 $updates = [];
+                if ($user->name !== $row['nama_mahasiswa']) $updates['name'] = $row['nama_mahasiswa'];
+                if ($user->email !== $row['email']) $updates['email'] = $row['email'];
 
-                // Daftar field yang akan dicek perubahannya
-                $fieldsToCheck = [
-                    'nim' => $row['nim'],
-                    'name' => $row['name'],
+                if (!empty($updates)) {
+                    $user->update($updates);
+                    Log::info('User diperbarui', ['id' => $user->id, 'updates' => $updates]);
+                }
+            } else {
+                // Buat user baru
+                $user = User::create([
+                    'id' => Str::uuid(),
+                    'name' => $row['nama_mahasiswa'],
                     'email' => $row['email'],
-                    'jurusan' => $row['jurusan'] ?? null,
-                    'prodi' => $row['prodi'] ?? null,
-                    'angkatan' => $row['angkatan'] ?? null,
-                    'class' => $row['class'] ?? null,
-                ];
-
-                foreach ($fieldsToCheck as $field => $newValue) {
-                    if ($existingUser->$field !== $newValue) {
-                        $hasChanges = true;
-                        $updates[$field] = $newValue;
-                    }
-                }
-
-                if ($hasChanges) {
-                    // Update data jika ada perubahan
-                    $existingUser->update($updates);
-                    Log::info('User diperbarui: ', [
-                        'id' => $existingUser->id,
-                        'updates' => $updates
-                    ]);
-                } else {
-                    Log::info('Tidak ada perubahan untuk user: ', [
-                        'id' => $existingUser->id
-                    ]);
-                }
-
-                return null; // Kembalikan null karena tidak perlu membuat model baru
+                    'password' => bcrypt(Str::random(8)),
+                    'role' => 'mahasiswa'
+                ]);
             }
 
-            // Jika user belum ada, buat user baru
-            $password = Str::random(8);
-            $user = new User([
-                'id' => Str::uuid(),
-                'name' => $row['name'],
-                'email' => $row['email'],
-                'password' => bcrypt($password),
-                'nim' => $row['nim'],
-                'role' => 'mahasiswa',
-                'jurusan' => $row['jurusan'] ?? null,
-                'prodi' => $row['prodi'] ?? null,
-                'angkatan' => $row['angkatan'] ?? null,
-                'class' => $row['class'] ?? null,
+            // Cek atau buat Mahasiswa
+            Mahasiswa::updateOrCreate([
+                'nim' => $row['nim']
+            ], [
+                'user_id' => $user->id,
+                'class_id' => $classRoom->id,
+                'nim' => $row['nim']
             ]);
 
-            Log::info('User baru dibuat: ', [
-                'id' => $user->id,
-                'nim' => $user->nim,
-                'email' => $user->email
-            ]);
-
-            return $user;
-
+            Log::info('Mahasiswa diperbarui atau dibuat', ['nim' => $row['nim']]);
         } catch (\Exception $e) {
-            Log::error('Kesalahan saat memproses baris import: ', [
+            Log::error('Kesalahan saat memproses baris import', [
                 'row' => $row,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'error' => $e->getMessage()
             ]);
-
             return null;
         }
-    }
-
-    public function onRow(Row $row)
-    {
-        // Method ini diperlukan untuk interface OnEachRow
-        // Kita bisa meninggalkannya kosong karena logika utama ada di method model()
-        return null;
     }
 
     public function batchSize(): int
@@ -125,28 +98,14 @@ class MahasiswaImport implements ToModel, WithHeadingRow, WithBatchInserts, OnEa
     public function __destruct()
     {
         try {
-            // Hapus user yang NIM-nya tidak ada dalam data import terbaru
-            $deletedUsers = User::where('role', 'mahasiswa')
-                ->whereNotIn('nim', $this->processedNims)
-                ->get();
-
-            foreach ($deletedUsers as $user) {
-                Log::info('Menghapus user yang tidak ada dalam import: ', [
-                    'id' => $user->id,
-                    'nim' => $user->nim,
-                    'email' => $user->email
-                ]);
+            // Hapus mahasiswa yang tidak ada dalam file import
+            $deletedMahasiswa = Mahasiswa::whereNotIn('nim', $this->processedNims)->get();
+            foreach ($deletedMahasiswa as $mhs) {
+                Log::info('Menghapus mahasiswa', ['id' => $mhs->id, 'nim' => $mhs->nim]);
+                $mhs->delete();
             }
-
-            User::where('role', 'mahasiswa')
-                ->whereNotIn('nim', $this->processedNims)
-                ->delete();
-
         } catch (\Exception $e) {
-            Log::error('Kesalahan saat menghapus user: ', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
+            Log::error('Kesalahan saat menghapus mahasiswa', ['error' => $e->getMessage()]);
         }
     }
 }

@@ -2,7 +2,8 @@
 
 namespace App\Exports;
 
-use App\Models\User;
+use App\Models\Mahasiswa;
+use App\Models\ClassRoom;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithTitle;
@@ -14,59 +15,67 @@ use Illuminate\Support\Collection;
 
 class MahasiswaExport implements FromCollection, WithHeadings, WithTitle, WithStyles
 {
-    protected $jurusan;
-    protected $prodi;
-    protected $angkatan;
+    protected $prodiId;
+    protected $batchYear;
 
-    public function __construct($jurusan, $prodi, $angkatan)
+    public function __construct($prodiId, $batchYear)
     {
-        $this->jurusan = $jurusan;
-        $this->prodi = $prodi;
-        $this->angkatan = $angkatan;
+        $this->prodiId = $prodiId;
+        $this->batchYear = $batchYear;
     }
 
     public function collection()
     {
-        // Cek apakah ada data mahasiswa dengan kriteria yang diberikan
-        $existingData = User::where('role', 'mahasiswa')
-            ->where('jurusan', $this->jurusan)
-            ->where('prodi', $this->prodi)
-            ->where('angkatan', $this->angkatan)
-            ->whereNotNull('class')
-            ->whereNotNull('name')
-            ->whereNotNull('nim')
-            ->whereNotNull('email')
-            ->orderBy('class')
-            ->orderBy('name')
-            ->get();
+        // Get the classroom for the specified prodi and batch year
+        $classroom = ClassRoom::where('prodi_id', $this->prodiId)
+            ->where('batch_year', $this->batchYear)
+            ->with(['prodi.major', 'prodi'])
+            ->first();
 
-        // Jika ada data yang memenuhi kriteria
-        if ($existingData->count() > 0) {
-            $data = [];
-            foreach ($existingData as $index => $user) {
-                $data[] = [
-                    'no' => $index + 1,
-                    'jurusan' => $user->jurusan,
-                    'prodi' => $user->prodi,
-                    'angkatan' => $user->angkatan,
-                    'class' => $user->class,
-                    'name' => $user->name,
-                    'nim' => $user->nim,
-                    'email' => $user->email
-                ];
+        if ($classroom) {
+            // Get existing students data
+            $existingData = Mahasiswa::whereHas('classRoom', function ($query) {
+                    $query->where('prodi_id', $this->prodiId)
+                          ->where('batch_year', $this->batchYear);
+                })
+                ->with(['user', 'classRoom.prodi.major'])
+                ->whereHas('user', function ($query) {
+                    $query->whereNotNull('name')
+                          ->whereNotNull('email');
+                })
+                ->orderBy('nim')
+                ->get();
+
+            if ($existingData->count() > 0) {
+                $data = [];
+                foreach ($existingData as $index => $mahasiswa) {
+                    $data[] = [
+                        'no' => $index + 1,
+                        'jurusan' => $mahasiswa->classRoom->prodi->major->major_name ?? '',
+                        'prodi' => $mahasiswa->classRoom->prodi->prodi_name ?? '',
+                        'angkatan' => $mahasiswa->classRoom->batch_year ?? '',
+                        'class' => $mahasiswa->classRoom->class_name ?? '',
+                        'name' => $mahasiswa->user->name ?? '',
+                        'nim' => $mahasiswa->nim ?? '',
+                        'email' => $mahasiswa->user->email ?? ''
+                    ];
+                }
+                return new Collection($data);
             }
-            return new Collection($data);
         }
 
-        // Jika tidak ada data, return template kosong
+        // If no data exists, return template with prodi information
+        $prodiInfo = \App\Models\Prodi::with('major')
+            ->find($this->prodiId);
+
         $templateData = [];
         for ($i = 1; $i <= 30; $i++) {
             $templateData[] = [
                 'no' => $i,
-                'jurusan' => $this->jurusan,
-                'prodi' => $this->prodi,
-                'angkatan' => $this->angkatan,
-                'class' => null,
+                'jurusan' => $prodiInfo->major->major_name ?? '',
+                'prodi' => $prodiInfo->prodi_name ?? '',
+                'angkatan' => $this->batchYear,
+                'class' => $classroom->class_name ?? '',
                 'name' => null,
                 'nim' => null,
                 'email' => null
@@ -82,8 +91,8 @@ class MahasiswaExport implements FromCollection, WithHeadings, WithTitle, WithSt
             'Jurusan',
             'Prodi', 
             'Angkatan',
-            'Class',
-            'Name',
+            'Kelas',
+            'Nama Mahasiswa',
             'NIM',
             'Email'
         ];
@@ -132,13 +141,13 @@ class MahasiswaExport implements FromCollection, WithHeadings, WithTitle, WithSt
         // Set column widths
         $columnWidths = [
             'A' => 5,   // No
-            'B' => 20,  // Jurusan
-            'C' => 20,  // Prodi
-            'D' => 10,  // Angkatan
+            'B' => 25,  // Jurusan
+            'C' => 25,  // Program Studi
+            'D' => 12,  // Angkatan
             'E' => 15,  // Kelas
-            'F' => 20,  // Nama
+            'F' => 30,  // Nama Mahasiswa
             'G' => 15,  // NIM
-            'H' => 25   // Email
+            'H' => 30   // Email
         ];
 
         foreach ($columnWidths as $column => $width) {

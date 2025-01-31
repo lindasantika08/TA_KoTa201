@@ -31,12 +31,23 @@ export default {
     const selectedProdi = ref("");
     const filteredProdi = ref([]);
 
-    const onJurusanChange = () => {
-      const jurusan = jurusanList.value.find(
-        (item) => item.jurusan === selectedJurusan.value
-      );
-      filteredProdi.value = jurusan ? jurusan.prodi : [];
-      selectedProdi.value = ""; // Reset prodi jika jurusan berubah
+    const onJurusanChange = async () => {
+      if (!selectedJurusan.value) return;
+
+      try {
+        const response = await axios.get(
+          `/api/get-prodi/${selectedJurusan.value}`
+        );
+        if (response.data.status === "success") {
+          filteredProdi.value = response.data.data;
+        } else {
+          filteredProdi.value = [];
+        }
+        selectedProdi.value = ""; // Reset prodi when jurusan changes
+      } catch (error) {
+        console.error("Error fetching prodi:", error);
+        filteredProdi.value = [];
+      }
     };
 
     const generateAngkatanOptions = () => {
@@ -53,15 +64,14 @@ export default {
         !selectedProdi.value ||
         !selectedAngkatan.value
       ) {
-        alert(
-          "Harap lengkapi semua pilihan: Tahun Ajaran, Nama Proyek, Jurusan, Prodi, dan Angkatan."
-        );
+        alert("Harap lengkapi semua pilihan: Jurusan, Prodi, dan Angkatan.");
         return;
       }
 
       try {
         const token = localStorage.getItem("auth_token");
 
+        // First try to get the blob
         const response = await axios.get("/dosen/manage-mahasiswa/export", {
           params: {
             jurusan: selectedJurusan.value,
@@ -75,6 +85,17 @@ export default {
           responseType: "blob",
         });
 
+        // Check if the response is an error message
+        if (
+          response.data instanceof Blob &&
+          response.data.type.includes("json")
+        ) {
+          const text = await response.data.text();
+          const error = JSON.parse(text);
+          throw new Error(error.message || "Error downloading file");
+        }
+
+        // If we get here, we have a valid Excel file
         const blob = new Blob([response.data], {
           type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         });
@@ -84,14 +105,15 @@ export default {
         link.href = url;
         link.setAttribute("download", "Data_Mahasiswa.xlsx");
         document.body.appendChild(link);
-
         link.click();
-
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
       } catch (error) {
         console.error("Download error:", error);
-        alert("Terjadi kesalahan saat mengunduh file excel");
+        alert(
+          error.response?.data?.message ||
+            "Terjadi kesalahan saat mengunduh file excel"
+        );
       }
     };
 
@@ -118,18 +140,19 @@ export default {
       }
     };
 
-    onMounted(() => {
+    onMounted(async () => {
       generateAngkatanOptions();
 
-      // Fetch jurusan list from API
-      axios
-        .get("/api/get-jurusan")
-        .then((response) => {
-          jurusanList.value = response.data;
-        })
-        .catch((error) => {
-          console.error("Error fetching jurusan:", error);
-        });
+      try {
+        const response = await axios.get("/api/get-jurusan");
+        if (response.data.status === "success") {
+          jurusanList.value = response.data.data;
+        } else {
+          console.error("Error fetching jurusan:", response.data.message);
+        }
+      } catch (error) {
+        console.error("Error fetching jurusan:", error);
+      }
     });
 
     return {
@@ -198,7 +221,6 @@ export default {
 
             <!-- Export Section -->
             <div v-if="inputMode === 'export'">
-              
               <div class="mt-4">
                 <label
                   for="angkatan-select"
@@ -239,10 +261,10 @@ export default {
                   <option value="" disabled selected>Pilih Jurusan</option>
                   <option
                     v-for="jurusan in jurusanList"
-                    :key="jurusan.jurusan"
-                    :value="jurusan.jurusan"
+                    :key="jurusan.id"
+                    :value="jurusan.id"
                   >
-                    {{ jurusan.jurusan }}
+                    {{ jurusan.major_name }}
                   </option>
                 </select>
               </div>
@@ -263,10 +285,10 @@ export default {
                   <option value="" disabled selected>Pilih Prodi</option>
                   <option
                     v-for="prodi in filteredProdi"
-                    :key="prodi"
-                    :value="prodi"
+                    :key="prodi.id"
+                    :value="prodi.id"
                   >
-                    {{ prodi }}
+                    {{ prodi.prodi_name }}
                   </option>
                 </select>
               </div>
@@ -275,7 +297,9 @@ export default {
                 <button
                   @click="downloadTemplate"
                   class="px-4 py-2 mt-2 bg-blue-500 text-white rounded"
-                  :disabled="!selectedJurusan || !selectedProdi || !selectedAngkatan"
+                  :disabled="
+                    !selectedJurusan || !selectedProdi || !selectedAngkatan
+                  "
                 >
                   Download Template Kelompok
                 </button>
