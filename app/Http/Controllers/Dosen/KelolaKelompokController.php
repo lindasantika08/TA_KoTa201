@@ -21,7 +21,6 @@ class KelolaKelompokController extends Controller
     {
         $allGroups = Group::select('group', 'project_id', 'dosen_id')
             ->with(['project', 'dosen.user'])
-            ->distinct('group')
             ->get();
 
         Log::info('All Unique Groups', 
@@ -50,38 +49,38 @@ class KelolaKelompokController extends Controller
         );
 
         $kelompokData = Group::with([
-            'mahasiswa.user', 
-            'dosen.user', 
+            'mahasiswa.user',
+            'dosen.user',
             'project'
         ])
         ->get()
-        ->groupBy('group') 
-        ->sortKeys()
-        ->map(function ($sameGroupItems) {
-            if ($sameGroupItems->isEmpty()) {
-                return null;
-            }
-
-            $firstGroup = $sameGroupItems->first();
-            
-            $members = $sameGroupItems->map(function ($group) {
-                return [
-                    'name' => optional($group->mahasiswa->user)->name ?? 'Unnamed',
-                    'nim' => optional($group->mahasiswa)->nim ?? 'N/A',
-                    'user_id' => optional($group->mahasiswa->user)->id ?? null
-                ];
-            })->unique('nim')->values();
-
-            return [
-                'dosen_name' => optional($firstGroup->dosen->user)->name ?? 'Unnamed Dosen',
-                'projects' => [[
-                    'project_name' => optional($firstGroup->project)->project_name ?? 'N/A',
-                    'batch_year' => optional($firstGroup->project)->batch_year ?? 'N/A',
-                    'group' => $firstGroup->group,
-                    'anggota' => $members
-                ]]
-            ];
+        ->groupBy('project_id')
+        ->map(function ($projectGroups) {
+            return $projectGroups->groupBy('group')
+                ->sortKeys()
+                ->map(function ($sameGroupItems) {
+                    $firstGroup = $sameGroupItems->first();
+                    $members = $sameGroupItems->map(function ($group) {
+                        return [
+                            'name' => optional($group->mahasiswa->user)->name ?? 'Unnamed',
+                            'nim' => optional($group->mahasiswa)->nim ?? 'N/A',
+                            'user_id' => optional($group->mahasiswa->user)->id ?? null
+                        ];
+                    })->unique('nim')->values();
+        
+                    return [
+                        'dosen_name' => optional($firstGroup->dosen->user)->name ?? 'Unnamed Dosen',
+                        'projects' => [[
+                            'project_name' => optional($firstGroup->project)->project_name ?? 'N/A',
+                            'batch_year' => optional($firstGroup->project)->batch_year ?? 'N/A',
+                            'group' => $firstGroup->group,
+                            'anggota' => $members
+                        ]]
+                    ];
+                })
+                ->values();
         })
+        ->flatten(1)
         ->filter()
         ->values();
 
