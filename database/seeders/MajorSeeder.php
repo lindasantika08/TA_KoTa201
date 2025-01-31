@@ -15,10 +15,10 @@ class MajorSeeder extends Seeder
     public function run(): void
     {
         $majors = [
-            ['id' => Str::uuid(), 'major_name' => 'Teknik Sipil'],
+            ['id' => '19b2c063-715a-421e-84f9-8b27257a101c', 'major_name' => 'Teknik Sipil'],
             ['id' => Str::uuid(), 'major_name' => 'Teknik Mesin'],
             ['id' => Str::uuid(), 'major_name' => 'Teknik Elektro'],
-            ['id' => Str::uuid(), 'major_name' => 'Teknik Komputer dan Informatika'],
+            ['id' => '73597463-6c5f-4357-8733-e5f3edb26b44', 'major_name' => 'Teknik Komputer dan Informatika'],
             ['id' => Str::uuid(), 'major_name' => 'Teknik Refrigerasi dan Tata Udara'],
             ['id' => Str::uuid(), 'major_name' => 'Teknik Konversi Energi'],
             ['id' => Str::uuid(), 'major_name' => 'Teknik Kimia'],
