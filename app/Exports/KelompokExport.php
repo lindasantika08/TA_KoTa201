@@ -33,8 +33,8 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
             ->join('dosen', 'groups.dosen_id', '=', 'dosen.id')
             ->join('users as dosen_user', 'dosen.user_id', '=', 'dosen_user.id')
             ->join('project', 'groups.project_id', '=', 'project.id')
-            ->join('major', 'project.major_id', '=', 'major.id')
-            ->join('prodi', 'major.id', '=', 'prodi.major_id')
+            ->join('class_room', 'mahasiswa.class_id', '=', 'class_room.id')
+            ->join('prodi', 'class_room.prodi_id', '=', 'prodi.id')
             ->where('project.batch_year', $this->tahunAjaran)
             ->where('project.project_name', $this->namaProyek)
             ->select(
@@ -43,8 +43,7 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
                 'mahasiswa_user.name as mahasiswa_name',
                 'mahasiswa.nim',
                 DB::raw("CONCAT(dosen_user.name, ' - ', dosen.kode_dosen) as dosen_manajer"),
-                'groups.group',
-                'prodi.prodi_name'
+                'groups.group'
             )
             ->orderBy('groups.group', 'asc')
             ->get();
@@ -61,7 +60,11 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
 
         $mahasiswa = DB::table('mahasiswa')
             ->join('users', 'mahasiswa.user_id', '=', 'users.id')
+            ->join('class_room', 'mahasiswa.class_id', '=', 'class_room.id')
+            ->join('project', 'class_room.prodi_id', '=', 'project.major_id')
             ->where('users.role', 'mahasiswa')
+            ->where('project.batch_year', $this->tahunAjaran)
+            ->where('project.project_name', $this->namaProyek)
             ->select(
                 'users.name',
                 'mahasiswa.nim'
@@ -78,8 +81,7 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
                 'mahasiswa_name' => $mahasiswaItem->name,
                 'nim' => $mahasiswaItem->nim,
                 'dosen_manajer' => '',
-                'group' => '',
-                'prodi_name' => ''
+                'group' => ''
             ];
         }
 

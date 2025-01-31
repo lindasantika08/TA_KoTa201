@@ -25,7 +25,6 @@ class KelompokImport implements ToModel, WithHeadingRow, SkipsOnError
 
             Log::info('Importing row:', $row);
 
-            // Mencari mahasiswa berdasarkan nim dengan eager loading relationships
             $mahasiswa = Mahasiswa::with(['user', 'classRoom.prodi.major'])
                 ->where('nim', $row['nim'])
                 ->first();
@@ -50,11 +49,9 @@ class KelompokImport implements ToModel, WithHeadingRow, SkipsOnError
                 throw new \Exception("Jurusan tidak ditemukan untuk program studi mahasiswa dengan NIM {$row['nim']}");
             }
 
-            // Memecah kolom dosen_manager untuk mendapatkan kode_dosen
             $dosenManager = explode(' - ', $row['dosen_manajer']);
             $kodeDosen = count($dosenManager) > 1 ? trim($dosenManager[1]) : null;
 
-            // Mencari dosen berdasarkan kode_dosen
             $dosen = null;
             if ($kodeDosen) {
                 $dosen = Dosen::where('kode_dosen', $kodeDosen)->first();
@@ -64,35 +61,35 @@ class KelompokImport implements ToModel, WithHeadingRow, SkipsOnError
                 }
             }
 
-            // Mencari atau membuat project berdasarkan data yang ada
-            $project = Project::firstOrCreate(
-                [
-                    'batch_year' => $mahasiswa->classRoom->batch_year,
-                    'project_name' => $row['proyek'],
-                    'major_id' => $mahasiswa->classRoom->prodi->major->id
-                ],
-                [
-                    'id' => Str::uuid(),
-                    'semester' => $row['semester'] ?? 'Ganjil', // Ambil dari Excel jika ada, default 'Ganjil'
-                    'status' => 'active',
-                    'start_date' => now(),
-                    'end_date' => now()->addMonths(6),
-                ]
-            );
+            Log::info('Project Search Debug', [
+                'batch_year_input' => $mahasiswa->classRoom->prodi->batch_year,
+                'project_name_input' => $row['proyek'],
+                'major_id_input' => $mahasiswa->classRoom->prodi->major->id,
+                'all_projects' => Project::select('batch_year', 'project_name', 'major_id')->get()->toArray()
+            ]);
+            
+            $project = Project::where('project_name', $row['proyek'])
+            ->where('major_id', $mahasiswa->classRoom->prodi->major->id)
+            ->first();
 
-            // Data baru yang sedang diimpor
+            if (!$project) {
+            Log::warning('Project not found', [
+                'project_name' => $row['proyek'],
+                'major_id' => $mahasiswa->classRoom->prodi->major->id,
+                'all_projects' => Project::select('batch_year', 'project_name', 'major_id')->get()->toArray()
+            ]);
+            throw new \Exception("Project tidak ditemukan untuk proyek {$row['proyek']}");
+            }
+
             $groupBaru = [
                 'mahasiswa_id' => $mahasiswa->id,
                 'group' => $row['kelompok'],
-                'batch_year' => $mahasiswa->classRoom->batch_year,
+                'batch_year' => $project->batch_year,
                 'project_id' => $project->id,
             ];
-
-            // Tambahkan data baru ke koleksi
-            static $dataBaru = [];
-            $dataBaru[] = $groupBaru;
-
-            // Simpan atau perbarui data group
+    
+            $this->dataBaru[] = $groupBaru;
+    
             $group = Group::updateOrCreate(
                 [
                     'project_id' => $project->id,
@@ -101,19 +98,18 @@ class KelompokImport implements ToModel, WithHeadingRow, SkipsOnError
                 [
                     'id' => Str::uuid(),
                     'group' => $row['kelompok'],
-                    'batch_year' => $mahasiswa->classRoom->batch_year,
+                    'batch_year' => $project->batch_year,
                     'dosen_id' => $dosen ? $dosen->id : null,
                 ]
             );
-
-            // Hapus data lama yang tidak ada di data baru
-            if (end($dataBaru) === $groupBaru) {
-                $this->cleanupOldData($project->id, $dataBaru);
+    
+            if (end($this->dataBaru) === $groupBaru) {
+                $this->cleanupOldData($project->id, $this->dataBaru);
             }
-
+    
             DB::commit();
             return null;
-
+    
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error in import:', [
