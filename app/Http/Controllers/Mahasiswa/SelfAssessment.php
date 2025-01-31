@@ -8,6 +8,8 @@ use App\Models\Assessment;
 use App\Models\Answers;
 use App\Models\project;
 use App\Models\User;
+use App\Models\Dosen;
+use App\Models\Mahasiswa;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
@@ -87,23 +89,57 @@ class SelfAssessment extends Controller
     {
         DB::beginTransaction();
         try {
+            // Validasi input
             $validated = $request->validate([
                 'question_id' => 'required|uuid',
                 'answer' => 'required|string',
                 'score' => 'required|integer|between:1,5',
-                'status' => 'required|string'
+                'status' => 'required|string',
+                'role' => 'required|string|in:dosen,mahasiswa' // Validasi role
             ]);
 
+            // Ambil informasi pengguna yang sedang login
+            $user = Auth::user();
+            $userId = $user->id;
+
+            // Ambil data dosen berdasarkan user_id
+            $dosen = Dosen::where('user_id', $userId)->first();
+
+            // Log informasi tentang dosen
+            Log::info('Dosen retrieved:', [
+                'dosen_id' => $dosen ? $dosen->id : null,
+                'user_id' => $userId
+            ]);
+
+            // Siapkan data untuk disimpan
+            $answerData = [
+                'question_id' => $validated['question_id'],
+                'answer' => $validated['answer'],
+                'score' => $validated['score'],
+                'status' => $validated['status'],
+            ];
+
+            // Tentukan ID berdasarkan role yang diterima dari frontend
+            if ($validated['role'] === 'dosen') {
+                if ($dosen) {
+                    $answerData['dosen_id'] = $dosen->id; // Simpan ID dosen
+                } else {
+                    throw new \Exception('Dosen tidak ditemukan untuk user_id: ' . $userId);
+                }
+                $answerData['mahasiswa_id'] = null; // Pastikan mahasiswa_id null
+            } elseif ($validated['role'] === 'mahasiswa') {
+                $answerData['mahasiswa_id'] = $userId; // Simpan ID mahasiswa
+                $answerData['dosen_id'] = null; // Pastikan dosen_id null
+            }
+
+            // Simpan atau perbarui jawaban
             $answer = Answers::updateOrCreate(
                 [
                     'question_id' => $validated['question_id'],
-                    'user_id' => auth()->id()
+                    'dosen_id' => $answerData['dosen_id'],
+                    'mahasiswa_id' => $answerData['mahasiswa_id'],
                 ],
-                [
-                    'answer' => $validated['answer'],
-                    'score' => $validated['score'],
-                    'status' => $validated['status']
-                ]
+                $answerData
             );
 
             DB::commit();
@@ -116,11 +152,18 @@ class SelfAssessment extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Error in saveAnswer:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'error' => 'Failed to save answer: ' . $e->getMessage()
             ], 500);
         }
     }
+
+
 
     public function getUserInfo(Request $request)
     {

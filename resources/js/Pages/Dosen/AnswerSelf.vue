@@ -155,40 +155,44 @@ export default {
         },
 
         submitAnswer() {
-            if (!this.currentQuestion) {
-                console.log('No current question available');
-                return;
+    if (!this.currentQuestion) {
+        console.log('No current question available');
+        return;
+    }
+
+    if (!this.score) {
+        alert('Silakan pilih nilai terlebih dahulu');
+        return;
+    }
+
+    console.log('Submitting answer for question:', this.currentQuestion.id);
+
+    // Mengirim data tanpa perlu menentukan role
+    const payload = {
+        question_id: this.currentQuestion.id,
+        answer: this.answer,
+        score: this.score,
+        status: 'submitted',
+        role: 'dosen'
+    };
+
+    console.log('payload :',payload);
+
+    axios.post('/api/save-answer', payload)
+        .then((response) => {
+            console.log('Answer saved:', response);
+            alert(response.data.message);
+            if (response.data.message === 'Answer saved successfully') {
+                this.nextQuestion();
+                this.score = null;
+                this.answer = '';
             }
-
-            if (!this.score) {
-                alert('Silakan pilih nilai terlebih dahulu');
-                return;
-            }
-
-            console.log('Submitting answer for question:', this.currentQuestion.id);
-
-            const payload = {
-                question_id: this.currentQuestion.id,
-                answer: this.answer,
-                score: this.score,
-                status: 'submitted'
-            };
-
-            axios.post('/api/save-answer', payload)
-                .then((response) => {
-                    console.log('Answer saved:', response);
-                    alert(response.data.message);
-                    if (response.data.message === 'Answer saved successfully') {
-                        this.nextQuestion();
-                        this.score = null;
-                        this.answer = '';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error saving answer:', error);
-                    alert('Gagal menyimpan jawaban. Silakan coba lagi.');
-                });
-        },
+        })
+        .catch(error => {
+            console.error('Error saving answer:', error);
+            alert('Gagal menyimpan jawaban. Silakan coba lagi.');
+        });
+},
         async nextQuestion() {
             this.saveTemporaryAnswer();
             if (this.currentQuestionIndex < this.questions.length - 1) {
