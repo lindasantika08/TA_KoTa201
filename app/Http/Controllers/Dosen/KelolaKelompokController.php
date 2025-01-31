@@ -19,37 +19,36 @@ class KelolaKelompokController extends Controller
 {
     public function KelolaKelompok()
     {
-        $kelompokData = Group::with('user', 'dosen')->get();
-        Log::info('Data Kelompok yang Dikirim:', ['kelompok' => $kelompokData]);
-
-
-        $kelompok = $kelompokData
-            ->groupBy(function ($item) {
-                return $item->tahun_ajaran . '-' . $item->kelompok;
-            })
-            ->map(function ($items) {
-                $first = $items->first();
-                return [
-                    'id' => $first->id,
-                    'tahun_ajaran' => $first->tahun_ajaran,
-                    'nama_proyek' => $first->nama_proyek,
-                    'kelompok' => $first->kelompok,
-                    'dosen' => $first->dosen->name ?? '-',
-                    'anggota' => $items->map(function ($item) {
+        $kelompokData = Group::with(['mahasiswa.user', 'dosen.user', 'project'])
+            ->get()
+            ->groupBy(['project_id', 'group'])
+            ->map(function ($projectGroups) {
+                $firstGroup = $projectGroups->first()->first();
+                $allMembers = $projectGroups->flatten()->map(function ($item) {
                     return [
-                        'name' => $item->user->name,
-                        'user_id' => $item->user->id 
+                        'name' => $item->mahasiswa->user->name,
+                        'user_id' => $item->mahasiswa->user->id
                     ];
-                })->unique('user_id')->toArray(), 
+                })->unique('user_id')->values();
+
+                return [
+                    'id' => $firstGroup->id,
+                    'batch_year' => $firstGroup->project->batch_year,
+                    'project_name' => $firstGroup->project->project_name,
+                    'group' => $firstGroup->group,
+                    'dosen' => $firstGroup->dosen ? $firstGroup->dosen->user->name : '-',
+                    'anggota' => $allMembers,
                 ];
             })
-            ->sortBy('kelompok')
             ->values();
 
+        Log::info('Data Kelompok yang Dikirim:', ['kelompok' => $kelompokData]);
+
         return Inertia::render('Dosen/KelolaKelompok', [
-            'kelompok' => $kelompok,
+            'kelompok' => $kelompokData,
         ]);
     }
+
     public function CreateKelompok()
     {
         return Inertia::render('Dosen/CreateKelompok');
@@ -58,12 +57,18 @@ class KelolaKelompokController extends Controller
     public function ProfileMhs(Request $request)
     {
         $userId = $request->input('user_id');
-        $user = User::find($userId); // Ambil user berdasarkan user_id
-        Log::info('user id:', ['user_id' => $userId]);
+        $user = User::find($userId);
+        
+        if (!$user) {
+            Log::warning('User not found:', ['user_id' => $userId]);
+            return redirect()->back()->with('error', 'User tidak ditemukan');
+        }
+        
+        Log::info('User found:', ['user_id' => $userId, 'name' => $user->name]);
 
         return Inertia::render('Dosen/DetailProfilMhs', [
             'user_id' => $userId,
-            'user_name' => $user ? $user->name : 'User Not Found', // Kirimkan nama user
+            'user_name' => $user->name,
         ]);
     }
 
@@ -108,25 +113,19 @@ class KelolaKelompokController extends Controller
 
     public function importData(Request $request)
     {
-        // Validasi input request untuk memastikan file Excel valid
         $request->validate([
             'file' => 'required|mimes:xlsx,xls',
         ]);
 
-        // Mendapatkan file yang diupload
         $file = $request->file('file');
 
         try {
-            // Log informasi tentang file yang diupload
             Log::info('File uploaded', ['file_name' => $file->getClientOriginalName()]);
 
-            // Menggunakan Maatwebsite\Excel untuk mengimpor data
             Excel::import(new KelompokImport, $file);
 
-            // Jika berhasil mengimpor data
             return response()->json(['message' => 'Data kelompok berhasil diimpor'], 200);
         } catch (\Exception $e) {
-            // Jika ada error, tangkap dan tampilkan pesan error
             Log::error('Import error: ' . $e->getMessage());
             return response()->json(['error' => 'Terjadi kesalahan saat mengimpor data', 'details' => $e->getMessage()], 500);
         }

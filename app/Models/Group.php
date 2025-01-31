@@ -65,4 +65,5 @@ class Group extends Model
     {
         return $this->hasMany(User::class, 'user_id');
     }
+
 }
