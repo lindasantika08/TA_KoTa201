@@ -198,6 +198,7 @@ class SelfAssessment extends Controller
     {
         DB::beginTransaction();
         try {
+            // Validasi input
             $validated = $request->validate([
                 'answers' => 'required|array',
                 'answers.*.question_id' => 'required|uuid',
@@ -206,31 +207,54 @@ class SelfAssessment extends Controller
                 'answers.*.status' => 'required|string'
             ]);
 
+            // Ambil informasi pengguna yang sedang login
+            $user = Auth::user();
+            $userId = $user->id;
+
+            // Ambil dosen berdasarkan user_id
+            $dosen = Dosen::where('user_id', $userId)->first();
+            \Log::info('Dosen retrieved:', ['dosen' => $dosen]);
+
+            // Loop melalui setiap jawaban dan simpan
             foreach ($validated['answers'] as $answerData) {
+                // Siapkan data untuk disimpan
+                $dataToSave = [
+                    'question_id' => $answerData['question_id'],
+                    'answer' => $answerData['answer'],
+                    'score' => $answerData['score'],
+                    'status' => $answerData['status'],
+                    'dosen_id' => $dosen ? $dosen->id : null, // Simpan ID dosen jika ada
+                    'mahasiswa_id' => null // Atur mahasiswa_id jika diperlukan
+                ];
+
+                // Jika role adalah mahasiswa, ambil mahasiswa_id
+                if ($request->input('role') === 'mahasiswa') {
+                    $dataToSave['mahasiswa_id'] = $userId; // Simpan ID mahasiswa
+                    $dataToSave['dosen_id'] = null; // Pastikan dosen_id null
+                }
+
+                // Simpan atau perbarui jawaban
                 Answers::updateOrCreate(
                     [
-                        'question_id' => $answerData['question_id'],
-                        'user_id' => auth()->id()
+                        'question_id' => $dataToSave['question_id'],
+                        'dosen_id' => $dataToSave['dosen_id'],
+                        'mahasiswa_id' => $dataToSave['mahasiswa_id'],
                     ],
-                    [
-                        'answer' => $answerData['answer'],
-                        'score' => $answerData['score'],
-                        'status' => $answerData['status']
-                    ]
+                    $dataToSave
                 );
             }
 
             DB::commit();
-            return response()->json([
-                'success' => true,
-                'message' => 'Semua jawaban berhasil disimpan'
-            ]);
+
+            return response()->json(['message' => 'All answers saved successfully.']);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'error' => $e->getMessage()
-            ], 500);
+            \Log::error('Error in saveAllAnswers:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json(['error' => 'Failed to save answers: ' . $e->getMessage()], 500);
         }
     }
 }

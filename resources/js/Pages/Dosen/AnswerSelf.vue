@@ -265,7 +265,8 @@ export default {
                     question_id: questionId,
                     answer: data.answer,
                     score: data.score,
-                    status: 'submitted'
+                    status: 'submitted',
+                    role:'dosen'
                 }));
 
                 const response = await axios.post('/api/save-all-answers', { answers: allAnswers });
@@ -273,7 +274,7 @@ export default {
                 if (response.data.success) {
                     alert('Semua jawaban berhasil disimpan!');
                     this.temporaryAnswers = {};
-                    this.$inertia.visit('/mahasiswa/assessment/self');
+                    this.$inertia.visit('/dosen/assessment/projectsSelf');
                 }
             } catch (error) {
                 console.error('Error submitting answers:', error);
