@@ -24,11 +24,17 @@ export default {
   setup() {
     const inputMode = ref("export");
     const projects = ref([]);
-    const selectedProject = ref({ tahun_ajaran: "", nama_proyek: "" });
+    const selectedProject = ref({ 
+      batch_year: "", 
+      semester: "",
+      project_name: "" 
+    });
 
     const downloadTemplate = async () => {
-      if (!selectedProject.value.tahun_ajaran || !selectedProject.value.nama_proyek) {
-        alert("Pilih Tahun Ajaran dan Nama Proyek terlebih dahulu.");
+      if (!selectedProject.value.batch_year || 
+          !selectedProject.value.semester || 
+          !selectedProject.value.project_name) {
+        alert("Pilih Project terlebih dahulu.");
         return;
       }
 
@@ -37,8 +43,9 @@ export default {
 
         const response = await axios.get("/dosen/kelola-kelompok/export", {
           params: {
-            tahun_ajaran: selectedProject.value.tahun_ajaran,
-            nama_proyek: selectedProject.value.nama_proyek,
+            batch_year: selectedProject.value.batch_year,
+            semester: selectedProject.value.semester,
+            project_name: selectedProject.value.project_name,
           },
           headers: {
             Authorization: `Bearer ${token}`,
@@ -88,8 +95,9 @@ export default {
 
     onMounted(async () => {
       try {
-        const response = await axios.get("/api/projects");
+        const response = await axios.get("/api/project-dropdown");
         projects.value = response.data;
+        console.log('Projects loaded:', projects.value); // Untuk debug
       } catch (error) {
         console.error("Error fetching projects:", error);
       }
@@ -118,71 +126,67 @@ export default {
         </div>
         <Card title="Buat Kelompok Mahasiswa">
           <template #actions>
-            <!-- Segmented Radio Buttons -->
             <div class="flex w-full mb-4">
-              <label
-                class="w-1/2 text-center py-2 border cursor-pointer"
-                :class="{
-                  'bg-blue-500 text-white': inputMode === 'export',
-                  'bg-white text-gray-700 border-gray-300':
-                    inputMode !== 'export',
-                }"
-              >
-                <input
-                  type="radio"
-                  v-model="inputMode"
-                  value="export"
-                  class="hidden"
-                />
+              <label class="w-1/2 text-center py-2 border cursor-pointer" :class="{
+                'bg-blue-500 text-white': inputMode === 'export',
+                'bg-white text-gray-700 border-gray-300': inputMode !== 'export',
+              }">
+                <input type="radio" v-model="inputMode" value="export" class="hidden" />
                 Export
               </label>
-              <label
-                class="w-1/2 text-center py-2 border cursor-pointer"
-                :class="{
-                  'bg-blue-500 text-white': inputMode === 'import',
-                  'bg-white text-gray-700 border-gray-300':
-                    inputMode !== 'import',
-                }"
-              >
-                <input
-                  type="radio"
-                  v-model="inputMode"
-                  value="import"
-                  class="hidden"
-                />
+              <label class="w-1/2 text-center py-2 border cursor-pointer" :class="{
+                'bg-blue-500 text-white': inputMode === 'import',
+                'bg-white text-gray-700 border-gray-300': inputMode !== 'import',
+              }">
+                <input type="radio" v-model="inputMode" value="import" class="hidden" />
                 Import
               </label>
             </div>
 
             <div v-if="inputMode === 'export'">
-            <div class="mt-4">
-              <label for="project-select" class="block text-sm font-medium text-gray-700">
-                Pilih Tahun Ajaran dan Nama Proyek
-              </label>
-              <select id="project-select" v-model="selectedProject"
-                class="mt-2 p-2 border border-gray-300 rounded w-full" required>
-                <option value="" disabled selected>Pilih Proyek</option>
-                <option v-for="project in projects" :key="`${project.tahun_ajaran}-${project.nama_proyek}`"
-                  :value="project">
-                  {{ project.tahun_ajaran }} - {{ project.nama_proyek }}
-                </option>
-              </select>
-            </div>
+              <div class="mt-4">
+                <label for="project-select" class="block text-sm font-medium text-gray-700">
+                  Choose Project
+                </label>
+                <select 
+                  id="project-select" 
+                  v-model="selectedProject"
+                  class="mt-2 p-2 border border-gray-300 rounded w-full" 
+                  required
+                >
+                  <option value="" disabled selected>Pilih Project</option>
+                  <option 
+                    v-for="project in projects" 
+                    :key="`${project.batch_year}-${project.semester}-${project.project_name}`"
+                    :value="project"
+                  >
+                    {{ project.batch_year }} - {{ project.semester }} - {{ project.project_name }}
+                  </option>
+                </select>
+              </div>
 
-            <div class="mt-4">
-              <button @click="downloadTemplate" class="px-4 py-2 mt-2 bg-blue-500 text-white rounded"
-                :disabled="!selectedProject.tahun_ajaran || !selectedProject.nama_proyek">
-                Download Template Kelompok
-              </button>
+              <div class="mt-4">
+                <button 
+                  @click="downloadTemplate" 
+                  class="px-4 py-2 mt-2 bg-blue-500 text-white rounded"
+                  :disabled="!selectedProject.batch_year || !selectedProject.semester || !selectedProject.project_name"
+                >
+                  Download Template Kelompok
+                </button>
+              </div>
             </div>
-          </div>
 
             <div v-if="inputMode === 'import'" class="mt-4">
               <label for="file-upload" class="block text-sm font-medium text-gray-700">
                 Import Data Excel (File .xlsx/.xls)
               </label>
-              <input type="file" id="file-upload" accept=".xlsx, .xls" @change="handleFileUpload"
-                class="mt-2 p-2 border border-gray-300 rounded" />
+              <input 
+                type="file" 
+                id="file-upload" 
+                accept=".xlsx, .xls" 
+                @change="handleFileUpload"
+                class="mt-2 p-2 border border-gray-300 rounded" 
+              />
             </div>
           </template>
         </Card>

@@ -16,34 +16,39 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
 {
     protected $tahunAjaran;
     protected $namaProyek;
+    protected $semester;
 
-    public function __construct($tahunAjaran, $namaProyek)
+    public function __construct($tahunAjaran, $namaProyek, $semester)
     {
         $this->tahunAjaran = $tahunAjaran;
         $this->namaProyek = $namaProyek;
+        $this->semester = $semester;
     }
 
     public function collection()
     {
-        // Query data kelompok
-        $kelompokData = DB::table('kelompok')
-            ->join('users as mahasiswa', 'kelompok.user_id', '=', 'mahasiswa.id')
-            ->join('users as dosen', 'kelompok.dosen_id', '=', 'dosen.id')
-            ->where('kelompok.tahun_ajaran', $this->tahunAjaran)
-            ->where('kelompok.nama_proyek', $this->namaProyek)
+        $kelompokData = DB::table('groups')
+            ->join('mahasiswa', 'groups.mahasiswa_id', '=', 'mahasiswa.id')
+            ->join('users as mahasiswa_user', 'mahasiswa.user_id', '=', 'mahasiswa_user.id')
+            ->join('dosen', 'groups.dosen_id', '=', 'dosen.id')
+            ->join('users as dosen_user', 'dosen.user_id', '=', 'dosen_user.id')
+            ->join('project', 'groups.project_id', '=', 'project.id')
+            ->join('major', 'project.major_id', '=', 'major.id')
+            ->join('prodi', 'major.id', '=', 'prodi.major_id')
+            ->where('project.batch_year', $this->tahunAjaran)
+            ->where('project.project_name', $this->namaProyek)
             ->select(
-                'kelompok.tahun_ajaran',
-                'kelompok.nama_proyek',
-                'mahasiswa.name as mahasiswa_name',
+                'groups.batch_year',
+                'project.project_name',
+                'mahasiswa_user.name as mahasiswa_name',
                 'mahasiswa.nim',
-                DB::raw("CONCAT(dosen.name, ' - ', dosen.kode_dosen) as dosen_manajer"), // Menggabungkan nama dosen dan kode_dosen
-                'kelompok.kelompok'
+                DB::raw("CONCAT(dosen_user.name, ' - ', dosen.kode_dosen) as dosen_manajer"),
+                'groups.group',
+                'prodi.prodi_name'
             )
-            // ->orderBy('mahasiswa.name', 'asc')
-            ->orderBy('kelompok.kelompok', 'asc') // Urutkan berdasarkan kelompok
+            ->orderBy('groups.group', 'asc')
             ->get();
 
-        // Jika data kelompok ditemukan, tambahkan kolom No secara dinamis
         if ($kelompokData->isNotEmpty()) {
             $dataWithNo = $kelompokData->map(function ($item, $index) {
                 return (object) array_merge(['no' => $index + 1], (array) $item);
@@ -52,25 +57,29 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
             return $dataWithNo;
         }
 
-        // Jika data kosong, log pesan dan buat template data kosong
         Log::info("Tidak ada data kelompok untuk tahun ajaran {$this->tahunAjaran} dan proyek {$this->namaProyek}.");
 
-        $mahasiswa = DB::table('users')
-            ->where('role', 'mahasiswa')
-            ->select('name', 'nim')
-            ->orderBy('name', 'asc')
+        $mahasiswa = DB::table('mahasiswa')
+            ->join('users', 'mahasiswa.user_id', '=', 'users.id')
+            ->where('users.role', 'mahasiswa')
+            ->select(
+                'users.name',
+                'mahasiswa.nim'
+            )
+            ->orderBy('users.name', 'asc')
             ->get();
 
         $data = [];
         foreach ($mahasiswa as $index => $mahasiswaItem) {
             $data[] = [
                 'no' => $index + 1,
-                'tahun_ajaran' => $this->tahunAjaran,
-                'nama_proyek' => $this->namaProyek,
-                'name' => $mahasiswaItem->name,
+                'batch_year' => $this->tahunAjaran,
+                'project_name' => $this->namaProyek,
+                'mahasiswa_name' => $mahasiswaItem->name,
                 'nim' => $mahasiswaItem->nim,
-                'kode_dosen' => '', // Kosong untuk dropdown
-                'kelompok' => '', // Kosong
+                'dosen_manajer' => '',
+                'group' => '',
+                'prodi_name' => ''
             ];
         }
 
@@ -89,40 +98,36 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
                 $worksheet = $event->sheet->getDelegate();
                 $lastRow = $worksheet->getHighestRow();
 
-                // Membuat daftar dosen untuk dropdown
+                $projectMajor = DB::table('project')
+                    ->where('project_name', $this->namaProyek)
+                    ->where('batch_year', $this->tahunAjaran)
+                    ->value('major_id');
+                                      
                 $dosenList = DB::table('users')
-                    ->where('role', 'dosen')
-                    ->whereNull('deleted_at')
-                    ->pluck('name', 'kode_dosen')
-                    ->map(function ($name, $kode_dosen) {
-                        return $name . ' - ' . $kode_dosen; // Format nama dosen dan kode_dosen
-                    })
+                    ->join('dosen', 'users.id', '=', 'dosen.user_id')
+                    ->where('users.role', 'dosen')
+                    ->where('dosen.major_id', $projectMajor)
+                    ->whereNull('users.deleted_at')
+                    ->select(DB::raw("CONCAT(users.name, ' - ', dosen.kode_dosen) as dosen_label"))
+                    ->distinct()
+                    ->pluck('dosen_label')
                     ->toArray();
 
-                // Membuat data validation untuk dropdown di kolom F
                 $validation = new DataValidation();
                 $validation->setType(DataValidation::TYPE_LIST)
                     ->setErrorStyle(DataValidation::STYLE_INFORMATION)
                     ->setAllowBlank(false)
                     ->setShowDropDown(true)
-                    ->setFormula1('"' . implode(',', $dosenList) . '"');
+                    ->setFormula1('"' . implode(',', array_unique($dosenList)) . '"');
 
-                // Menambahkan dropdown pada setiap sel di kolom F
                 for ($row = 2; $row <= $lastRow; $row++) {
                     $worksheet->getCell('F' . $row)->setDataValidation(clone $validation);
                 }
 
-                // Tambahkan border untuk semua sel
                 $worksheet->getStyle('A1:G' . $lastRow)->getBorders()->getAllBorders()->setBorderStyle('thin');
-
-                // Membuat header menjadi tebal dan rata tengah
                 $worksheet->getStyle('A1:G1')->getFont()->setBold(true);
                 $worksheet->getStyle('A1:G1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-
-                // Meratakan kolom No ke tengah
                 $worksheet->getStyle('A2:A' . $lastRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-
-                // Meratakan kolom lainnya ke kiri
                 $worksheet->getStyle('B2:G' . $lastRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
             }
         ];

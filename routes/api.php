@@ -95,7 +95,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user-info', [SelfAssessment::class, 'getUserInfo']);
     Route::get('/assessment/projects', [ProjectController::class, 'getProjectsWithAssessments']);
     Route::get('/proyek-self-assessment', [ProjectController::class, 'getDataSelf']);
-    Route::get('/proyek-Peer-assessment', [ProjectController::class, 'getDataPeer']);
+
     Route::get('/get-answer/{questionId}', [SelfAssessment::class, 'getAnswer']);
     Route::post('/save-all-answers', [SelfAssessment::class, 'saveAllAnswers']);
     Route::post('/save-all-answers-peer', [PeerAssessment::class, 'saveAllAnswersPeer']);

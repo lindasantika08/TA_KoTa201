@@ -9,7 +9,8 @@ use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\Assessment;
-use App\Models\type_criteria;
+use App\Models\Project;
+use App\Models\TypeCriteria;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -32,27 +33,38 @@ class AssessmentController extends Controller
         return Inertia::render('Dosen/PeerAssessment');
     }
 
+
     public function exportExcel(Request $request)
     {
-        $tahunAjaran = $request->input('tahun_ajaran');
-        $namaProyek = $request->input('nama_proyek');
+        try {
+            $request->validate([
+                'batch_year' => 'required|string',
+                'project_name' => 'required|string',
+            ]);
 
-        $request->validate([
-            'tahun_ajaran' => 'required|string',
-            'nama_proyek' => 'required|string',
-        ]);
+            $project = Project::where('batch_year', $request->batch_year)
+                ->where('project_name', $request->project_name)
+                ->first();
 
-        $assessments = Assessment::where('tahun_ajaran', $tahunAjaran)
-            ->where('nama_proyek', $namaProyek)
-            ->get();
+            if (!$project) {
+                return response()->json(['error' => 'Project not found'], 404);
+            }
 
-        if ($assessments->isEmpty()) {
-            return Excel::download(new AssessmentExport($tahunAjaran, $namaProyek), 'template-assessment.xlsx');
-        } else {
-            return Excel::download(new AssessmentExport($tahunAjaran, $namaProyek), 'template-assessment.xlsx');
+            return Excel::download(
+                new AssessmentExport(
+                    $request->batch_year,
+                    $request->project_name,
+                    $project->id
+                ),
+                'assessment-template.xlsx'
+            );
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Internal Server Error',
+                'message' => $e->getMessage()
+            ], 500);
         }
     }
-    
 
     public function import(Request $request)
     {
@@ -65,67 +77,84 @@ class AssessmentController extends Controller
 
             $spreadsheet = IOFactory::load($request->file('file'));
 
+            // Import Type Criteria dari sheet kedua
+            $sheet2 = $spreadsheet->getSheetByName('Type Criteria');
+            $highestRow2 = $sheet2->getHighestRow();
+
+            // Mulai dari baris 3 karena ada 2 baris header
+            for ($row = 5; $row <= $highestRow2; $row++) {
+                $aspect = $sheet2->getCellByColumnAndRow(2, $row)->getValue();
+                $criteria = $sheet2->getCellByColumnAndRow(3, $row)->getValue();
+
+                if (!empty($aspect) && !empty($criteria)) {
+                    TypeCriteria::updateOrCreate(
+                        [
+                            'aspect' => trim($aspect),
+                            'criteria' => trim($criteria)
+                        ],
+                        [
+                            'bobot_1' => trim($sheet2->getCellByColumnAndRow(4, $row)->getValue() ?? ''),
+                            'bobot_2' => trim($sheet2->getCellByColumnAndRow(5, $row)->getValue() ?? ''),
+                            'bobot_3' => trim($sheet2->getCellByColumnAndRow(6, $row)->getValue() ?? ''),
+                            'bobot_4' => trim($sheet2->getCellByColumnAndRow(7, $row)->getValue() ?? ''),
+                            'bobot_5' => trim($sheet2->getCellByColumnAndRow(8, $row)->getValue() ?? '')
+                        ]
+                    );
+                }
+            }
+
+            // Import Assessment dari sheet pertama
             $sheet1 = $spreadsheet->getSheet(0);
-            $assessmentData = [];
-            foreach ($sheet1->getRowIterator(2) as $row) {
-                $cellIterator = $row->getCellIterator();
-                $cellIterator->setIterateOnlyExistingCells(false);
-                $rowData = [];
-                foreach ($cellIterator as $cell) {
-                    $rowData[] = $cell->getValue();
+            $highestRow1 = $sheet1->getHighestRow();
+
+            // Mulai dari baris 2 karena ada 1 baris header
+            for ($row = 2; $row <= $highestRow1; $row++) {
+                $batchYear = trim($sheet1->getCellByColumnAndRow(2, $row)->getValue());
+                $projectName = trim($sheet1->getCellByColumnAndRow(3, $row)->getValue());
+                $type = trim($sheet1->getCellByColumnAndRow(4, $row)->getValue());
+                $question = trim($sheet1->getCellByColumnAndRow(5, $row)->getValue());
+                $aspect = trim($sheet1->getCellByColumnAndRow(6, $row)->getValue());
+                $criteria = trim($sheet1->getCellByColumnAndRow(7, $row)->getValue());
+
+                if (!empty($batchYear) && !empty($projectName)) {
+                    // Cari atau buat Project
+                    $project = Project::firstOrCreate(
+                        [
+                            'batch_year' => $batchYear,
+                            'project_name' => $projectName
+                        ]
+                    );
+
+                    // Cari TypeCriteria berdasarkan aspect dan criteria
+                    $typeCriteria = TypeCriteria::where('aspect', $aspect)
+                        ->where('criteria', $criteria)
+                        ->first();
+
+                    if ($typeCriteria) {
+                        // Check if the combination of batch_year and project_name exists in the Assessment table
+                        $assessment = Assessment::where('batch_year', $batchYear)
+                            ->where('project_id', $project->id)
+                            ->where('question', $question)
+                            ->where('criteria_id', $typeCriteria->id)
+                            ->first();
+
+                        if ($assessment) {
+                            // If exists, update the record
+                            $assessment->update([
+                                'type' => $type
+                            ]);
+                        } else {
+                            // If not exists, create a new record
+                            Assessment::create([
+                                'batch_year' => $batchYear,
+                                'project_id' => $project->id,
+                                'type' => $type,
+                                'question' => $question,
+                                'criteria_id' => $typeCriteria->id
+                            ]);
+                        }
+                    }
                 }
-
-                if (!empty($rowData[1])) {
-                    $assessmentData[] = [
-                        'tahun_ajaran' => trim($rowData[1]),
-                        'nama_proyek' => trim($rowData[2]),
-                        'type' => trim($rowData[3]),
-                        'pertanyaan' => trim($rowData[4]),
-                        'aspek' => trim($rowData[5]),
-                        'kriteria' => trim($rowData[6]),
-                    ];
-                }
-            }
-
-            $sheet2 = $spreadsheet->getSheet(1);
-            $typeCriteriaData = [];
-            foreach ($sheet2->getRowIterator(3) as $row) {
-                $cellIterator = $row->getCellIterator();
-                $cellIterator->setIterateOnlyExistingCells(false);
-                $rowData = [];
-                foreach ($cellIterator as $cell) {
-                    $rowData[] = $cell->getValue();
-                }
-
-                if (!empty($rowData[1])) {
-                    $typeCriteriaData[] = [
-                        'aspek' => trim($rowData[1]),
-                        'kriteria' => trim($rowData[2]),
-                        'bobot_1' => trim($rowData[3]),
-                        'bobot_2' => trim($rowData[4]),
-                        'bobot_3' => trim($rowData[5]),
-                        'bobot_4' => trim($rowData[6]),
-                        'bobot_5' => trim($rowData[7]),
-                    ];
-                }
-            }
-
-            foreach ($typeCriteriaData as $row) {
-                \App\Models\type_criteria::updateOrCreate(
-                    ['aspek' => $row['aspek'], 'kriteria' => $row['kriteria']],
-                    $row
-                );
-            }
-
-            foreach ($assessmentData as $row) {
-                \App\Models\Assessment::updateOrCreate(
-                    [
-                        'pertanyaan' => $row['pertanyaan'],
-                        'aspek' => $row['aspek'],
-                        'kriteria' => $row['kriteria']
-                    ],
-                    $row
-                );
             }
 
             DB::commit();
@@ -133,51 +162,49 @@ class AssessmentController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Import Error: ' . $e->getMessage());
-            throw $e;
+            return response()->json([
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ], 500);
         }
     }
 
 
+
     public function getData()
     {
-        $assessments = Assessment::all(); 
-        return response()->json($assessments); 
+        $assessments = Assessment::all();
+        return response()->json($assessments);
     }
 
     public function getAssessmentsWithBobotSelf(Request $request)
     {
-        $tahunAjaran = $request->query('tahun_ajaran');
-        $namaProyek = $request->query('nama_proyek');
+        $batchYear = $request->query('batch_year');
+        $projectName = $request->query('project_name');
 
-        $assessments = Assessment::join('type_criteria', function ($join) {
-            $join->on('assessment.aspek', '=', 'type_criteria.aspek')
-                ->on('assessment.kriteria', '=', 'type_criteria.kriteria');
-        })
+        $assessments = Assessment::with('typeCriteria') // Simplified eager loading
             ->select(
                 'assessment.id',
                 'assessment.type',
-                'assessment.pertanyaan',
-                'assessment.aspek',
-                'assessment.kriteria',
-                'type_criteria.bobot_1',
-                'type_criteria.bobot_2',
-                'type_criteria.bobot_3',
-                'type_criteria.bobot_4',
-                'type_criteria.bobot_5'
+                'assessment.question',
+                'assessment.criteria_id',
+                'assessment.batch_year',
+                'assessment.project_id'
             )
-            ->when($tahunAjaran, function ($query, $tahunAjaran) {
-                $query->where('assessment.tahun_ajaran', $tahunAjaran);
+            ->join('project', 'assessment.project_id', '=', 'project.id')
+            ->when($batchYear, function ($query, $batchYear) {
+                $query->where('assessment.batch_year', $batchYear);
             })
-            ->when($namaProyek, function ($query, $namaProyek) {
-                $query->where('assessment.nama_proyek', $namaProyek);
+            ->when($projectName, function ($query, $projectName) {
+                $query->where('project.project_name', $projectName);
             })
             ->where('assessment.type', 'selfAssessment')
             ->get();
 
         return Inertia::render('Dosen/SelfAssessment', [
             'assessments' => $assessments,
-            'tahunAjaran' => $tahunAjaran,
-            'namaProyek' => $namaProyek,
+            'batchYear' => $batchYear,
+            'projectName' => $projectName
         ]);
     }
 

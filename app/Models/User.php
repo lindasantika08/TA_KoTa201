@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Database\Eloquent\SoftDeletes;
+// use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Spatie\Permission\Traits\HasRoles;
 
@@ -15,7 +15,7 @@ class User extends Authenticatable
     use HasApiTokens;
     use HasFactory;
     use Notifiable;
-    use SoftDeletes;
+    // use SoftDeletes;
     use HasUuids;
     use HasRoles;
 
@@ -58,12 +58,19 @@ class User extends Authenticatable
         ];
     }
 
-    public function isDosen() {
+
+    public function dosen()
+    {
+        return $this->hasOne(Dosen::class, 'user_id');
+    }
+
+    public function isDosen()
+    {
         return $this->role === 'dosen';
     }
 
-    public function isMahasiswa() {
+    public function isMahasiswa()
+    {
         return $this->role === 'mahasiswa';
     }
-
 }

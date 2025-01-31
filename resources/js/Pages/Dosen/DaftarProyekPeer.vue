@@ -1,12 +1,12 @@
 <script>
-import axios from "axios";
+import axios from 'axios';
 import DataTable from "@/Components/DataTable.vue";
 import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
 import Sidebar from "@/Components/Sidebar.vue";
 import Breadcrumb from "@/Components/Breadcrumb.vue";
-import dayjs from "dayjs";
-import { router } from "@inertiajs/vue3";
+import dayjs from 'dayjs';
+import { router } from '@inertiajs/vue3';
 
 export default {
   components: {
@@ -14,63 +14,74 @@ export default {
     Navbar,
     Card,
     Sidebar,
-    Breadcrumb,
+    Breadcrumb
   },
   data() {
     return {
       breadcrumbs: [
-        { text: "Peer Assessment", href: "/dosen/assessment/projectsPeer" },
+        { text: "Self Assessment", href: "/dosen/assessment/projectspeer" }
       ],
       headers: [
-        { key: "no", label: "No" },
-        { key: "tahun_ajaran", label: "Tahun Ajaran" },
-        { key: "nama_proyek", label: "Proyek" },
-        { key: "status", label: "Status" },
-        { key: "tanggal", label: "Tanggal Pembuatan" },
-        { key: "actions", label: "Actions" },
+        { key: 'no', label: 'No' },
+        { key: 'batch_year', label: 'Batch Year' },
+        { key: 'project_name', label: 'Project Name' },
+        { key: 'status', label: 'Status' },
+        { key: 'date', label: 'Created Date' },
+        { key: 'actions', label: 'Actions' },
       ],
       items: [],
-    };
+    }
   },
   methods: {
     handleDetail(item) {
-      router.get(
-        "/dosen/assessment/data-with-bobot-peer",
-        {
-          tahun_ajaran: item.tahun_ajaran,
-          nama_proyek: item.nama_proyek,
-        },
-        {
-          preserveState: true,
-        }
-      );
-    },
+    // Log untuk memastikan parameter yang dikirimkan
+    console.log('Sending request to /dosen/assessment/data-with-bobot-self with parameters:', {
+        batch_year: item.batch_year,
+        project_name: item.project_name
+    });
+
+    // Mengirimkan request dengan router
+    router.get('/dosen/assessment/data-with-bobot-self', {
+        batch_year: item.batch_year,
+        project_name: item.project_name
+    }, {
+        preserveState: true
+    })
+    .then(response => {
+        // Jika request sukses, log responsenya
+        console.log('Response received:', response);
+    })
+    .catch(error => {
+        // Jika terjadi error, log errornya
+        console.error('Error occurred while fetching data:', error);
+    });
+},
+
     handleListAnswer(item) {
-      router.get('/dosen/answer-list-peer ', {
-        tahun_ajaran: item.tahun_ajaran,
-        nama_proyek: item.nama_proyek
+      router.get('/dosen/answers-peer-assessment', {
+        batch_year: item.batch_year,
+        project_name: item.project_name
       }, {
         preserveState: true
       });
     }
   },
   mounted() {
-    axios
-      .get("/api/proyek-Peer-assessment")
-      .then((response) => {
+    axios.get('/api/proyek-Peer-assessment')
+      .then(response => {
         this.items = response.data.map((item, index) => ({
           no: index + 1,
-          tahun_ajaran: item.tahun_ajaran,
-          nama_proyek: item.nama_proyek,
+          batch_year: item.batch_year,
+          project_name: item.project_name,
           status: item.status,
-          tanggal: dayjs(item.created_at).format("DD MMMM YYYY HH:mm"),
+          date: dayjs(item.created_at).format('DD MMMM YYYY HH:mm'),
         }));
       })
-      .catch((error) => {
-        console.error("There something when reach data:", error);
+      .catch(error => {
+        console.error('Error fetching data:', error);
       });
-  },
-};
+  }
+}
 </script>
 
 <template>
@@ -83,32 +94,38 @@ export default {
           <Breadcrumb :items="breadcrumbs" />
         </div>
 
-        <Card title="DAFTAR PROYEK PEER ASSESSMENT" description="" class="w-full">
+        <Card title="PEER ASSESSMENT PROJECT LIST" description="" class="w-full">
           <div v-if="items.length === 0" class="text-center text-gray-500 py-6">
-            Belum ada assessment
+            No assessment available
           </div>
           <div v-else>
             <DataTable :headers="headers" :items="items" class="mt-10">
               <template #column-actions="{ item }">
-                <button @click="handleDetail(item)"
-                  class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                <button
+                  @click="handleDetail(item)"
+                  class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
                   <font-awesome-icon icon="fa-solid fa-eye" class="mr-2" />
                   Detail
                 </button>
-                <button @click="handleListAnswer(item)"
-                  class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ml-2">
+                <button
+                  @click="handleListAnswer(item)"
+                  class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ml-2"
+                >
                   <font-awesome-icon icon="fa-solid fa-file" class="mr-2" />
                   List Answer
                 </button>
               </template>
 
               <template #column-status="{ item }">
-                <span :class="[
-                  'px-2 py-1 rounded-full text-xs font-medium',
-                  item.status === 'aktif'
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-red-100 text-red-800'
-                ]">
+                <span
+                  :class="[
+                    'px-2 py-1 rounded-full text-xs font-medium',
+                    item.status === 'Active'
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-red-100 text-red-800'
+                  ]"
+                >
                   {{ item.status }}
                 </span>
               </template>

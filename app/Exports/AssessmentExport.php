@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\Assessment;
+use App\Models\Project;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Maatwebsite\Excel\Concerns\Exportable;
 
@@ -10,43 +11,50 @@ class AssessmentExport implements WithMultipleSheets
 {
     use Exportable;
 
-    protected $tahunAjaran;
-    protected $namaProyek;
+    protected $batchYear;
+    protected $projectName;
+    protected $projectId;
 
-    public function __construct($tahunAjaran, $namaProyek)
+    public function __construct($batchYear, $projectName, $projectId = null)
     {
-        $this->tahunAjaran = $tahunAjaran;
-        $this->namaProyek = $namaProyek;
+        $this->batchYear = $batchYear;
+        $this->projectName = $projectName;
+        $this->projectId = $projectId;
     }
 
-    /**
-     * Sheet yang akan di-ekspor
-     */
     public function sheets(): array
     {
-        // Cek apakah ada data assessment untuk tahun_ajaran dan nama_proyek
-        $assessments = Assessment::where('tahun_ajaran', $this->tahunAjaran)
-            ->where('nama_proyek', $this->namaProyek)
-            ->get();
+        // Jika projectId tidak ada, cari project
+        if (!$this->projectId) {
+            $project = Project::where('batch_year', $this->batchYear)
+                ->where('project_name', $this->projectName)
+                ->first();
 
-        // Jika tidak ada data, kirim template kosong tapi tetap dengan tahun_ajaran dan nama_proyek
-        if ($assessments->isEmpty()) {
-            return [
-                // Sheet 1: Template kosong untuk Assessment, tetap menampilkan tahun_ajaran dan nama_proyek
-                new AssessmentSheet($this->tahunAjaran, $this->namaProyek),
-
-                // Sheet 2: Template kosong untuk TypeCriteriaSheet, tetap menampilkan tahun_ajaran dan nama_proyek
-                new TypeCriteriaSheet($this->tahunAjaran, $this->namaProyek),
-            ];
-        } else {
-            // Jika ada data, kirim template dengan data yang sudah ada
-            return [
-                // Sheet 1: Data Assessment yang sudah ada
-                new AssessmentSheet($this->tahunAjaran, $this->namaProyek),
-
-                // Sheet 2: TypeCriteriaSheet yang sudah ada
-                new TypeCriteriaSheet($this->tahunAjaran, $this->namaProyek),
-            ];
+            if ($project) {
+                $this->projectId = $project->id;
+            }
         }
+
+        // Ambil assessment jika project ditemukan
+        $assessments = null;
+        if ($this->projectId) {
+            $assessments = Assessment::with('typeCriteria')
+                ->where('project_id', $this->projectId)
+                ->get();
+        }
+
+        return [
+            new AssessmentSheet(
+                $this->batchYear,
+                $this->projectName,
+                $this->projectId,
+                $assessments
+            ),
+            new TypeCriteriaSheet(
+                $this->projectId,
+                $this->batchYear,
+                $this->projectName
+            )
+        ];
     }
 }

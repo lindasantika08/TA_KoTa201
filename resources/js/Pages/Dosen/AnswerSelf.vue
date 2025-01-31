@@ -28,11 +28,11 @@ export default {
                 'date': '',
             })
         },
-        tahunAjaran: {
+        batch_year: {
             type: String,
             default: ''
         },
-        namaProyek: {
+        project_name: {
             type: String,
             default: ''
         }
@@ -92,47 +92,58 @@ export default {
 
     methods: {
         async fetchQuestions() {
-            console.log('Fetching questions started');
-            this.loading = true;
-            this.error = null;
+    console.log('Fetching questions started');
+    this.loading = true;
+    this.error = null;
 
-            try {
-                console.log('Tahun Ajaran:', this.tahunAjaran);
-                console.log('Nama Proyek:', this.namaProyek);
+    try {
+        const params = {
+            batch_year: this.batch_year,
+            project_name: this.project_name
+        };
 
-                const params = {
-                    tahun_ajaran: this.tahunAjaran,
-                    nama_proyek: this.namaProyek
-                };
+        console.log('Request params:', params);
 
-                const response = await axios.get('/api/questions-dosen', { params });
+        const response = await axios.get('/api/questions-dosen', { params });
+        console.log('Raw API Response:', response.data);
 
-                console.log('API Response:', response);
-
-                if (response.data && Array.isArray(response.data)) {
-                    this.questions = response.data;
-                    console.log('Questions loaded:', this.questions.length);
-                    this.loading = false;
-                } else {
-                    throw new Error('Invalid response format');
-                }
-            } catch (error) {
-                console.error('Error details:', {
-                    message: error.message,
-                    response: error.response,
-                    status: error.response?.status
-                });
-                this.error = `Error loading questions: ${error.message}`;
-                this.loading = false;
+        if (response.data && Array.isArray(response.data)) {
+            this.questions = response.data.map(question => ({
+                id: question.id,
+                aspect: question.aspek || '',
+                criteria: question.kriteria || '',
+                pertanyaan: question.pertanyaan || '',
+                bobot_1: question.bobot_1 || '',
+                bobot_2: question.bobot_2 || '',
+                bobot_3: question.bobot_3 || '',
+                bobot_4: question.bobot_4 || '',
+                bobot_5: question.bobot_5 || '',
+            }));
+            console.log('Processed questions:', this.questions);
+        } else {
+            throw new Error('Invalid response format - expected array');
+        }
+    } catch (error) {
+        console.error('Error fetching questions:', {
+            message: error.message,
+            response: error.response?.data,
+            status: error.response?.status,
+            params: {
+                batch_year: this.batch_year,
+                project_name: this.project_name
             }
-        },
-
+        });
+        this.error = `Error loading questions: ${error.message}`;
+    } finally {
+        this.loading = false;
+    }
+},
         async fetchStudentsInfo() {
             try {
                 const response = await axios.get('/api/user-info-dosen');
                 if (response.data) {
                     this.studentInfo = response.data;
-                    this.studentInfo.project = this.namaProyek;
+                    this.studentInfo.project = this.project_name;
                 }
             } catch (error) {
                 console.error('Failed to fetch student info: ', error);
@@ -289,7 +300,6 @@ export default {
                         <div>
                             <p><strong>NIP:</strong> {{ studentInfo.nip }}</p>
                             <p><strong>Nama Lengkap:</strong> {{ studentInfo.name }}</p>
-                            <p><strong>Kelas:</strong> {{ studentInfo.class }}</p>
                         </div>
                         <div>
                             <p><strong>Proyek:</strong> {{ studentInfo.project }}</p>
@@ -315,8 +325,8 @@ export default {
                                 <h3 class="font-semibold text-lg mb-4">
                                     Question {{ currentQuestionIndex + 1 }} dari {{ questions.length }}
                                 </h3>
-                                <p class="mb-2"><strong>Aspek:</strong> {{ currentQuestion.aspek }}</p>
-                                <p><strong>Kriteria:</strong> {{ currentQuestion.kriteria }}</p>
+                                <p class="mb-2"><strong>Aspek:</strong> {{ currentQuestion.aspect }}</p>
+                                <p><strong>Kriteria:</strong> {{ currentQuestion.criteria }}</p>
                             </div>
 
                             <div class="overflow-x-auto">

@@ -108,10 +108,13 @@ export default {
   <div class="min-h-screen flex">
     <div class="w-1/2 bg-sky-100 p-12">
       <h1 class="text-3xl font-bold mb-6">Self and Peer Assessment Project</h1>
-      <p class="text-gray-600 leading-relaxed">
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit,
-        sed do eiusmod tempor incididunt ut labore et dolore
-        magna aliqua.
+      <p class="text-gray-600 leading-relaxed text-justify">
+        Welcome to the Self and Peer Assessment Project, a platform designed
+        to facilitate self-evaluation and peer assessment for vocational students 
+        at Politeknik Negeri Bandung. This application allows users to objectively 
+        assess their own performance while providing fair evaluations for their peers. 
+        By logging in, students can access a structured and transparent assessment system 
+        that encourages personal growth and teamwork. Enter your email and password to get started.
       </p>
     </div>
 

@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Dosen;
 use App\Models\Kelompok;
 use App\Models\Answers;
 use App\Models\User;
+use App\Models\Dosen;
 use App\Models\AnswersPeer;
 use App\Models\Assessment;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\Group;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -19,18 +21,13 @@ class AnswerController extends Controller
     public function answerSelf(Request $request)
     {
         $validated = $request->validate([
-            'tahunAjaran' => 'required|string',
-            'namaProyek' => 'required|string',
-        ]);
-
-        Log::info('AnswerSelf method called', [
-            'tahunAjaran' => $validated['tahunAjaran'],
-            'namaProyek' => $validated['namaProyek'],
+            'batch_year' => 'required|string',
+            'project_name' => 'required|string',
         ]);
 
         return Inertia::render('Dosen/AnswerSelf', [
-            'tahunAjaran' => $validated['tahunAjaran'],
-            'namaProyek' => $validated['namaProyek'],
+            'batch_year' => $validated['batch_year'],
+            'project_name' => $validated['project_name'],
         ]);
     }
 
@@ -96,12 +93,15 @@ class AnswerController extends Controller
     public function getQuestionId(Request $request)
     {
         $validated = $request->validate([
-            'tahun_ajaran' => 'required|string',
-            'nama_proyek' => 'required|string',
+            'batch_year' => 'required|string',
+            'project_name' => 'required|string',
         ]);
 
-        $assessment = Assessment::where('tahun_ajaran', $validated['tahun_ajaran'])
-            ->where('nama_proyek', $validated['nama_proyek'])
+        $assessment = Assessment::join('project', 'assessment.project_id', '=', 'project.id')
+            ->where('assessment.batch_year', $validated['batch_year'])
+            ->where('project.project_name', $validated['project_name'])
+            ->where('assessment.type', 'selfAssessment')
+            ->select('assessment.id')
             ->first();
 
         if (!$assessment) {
@@ -115,49 +115,77 @@ class AnswerController extends Controller
 
     public function getUserInfoDosen(Request $request)
     {
-        $user = Auth::user();
+        try {
+            $user = Auth::user();
 
-        $kelompok = Kelompok::where('dosen_id', $user->id)
-            ->first();
+            if (!$user) {
+                return response()->json(['error' => 'User not authenticated'], 401);
+            }
 
-        $userInfo = [
-            'id' => $user->id,
-            'nip' => $user->nip,
-            'name' => $user->name,
-            'class' => '1B',
-            'group' => $kelompok ? $kelompok->kelompok : 'Tidak Ditemukan',
-            'project' => $kelompok ? $kelompok->nama_proyek : 'Tidak Ditemukan',
-            'date' => now()->format('d F Y')
-        ];
+            // Get the dosen record associated with the user
+            $dosen = Dosen::with('user')
+                ->where('user_id', $user->id)
+                ->first();
 
-        return response()->json($userInfo);
+            if (!$dosen) {
+                return response()->json(['error' => 'Dosen record not found'], 404);
+            }
+
+            // Get the group information
+            $kelompok = Group::where('dosen_id', $dosen->id)
+                ->with('project') // Assuming there's a relationship with Project model
+                ->first();
+
+            $userInfo = [
+                'id' => $dosen->id,
+                'nip' => $dosen->nip,
+                'name' => $user->name,
+                'group' => $kelompok ? $kelompok->name : 'Tidak Ditemukan',
+                'project' => $kelompok && $kelompok->project ? $kelompok->project->project_name : 'Tidak Ditemukan',
+                'date' => now()->format('d F Y')
+            ];
+
+            return response()->json($userInfo);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to fetch user info',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function getQuestionsByProject(Request $request)
     {
-        $tahunAjaran = $request->query('tahun_ajaran');
-        $namaProyek = $request->query('nama_proyek');
+        $batchYear = $request->query('batch_year');
+        $projectName = $request->query('project_name');
 
-        $assessments = Assessment::join('type_criteria', function ($join) {
-            $join->on('assessment.aspek', '=', 'type_criteria.aspek')
-                ->on('assessment.kriteria', '=', 'type_criteria.kriteria');
-        })
-            ->select(
-                'assessment.id',
-                'assessment.type',
-                'assessment.pertanyaan',
-                'assessment.aspek',
-                'assessment.kriteria',
-                'type_criteria.bobot_1',
-                'type_criteria.bobot_2',
-                'type_criteria.bobot_3',
-                'type_criteria.bobot_4',
-                'type_criteria.bobot_5'
-            )
-            ->where('assessment.tahun_ajaran', $tahunAjaran)
-            ->where('assessment.nama_proyek', $namaProyek)
-            ->where('assessment.type', 'selfAssessment')
-            ->get();
+        // First find the project
+        $project = Project::where('batch_year', $batchYear)
+            ->where('project_name', $projectName)
+            ->first();
+
+        if (!$project) {
+            return response()->json(['error' => 'Project not found'], 404);
+        }
+
+        $assessments = Assessment::with('typeCriteria')
+            ->where('project_id', $project->id)
+            ->where('type', 'selfAssessment')
+            ->get()
+            ->map(function ($assessment) {
+                return [
+                    'id' => $assessment->id,
+                    'type' => $assessment->type,
+                    'pertanyaan' => $assessment->question,
+                    'aspek' => $assessment->typeCriteria->aspect,
+                    'kriteria' => $assessment->typeCriteria->criteria,
+                    'bobot_1' => $assessment->typeCriteria->bobot_1,
+                    'bobot_2' => $assessment->typeCriteria->bobot_2,
+                    'bobot_3' => $assessment->typeCriteria->bobot_3,
+                    'bobot_4' => $assessment->typeCriteria->bobot_4,
+                    'bobot_5' => $assessment->typeCriteria->bobot_5,
+                ];
+            });
 
         return response()->json($assessments);
     }

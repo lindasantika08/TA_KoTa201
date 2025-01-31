@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Project; 
-use App\Models\Kelompok;
+use App\Models\Group;
 use App\Models\User;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\KelompokImport; 
@@ -19,7 +19,7 @@ class KelolaKelompokController extends Controller
 {
     public function KelolaKelompok()
     {
-        $kelompokData = Kelompok::with('user', 'dosen')->get();
+        $kelompokData = Group::with('user', 'dosen')->get();
         Log::info('Data Kelompok yang Dikirim:', ['kelompok' => $kelompokData]);
 
 
@@ -69,7 +69,7 @@ class KelolaKelompokController extends Controller
 
     public function showDetail($id)
     {
-        $kelompok = Kelompok::with('user', 'dosen')->findOrFail($id);
+        $kelompok = Group::with('user', 'dosen')->findOrFail($id);
         return Inertia::render('Dosen/DetailKelompok', [
             'kelompok' => $kelompok
         ]);
@@ -77,16 +77,33 @@ class KelolaKelompokController extends Controller
 
     public function exportTemplate(Request $request)
     {
-        // Mengambil tahun ajaran dan proyek dari parameter
-        $tahunAjaran = $request->input('tahun_ajaran');
-        $namaProyek = $request->input('nama_proyek');
+        $request->validate([
+            'batch_year' => 'required',
+            'project_name' => 'required',
+            'semester' => 'required'
+        ]);
 
-        if (!$tahunAjaran || !$namaProyek) {
-            return response()->json(['error' => 'Parameter tidak lengkap.'], 400);
+        $batchYear = $request->input('batch_year');
+        $projectName = $request->input('project_name');
+        $semester = $request->input('semester');
+
+        $project = Project::where('batch_year', $batchYear)
+            ->where('project_name', $projectName)
+            ->where('semester', $semester)
+            ->first();
+
+        if (!$project) {
+            return response()->json(['error' => 'Project tidak ditemukan.'], 404);
         }
 
-        // Kirim data ke export untuk menghasilkan template
-        return Excel::download(new KelompokExport($tahunAjaran, $namaProyek), 'Data_Kelompok.xlsx');
+        return Excel::download(
+            new KelompokExport(
+                $batchYear,
+                $projectName,
+                $semester
+            ), 
+            'Data_Kelompok.xlsx'
+        );
     }
 
     public function importData(Request $request)

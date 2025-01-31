@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Mahasiswa;
 
 use App\Http\Controllers\Controller;
-use App\Models\type_criteria;
+use App\Models\TypeCriteria;
 use App\Models\Assessment;
 use App\Models\Answers;
 use App\Models\project;
@@ -35,33 +35,36 @@ class SelfAssessment extends Controller
 
     public function getQuestionsByProject(Request $request)
     {
-        $tahunAjaran = $request->query('tahun_ajaran');
-        $namaProyek = $request->query('nama_proyek');
+        $batchYear = $request->query('batch_year');
+        $projectName = $request->query('project_name');
 
-        $assessments = Assessment::join('type_criteria', function ($join) {
-            $join->on('assessment.aspek', '=', 'type_criteria.aspek')
-                ->on('assessment.kriteria', '=', 'type_criteria.kriteria');
-        })
-            ->select(
-                'assessment.id',
-                'assessment.type',
-                'assessment.pertanyaan',
-                'assessment.aspek',
-                'assessment.kriteria',
-                'type_criteria.bobot_1',
-                'type_criteria.bobot_2',
-                'type_criteria.bobot_3',
-                'type_criteria.bobot_4',
-                'type_criteria.bobot_5'
-            )
-            ->when($tahunAjaran, function ($query, $tahunAjaran) {
-                $query->where('assessment.tahun_ajaran', $tahunAjaran);
-            })
-            ->when($namaProyek, function ($query, $namaProyek) {
-                $query->where('assessment.nama_proyek', $namaProyek);
-            })
-            ->where('assessment.type', 'selfAssessment')
-            ->get();
+        // First find the project
+        $project = Project::where('batch_year', $batchYear)
+            ->where('project_name', $projectName)
+            ->first();
+
+        if (!$project) {
+            return response()->json(['error' => 'Project not found'], 404);
+        }
+
+        $assessments = Assessment::with('typeCriteria')
+            ->where('project_id', $project->id)
+            ->where('type', 'selfAssessment')
+            ->get()
+            ->map(function ($assessment) {
+                return [
+                    'id' => $assessment->id,
+                    'type' => $assessment->type,
+                    'pertanyaan' => $assessment->question,
+                    'aspek' => $assessment->typeCriteria->aspect,
+                    'kriteria' => $assessment->typeCriteria->criteria,
+                    'bobot_1' => $assessment->typeCriteria->bobot_1,
+                    'bobot_2' => $assessment->typeCriteria->bobot_2,
+                    'bobot_3' => $assessment->typeCriteria->bobot_3,
+                    'bobot_4' => $assessment->typeCriteria->bobot_4,
+                    'bobot_5' => $assessment->typeCriteria->bobot_5,
+                ];
+            });
 
         return response()->json($assessments);
     }
@@ -70,7 +73,7 @@ class SelfAssessment extends Controller
     public function getFilteredBobot(Request $request)
     {
         try {
-            $bobot = type_criteria::where('aspek', $request->aspek)
+            $bobot = TypeCriteria::where('aspek', $request->aspek)
                 ->where('kriteria', $request->kriteria)
                 ->get(['bobot_1', 'bobot_2', 'bobot_3', 'bobot_4', 'bobot_5'])
                 ->first();

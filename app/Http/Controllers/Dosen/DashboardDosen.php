@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\project;
+use App\Models\Dosen;
+use App\Models\User;
 
 class DashboardDosen extends Controller
 {
@@ -39,5 +41,15 @@ class DashboardDosen extends Controller
         $projects = Project::where('status', 'aktif')->get();
 
         return response()->json($projects);
+    }
+
+    public function getDosensInSameMajor()
+    {
+        $dosenData = auth()->user()->dosen;
+        $sameMajorDosen = Dosen::where('major_id', $dosenData->major_id)->get();
+        
+        return response()->json([
+            'data' => $sameMajorDosen
+        ]);
     }
 }

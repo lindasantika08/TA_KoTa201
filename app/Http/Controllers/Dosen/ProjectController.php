@@ -14,30 +14,42 @@ class ProjectController extends Controller
 {
     public function index()
     {
-        return response()->json(Project::select('tahun_ajaran', 'nama_proyek')->get());
+        return response()->json(Project::select('batch_year', 'semester', 'project_name')->get());
     }
 
     public function getProjectsWithAssessmentsSelf()
     {
-        $projects = Assessment::select('tahun_ajaran', 'nama_proyek')
+        $projects = Project::whereHas('assessments', function ($query) {
+            $query->where('type', 'selfAssessment');
+        })
+            ->select('id', 'batch_year', 'project_name', 'status', 'created_at')
+            ->with(['assessments' => function ($query) {
+                $query->where('type', 'selfAssessment')
+                    ->with('typeCriteria'); // Load relasi typeCriteria jika diperlukan
+            }])
             ->distinct()
-            ->get()
-            ->toArray();
+            ->get();
 
         return Inertia::render('Dosen/DaftarProyekSelf', [
-            'projects' => $projects,
+            'projects' => $projects
         ]);
     }
 
     public function getProjectsWithAssessmentsPeer()
     {
-        $projects = Assessment::select('tahun_ajaran', 'nama_proyek')
+        $projects = Project::whereHas('assessments', function ($query) {
+            $query->where('type', 'peerAssessment');
+        })
+            ->select('id', 'batch_year', 'project_name', 'status', 'created_at')
+            ->with(['assessments' => function ($query) {
+                $query->where('type', 'peerAssessment')
+                    ->with('typeCriteria'); // Load relasi typeCriteria jika diperlukan
+            }])
             ->distinct()
-            ->get()
-            ->toArray();
+            ->get();
 
         return Inertia::render('Dosen/DaftarProyekPeer', [
-            'projects' => $projects,
+            'projects' => $projects
         ]);
     }
 
@@ -45,10 +57,17 @@ class ProjectController extends Controller
     {
         $projects = Project::whereExists(function ($query) {
             $query->from('assessment')
-                ->whereColumn('project.tahun_ajaran', 'assessment.tahun_ajaran')
-                ->whereColumn('project.nama_proyek', 'assessment.nama_proyek')
+                ->whereColumn('project.id', 'assessment.project_id')
                 ->where('assessment.type', 'selfAssessment');
         })
+            ->select([
+                'id',
+                'batch_year',
+                'project_name',
+                'status',
+                'created_at'
+            ])
+            ->orderBy('created_at', 'desc')
             ->get();
 
         return response()->json($projects);
@@ -58,13 +77,18 @@ class ProjectController extends Controller
     {
         $projects = Project::whereExists(function ($query) {
             $query->from('assessment')
-                ->whereColumn('project.tahun_ajaran', 'assessment.tahun_ajaran')
-                ->whereColumn('project.nama_proyek', 'assessment.nama_proyek')
+                ->whereColumn('project.id', 'assessment.project_id')
                 ->where('assessment.type', 'peerAssessment');
         })
-
+            ->select([
+                'id',
+                'batch_year',
+                'project_name',
+                'status',
+                'created_at'
+            ])
+            ->orderBy('created_at', 'desc')
             ->get();
-
 
         return response()->json($projects);
     }
