@@ -15,6 +15,7 @@ class Dosen extends Model
 
     protected $fillable = [
         'user_id',
+        'major_id',
         'nip',
         'kode_dosen',
     ];
@@ -27,5 +28,10 @@ class Dosen extends Model
     public function answers()
     {
         return $this->hasMany(Answers::class, 'dosen_id');
+    }
+
+    public function major()
+    {
+        return $this->belongsTo(Major::class, 'major_id');
     }
 }

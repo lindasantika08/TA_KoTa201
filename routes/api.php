@@ -73,6 +73,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/get-mahasiswa', [UserManagementController::class, 'getMahasiswa']);
     Route::get('/get-dosen', [UserManagementController::class, 'getDosen']);
     Route::get('/get-jurusan', [UserManagementController::class, 'getJurusanList']);
+    Route::get('/get-prodi/{majorId}', [UserManagementController::class, 'getProdiByMajor']);
     Route::get('/get-angkatan', [UserManagementController::class, 'getAngkatan']);
     Route::get('/get-class', [UserManagementController::class, 'getClass']);
 
