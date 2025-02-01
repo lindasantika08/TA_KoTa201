@@ -8,11 +8,14 @@ use Inertia\Inertia;
 use App\Models\Project; 
 use App\Models\Group;
 use App\Models\User;
+use App\Models\Mahasiswa;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\KelompokImport; 
 use App\Exports\KelompokExport;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 
 class KelolaKelompokController extends Controller
@@ -111,6 +114,49 @@ class KelolaKelompokController extends Controller
             'user_name' => $user->name,
         ]);
     }
+
+    public function getProfile($user_id)
+{
+    // Ambil data mahasiswa berdasarkan user_id yang diterima dari parameter
+    $mahasiswa = Mahasiswa::with([
+        'user',          // Relasi dengan tabel user
+        'classRoom.prodi.major', // Relasi dengan class room dan prodi serta major
+    ])
+    ->where('user_id', $user_id) // Mengambil data mahasiswa berdasarkan user_id yang diterima
+    ->first(); // Ambil hanya satu data mahasiswa (karena user hanya punya satu mahasiswa)
+
+    if (!$mahasiswa) {
+        return response()->json(['message' => 'Data mahasiswa tidak ditemukan.'], 404);
+    }
+
+    // Kembalikan data mahasiswa dengan relasi terkait
+    return response()->json([
+        'nama' => $mahasiswa->user->name,
+        'nim' => $mahasiswa->nim,
+        'prodi' => $mahasiswa->classRoom->prodi->prodi_name,
+        'jurusan' => $mahasiswa->classRoom->prodi->major->major_name,
+        'email' => $mahasiswa->user->email,
+        // 'telepon' => $mahasiswa->user->phone, // Misalkan ada kolom telepon di tabel user
+        // 'photo' => $mahasiswa->user->photo, // Misalkan ada kolom photo di tabel user
+    ]);
+}
+
+
+       // Mendapatkan foto profil mahasiswa
+public function getProfilePhoto()
+{
+    $user = Auth::user();
+    $mahasiswa = Mahasiswa::where('user_id', $user->id)->first();
+
+    if (!$mahasiswa || !$mahasiswa->user->photo) {
+        return response()->json(['message' => 'Foto profil tidak ditemukan.'], 404);
+    }
+
+    // Mendapatkan URL untuk file foto profil
+    $photoUrl = Storage::url($mahasiswa->user->photo);
+
+    return response()->json(['photo_url' => $photoUrl]);
+}
 
     public function showDetail($id)
     {

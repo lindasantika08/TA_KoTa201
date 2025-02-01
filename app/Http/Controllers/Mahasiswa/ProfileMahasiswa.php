@@ -47,20 +47,20 @@ class ProfileMahasiswa extends Controller
     }
 
     // Mendapatkan foto profil mahasiswa
-public function getProfilePhoto()
-{
-    $user = Auth::user();
-    $mahasiswa = Mahasiswa::where('user_id', $user->id)->first();
-
-    if (!$mahasiswa || !$mahasiswa->user->photo) {
-        return response()->json(['message' => 'Foto profil tidak ditemukan.'], 404);
+    public function getProfilePhoto($user_id)
+    {
+        $mahasiswa = Mahasiswa::where('user_id', $user_id)->first();
+    
+        if (!$mahasiswa || !$mahasiswa->user->photo) {
+            return response()->json(['message' => 'Foto profil tidak ditemukan.'], 404);
+        }
+    
+        // Mendapatkan URL untuk file foto profil
+        $photoUrl = Storage::url($mahasiswa->user->photo);
+    
+        return response()->json(['photo_url' => $photoUrl]);
     }
-
-    // Mendapatkan URL untuk file foto profil
-    $photoUrl = Storage::url($mahasiswa->user->photo);
-
-    return response()->json(['photo_url' => $photoUrl]);
-}
+    
 
 
     // Upload foto profil
