@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\User;
+use App\Models\Major;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithTitle;
@@ -14,54 +15,71 @@ use Illuminate\Support\Collection;
 
 class DosenExport implements FromCollection, WithHeadings, WithTitle, WithStyles
 {
-    protected $jurusan;
+    protected $majorId;
 
-    public function __construct($jurusan)
+    public function __construct($majorId)
     {
-        $this->jurusan = $jurusan;
+        $this->majorId = $majorId;
     }
 
     public function collection()
     {
-        // Cek apakah ada data mahasiswa dengan kriteria yang diberikan
-        $existingData = User::where('role', 'dosen')
-            ->where('jurusan', $this->jurusan)
-            ->whereNotNull('name')
-            ->whereNotNull('kode_dosen')
-            ->whereNotNull('nip')
-            ->whereNotNull('email')
-            ->orderBy('name')
-            ->get();
+        // Get the major first
+        $major = Major::find($this->majorId);
+        
+        if (!$major) {
+            return new Collection($this->getEmptyTemplate(null));
+        }
 
-            // Jika ada data yang memenuhi kriteria
+        // Get existing data through relationships
+        $existingData = User::whereHas('dosen', function($query) {
+            $query->where('major_id', $this->majorId);
+        })
+        ->where('role', 'dosen')
+        ->whereNotNull('name')
+        ->whereNotNull('email')
+        ->whereHas('dosen', function($query) {
+            $query->whereNotNull('nip')
+                  ->whereNotNull('kode_dosen');
+        })
+        ->with(['dosen', 'dosen.major']) // Eager load relationships
+        ->orderBy('name')
+        ->get();
+
+        // If data exists, format it
         if ($existingData->count() > 0) {
             $data = [];
             foreach ($existingData as $index => $user) {
                 $data[] = [
                     'no' => $index + 1,
-                    'jurusan' => $user->jurusan,
+                    'jurusan' => $user->dosen->major->major_name,
                     'name' => $user->name,
-                    'kode_dosen' => $user->kode_dosen,
-                    'nip' => $user->nip,
+                    'kode_dosen' => $user->dosen->kode_dosen,
+                    'nip' => $user->dosen->nip,
                     'email' => $user->email
                 ];
             }
             return new Collection($data);
         }
 
-        // Jika tidak ada data, return template kosong
+        // If no data, return empty template
+        return new Collection($this->getEmptyTemplate($major->major_name));
+    }
+
+    private function getEmptyTemplate($majorName)
+    {
         $templateData = [];
         for ($i = 1; $i <= 30; $i++) {
             $templateData[] = [
                 'no' => $i,
-                'jurusan' => $this->jurusan,
+                'jurusan' => $majorName,
                 'name' => null,
                 'kode_dosen' => null,
                 'nip' => null,
                 'email' => null
             ];
         }
-        return new Collection($templateData);
+        return $templateData;
     }
 
     public function headings(): array
@@ -78,32 +96,32 @@ class DosenExport implements FromCollection, WithHeadings, WithTitle, WithStyles
 
     public function styles(Worksheet $sheet)
     {
-       // Border and alignment for entire table
-       $lastRow = $sheet->getHighestRow();
-       $sheet->getStyle('A1:F' . $lastRow)->applyFromArray([
-           'borders' => [
-               'allBorders' => [
-                   'borderStyle' => Border::BORDER_THIN,
-                   'color' => ['rgb' => '000000']
-               ]
-           ]
-       ]);
+        // Border and alignment for entire table
+        $lastRow = $sheet->getHighestRow();
+        $sheet->getStyle('A1:F' . $lastRow)->applyFromArray([
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => Border::BORDER_THIN,
+                    'color' => ['rgb' => '000000']
+                ]
+            ]
+        ]);
 
-       // Header styling
-       $sheet->getStyle('A1:F1')->applyFromArray([
-           'font' => [
-               'bold' => true,
-               'color' => ['rgb' => 'FFFFFF']
-           ],
-           'fill' => [
-               'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-               'startColor' => ['rgb' => '4CAF50']
-           ],
-           'alignment' => [
-               'horizontal' => Alignment::HORIZONTAL_CENTER,
-               'vertical' => Alignment::VERTICAL_CENTER
-           ]
-       ]);
+        // Header styling
+        $sheet->getStyle('A1:F1')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'color' => ['rgb' => 'FFFFFF']
+            ],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '4CAF50']
+            ],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER
+            ]
+        ]);
 
         // Center align No column
         $sheet->getStyle('A2:A' . $lastRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);

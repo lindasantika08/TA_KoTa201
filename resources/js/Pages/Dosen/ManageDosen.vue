@@ -24,7 +24,6 @@ export default {
       users: [],
       headers: [
         { key: "no", label: "No" },
-        { key: "jurusan", label: "Jurusan" },
         { key: "name", label: "Nama" },
         { key: "kode_dosen", label: "Kode Dosen" },
         { key: "nip", label: "NIP" },
@@ -81,6 +80,26 @@ export default {
                   <font-awesome-icon icon="fa-solid fa-eye" class="mr-2" />
                     Detail
                   </button>
+              </template>
+
+              <!-- Menampilkan Nama (name) -->
+              <template #column-name="{ item }">
+                {{ item.user.name }}
+              </template>
+
+              <!-- Menampilkan Kode Dosen (kode_dosen) -->
+              <template #column-kode_dosen="{ item }">
+                {{ item.kode_dosen }}
+              </template>
+
+              <!-- Menampilkan NIP (nip) -->
+              <template #column-nip="{ item }">
+                {{ item.nip }}
+              </template>
+
+              <!-- Menampilkan Email (email) -->
+              <template #column-email="{ item }">
+                {{ item.user.email }}
               </template>
             </DataTable>
           </template>

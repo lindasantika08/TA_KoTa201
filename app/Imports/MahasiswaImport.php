@@ -66,7 +66,7 @@ class MahasiswaImport implements ToModel, WithHeadingRow, WithBatchInserts
                     'id' => Str::uuid(),
                     'name' => $row['nama_mahasiswa'],
                     'email' => $row['email'],
-                    'password' => bcrypt(Str::random(8)),
+                    'password' => bcrypt('qwert1234'),
                     'role' => 'mahasiswa'
                 ]);
             }
