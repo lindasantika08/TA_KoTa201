@@ -89,29 +89,24 @@ class SelfAssessment extends Controller
     {
         DB::beginTransaction();
         try {
-            // Validasi input
             $validated = $request->validate([
                 'question_id' => 'required|uuid',
                 'answer' => 'required|string',
                 'score' => 'required|integer|between:1,5',
                 'status' => 'required|string',
-                'role' => 'required|string|in:dosen,mahasiswa' // Validasi role
+                'role' => 'required|string|in:dosen,mahasiswa'
             ]);
 
-            // Ambil informasi pengguna yang sedang login
             $user = Auth::user();
             $userId = $user->id;
 
-            // Ambil data dosen berdasarkan user_id
             $dosen = Dosen::where('user_id', $userId)->first();
 
-            // Log informasi tentang dosen
             Log::info('Dosen retrieved:', [
                 'dosen_id' => $dosen ? $dosen->id : null,
                 'user_id' => $userId
             ]);
 
-            // Siapkan data untuk disimpan
             $answerData = [
                 'question_id' => $validated['question_id'],
                 'answer' => $validated['answer'],
@@ -119,20 +114,18 @@ class SelfAssessment extends Controller
                 'status' => $validated['status'],
             ];
 
-            // Tentukan ID berdasarkan role yang diterima dari frontend
             if ($validated['role'] === 'dosen') {
                 if ($dosen) {
-                    $answerData['dosen_id'] = $dosen->id; // Simpan ID dosen
+                    $answerData['dosen_id'] = $dosen->id;
                 } else {
                     throw new \Exception('Dosen tidak ditemukan untuk user_id: ' . $userId);
                 }
-                $answerData['mahasiswa_id'] = null; // Pastikan mahasiswa_id null
+                $answerData['mahasiswa_id'] = null;
             } elseif ($validated['role'] === 'mahasiswa') {
-                $answerData['mahasiswa_id'] = $userId; // Simpan ID mahasiswa
-                $answerData['dosen_id'] = null; // Pastikan dosen_id null
+                $answerData['mahasiswa_id'] = $userId;
+                $answerData['dosen_id'] = null;
             }
 
-            // Simpan atau perbarui jawaban
             $answer = Answers::updateOrCreate(
                 [
                     'question_id' => $validated['question_id'],

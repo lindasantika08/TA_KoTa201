@@ -24,10 +24,10 @@ export default {
       ],
       headers: [
         { key: 'no', label: 'No' },
-        { key: 'tahunAjaran', label: 'Tahun Ajaran' },
-        { key: 'proyek', label: 'Proyek' },
+        { key: 'batch_year', label: 'Tahun Ajaran' },
+        { key: 'project_name', label: 'Proyek' },
         { key: 'status', label: 'Status' },
-        { key: 'tanggal', label: 'Tanggal Pengisian' },
+        { key: 'date', label: 'Tanggal Pengisian' },
         { key: 'actions', label: 'Actions' },
       ],
       items: [],
@@ -35,21 +35,22 @@ export default {
   },
   methods: {
     handleAnswer(item) {
-      const tahunAjaran = item.tahunAjaran;
-      const namaProyek = item.proyek;
+  const tahunAjaran = item.batch_year;
+  const namaProyek = item.project_name;
 
-      console.log('Tahun Ajaran:', tahunAjaran);
-      console.log('Nama Proyek:', namaProyek);
+  console.log('Tahun Ajaran:', tahunAjaran);
+  console.log('Nama Proyek:', namaProyek);
 
-      router.visit(`/mahasiswa/assessment/self-assessment`, {
-        method: 'get',
-        data: {
-          tahunAjaran: tahunAjaran,
-          namaProyek: namaProyek
-        },
-        preserveState: true
-      });
+  router.visit(`/mahasiswa/assessment/self-assessment`, {
+    method: 'get',
+    data: {
+      tahunAjaran: tahunAjaran,
+      namaProyek: namaProyek
     },
+    preserveState: true
+  });
+},
+
     handleDetail(item) {
       router.visit(`/mahasiswa/peer-assessment/self-detail`, {
         method: 'get',
@@ -59,19 +60,20 @@ export default {
   },
   mounted() {
     axios.get('/api/self-assessment')
-      .then(response => {
-        this.items = response.data.map((item, index) => ({
-          id: item.id,
-          no: index + 1,
-          tahunAjaran: item.tahun_ajaran,
-          proyek: item.nama_proyek,
-          status: item.status,
-          tanggal: dayjs(item.created_at).format('DD MMMM YYYY HH:mm'),
-        }));
-      })
-      .catch(error => {
-        console.error('There something when reach data:', error);
-      });
+    .then(response => {
+      this.items = response.data.assessments.map((item, index) => ({
+        id: item.id,
+        no: index + 1,
+        batch_year: item.batch_year, // sudah sesuai
+        project_name: item.project_name, // sudah sesuai
+        status: item.status, // sudah sesuai
+        date: dayjs(item.created_at).format('DD MMMM YYYY HH:mm'),
+        total_questions: item.total_questions, // pastikan total_questions ada di response API
+      }));
+    })
+    .catch(error => {
+      console.error('There was an error fetching data:', error);
+    });
   }
 }
 </script>

@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Mahasiswa;
 
 use App\Models\project;
-use App\Models\Kelompok;
+use App\Models\Group;
 use App\Models\User;
 use App\Models\Assessment;
 use App\Models\AnswersPeer;
+use App\Models\Mahasiswa;
+use App\Models\Dosen;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -29,24 +31,22 @@ class AssessmentMahasiswa extends Controller
     public function getDataSelf()
     {
         $userId = Auth::id();
-
-        $projects = Project::whereExists(function ($query) {
-            $query->from('assessment')
-                ->whereColumn('project.tahun_ajaran', 'assessment.tahun_ajaran')
-                ->whereColumn('project.nama_proyek', 'assessment.nama_proyek')
-                ->where('assessment.type', 'selfAssessment');
-        })
-            ->whereExists(function ($query) use ($userId) {
-                $query->from('kelompok')
-                    ->whereColumn('project.tahun_ajaran', 'kelompok.tahun_ajaran')
-                    ->whereColumn('project.nama_proyek', 'kelompok.nama_proyek')
-                    ->where('kelompok.user_id', $userId);
-            })
-
+        $mahasiswa = Mahasiswa::where('user_id', $userId)->first();
+        $groups = Group::where('mahasiswa_id', $mahasiswa->id)->get();
+        $projectIds = $groups->pluck('project_id');
+    
+        $assessments = Assessment::whereIn('project_id', $projectIds)
+            ->where('type', 'selfAssessment')
+            ->with(['project'])
             ->get();
-
-        return response()->json($projects);
+    
+        if ($assessments->isEmpty()) {
+            return response()->json(['error' => 'Tidak ada assessment untuk proyek ini'], 404);
+        }
+    
+        return response()->json(['assessments' => $assessments]);
     }
+    
 
     public function getDataPeer()
     {
@@ -54,14 +54,14 @@ class AssessmentMahasiswa extends Controller
 
         $projects = Project::whereExists(function ($query) {
             $query->from('assessment')
-                ->whereColumn('project.tahun_ajaran', 'assessment.tahun_ajaran')
-                ->whereColumn('project.nama_proyek', 'assessment.nama_proyek')
+                ->whereColumn('project.batch_year', 'assessment.batch_year')
+                ->whereColumn('project.project_name', 'assessment.project_name')
                 ->where('assessment.type', 'peerAssessment');
         })
             ->whereExists(function ($query) use ($userId) {
                 $query->from('kelompok')
-                    ->whereColumn('project.tahun_ajaran', 'kelompok.tahun_ajaran')
-                    ->whereColumn('project.nama_proyek', 'kelompok.nama_proyek')
+                    ->whereColumn('project.batch_year', 'kelompok.batch_year')
+                    ->whereColumn('project.project_name', 'kelompok.project_name')
                     ->where('kelompok.user_id', $userId);
             })
 
@@ -72,12 +72,12 @@ class AssessmentMahasiswa extends Controller
     public function getKelompokByUser(Request $request)
     {
         $userId = auth()->id();
-        $tahunAjaran = $request->input('tahun_ajaran');
+        $tahunAjaran = $request->input('batch_year');
         $proyek = $request->input('proyek');
 
         if (!$tahunAjaran || !$proyek) {
             Log::warning('Tahun Ajaran atau Proyek tidak ditemukan pada request', [
-                'tahun_ajaran' => $tahunAjaran,
+                'batch_year' => $tahunAjaran,
                 'proyek' => $proyek
             ]);
             return response()->json(['message' => 'Tahun ajaran atau proyek tidak ditemukan'], 400);
@@ -85,24 +85,24 @@ class AssessmentMahasiswa extends Controller
 
         Log::info('Menerima request untuk getKelompokByUser', [
             'user_id' => $userId,
-            'tahun_ajaran' => $tahunAjaran,
+            'batch_year' => $tahunAjaran,
             'proyek' => $proyek
         ]);
 
-        $totalQuestions = Assessment::where('tahun_ajaran', $tahunAjaran)
-            ->where('nama_proyek', $proyek)
+        $totalQuestions = Assessment::where('batch_year', $tahunAjaran)
+            ->where('project_name', $proyek)
             ->where('type', 'peerAssessment')
             ->count();
 
         $userGroup = Kelompok::where('user_id', $userId)
-            ->where('tahun_ajaran', $tahunAjaran)
-            ->where('nama_proyek', $proyek)
+            ->where('batch_year', $tahunAjaran)
+            ->where('project_name', $proyek)
             ->value('kelompok');
 
         $kelompok = Kelompok::with('user')
             ->where('kelompok', $userGroup)
-            ->where('tahun_ajaran', $tahunAjaran)
-            ->where('nama_proyek', $proyek)
+            ->where('batch_year', $tahunAjaran)
+            ->where('project_name', $proyek)
             ->where('user_id', '!=', $userId)
             ->get();
 
@@ -123,7 +123,7 @@ class AssessmentMahasiswa extends Controller
         if ($filteredKelompok->isEmpty()) {
             Log::info('Tidak ada anggota kelompok yang tersisa untuk dinilai', [
                 'user_id' => $userId,
-                'tahun_ajaran' => $tahunAjaran,
+                'batch_year' => $tahunAjaran,
                 'proyek' => $proyek
             ]);
         }
