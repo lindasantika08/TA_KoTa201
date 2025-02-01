@@ -18,6 +18,7 @@ use App\Http\Controllers\Mahasiswa\SelfAssessment;
 use App\Http\Controllers\Mahasiswa\PeerAssessment;
 use App\Http\Controllers\Mahasiswa\DetailSelfMahasiswa;
 use App\Http\Controllers\Mahasiswa\ReportMahasiswa;
+use App\Http\Controllers\Mahasiswa\ProfileMahasiswa;
 use Illuminate\Support\Facades\Auth;
 // use SebastianBergmann\CodeCoverage\Report\Html\Dashboard;
 
@@ -116,4 +117,10 @@ Route::middleware('auth:sanctum')->group(function () {
     //mahasiswa Report
     Route::get('/mahasiswa/projects', [ReportMahasiswa::class, 'getProjects']);
     Route::get('/project-score-details', [ReportMahasiswa::class, 'getProjectScoreDetails']);
+
+    //Mahasiswa Profile
+    Route::get('/get-profile', [ProfileMahasiswa::class, 'getProfile']);
+    Route::get('/mahasiswa/get-profile-photo', [ProfileMahasiswa::class, 'getProfilePhoto']);
+    Route::post('/mahasiswa/upload-profile-photo', [ProfileMahasiswa::class, 'uploadProfilePhoto']);
+    Route::delete('/mahasiswa/delete-profile-photo', [ProfileMahasiswa::class, 'deleteProfilePhoto']);
 });
