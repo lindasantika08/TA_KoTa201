@@ -61,8 +61,4 @@ class Group extends Model
         return $this->belongsTo(Dosen::class, 'dosen_id');
     }
 
-    public function members()
-    {
-        return $this->hasMany(User::class, 'user_id');
-    }
 }

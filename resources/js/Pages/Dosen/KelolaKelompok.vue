@@ -27,9 +27,9 @@ export default {
         { text: "Manage Group", href: "/dosen/kelola-kelompok" },
       ],
       headers: [
-        { label: "Tahun Ajaran", key: "tahun_ajaran" },
-        { label: "Nama Proyek", key: "nama_proyek" },
-        { label: "Kelompok", key: "kelompok" },
+        { label: "Tahun Ajaran", key: "batch_year" },
+        { label: "Nama Proyek", key: "project_name" },
+        { label: "Kelompok", key: "group" },
         { label: "Manager Dosen", key: "dosen" },
         { label: "Anggota Kelompok", key: "anggota" },
         { label: "Aksi", key: "aksi" },
@@ -42,7 +42,14 @@ export default {
   mounted() {
     console.log("Data Kelompok:", this.kelompok);
     this.fetchProjects();
-    this.filteredKelompok = this.kelompok;
+
+    // Flatten the nested structure
+    this.filteredKelompok = this.kelompok.flatMap(dosenGroup =>
+      dosenGroup.projects.map(project => ({
+        ...project,
+        dosen: dosenGroup.dosen_name
+      }))
+    );
   },
   methods: {
     async fetchProjects() {
@@ -55,15 +62,26 @@ export default {
     },
     applyFilter() {
       if (!this.selectedProject) {
-        this.filteredKelompok = this.kelompok;
+        this.filteredKelompok = this.kelompok.flatMap(dosenGroup =>
+          dosenGroup.projects.map(project => ({
+            ...project,
+            dosen: dosenGroup.dosen_name
+          }))
+        );
         return;
       }
 
-      const [tahun_ajaran, nama_proyek] = this.selectedProject.split(" - ");
-      this.filteredKelompok = this.kelompok.filter(
-        (item) =>
-          item.tahun_ajaran === tahun_ajaran &&
-          item.nama_proyek === nama_proyek
+      const [batch_year, project_name] = this.selectedProject.split(" - ");
+      this.filteredKelompok = this.kelompok.flatMap(dosenGroup =>
+        dosenGroup.projects
+          .filter(project =>
+            project.batch_year === batch_year &&
+            project.project_name === project_name
+          )
+          .map(project => ({
+            ...project,
+            dosen: dosenGroup.dosen_name
+          }))
       );
     },
     showDetail(kelompokId) {
@@ -99,9 +117,9 @@ export default {
               <select id="projectDropdown" v-model="selectedProject"
                 class="py-2 px-2 border border-gray-300 rounded w-full" @change="applyFilter">
                 <option value="" disabled>Pilih Tahun Ajaran - Proyek</option>
-                <option v-for="project in projects" :key="`${project.tahun_ajaran}-${project.nama_proyek}`"
-                  :value="`${project.tahun_ajaran} - ${project.nama_proyek}`">
-                  {{ project.tahun_ajaran }} - {{ project.nama_proyek }}
+                <option v-for="project in projects" :key="`${project.batch_year}-${project.project_name}`"
+                  :value="`${project.batch_year} - ${project.project_name}`">
+                  {{ project.batch_year }} - {{ project.project_name }}
                 </option>
               </select>
             </div>

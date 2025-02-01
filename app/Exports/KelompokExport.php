@@ -27,63 +27,45 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
 
     public function collection()
     {
-        $kelompokData = DB::table('groups')
-            ->join('mahasiswa', 'groups.mahasiswa_id', '=', 'mahasiswa.id')
-            ->join('users as mahasiswa_user', 'mahasiswa.user_id', '=', 'mahasiswa_user.id')
-            ->join('dosen', 'groups.dosen_id', '=', 'dosen.id')
-            ->join('users as dosen_user', 'dosen.user_id', '=', 'dosen_user.id')
-            ->join('project', 'groups.project_id', '=', 'project.id')
-            ->join('major', 'project.major_id', '=', 'major.id')
-            ->join('prodi', 'major.id', '=', 'prodi.major_id')
-            ->where('project.batch_year', $this->tahunAjaran)
-            ->where('project.project_name', $this->namaProyek)
-            ->select(
-                'groups.batch_year',
-                'project.project_name',
-                'mahasiswa_user.name as mahasiswa_name',
-                'mahasiswa.nim',
-                DB::raw("CONCAT(dosen_user.name, ' - ', dosen.kode_dosen) as dosen_manajer"),
-                'groups.group',
-                'prodi.prodi_name'
-            )
-            ->orderBy('groups.group', 'asc')
-            ->get();
+        $projectMajor = DB::table('project')
+            ->where('batch_year', $this->tahunAjaran)
+            ->where('project_name', $this->namaProyek)
+            ->value('major_id');
 
-        if ($kelompokData->isNotEmpty()) {
-            $dataWithNo = $kelompokData->map(function ($item, $index) {
-                return (object) array_merge(['no' => $index + 1], (array) $item);
-            });
-
-            return $dataWithNo;
-        }
-
-        Log::info("Tidak ada data kelompok untuk tahun ajaran {$this->tahunAjaran} dan proyek {$this->namaProyek}.");
-
-        $mahasiswa = DB::table('mahasiswa')
+        $mahasiswaQuery = DB::table('mahasiswa')
             ->join('users', 'mahasiswa.user_id', '=', 'users.id')
-            ->where('users.role', 'mahasiswa')
+            ->join('class_room', 'mahasiswa.class_id', '=', 'class_room.id')
+            ->join('prodi', 'class_room.prodi_id', '=', 'prodi.id')
+            ->leftJoin('groups', function($join) use ($projectMajor) {
+                $join->on('groups.mahasiswa_id', '=', 'mahasiswa.id')
+                    ->whereExists(function($query) use ($projectMajor) {
+                        $query->select(DB::raw(1))
+                            ->from('project')
+                            ->whereRaw('project.id = groups.project_id')
+                            ->where('project.major_id', $projectMajor)
+                            ->where('project.batch_year', $this->tahunAjaran)
+                            ->where('project.project_name', $this->namaProyek);
+                    });
+            })
+            ->leftJoin('dosen', function($join) use ($projectMajor) {
+                $join->on('groups.dosen_id', '=', 'dosen.id')
+                    ->where('dosen.major_id', $projectMajor);
+            })
+            ->leftJoin('users as dosen_user', 'dosen.user_id', '=', 'dosen_user.id')
+            ->where('prodi.major_id', $projectMajor)
             ->select(
-                'users.name',
-                'mahasiswa.nim'
+                DB::raw('(@row_number:=@row_number + 1) AS no'),
+                DB::raw("'{$this->tahunAjaran}' as batch_year"),
+                DB::raw("'{$this->namaProyek}' as project_name"),
+                'users.name as mahasiswa_name',
+                'mahasiswa.nim',
+                DB::raw('COALESCE(CONCAT(dosen_user.name, \' - \', dosen.kode_dosen), \'\') as dosen_manajer'),
+                DB::raw('COALESCE(groups.`group`, \'\') as kelompok')
             )
-            ->orderBy('users.name', 'asc')
+            ->from(DB::raw('(SELECT @row_number:=0) as r, mahasiswa'))
             ->get();
 
-        $data = [];
-        foreach ($mahasiswa as $index => $mahasiswaItem) {
-            $data[] = [
-                'no' => $index + 1,
-                'batch_year' => $this->tahunAjaran,
-                'project_name' => $this->namaProyek,
-                'mahasiswa_name' => $mahasiswaItem->name,
-                'nim' => $mahasiswaItem->nim,
-                'dosen_manajer' => '',
-                'group' => '',
-                'prodi_name' => ''
-            ];
-        }
-
-        return collect($data);
+        return $mahasiswaQuery;
     }
 
     public function headings(): array

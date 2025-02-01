@@ -69,4 +69,9 @@ class Project extends Model
     {
         return $this->hasMany(Assessment::class, 'project_id');
     }
+
+    public function groups()
+    {
+        return $this->hasMany(Group::class, 'project_id');
+    }
 }

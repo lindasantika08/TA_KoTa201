@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('dosen', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('major_id')->constrained('major');
             $table->foreignUuid('user_id')->constrained('users');
             $table->string('nip', 21)->unique();
             $table->string('kode_dosen')->unique();

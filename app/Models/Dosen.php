@@ -34,4 +34,9 @@ class Dosen extends Model
     {
         return $this->belongsTo(Major::class, 'major_id');
     }
+
+    public function groups()
+    {
+        return $this->hasMany(Group::class, 'dosen_id');
+    }
 }

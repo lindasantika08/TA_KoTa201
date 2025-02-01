@@ -77,6 +77,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/get-angkatan', [UserManagementController::class, 'getAngkatan']);
     Route::get('/get-class', [UserManagementController::class, 'getClass']);
 
+    Route::post('/save-answer', [AssessmentController::class, 'saveAnswer']);
+    Route::post('/save-all-answers', [AssessmentController::class, 'saveAllAnswers']);
+
 
     //mahasiswa
     Route::get('/bobot', [SelfAssessment::class, 'getFilteredBobot']);
@@ -85,7 +88,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/questions', [SelfAssessment::class, 'getQuestionsByProject']);
     Route::get('/questions-peer', [PeerAssessment::class, 'getQuestionsByProject']);
     Route::get('/type-kriteria', [SelfAssessment::class, '']);
-    Route::post('/save-answer', [SelfAssessment::class, 'saveAnswer']);
+    Route::post('/save-answer', [AssessmentController::class, 'saveAnswer']);
     Route::get('/proyek-self-assessment', [ProjectController::class, 'getDataSelf']);
     Route::get('/proyek-Peer-assessment', [ProjectController::class, 'getDataPeer']);
 
@@ -97,7 +100,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/proyek-self-assessment', [ProjectController::class, 'getDataSelf']);
 
     Route::get('/get-answer/{questionId}', [SelfAssessment::class, 'getAnswer']);
-    Route::post('/save-all-answers', [SelfAssessment::class, 'saveAllAnswers']);
+    Route::post('/save-all-answers', [AssessmentController::class, 'saveAllAnswers']);
     Route::post('/save-all-answers-peer', [PeerAssessment::class, 'saveAllAnswersPeer']);
     Route::get('/get-answer-peer/{questionId}', [PeerAssessment::class, 'getAnswerPeer']);
     Route::get('/answered-peers', [PeerAssessment::class, 'answeredPeers']);
