@@ -24,10 +24,10 @@ export default {
       ],
       headers: [
         { key: 'no', label: 'No' },
-        { key: 'tahun_ajaran', label: 'Tahun Ajaran' },
-        { key: 'proyek', label: 'Proyek' },
+        { key: 'batch_year', label: 'Tahun Ajaran' },
+        { key: 'project_name', label: 'Nama Proyek' },
         { key: 'status', label: 'Status' },
-        { key: 'tanggal', label: 'Tanggal Pengisian' },
+        { key: 'date', label: 'Tanggal Pengisian' },
         { key: 'actions', label: 'Actions' },
       ],
       items: [],
@@ -35,12 +35,12 @@ export default {
   },
   methods: {
     handleAnswer(item) {
-      console.log('Tahun Ajaran:', item.tahun_ajaran);
-      console.log('Proyek:', item.proyek);
+      console.log('Tahun Ajaran:', item.batch_year);
+      console.log('project_name:', item.project_name);
 
       router.get('/mahasiswa/assessment/peer-assessment', {
-        tahun_ajaran: item.tahun_ajaran,
-        proyek: item.proyek
+        batch_year: item.batch_year,
+        project_name: item.project_name
       }, {
         preserveState: true,
         onSuccess: (page) => {
@@ -61,17 +61,24 @@ export default {
   mounted() {
     axios.get('/api/peer-assessment')
       .then(response => {
-        this.items = response.data.map((item, index) => ({
+        console.log('API Response:', response.data);
+        this.items = response.data.assessments.map((item, index) => ({
           id: item.id,
           no: index + 1,
-          tahun_ajaran: item.tahun_ajaran,
-          proyek: item.nama_proyek,
+          batch_year: item.batch_year,
+          project_name: item.project_name,
           status: item.status,
-          tanggal: dayjs(item.created_at).format('DD MMMM YYYY HH:mm'),
+          date: dayjs(item.created_at).format('DD MMMM YYYY HH:mm'),
+          total_questions: item.total_questions,
         }));
+        console.log('Mapped items:', this.items);
       })
       .catch(error => {
-        console.error('There something when reach data:', error);
+        console.error('There was an error fetching data:', error);
+        if (error.response) {
+          console.error('Error response:', error.response.data);
+          console.error('Error status:', error.response.status);
+        }
       });
   }
 }

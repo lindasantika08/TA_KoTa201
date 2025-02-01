@@ -107,11 +107,11 @@ export default {
                 console.log('Nama Proyek:', this.namaProyek);
 
                 const params = {
-                    tahun_ajaran: this.tahunAjaran,
-                    nama_proyek: this.namaProyek
+                    batch_year: this.tahunAjaran,
+                    project_name: this.namaProyek
                 };
 
-                const response = await axios.get('/api/questions-dosen', { params });
+                const response = await axios.get('/api/questions', { params });
 
                 console.log('API Response:', response);
 
@@ -159,28 +159,31 @@ export default {
                 return;
             }
 
-            console.log('Submitting answer for question:', this.currentQuestion.id);
+            this.saveTemporaryAnswer();
 
-            const payload = {
-                question_id: this.currentQuestion.id,
-                answer: this.answer,
-                score: this.score,
+            const answers = Object.entries(this.temporaryAnswers).map(([questionId, data]) => ({
+                question_id: questionId,
+                answer: data.answer,
+                score: data.score,
                 status: 'submitted'
-            };
+            }));
 
-            axios.post('/api/save-answer', payload)
+            axios.post('/api/save-answer-mhs', { answers })
                 .then((response) => {
-                    console.log('Answer saved:', response);
+                    console.log('Answers saved:', response);
                     alert(response.data.message);
-                    if (response.data.message === 'Answer saved successfully') {
+                    if (response.data.message.includes('successfully')) {
                         this.nextQuestion();
                         this.score = null;
                         this.answer = '';
                     }
                 })
                 .catch(error => {
-                    console.error('Error saving answer:', error);
-                    alert('Gagal menyimpan jawaban. Silakan coba lagi.');
+                    console.error('Error saving answers:', error);
+                    const errorMessage = error.response?.data?.error ||
+                        error.response?.data?.message ||
+                        'Gagal menyimpan jawaban. Silakan coba lagi.';
+                    alert(errorMessage);
                 });
         },
         async nextQuestion() {
@@ -363,7 +366,7 @@ export default {
                             </div>
 
                             <div class="bg-white p-6 rounded-lg shadow-md">
-                                <p class="text-gray-700 mb-4">{{ currentQuestion.pertanyaan }}</p>
+                                <p class="text-gray-700 mb-4">{{ currentQuestion.question }}</p>
                                 <div class="score-container mt-4">
                                     <div class="slider-container">
                                         <div class="track"></div>
@@ -400,7 +403,7 @@ export default {
                                         Save Answer
                                     </button>
 
-                                    <button v-if="currentQuestionIndex === questions.length-1" type="button"
+                                    <button v-if="currentQuestionIndex === questions.length - 1" type="button"
                                         @click="handleSubmitAll" :disabled="isSubmitting"
                                         class="px-4 py-2 bg-green-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed">
                                         {{ isSubmitting ? 'Mengirim...' : 'Send' }}

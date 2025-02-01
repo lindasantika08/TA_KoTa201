@@ -35,21 +35,21 @@ export default {
   },
   methods: {
     handleAnswer(item) {
-  const tahunAjaran = item.batch_year;
-  const namaProyek = item.project_name;
+      const batch_year = item.batch_year;
+      const project_name = item.project_name;
 
-  console.log('Tahun Ajaran:', tahunAjaran);
-  console.log('Nama Proyek:', namaProyek);
+      console.log('Batch Year:', batch_year);
+      console.log('Project Name:', project_name);
 
-  router.visit(`/mahasiswa/assessment/self-assessment`, {
-    method: 'get',
-    data: {
-      tahunAjaran: tahunAjaran,
-      namaProyek: namaProyek
+      router.visit(`/mahasiswa/assessment/self-assessment`, {
+        method: 'get',
+        data: {
+          batch_year: batch_year,
+          project_name: project_name
+        },
+        preserveState: true
+      });
     },
-    preserveState: true
-  });
-},
 
     handleDetail(item) {
       router.visit(`/mahasiswa/peer-assessment/self-detail`, {
@@ -57,23 +57,24 @@ export default {
         preserveState: true
       });
     }
+
   },
   mounted() {
     axios.get('/api/self-assessment')
-    .then(response => {
-      this.items = response.data.assessments.map((item, index) => ({
-        id: item.id,
-        no: index + 1,
-        batch_year: item.batch_year, // sudah sesuai
-        project_name: item.project_name, // sudah sesuai
-        status: item.status, // sudah sesuai
-        date: dayjs(item.created_at).format('DD MMMM YYYY HH:mm'),
-        total_questions: item.total_questions, // pastikan total_questions ada di response API
-      }));
-    })
-    .catch(error => {
-      console.error('There was an error fetching data:', error);
-    });
+      .then(response => {
+        this.items = response.data.assessments.map((item, index) => ({
+          id: item.id,
+          no: index + 1,
+          batch_year: item.batch_year,
+          project_name: item.project_name, 
+          status: item.status, 
+          date: dayjs(item.created_at).format('DD MMMM YYYY HH:mm'),
+          total_questions: item.total_questions,
+        }));
+      })
+      .catch(error => {
+        console.error('There was an error fetching data:', error);
+      });
   }
 }
 </script>
@@ -102,6 +103,11 @@ export default {
                   <font-awesome-icon icon="fa-solid fa-eye" class="mr-2" />
                   Detail
                 </button>
+                <button @click="handleAnswer(item)"
+                  class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+                  <font-awesome-icon icon="fa-solid fa-pen" class="mr-2" />
+                  Answer
+                </button>
               </div>
             </template>
 
@@ -119,6 +125,3 @@ export default {
     </div>
   </div>
 </template>
-
-
-
