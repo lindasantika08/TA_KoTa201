@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Dosen;
 
 use App\Models\User;
 use App\Models\Mahasiswa;
+use App\Models\Dosen;
 use App\Models\Major;
 use App\Models\Prodi;
 use App\Models\ClassRoom;
@@ -69,9 +70,6 @@ class UserManagementController extends Controller
         return response()->json($mahasiswa);
     }
     
-
-
-
     public function InputMahasiswa()
     {
 
@@ -122,33 +120,70 @@ class UserManagementController extends Controller
         return redirect()->route('ManageMahasiswa')->with('success', 'Data mahasiswa berhasil diimpor!');
     }
 
-
     public function ManageDosen(Request $request)
     {
-
         return Inertia::render('Dosen/ManageDosen');
     }
 
     public function DetailDosen()
     {
-
         return Inertia::render('Dosen/DetailDosen');
     }
 
     public function getDosen(Request $request)
     {
-        $query = User::where('role', 'dosen');
+        // Mulai query untuk mengambil data mahasiswa
+        $query = Dosen::with(relations: ['user']);
 
-        // Filter berdasarkan jurusan jika dipilih
-        if ($request->has('jurusan') && $request->jurusan) {
-            $query->where('jurusan', $request->jurusan);
-        }
+        // Ambil data dosen
+        $dosen = $query->get();
 
-        $users = $query->select('id', 'name', 'kode_dosen', 'email', 'nip', 'jurusan')
-            ->get();
+        // Format data agar sesuai dengan yang dibutuhkan (misalnya menambahkan nomor urut)
+        $dosen = $dosen->map(function ($item, $index) {
+            $item->no = $index + 1;
+            return $item;
+        });
 
-        return response()->json($users);
+        // Kirim data ke frontend
+        return response()->json($dosen);
     }
+
+//     public function getDosen(Request $request)
+// {
+//     try {
+//         // Dapatkan user yang sedang login
+//         $user = auth()->user();
+        
+//         // Dapatkan major_id dari user yang login
+//         // Asumsikan user memiliki relasi ke dosen dan dosen memiliki major_id
+//         $majorId = $user->dosen->major_id;
+        
+//         // Query untuk mengambil data dosen
+//         $query = Dosen::with(['user'])
+//             ->where('major_id', $majorId)
+//             ->orderBy('created_at', 'desc');
+
+//         // Ambil data dosen
+//         $dosen = $query->get();
+
+//         // Format data dengan menambahkan nomor urut
+//         $dosen = $dosen->map(function ($item, $index) {
+//             $item->no = $index + 1;
+//             return $item;
+//         });
+
+//         return response()->json([
+//             'status' => 'success',
+//             'data' => $dosen
+//         ]);
+
+//     } catch (\Exception $e) {
+//         return response()->json([
+//             'status' => 'error',
+//             'message' => 'Gagal mengambil data dosen: ' . $e->getMessage()
+//         ], 500);
+//     }
+// }
 
 
 
@@ -159,12 +194,32 @@ class UserManagementController extends Controller
     }
 
     public function ExportDosen(Request $request)
-    {
+{
+    try {
+        // Validate request
+        $validator = Validator::make($request->all(), [
+            'jurusan' => 'required|exists:major,id',
+        ]);
 
-        return Excel::download(new DosenExport(
-            $request->jurusan,
-        ), 'Data_Dosen.xlsx');
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // Get the major_id from the validated request
+        $majorId = $request->input('jurusan');
+
+        // Generate Excel file
+        return Excel::download(new DosenExport($majorId), 'Data_Dosen.xlsx');
+    } catch (\Exception $e) {
+        return response()->json([
+            'message' => 'Error exporting data',
+            'error' => $e->getMessage()
+        ], 500);
     }
+}
 
     public function ImportDosen(Request $request)
     {
@@ -190,7 +245,6 @@ class UserManagementController extends Controller
     
         return response()->json($angkatan);
     }
-    
 
     public function getClass()
     {
@@ -203,8 +257,6 @@ class UserManagementController extends Controller
     
         return response()->json($kelas);
     }
-    
-
 
     public function getProdiByMajor(string $majorId)
     {
@@ -235,7 +287,7 @@ class UserManagementController extends Controller
             ], 500);
         }
     }
-
+    
     public function getJurusanList()
     {
         try {

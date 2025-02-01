@@ -23,19 +23,37 @@ export default {
     },
     setup() {
         const inputMode = ref("export");
-        const jurusanList = ref([
-            { id: 1, jurusan: "Teknik Sipil" },
-            { id: 2, jurusan: "Teknik Mesin" },
-            { id: 3, jurusan: "Teknik Refrigasi dan Tata Udara" },
-            { id: 4, jurusan: "Teknik Konversi Energi" },
-            { id: 5, jurusan: "Teknik Elektro" },
-            { id: 6, jurusan: "Teknik Kimia" },
-            { id: 7, jurusan: "Teknik Komputer dan Informatika" },
-            { id: 8, jurusan: "Akuntansi" },
-            { id: 9, jurusan: "Administrasi Niaga" },
-            { id: 10, jurusan: "Bahasa Inggris" }
-        ]);
+        const jurusanList = ref([]);
         const selectedJurusan = ref("");
+        const isLoading = ref(false);
+        const errorMessage = ref("");
+
+        // Fungsi untuk mengambil data jurusan dari API
+        const getJurusanList = async () => {
+            try {
+                isLoading.value = true;
+                const token = localStorage.getItem("auth_token");
+                const response = await axios.get("/api/majors", {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: "application/json",
+                    },
+                });
+                // Langsung assign response.data karena sudah berupa array
+                jurusanList.value = response.data;
+                console.log('Jurusan list:', jurusanList.value);
+            } catch (error) {
+                console.error("Error mengambil data jurusan:", error);
+                errorMessage.value = "Gagal memuat data jurusan. Silakan coba lagi.";
+            } finally {
+                isLoading.value = false;
+            }
+        };
+
+        // Panggil fungsi getJurusanList saat komponen dimount
+        onMounted(() => {
+            getJurusanList();
+        });
 
         // Fungsi untuk mengunduh template berdasarkan jurusan
         const downloadTemplate = async () => {
@@ -67,7 +85,7 @@ export default {
                 document.body.removeChild(link);
                 window.URL.revokeObjectURL(url);
             } catch (error) {
-                console.error("Download error:", error);
+                console.error("Error download:", error);
                 alert("Gagal mengunduh template. Silakan coba lagi.");
             }
         };
@@ -78,14 +96,16 @@ export default {
             formData.append("file", event.target.files[0]);
 
             try {
+                const token = localStorage.getItem("auth_token");
                 await axios.post("/dosen/manage-dosen/import", formData, {
                     headers: {
+                        Authorization: `Bearer ${token}`,
                         "Content-Type": "multipart/form-data",
                     },
                 });
                 alert("Data dosen berhasil diimpor.");
             } catch (error) {
-                console.error("Import error:", error.response?.data);
+                console.error("Error import:", error.response?.data);
                 alert("Gagal mengimpor data. Silakan periksa format file Anda.");
             }
         };
@@ -94,6 +114,8 @@ export default {
             inputMode,
             jurusanList,
             selectedJurusan,
+            isLoading,
+            errorMessage,
             downloadTemplate,
             handleFileUpload,
         };
@@ -139,17 +161,24 @@ export default {
                                 <label for="jurusan-select" class="block text-sm font-medium text-gray-700">
                                     Pilih Jurusan
                                 </label>
-                                <select id="jurusan-select" v-model="selectedJurusan"
+                                <div v-if="isLoading" class="mt-2 text-gray-600">
+                                    Memuat data jurusan...
+                                </div>
+                                <div v-else-if="errorMessage" class="mt-2 text-red-600">
+                                    {{ errorMessage }}
+                                </div>
+                                <select v-else id="jurusan-select" v-model="selectedJurusan"
                                     class="mt-2 p-2 border border-gray-300 rounded w-full">
                                     <option value="" disabled>Pilih Jurusan</option>
-                                    <option v-for="jurusan in jurusanList" :key="jurusan.id" :value="jurusan.jurusan">
-                                        {{ jurusan.jurusan }}
+                                    <option v-for="jurusan in jurusanList" :key="jurusan.id" :value="jurusan.id">
+                                        {{ jurusan.major_name }}
                                     </option>
                                 </select>
                             </div>
                             <div class="mt-4">
-                                <button @click="downloadTemplate" class="px-4 py-2 bg-blue-500 text-white rounded"
-                                    :disabled="!selectedJurusan">
+                                <button @click="downloadTemplate"
+                                    class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400"
+                                    :disabled="!selectedJurusan || isLoading">
                                     Download Template
                                 </button>
                             </div>

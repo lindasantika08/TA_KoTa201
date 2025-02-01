@@ -18,6 +18,7 @@ use App\Http\Controllers\Mahasiswa\SelfAssessment;
 use App\Http\Controllers\Mahasiswa\PeerAssessment;
 use App\Http\Controllers\Mahasiswa\DetailSelfMahasiswa;
 use App\Http\Controllers\Mahasiswa\ReportMahasiswa;
+use App\Http\Controllers\Mahasiswa\ProfileMahasiswa;
 use Illuminate\Support\Facades\Auth;
 // use SebastianBergmann\CodeCoverage\Report\Html\Dashboard;
 
@@ -50,8 +51,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/assessment/projects', [ProjectController::class, 'getProjectsWithAssessments']);
     Route::get('/proyek-self-assessment', [ProjectController::class, 'getDataSelf']);
     Route::get('/proyek-Peer-assessment', [ProjectController::class, 'getDataPeer']);
+
     Route::get('/kelola-kelompok/export', [KelolaKelompokController::class, 'exportTemplate']);
     Route::post('/kelola-kelompok/import', [KelolaKelompokController::class, 'importData']);
+    Route::get('/kelola-kelompok/get-profile/{user_id}', [KelolaKelompokController::class, 'getProfile']);
+    Route::get('/kelola-kelompok/get-profile-photo/{user_id}', [KelolaKelompokController::class, 'getProfilePhoto']);
+
     Route::post('/save-answer-peerDosen', [AnswerController::class, 'AnswersPeerDosen']);
     Route::get('/users/search', [AnswerController::class, 'searchByNip']);
     Route::get('/questions-peerDosen', [AnswerController::class, 'getQuestionsByProjectPeer']);
@@ -116,4 +121,10 @@ Route::middleware('auth:sanctum')->group(function () {
     //mahasiswa Report
     Route::get('/mahasiswa/projects', [ReportMahasiswa::class, 'getProjects']);
     Route::get('/project-score-details', [ReportMahasiswa::class, 'getProjectScoreDetails']);
+
+    //Mahasiswa Profile
+    Route::get('/get-profile', [ProfileMahasiswa::class, 'getProfile']);
+    Route::get('/mahasiswa/get-profile-photo', [ProfileMahasiswa::class, 'getProfilePhoto']);
+    Route::post('/mahasiswa/upload-profile-photo', [ProfileMahasiswa::class, 'uploadProfilePhoto']);
+    Route::delete('/mahasiswa/delete-profile-photo', [ProfileMahasiswa::class, 'deleteProfilePhoto']);
 });

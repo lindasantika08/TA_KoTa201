@@ -18,7 +18,7 @@ use App\Http\Controllers\Mahasiswa\FeedbackMahasiswa;
 use App\Http\Controllers\Mahasiswa\ReportMahasiswa;
 use App\Http\Controllers\Mahasiswa\DetailSelfMahasiswa;
 use App\Http\Controllers\Mahasiswa\DetailPeerMahasiswa;
-
+use App\Http\Controllers\Mahasiswa\ProfileMahasiswa;
 
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
@@ -94,7 +94,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/peer-assessment/answers/{userId}', [AssessmentMahasiswa::class, 'getUserPeerAnswers']);
         Route::get('/peer-assessment/peer-detail', [DetailPeerMahasiswa::class, 'showDetail']);
         Route::get('/peer-assessment/self-detail', [DetailSelfMahasiswa::class, 'showDetail']);
-        Route::get('/profile', [DashboardMahasiswa::class, 'profile'])->name('profile');
+
+        Route::get('/profile', [ProfileMahasiswa::class, 'profile'])->name('profile');
 
         Route::get('/projects', [ProjectController::class, 'getUserProjects']);
         Route::get('/assessment-status', [ProjectController::class, 'getAssessmentStatus']);

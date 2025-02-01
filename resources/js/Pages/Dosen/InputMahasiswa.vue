@@ -128,7 +128,7 @@ export default {
           },
         });
 
-        alert("Data kelompok berhasil diimpor");
+        alert("Data Mahasiswa berhasil diimpor");
       } catch (error) {
         console.error("Import error detail:", error.response?.data);
         alert(
