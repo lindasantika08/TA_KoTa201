@@ -98,7 +98,7 @@ export default {
           <DataTable :headers="headers" :items="items" class="mt-10">
             <template #column-actions="{ item }">
               <div class="flex justify-center space-x-2">
-                <button v-if="item.status === 'aktif'" @click="handleAnswer(item)"
+                <button v-if="item.status === 'Active'" @click="handleAnswer(item)"
                   class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                   <font-awesome-icon icon="fa-solid fa-pencil" class="mr-2" />
                   Answer

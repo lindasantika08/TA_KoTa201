@@ -115,8 +115,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/existing-peer-answers', [PeerAssessment::class, 'getExistingPeerAnswers']);
     Route::get('/answered-peers', [PeerAssessment::class, 'answeredPeers']);
     Route::get('/get-answer-peer/{questionId}', [PeerAssessment::class, 'getAnswerPeer']);
-    Route::get('/kelompok', [AssessmentMahasiswa::class, 'getKelompokByUser']);
-    Route::get('/users/search', [AssessmentMahasiswa::class, 'searchByNim']);
+    Route::get('/groups', [PeerAssessment::class, 'getPeerByGroup']);
+    Route::get('/users/search', [PeerAssessment::class, 'searchByNim']);
+    Route::get('/user-info-peer', [PeerAssessment::class, 'getUserInfo']);
 
     // detail assessment
     Route::get('/user-detail-answer', [DetailSelfMahasiswa::class, 'getUserInfo']);

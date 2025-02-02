@@ -83,13 +83,25 @@ export default {
   },
 
   watch: {
+    kelompok: {
+      immediate: true,
+      handler(newVal) {
+        console.log('Kelompok updated:', newVal);
+      }
+    },
     selectedMember: {
       immediate: true,
       handler(newVal) {
+        console.log('Selected member updated:', newVal);
         if (newVal) {
-          this.currentQuestionIndex = 0;
-          this.loadTemporaryAnswer();
-          this.checkExistingAnswer();
+          try {
+            this.currentQuestionIndex = 0;
+            this.loadTemporaryAnswer();
+            this.checkExistingAnswer();
+            this.saveCurrentState();
+          } catch (error) {
+            console.error('Error handling selected member:', error);
+          }
         } else {
           this.resetForm();
         }
@@ -109,7 +121,12 @@ export default {
 
   created() {
     this.initializeData();
+    console.log('Initial kelompok data:', this.kelompok);
+    console.log('Current user ID:', this.currentUserId);
+    console.log('Selected member:', this.selectedMember);
+    console.log('Current question:', this.currentQuestion);
   },
+
 
   methods: {
     async initializeData() {
@@ -117,51 +134,56 @@ export default {
       this.error = null;
 
       try {
-        const userResponse = await axios.get("/api/user");
-        const currentUser = userResponse.data;
+        const userInfoResponse = await axios.get("/api/user-info-peer");
+        const userInfo = userInfoResponse.data;
 
+        console.log('User info received:', userInfo);
+
+        this.currentUserId = userInfo.id;
         this.studentInfo = {
-          nim: currentUser.nim || "",
-          name: currentUser.name || "",
-          class: currentUser.kelas || "",
-          group: "",
-          project: this.proyek,
+          nim: userInfo.nim || "",
+          name: userInfo.name || "",
+          class: userInfo.kelas || "",
+          group: userInfo.group || "",
+          project_name: userInfo.project_name || "",
           date: new Date().toLocaleDateString("id-ID"),
         };
 
-        const kelompokResponse = await axios.get("/api/kelompok", {
-          params: {
-            tahun_ajaran: this.tahunAjaran,
-            proyek: this.studentInfo.project
+        this.batch_year = userInfo.batch_year;
+
+        console.log('Student info set:', this.studentInfo);
+        console.log('Batch year set:', this.batch_year);
+
+        if (this.batch_year && this.studentInfo.project_name) {
+          const kelompokResponse = await axios.get("/api/groups", {
+            params: {
+              batch_year: this.batch_year,
+              project_name: this.studentInfo.project_name
+            }
+          });
+
+          if (kelompokResponse.data) {
+            this.kelompok = kelompokResponse.data;
+            console.log('Kelompok data:', this.kelompok);
           }
-        });
-
-        if (kelompokResponse.data?.length > 0) {
-          const userKelompok = kelompokResponse.data[0];
-          this.studentInfo.group = userKelompok.kelompok || "";
-
-          const filteredKelompok = kelompokResponse.data.filter(item =>
-            item.tahun_ajaran === this.tahunAjaran &&
-            item.nama_proyek === this.studentInfo.project
-          );
-
-          const answeredPeersResponse = await axios.get("/api/answered-peers");
-          const answeredPeerIds = answeredPeersResponse.data || [];
-
-          this.kelompok = filteredKelompok.filter(item =>
-            item.kelompok === this.studentInfo.group &&
-            item.user?.id !== currentUser.id &&
-            !answeredPeerIds.includes(item.user?.id)
-          );
+        } else {
+          console.error('Missing batch_year or project_name:', {
+            batch_year: this.batch_year,
+            project_name: this.studentInfo.project_name
+          });
         }
 
         await this.loadQuestions();
         await this.loadExistingAnswers();
         await this.checkExistingAnswer();
+        this.loadSavedState();
 
       } catch (error) {
         this.error = `Error loading data: ${error.message}`;
-        console.error("Error:", error);
+        console.error("Error details:", error);
+        if (error.response) {
+          console.error("Response data:", error.response.data);
+        }
       } finally {
         this.loading = false;
       }
@@ -170,32 +192,67 @@ export default {
     async loadQuestions(retryCount = 3) {
       for (let i = 0; i < retryCount; i++) {
         try {
+          console.log('Loading questions with params:', {
+            batch_year: this.batch_year,
+            project_name: this.studentInfo.project_name
+          });
+
           const response = await axios.get("/api/questions-peer", {
             params: {
-              tahun_ajaran: this.tahunAjaran,
-              nama_proyek: this.studentInfo.project || ""
+              batch_year: this.batch_year,
+              project_name: this.studentInfo.project_name
             }
           });
 
-          if (response.data && Array.isArray(response.data)) {
-            this.questions = response.data;
-            return;
+          console.log('Raw API response:', response.data);
+
+          if (!response.data || !response.data.data) {
+            console.error('Invalid response structure:', response.data);
+            throw new Error('Invalid response format');
           }
+
+          const { assessments, group_members, project_details } = response.data.data;
+
+          if (!Array.isArray(assessments)) {
+            console.error('Assessments is not an array:', assessments);
+            throw new Error('Invalid assessments format');
+          }
+
+          this.questions = assessments.map(q => ({
+            id: q.id,
+            type: q.type,
+            question: q.question,
+            aspect: q.aspect,
+            criteria: q.criteria,
+            bobot_1: q.bobot_1,
+            bobot_2: q.bobot_2,
+            bobot_3: q.bobot_3,
+            bobot_4: q.bobot_4,
+            bobot_5: q.bobot_5
+          }));
+
+          if (Array.isArray(group_members)) {
+            this.groupMembers = group_members;
+          }
+
+          if (project_details) {
+            this.projectDetails = project_details;
+          }
+
+          console.log('Processed questions:', this.questions);
+          console.log('Group members:', this.groupMembers);
+          console.log('Project details:', this.projectDetails);
+
+          return;
+
         } catch (error) {
           console.error(`Attempt ${i + 1} failed:`, error);
+          if (error.response) {
+            console.error('Error response:', error.response.data);
+          }
           if (i === retryCount - 1) throw error;
           await new Promise(resolve => setTimeout(resolve, 1000));
         }
-      }
-    },
-
-    async fetchUserIdByNim(nim) {
-      try {
-        const response = await axios.get(`/api/users/search?nim=${nim}`);
-        return response.data?.user_id || null;
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-        return null;
       }
     },
 
@@ -207,15 +264,15 @@ export default {
     async submitAnswer() {
       if (!this.currentQuestion || !this.selectedMember) return;
 
-      const user_id = await this.fetchUserIdByNim(this.studentInfo.nim);
-      if (!user_id) {
-        alert("User tidak ditemukan");
+      const mahasiswaData = await this.fetchUserIdByNim(this.studentInfo.nim);
+      if (!mahasiswaData?.mahasiswa_id) {
+        alert("Data mahasiswa tidak ditemukan");
         return;
       }
 
       try {
         const response = await axios.post("/api/save-answer-peer", {
-          user_id: user_id,
+          mahasiswa_id: mahasiswaData.mahasiswa_id,
           peer_id: this.selectedMember,
           question_id: this.currentQuestion.id,
           answer: this.answer,
@@ -225,6 +282,7 @@ export default {
 
         if (response.data.success) {
           this.nextQuestion();
+          this.saveCurrentState();
         } else {
           alert("Gagal menyimpan jawaban: " + response.data.message);
         }
@@ -234,12 +292,23 @@ export default {
       }
     },
 
+    async fetchUserIdByNim(nim) {
+      try {
+        const response = await axios.get(`/api/users/search?nim=${nim}`);
+        return response.data;
+      } catch (error) {
+        console.error("Error fetching mahasiswa data:", error);
+        return null;
+      }
+    },
+
     nextQuestion() {
       this.saveTemporaryAnswer();
       if (this.currentQuestionIndex < this.questions.length - 1) {
         this.currentQuestionIndex++;
         this.loadTemporaryAnswer();
         this.loadExistingAnswers();
+        this.saveCurrentState();
       }
     },
 
@@ -249,6 +318,25 @@ export default {
         this.currentQuestionIndex--;
         this.loadTemporaryAnswer();
         this.loadExistingAnswers();
+        this.saveCurrentState();
+      }
+    },
+    saveCurrentState() {
+      const stateToSave = {
+        selectedMember: this.selectedMember,
+        currentQuestionIndex: this.currentQuestionIndex,
+        answers: this.answers
+      };
+      localStorage.setItem('peerAssessmentState', JSON.stringify(stateToSave));
+    },
+
+    loadSavedState() {
+      const savedState = localStorage.getItem('peerAssessmentState');
+      if (savedState) {
+        const state = JSON.parse(savedState);
+        this.selectedMember = state.selectedMember;
+        this.currentQuestionIndex = state.currentQuestionIndex;
+        this.answers = state.answers || {};
       }
     },
 
@@ -294,7 +382,6 @@ export default {
         this.score = 0;
       }
     },
-
     saveTemporaryAnswer() {
       if (!this.selectedMember || !this.currentQuestion) return;
 
@@ -306,6 +393,27 @@ export default {
         answer: this.answer,
         score: this.score,
       };
+
+      localStorage.setItem('temporaryAnswers', JSON.stringify(this.temporaryAnswers));
+    },
+
+    saveCurrentState() {
+      const stateToSave = {
+        selectedMember: this.selectedMember,
+        currentQuestionIndex: this.currentQuestionIndex,
+        answers: this.answers
+      };
+      localStorage.setItem('peerAssessmentState', JSON.stringify(stateToSave));
+    },
+
+    loadSavedState() {
+      const savedState = localStorage.getItem('peerAssessmentState');
+      if (savedState) {
+        const state = JSON.parse(savedState);
+        this.selectedMember = state.selectedMember;
+        this.currentQuestionIndex = state.currentQuestionIndex;
+        this.answers = state.answers || {};
+      }
     },
 
     showSubmitConfirmation() {
@@ -313,19 +421,22 @@ export default {
       if (this.allQuestionsAnswered) {
         this.showConfirmModal = true;
       } else {
-        alert("Mohon jawab semua pertanyaan terlebih dahulu");
+        alert("Mohon jawab semua question terlebih dahulu");
       }
     },
     async loadExistingAnswers() {
       if (!this.selectedMember) return;
 
       try {
-        const user_id = await this.fetchUserIdByNim(this.studentInfo.nim);
-        if (!user_id) return;
+        const mahasiswaData = await this.fetchUserIdByNim(this.studentInfo.nim);
+        if (!mahasiswaData?.mahasiswa_id) {
+          alert("Data mahasiswa tidak ditemukan");
+          return;
+        }
 
         const response = await axios.get("/api/existing-peer-answers", {
           params: {
-            user_id: user_id,
+            mahasiswa_id: mahasiswaData.mahasiswa_id,
             peer_id: this.selectedMember,
             question_id: this.currentQuestion.id
           }
@@ -359,12 +470,13 @@ export default {
 
     async submitAllAnswers() {
       this.saveTemporaryAnswer();
+
       try {
         this.isSubmitting = true;
 
-        const user_id = await this.fetchUserIdByNim(this.studentInfo.nim);
-        if (!user_id) {
-          alert("User tidak ditemukan");
+        const mahasiswaData = await this.fetchUserIdByNim(this.studentInfo.nim);
+        if (!mahasiswaData?.mahasiswa_id) {
+          alert("Data mahasiswa tidak ditemukan");
           return;
         }
 
@@ -373,32 +485,40 @@ export default {
           return;
         }
 
+        const emptyQuestions = this.questions.filter(question => {
+          const savedAnswer = this.temporaryAnswers[this.selectedMember][question.id];
+          return !savedAnswer?.answer?.trim();
+        });
+
+        if (emptyQuestions.length > 0) {
+          alert(`Mohon isi jawaban untuk pertanyaan berikut:\n${emptyQuestions.map(q => q.question).join('\n')}`);
+          return;
+        }
+
         const answers = this.questions.map(question => {
           const savedAnswer = this.temporaryAnswers[this.selectedMember][question.id];
-
-          if (!savedAnswer.answer.trim()) {
-            alert(`Mohon isi jawaban untuk pertanyaan: ${question.pertanyaan}`);
-            throw new Error("Empty answer found");
-          }
-
           return {
-            user_id: user_id,
-            peer_id: this.selectedMember,
+            mahasiswa_id: String(mahasiswaData.mahasiswa_id),
+            peer_id: String(this.selectedMember),
             question_id: question.id,
-            answer: savedAnswer.answer,
-            score: savedAnswer.score,
-            status: "submitted",
+            answer: savedAnswer.answer.trim(),
+            score: savedAnswer.score || 0,
+            status: "submitted"
           };
         });
 
-        await Promise.all(
-          answers.map(answer => axios.post("/api/save-answer-peer", answer))
-        );
+        await axios.post("/api/save-all-answers-peer", {
+          answers: answers
+        });
+
+        localStorage.removeItem('temporaryAnswers');
+        localStorage.removeItem('peerAssessmentState');
 
         window.location.href = "/mahasiswa/assessment/peer";
+
       } catch (error) {
         console.error("Error submitting answers:", error);
-        alert("Gagal menyimpan jawaban. Silakan coba lagi.");
+        alert(error.response?.data?.message || "Gagal menyimpan jawaban. Silakan coba lagi.");
       } finally {
         this.isSubmitting = false;
       }
@@ -425,6 +545,11 @@ export default {
           <Breadcrumb :items="breadcrumbs" />
         </div>
 
+        <!-- <div>
+          Debug info:
+          <pre>{{ studentInfo }}</pre>
+          <pre>{{ batch_year }}</pre>
+        </div> -->
         <Card title="FORMULIR PENGISIAN PEER ASSESSMENT" class="w-full">
           <div v-if="loading" class="text-center py-8">
             <p>Memuat data...</p>
@@ -439,7 +564,7 @@ export default {
               </div>
               <div>
                 <p><strong>Kelompok:</strong> {{ studentInfo.group }}</p>
-                <p><strong>Proyek:</strong> {{ studentInfo.project }}</p>
+                <p><strong>Proyek:</strong> {{ studentInfo.project_name }}</p>
                 <p>
                   <strong>Tanggal Pengisian:</strong> {{ studentInfo.date }}
                 </p>
@@ -453,10 +578,11 @@ export default {
               <select id="select-member" v-model="selectedMember"
                 class="block w-full rounded-md border border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
                 <option disabled value="">-- Pilih Teman Kelompok --</option>
-                <option v-for="member in kelompok" :key="member.user.id" :value="member.user.id">
-                  {{ member.user.name }}
+                <option v-for="member in kelompok" :key="member.mahasiswa_id" :value="member.mahasiswa_id">
+                  {{ member.name }} ({{ member.nim }})
                 </option>
               </select>
+
             </div>
 
             <div v-if="error" class="text-center py-8 text-red-600">
@@ -467,17 +593,15 @@ export default {
             </div>
 
             <!-- Only show questions if a member is selected -->
-            <div v-else-if="selectedMember && currentQuestion" class="space-y-6">
-              <!-- Question display section -->
+            <div v-if="selectedMember && currentQuestion" class="space-y-6">
               <div class="bg-gray-50 p-4 rounded-lg">
                 <h3 class="font-semibold text-lg mb-4">
-                  Pertanyaan {{ currentQuestionIndex + 1 }} dari
-                  {{ questions.length }}
+                  Question {{ currentQuestionIndex + 1 }} dari {{ questions.length }}
                 </h3>
                 <p class="mb-2">
-                  <strong>Aspek:</strong> {{ currentQuestion.aspek }}
+                  <strong>Aspek:</strong> {{ currentQuestion.aspect }}
                 </p>
-                <p><strong>Kriteria:</strong> {{ currentQuestion.kriteria }}</p>
+                <p><strong>Kriteria:</strong> {{ currentQuestion.criteria }}</p>
               </div>
 
               <div class="overflow-x-auto">
@@ -503,7 +627,7 @@ export default {
 
               <div class="bg-white p-6 rounded-lg shadow-md">
                 <p class="text-gray-700 mb-4">
-                  {{ currentQuestion.pertanyaan }}
+                  {{ currentQuestion.question }}
                 </p>
                 <div class="score-container mt-4">
                   <div class="slider-container">
@@ -560,7 +684,8 @@ export default {
             </div>
 
             <div v-else class="text-center py-8">
-              <p>Tidak ada pertanyaan tersedia.</p>
+              <p v-if="!selectedMember">Please select a peer to assess.</p>
+              <p v-else>Tidak ada pertanyaan tersedia.</p>
             </div>
           </template>
         </Card>

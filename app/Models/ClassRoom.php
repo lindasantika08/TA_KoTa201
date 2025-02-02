@@ -26,4 +26,9 @@ class ClassRoom extends Model
     {
         return $this->belongsTo(Prodi::class, 'prodi_id');
     }
+
+    public function mahasiswa() {
+        
+        return $this->hasMany(Mahasiswa::class, 'class_id');
+    }
 }

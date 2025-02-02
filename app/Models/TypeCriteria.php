@@ -55,4 +55,9 @@ class TypeCriteria extends Model
 
         return $query;
     }
+
+    public function assessments() {
+        
+        return $this0>hasMany(Assessment::class, 'criteria_id');
+    }
 }
