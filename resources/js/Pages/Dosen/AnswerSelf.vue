@@ -170,16 +170,13 @@ export default {
                 });
 
                 if (response.data.message.includes('successfully')) {
-                    // Remove this question's temporary data since it's now saved
                     delete this.temporaryAnswers[this.currentQuestion.id];
                     localStorage.setItem('temporaryAnswers', JSON.stringify(this.temporaryAnswers));
 
                     alert(response.data.message);
 
-                    // Move to next question
                     if (this.currentQuestionIndex < this.questions.length - 1) {
                         this.currentQuestionIndex++;
-                        // Load the next question's data
                         await this.loadExistingAnswer();
                     }
                 }

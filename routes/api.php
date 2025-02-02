@@ -108,6 +108,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/save-answer-mhs', [SelfAssessment::class, 'saveAnswer']);
     Route::get('/user-info', [SelfAssessment::class, 'getUserInfo']);
     Route::post('/save-all-answers', [SelfAssessment::class, 'saveAllAnswers']);
+    Route::get('/get-answer-mhs/{questionId}', [SelfAssessment::class, 'getAnswer']);
 
     // peer assessment mhs
     Route::get('/peer-assessment', [AssessmentMahasiswa::class, 'getDataPeer']);
