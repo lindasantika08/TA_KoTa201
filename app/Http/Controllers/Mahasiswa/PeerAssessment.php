@@ -250,93 +250,93 @@ class PeerAssessment extends Controller
     }
 
     public function AnswersPeer(Request $request)
-{
-    try {
-        $validated = $request->validate([
-            'mahasiswa_id' => 'required|string|exists:mahasiswa,id',
-            'peer_id' => 'required|string|exists:mahasiswa,id',
-            'question_id' => 'required|string|exists:assessment,id',
-            'answer' => 'required|string',
-            'score' => 'required|integer|min:1|max:5',
-            'status' => 'required|string',
-        ]);
-
-        if ($validated['mahasiswa_id'] === $validated['peer_id']) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Tidak dapat menilai diri sendiri.',
-            ], 400);
-        }
-
-        $mahasiswaGroup = Group::where('mahasiswa_id', $validated['mahasiswa_id'])
-            ->where('project_id', function($query) use ($validated) {
-                $query->select('project_id')
-                    ->from('assessment')
-                    ->where('id', $validated['question_id']);
-            })
-            ->first();
-
-        $peerGroup = Group::where('mahasiswa_id', $validated['peer_id'])
-            ->where('project_id', $mahasiswaGroup->project_id ?? null)
-            ->first();
-
-        if (!$mahasiswaGroup || !$peerGroup || $mahasiswaGroup->group !== $peerGroup->group) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Mahasiswa dan peer harus berada dalam grup yang sama.',
-            ], 400);
-        }
-
-        DB::beginTransaction();
+    {
         try {
-            $existingAnswer = AnswersPeer::where([
-                'mahasiswa_id' => $validated['mahasiswa_id'],
-                'peer_id' => $validated['peer_id'],
-                'question_id' => $validated['question_id'],
-            ])->first();
+            $validated = $request->validate([
+                'mahasiswa_id' => 'required|string|exists:mahasiswa,id',
+                'peer_id' => 'required|string|exists:mahasiswa,id',
+                'question_id' => 'required|string|exists:assessment,id',
+                'answer' => 'required|string',
+                'score' => 'required|integer|min:1|max:5',
+                'status' => 'required|string',
+            ]);
 
-            if ($existingAnswer) {
-                $existingAnswer->update([
-                    'answer' => $validated['answer'],
-                    'score' => $validated['score'],
-                    'status' => $validated['status']
-                ]);
-                $answer = $existingAnswer;
-            } else {
-                $answer = AnswersPeer::create($validated);
+            if ($validated['mahasiswa_id'] === $validated['peer_id']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tidak dapat menilai diri sendiri.',
+                ], 400);
             }
 
-            DB::commit();
+            $mahasiswaGroup = Group::where('mahasiswa_id', $validated['mahasiswa_id'])
+                ->where('project_id', function($query) use ($validated) {
+                    $query->select('project_id')
+                        ->from('assessment')
+                        ->where('id', $validated['question_id']);
+                })
+                ->first();
+
+            $peerGroup = Group::where('mahasiswa_id', $validated['peer_id'])
+                ->where('project_id', $mahasiswaGroup->project_id ?? null)
+                ->first();
+
+            if (!$mahasiswaGroup || !$peerGroup || $mahasiswaGroup->group !== $peerGroup->group) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Mahasiswa dan peer harus berada dalam grup yang sama.',
+                ], 400);
+            }
+
+            DB::beginTransaction();
+            try {
+                $existingAnswer = AnswersPeer::where([
+                    'mahasiswa_id' => $validated['mahasiswa_id'],
+                    'peer_id' => $validated['peer_id'],
+                    'question_id' => $validated['question_id'],
+                ])->first();
+
+                if ($existingAnswer) {
+                    $existingAnswer->update([
+                        'answer' => $validated['answer'],
+                        'score' => $validated['score'],
+                        'status' => $validated['status']
+                    ]);
+                    $answer = $existingAnswer;
+                } else {
+                    $answer = AnswersPeer::create($validated);
+                }
+
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Jawaban peer berhasil disimpan.',
+                    'data' => $answer,
+                ], 201);
+            } catch (\Exception $e) {
+                DB::rollback();
+                throw $e;
+            }
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal.',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Error in AnswersPeer:', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
 
             return response()->json([
-                'success' => true,
-                'message' => 'Jawaban peer berhasil disimpan.',
-                'data' => $answer,
-            ], 201);
-        } catch (\Exception $e) {
-            DB::rollback();
-            throw $e;
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat menyimpan jawaban peer.',
+                'error' => $e->getMessage()
+            ], 500);
         }
-    } catch (ValidationException $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Validasi gagal.',
-            'errors' => $e->errors()
-        ], 422);
-    } catch (\Exception $e) {
-        Log::error('Error in AnswersPeer:', [
-            'message' => $e->getMessage(),
-            'file' => $e->getFile(),
-            'line' => $e->getLine()
-        ]);
-
-        return response()->json([
-            'success' => false,
-            'message' => 'Terjadi kesalahan saat menyimpan jawaban peer.',
-            'error' => $e->getMessage()
-        ], 500);
     }
-}
 
     public function saveAllAnswersPeer(Request $request)
     {

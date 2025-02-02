@@ -67,8 +67,6 @@ export default {
     },
     computed: {
         currentQuestion() {
-            console.log('Current question index:', this.currentQuestionIndex);
-            console.log('Current question:', this.questions[this.currentQuestionIndex]);
             return this.questions[this.currentQuestionIndex] || null;
         },
         canSubmitAll() {
@@ -76,14 +74,6 @@ export default {
                 const temp = this.temporaryAnswers[question.id];
                 return temp?.answer && temp?.score;
             });
-        },
-        currentProgress() {
-            const answered = Object.keys(this.temporaryAnswers).length;
-            return {
-                answered,
-                total: this.questions.length,
-                isComplete: answered === this.questions.length
-            };
         },
     },
     async created() {
@@ -102,11 +92,11 @@ export default {
                 console.log('Nama Proyek:', this.namaProyek);
 
                 const params = {
-                    tahun_ajaran: this.tahunAjaran,
-                    nama_proyek: this.namaProyek
+                    batch_year: this.tahunAjaran,
+                    project_name: this.namaProyek
                 };
 
-                const response = await axios.get('/api/questions-peerDosen', { params });
+                const response = await axios.get('/api/questions-peer-dosen', { params });
 
                 console.log('API Response:', response);
 
@@ -156,11 +146,7 @@ export default {
                 return;
             }
 
-            console.log('Submitting answer for question:', this.currentQuestion.id);
-
             const payload = {
-                user_id: this.studentInfo.id,
-                peer_id: this.peer_id || null,
                 question_id: this.currentQuestion.id,
                 answer: this.answer,
                 score: this.score,
@@ -169,8 +155,7 @@ export default {
 
             console.log('Payload:', payload);
 
-
-            axios.post('/api/save-answer-peerDosen', payload)
+            axios.post('/api/save-answer-peer-dosen', payload)
                 .then((response) => {
                     console.log('Answer saved:', response);
                     alert(response.data.message);
@@ -260,7 +245,7 @@ export default {
                     status: 'submitted'
                 }));
 
-                const response = await axios.post('/api/save-all-answers-peerDosen', { answers: allAnswers });
+                const response = await axios.post('/api/save-all-answers-peer-dosen', { answers: allAnswers });
 
                 if (response.data.success) {
                     alert('Semua jawaban berhasil disimpan!');
@@ -292,14 +277,13 @@ export default {
                 </div>
 
                 <Card title="FORMULIR PENGISIAN SELF ASSESSMENT" class="w-full">
-                    <div class="grid grid-cols-2 gap-6 text-sm leading-6 mb-6">
+                    <div class="grid grid-cols-2 gap-6 text-sx leading-6 mb-6">
                         <div>
-                            <p><strong>NIP:</strong> {{ studentInfo.nip }}</p>
+                            <p class="mb-2"><strong>NIP:</strong> {{ studentInfo.nip }}</p>
                             <p><strong>Nama Lengkap:</strong> {{ studentInfo.name }}</p>
-                            <p><strong>Kelas:</strong> {{ studentInfo.class }}</p>
                         </div>
                         <div>
-                            <p><strong>Proyek:</strong> {{ studentInfo.project }}</p>
+                            <p class="mb-2"><strong>Proyek:</strong> {{ studentInfo.project }}</p>
                             <p><strong>Tanggal Pengisian:</strong> {{ studentInfo.date }}</p>
                         </div>
                     </div>
@@ -323,8 +307,8 @@ export default {
                                 <h3 class="font-semibold text-lg mb-4">
                                     Question {{ currentQuestionIndex + 1 }} dari {{ questions.length }}
                                 </h3>
-                                <p class="mb-2"><strong>Aspek:</strong> {{ currentQuestion.aspek }}</p>
-                                <p><strong>Kriteria:</strong> {{ currentQuestion.kriteria }}</p>
+                                <p class="mb-2"><strong>Aspek:</strong> {{ currentQuestion.aspect }}</p>
+                                <p><strong>Kriteria:</strong> {{ currentQuestion.criteria }}</p>
                             </div>
 
                             <div class="overflow-x-auto">
@@ -349,7 +333,7 @@ export default {
                             </div>
 
                             <div class="bg-white p-6 rounded-lg shadow-md">
-                                <p class="text-gray-700 mb-4">{{ currentQuestion.pertanyaan }}</p>
+                                <p class="text-gray-700 mb-4">{{ currentQuestion.question }}</p>
                                 <div class="score-container mt-4">
                                     <div class="slider-container">
                                         <div class="track"></div>
@@ -388,9 +372,9 @@ export default {
                                     </button>
 
                                     <button v-if="currentQuestionIndex === questions.length - 1" type="button"
-                                        @click="handleSubmitAll" :disabled="!canSubmitAll || isSubmitting"
+                                        @click="handleSubmitAll" :disabled="isSubmitting"
                                         class="px-4 py-2 bg-green-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed">
-                                        {{ isSubmitting ? 'Mengirim...' : 'Kirim' }}
+                                        {{ isSubmitting ? 'Mengirim...' : 'Send' }}
                                     </button>
                                     <button v-else type="button" @click="nextQuestion"
                                         :disabled="currentQuestionIndex === questions.length - 1"

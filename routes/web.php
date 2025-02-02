@@ -9,6 +9,7 @@ use App\Http\Controllers\Dosen\FeedbackController;
 use App\Http\Controllers\Dosen\ReportController;
 use App\Http\Controllers\Dosen\AnswerController;
 use App\Http\Controllers\Dosen\UserManagementController;
+use App\Http\Controllers\Dosen\PeerAssessmentDosen;
 
 use App\Http\Controllers\Mahasiswa\AssessmentMahasiswa;
 use App\Http\Controllers\Mahasiswa\DashboardMahasiswa;
@@ -39,7 +40,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/assessment/import', [AssessmentController::class, 'import'])->name('assessment.import');
         Route::get('/assessment/data', [AssessmentController::class, 'getData'])->name('assessment.data');
         Route::get('/assessment/data-with-bobot-self', [AssessmentController::class, 'getAssessmentsWithBobotSelf'])->name('dosen.assessment.data-with-bobot-self');
-        Route::get('/assessment/data-with-bobot-peer', [AssessmentController::class, 'getAssessmentsWithBobotpeer'])->name('dosen.assessment.data-with-bobot-peer');
+        Route::get('/assessment/data-with-bobot-peer', [PeerAssessmentDosen::class, 'getAssessmentsWithBobotpeer'])->name('dosen.assessment.data-with-bobot-peer');
         Route::get('/assessment/create', [AssessmentController::class, 'create'])->name('CreateAssessment');
         Route::get('/assessment/projectsSelf', [ProjectController::class, 'getProjectsWithAssessmentsSelf']);
         Route::get('/assessment/projectsPeer', [ProjectController::class, 'getProjectsWithAssessmentsPeer']);

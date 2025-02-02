@@ -13,8 +13,9 @@ return new class extends Migration
     {
         Schema::create('answers_peer', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('mahasiswa_id')->constrained('mahasiswa');
-            $table->foreignUuid('peer_id')->constrained('mahasiswa');
+            $table->foreignUuid('mahasiswa_id')->nullable()->constrained('mahasiswa');
+            $table->foreignUuid('peer_id')->nullable()->constrained('mahasiswa');
+            $table->foreignUuid('dosen_id')->nullable()->constrained('dosen');
             $table->uuid('question_id');
             $table->text('answer');
             $table->integer('score');

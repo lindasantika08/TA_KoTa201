@@ -12,6 +12,7 @@ use App\Http\Controllers\Dosen\KelolaKelompokController;
 use App\Http\Controllers\Dosen\ReportController;
 use App\Http\Controllers\Dosen\UserManagementController;
 use App\Http\Controllers\Dosen\SelfAssessmentDosen;
+use App\Http\Controllers\Dosen\PeerAssessmentDosen;
 
 use App\Http\Controllers\Mahasiswa\AssessmentMahasiswa;
 use App\Http\Controllers\Mahasiswa\DashboardMahasiswa;
@@ -58,19 +59,20 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/get-answer/{questionId}', [SelfAssessmentDosen::class, 'getAnswer']);
     Route::post('/save-all-answers-dosen', [SelfAssessmentDosen::class, 'saveAllAnswers']);
     
+    // peer assessment dosen
+    Route::get('/questions-peer-dosen', [PeerAssessmentDosen::class, 'getQuestionsByProjectPeer']);
+    Route::post('/save-answer-peer-dosen', [PeerAssessmentDosen::class, 'saveAnswerPeer']);
+    Route::post('/save-all-answers-peer-dosen', [PeerAssessmentDosen::class, 'saveAllAnswersPeerDosen']);
 
     Route::get('/kelola-kelompok/export', [KelolaKelompokController::class, 'exportTemplate']);
     Route::post('/kelola-kelompok/import', [KelolaKelompokController::class, 'importData']);
     Route::get('/kelola-kelompok/get-profile/{user_id}', [KelolaKelompokController::class, 'getProfile']);
     Route::get('/kelola-kelompok/get-profile-photo/{user_id}', [KelolaKelompokController::class, 'getProfilePhoto']);
 
-    Route::post('/save-answer-peerDosen', [AnswerController::class, 'AnswersPeerDosen']);
     Route::get('/users/search', [AnswerController::class, 'searchByNip']);
-    Route::get('/questions-peerDosen', [AnswerController::class, 'getQuestionsByProjectPeer']);
     Route::get('/kelompok-dosen', [AnswerController::class, 'getKelompokDosen']);
     Route::get('/answered-peers-dosen', [AnswerController::class, 'answeredPeersDosen']);
     Route::get('/get-answer-peerDosen/{questionId}', [AnswerController::class, 'getAnswerPeerDosen']);
-    Route::post('/save-all-answers-peerDosen', [AnswerController::class, 'saveAllAnswersPeerDosen']);
     Route::get('/answers/statistics', [AnswerController::class, 'getStatistics']);
     Route::get('/answers/statistics-peer', [AnswerController::class, 'getStatisticsPeer']);
     Route::get('projects/active', [DashboardDosen::class, 'getActiveProjects']);

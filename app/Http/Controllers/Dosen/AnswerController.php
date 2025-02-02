@@ -420,39 +420,6 @@ class AnswerController extends Controller
         }
     }
 
-    public function getQuestionsByProjectPeer(Request $request)
-    {
-        $tahunAjaran = $request->query('tahun_ajaran');
-        $namaProyek = $request->query('nama_proyek');
-
-        $assessments = Assessment::join('type_criteria', function ($join) {
-            $join->on('assessment.aspek', '=', 'type_criteria.aspek')
-                ->on('assessment.kriteria', '=', 'type_criteria.kriteria');
-        })
-            ->select(
-                'assessment.id',
-                'assessment.type',
-                'assessment.pertanyaan',
-                'assessment.aspek',
-                'assessment.kriteria',
-                'type_criteria.bobot_1',
-                'type_criteria.bobot_2',
-                'type_criteria.bobot_3',
-                'type_criteria.bobot_4',
-                'type_criteria.bobot_5'
-            )
-            ->when($tahunAjaran, function ($query, $tahunAjaran) {
-                $query->where('assessment.tahun_ajaran', $tahunAjaran);
-            })
-            ->when($namaProyek, function ($query, $namaProyek) {
-                $query->where('assessment.nama_proyek', $namaProyek);
-            })
-            ->where('assessment.type', 'peerAssessment')
-            ->get();
-
-        return response()->json($assessments);
-    }
-
     public function AnswersPeerDosen(Request $request)
     {
         try {

@@ -18,6 +18,7 @@ class AnswersPeer extends Model
         'mahasiswa_id',
         'peer_id',
         'question_id',
+        'dosen_id',
         'answer',
         'score',
         'status',
