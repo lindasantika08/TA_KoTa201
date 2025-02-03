@@ -65,6 +65,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/save-answer-peer-dosen', [PeerAssessmentDosen::class, 'saveAnswerPeer']);
     Route::post('/save-all-answers-peer-dosen', [PeerAssessmentDosen::class, 'saveAllAnswersPeerDosen']);
 
+    // Manage Group
     Route::get('/kelola-kelompok/export', [KelolaKelompokController::class, 'exportTemplate']);
     Route::post('/kelola-kelompok/import', [KelolaKelompokController::class, 'importData']);
     Route::get('/kelola-kelompok/get-profile/{user_id}', [KelolaKelompokController::class, 'getProfile']);
@@ -81,6 +82,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/answers/get-details', [AnswerController::class, 'getDetailsAnswer']);
     Route::get('/answers/{id}', [AnswerController::class, 'showdetail']);
 
+    //Manage User Dosen dan Mahasiswa (Role Dosen)
     Route::get('/get-mahasiswa', [UserManagementController::class, 'getMahasiswa']);
     Route::get('/get-dosen', [UserManagementController::class, 'getDosen']);
     Route::get('/get-jurusan', [UserManagementController::class, 'getJurusanList']);
