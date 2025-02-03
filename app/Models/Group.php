@@ -44,6 +44,7 @@ class Group extends Model
         'mahasiswa_id',
         'group',
         'dosen_id',
+        'angkatan',
     ];
 
     public function project()

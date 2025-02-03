@@ -23,8 +23,8 @@ export default {
         { text: "Detail Score", href: null },
       ],
       projectDetails: {
-        tahun_ajaran: "",
-        nama_proyek: "",
+        batch_year: "",
+        project_id: "",
         nama_kelompok: "",
       },
       scoreData: null,
@@ -95,28 +95,53 @@ export default {
           }
         }
       };
+    },
+
+    hasRequiredParams() {
+      return Boolean(this.projectDetails.batch_year && this.projectDetails.project_id);
     }
   },
 
   methods: {
     async fetchProjectScoreDetails() {
+      if (!this.hasRequiredParams) {
+        this.error = 'Missing required parameters (batch_year or project_id)';
+        return;
+      }
+
       this.loading = true;
       this.error = null;
       
       try {
         const response = await axios.get('/api/project-score-details', {
           params: {
-            tahun_ajaran: this.projectDetails.tahun_ajaran,
-            nama_proyek: this.projectDetails.nama_proyek,
+            batch_year: this.projectDetails.batch_year,
+            project_id: this.projectDetails.project_id,
+          },
+          headers: {
+            'Accept': 'application/json',
           }
         });
-        
-        if (response.data.status === 'success') {
+
+        if (response.data?.status === 'success' && response.data?.data) {
           this.scoreData = response.data.data;
+          console.log('Score Data Set:', this.scoreData);
+        } else {
+          throw new Error('Invalid response format from API');
         }
+
       } catch (error) {
-        this.error = error.response?.data?.message || 'Failed to fetch project details';
-        console.error('Error fetching project details:', error);
+        console.error('API Error:', error);
+        if (error.response) {
+          // Error response from server
+          this.error = error.response.data.message || 'Server error occurred';
+        } else if (error.request) {
+          // Request made but no response
+          this.error = 'No response from server. Please check your connection.';
+        } else {
+          // Error in request setup
+          this.error = error.message || 'Failed to fetch project details';
+        }
       } finally {
         this.loading = false;
       }
@@ -129,19 +154,23 @@ export default {
       const selfAssessments = this.scoreData.self_assessment || [];
       const peerAssessments = this.scoreData.peer_assessment || [];
 
+      // Create map of peer scores
       const peerScoresMap = new Map();
       peerAssessments.forEach(peer => {
-        peerScoresMap.set(`${peer.aspek}_${peer.kriteria}`, peer.total_score);
+        const key = `${peer.aspek}_${peer.kriteria}`;
+        peerScoresMap.set(key, peer.total_score);
       });
 
+      // Process self assessments
       selfAssessments.forEach(self => {
-        const peerScore = peerScoresMap.get(`${self.aspek}_${self.kriteria}`) || 0;
+        const key = `${self.aspek}_${self.kriteria}`;
+        const peerScore = peerScoresMap.get(key) || 0;
         const selfScore = self.total_score || 0;
         const difference = parseFloat((selfScore - peerScore).toFixed(2));
 
         let status = 'Match';
-        if (difference > 0) status = 'Over';
-        else if (difference < 0) status = 'Under';
+        if (difference > 0.5) status = 'Over';
+        else if (difference < -0.5) status = 'Under';
 
         analysisScores.push({
           aspek: self.aspek,
@@ -149,102 +178,126 @@ export default {
           selfScore: selfScore.toFixed(2),
           averagePeerScore: peerScore.toFixed(2),
           scoreDifference: difference,
-          status: status
+          status: status,
+          questions: self.questions
         });
       });
 
       return analysisScores;
     },
+
+    retryFetch() {
+      this.fetchProjectScoreDetails();
+    }
   },
 
   mounted() {
     const urlParams = new URLSearchParams(window.location.search);
-    this.projectDetails.tahun_ajaran = urlParams.get("tahun_ajaran");
-    this.projectDetails.nama_proyek = urlParams.get("nama_proyek");
+    this.projectDetails.batch_year = urlParams.get("batch_year");
+    this.projectDetails.project_id = urlParams.get("project_id");
     
-    if (this.projectDetails.tahun_ajaran && this.projectDetails.nama_proyek) {
+    if (this.hasRequiredParams) {
       this.fetchProjectScoreDetails();
     }
   },
+
+  watch: {
+    // Watch for changes in URL parameters
+    '$route.query': {
+      handler(newQuery) {
+        this.projectDetails.batch_year = newQuery.batch_year;
+        this.projectDetails.project_id = newQuery.project_id;
+        
+        if (this.hasRequiredParams) {
+          this.fetchProjectScoreDetails();
+        }
+      },
+      deep: true
+    }
+  }
 };
 </script>
 
 <template>
-    <div class="flex min-h-screen bg-gray-50">
-      <SidebarMahasiswa role="mahasiswa" />
-  
-      <div class="flex-1">
-        <Navbar userName="Mahasiswa" />
-        
-        <main class="p-6">
-          <div class="mb-6">
-            <Breadcrumb :items="breadcrumbs" />
-            <h1 class="text-2xl font-bold text-gray-800 mt-4">Project Score Details</h1>
-          </div>
-  
-          <div class="space-y-6">
-            <!-- Loading State -->
-            <div v-if="loading" class="text-center py-4">
-              <p class="text-gray-600">Loading project details...</p>
+  <div class="flex min-h-screen bg-gray-50">
+    <SidebarMahasiswa role="mahasiswa" />
+
+    <div class="flex-1">
+      <Navbar userName="Mahasiswa" />
+      
+      <main class="p-6">
+        <div class="mb-6">
+          <Breadcrumb :items="breadcrumbs" />
+          <h1 class="text-2xl font-bold text-gray-800 mt-4">Project Score Details</h1>
+        </div>
+
+        <div class="space-y-6">
+          <!-- Loading State -->
+          <div v-if="loading" class="text-center py-4">
+            <div class="animate-pulse">
+              <div class="h-4 bg-gray-200 rounded w-3/4 mx-auto mb-4"></div>
+              <div class="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
             </div>
-  
-            <!-- Error State -->
-            <div v-else-if="error" class="bg-red-50 border border-red-200 rounded-md p-4">
+            <p class="text-gray-600 mt-4">Loading project details...</p>
+          </div>
+
+          <!-- Error State -->
+          <div v-else-if="error" class="bg-red-50 border border-red-200 rounded-md p-4">
+            <div class="flex items-center">
+              <svg class="h-5 w-5 text-red-400 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+              </svg>
               <p class="text-red-600">{{ error }}</p>
             </div>
-  
-            <!-- Score Content -->
-            <div v-else-if="scoreData" class="space-y-6">
-              <!-- Enhanced User Info Card -->
-              <Card title="Student Information" class="bg-white shadow-lg">
-                <div class="p-6">
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Student Name -->
-                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-100 hover:border-blue-200 transition-colors duration-200">
-                      <h3 class="text-sm font-medium text-gray-500 mb-2 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                        Name
-                      </h3>
-                      <p class="text-lg font-semibold text-gray-900">{{ scoreData.name }}</p>
-                    </div>
-  
-                    <!-- Academic Year -->
-                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-100 hover:border-blue-200 transition-colors duration-200">
-                      <h3 class="text-sm font-medium text-gray-500 mb-2 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        Academic Year
-                      </h3>
-                      <p class="text-lg font-semibold text-gray-900">{{ projectDetails.tahun_ajaran }}</p>
-                    </div>
-  
-                    <!-- Project Name -->
-                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-100 hover:border-blue-200 transition-colors duration-200">
-                      <h3 class="text-sm font-medium text-gray-500 mb-2 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        Project Name
-                      </h3>
-                      <p class="text-lg font-semibold text-gray-900">{{ projectDetails.nama_proyek }}</p>
-                    </div>
-  
-                    <!-- Group -->
-                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-100 hover:border-blue-200 transition-colors duration-200">
-                      <h3 class="text-sm font-medium text-gray-500 mb-2 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                        Group
-                      </h3>
-                      <p class="text-lg font-semibold text-gray-900">{{ scoreData.kelompok }}</p>
-                    </div>
+            <button 
+              @click="retryFetch"
+              class="mt-3 px-4 py-2 bg-red-100 text-red-600 rounded-md hover:bg-red-200 transition-colors duration-200"
+            >
+              Retry
+            </button>
+          </div>
+
+          <!-- Score Content -->
+          <div v-else-if="scoreData" class="space-y-6">
+            <!-- Student Information Card -->
+            <Card title="Student Information" class="bg-white shadow-lg">
+              <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <!-- Student Name -->
+                  <div class="bg-gray-50 rounded-lg p-4 border border-gray-100 hover:border-blue-200 transition-colors duration-200">
+                    <h3 class="text-sm font-medium text-gray-500 mb-2 flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                      Name
+                    </h3>
+                    <p class="text-lg font-semibold text-gray-900">{{ scoreData.name }}</p>
+                  </div>
+
+                  <!-- Batch Year -->
+                  <div class="bg-gray-50 rounded-lg p-4 border border-gray-100 hover:border-blue-200 transition-colors duration-200">
+                    <h3 class="text-sm font-medium text-gray-500 mb-2 flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      Batch Year
+                    </h3>
+                    <p class="text-lg font-semibold text-gray-900">{{ projectDetails.batch_year }}</p>
+                  </div>
+
+                  <!-- Project ID -->
+                  <div class="bg-gray-50 rounded-lg p-4 border border-gray-100 hover:border-blue-200 transition-colors duration-200">
+                    <h3 class="text-sm font-medium text-gray-500 mb-2 flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Project ID
+                    </h3>
+                    <p class="text-lg font-semibold text-gray-900">{{ projectDetails.project_id }}</p>
                   </div>
                 </div>
-              </Card>
+              </div>
+            </Card>
 
             <!-- Spider Web Chart -->
             <Card title="Score Comparison Chart" class="bg-white shadow-lg">
@@ -260,30 +313,6 @@ export default {
               </div>
             </Card>
 
-            <!-- Score Details Section -->
-            <div class="mt-6 space-y-8">
-              <div v-for="assessment in scoreData.self_assessment" 
-                   :key="assessment.aspek + assessment.kriteria"
-                   class="bg-gray-50 rounded-lg p-4">
-                <h3 class="font-medium text-gray-900 mb-3">
-                  {{ assessment.aspek }} - {{ assessment.kriteria }}
-                </h3>
-                <div class="space-y-4">
-                  <div v-for="question in assessment.questions" 
-                       :key="question.question_id"
-                       class="border-b border-gray-200 pb-4">
-                    <p class="text-sm text-gray-600 mb-2">{{ question.pertanyaan }}</p>
-                    <div class="flex justify-between">
-                      <span class="text-sm font-medium">Score: {{ question.score || 'N/A' }}</span>
-                      <span class="text-sm text-gray-500">
-                        Answer: {{ question.answer || 'No answer provided' }}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
             <!-- Analysis Score Card -->
             <Card title="Score Analysis" class="bg-white shadow-lg">
               <div class="p-6">
@@ -293,9 +322,9 @@ export default {
                       <tr>
                         <th class="border p-2 text-left">Aspek</th>
                         <th class="border p-2 text-left">Kriteria</th>
-                        <th class="border p-2 text-right">Skor Total (Self)</th>
-                        <th class="border p-2 text-right">Average Skor (Peer)</th>
-                        <th class="border p-2 text-right">Selisih Skor</th>
+                        <th class="border p-2 text-right">Self Score</th>
+                        <th class="border p-2 text-right">Peer Average</th>
+                        <th class="border p-2 text-right">Difference</th>
                         <th class="border p-2 text-center">Status</th>
                       </tr>
                     </thead>

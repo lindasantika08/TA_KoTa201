@@ -29,8 +29,8 @@ class ProfileMahasiswa extends Controller
             return response()->json(['message' => 'Data mahasiswa tidak ditemukan.'], 404);
         }
 
-       // Periksa apakah mahasiswa memiliki foto dan buat URL dengan asset()
-    $photoUrl = $mahasiswa->user->photo ? asset('storage/' . $mahasiswa->user->photo) : null;
+        // Periksa apakah mahasiswa memiliki foto dan buat URL dengan asset()
+        $photoUrl = $mahasiswa->user->photo ? asset('storage/' . $mahasiswa->user->photo) : null;
 
         // Kembalikan data mahasiswa dengan relasi terkait
         return response()->json([
@@ -40,7 +40,7 @@ class ProfileMahasiswa extends Controller
             'jurusan' => $mahasiswa->classRoom->prodi->major->major_name,
             'email' => $mahasiswa->user->email,
             'telepon' => $mahasiswa->phone, // Misalkan ada kolom telepon di tabel user
-             'photo' => $photoUrl, // Menambahkan URL foto
+            'photo' => $photoUrl, // Menambahkan URL foto
         ]);
     }
 
@@ -70,7 +70,7 @@ class ProfileMahasiswa extends Controller
 
         // Upload foto baru
         $path = $request->file('photo')->store('profile_photos', 'public');
-        
+
         // Simpan path foto ke database
         $mahasiswa->user->photo = $path;
         $mahasiswa->user->save();
@@ -96,5 +96,37 @@ class ProfileMahasiswa extends Controller
         $mahasiswa->user->save();
 
         return response()->json(['message' => 'Foto profil berhasil dihapus.']);
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $user = Auth::user();
+        $mahasiswa = Mahasiswa::where('user_id', $user->id)->first();
+
+        if (!$mahasiswa) {
+            return response()->json(['message' => 'Data mahasiswa tidak ditemukan.'], 404);
+        }
+
+        // Validasi input yang diterima
+        $validated = $request->validate([
+            'nama' => 'required|string|max:255',
+            'nim' => 'required|string|max:21',
+            'jurusan' => 'required|string|max:255',
+            'prodi' => 'required|string|max:255',
+            'email' => 'required|email',
+            'telepon' => 'nullable|string|max:15', // Pastikan Anda memvalidasi telepon
+        ]);
+
+        // Update data mahasiswa dengan data yang valid
+        $mahasiswa->user->name = $validated['nama'];
+        $mahasiswa->nim = $validated['nim'];
+        $mahasiswa->classRoom->prodi->major->major_name = $validated['jurusan'];
+        $mahasiswa->classRoom->prodi->prodi_name = $validated['prodi'];
+        $mahasiswa->user->email = $validated['email'];
+        $mahasiswa->phone = $validated['telepon'];
+        $mahasiswa->user->save();
+        $mahasiswa->save();
+
+        return response()->json(['message' => 'Profile updated successfully.']);
     }
 }

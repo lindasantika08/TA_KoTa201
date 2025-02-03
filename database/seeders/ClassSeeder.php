@@ -18,13 +18,13 @@ class ClassSeeder extends Seeder
                 'id' => 'a7e6ad5a-a8e7-4654-aa65-1a3301a394cl',
                 'class_name' => 'B',
                 'prodi_id' =>'a0e6ad5a-a8e7-4654-aa65-1a3301a394cl',
-                'batch_year' => '2022',
+                'angkatan' => '2022',
             ],
             [
                 'id' => 'be6ad5a-a8e7-4654-aa65-1a3301a394cl',
                 'class_name' => 'A',
                 'prodi_id' =>'a0e6ad5a-a8e7-4654-aa65-1a3301a394cl',
-                'batch_year' => '2022',
+                'angkatan' => '2022',
             ],
         ]);
     }

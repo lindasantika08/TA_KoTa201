@@ -3,14 +3,17 @@
 namespace App\Http\Controllers\Mahasiswa;
 
 use App\Models\project;
-use App\Models\Kelompok;
+use App\Models\Group;
 use App\Models\User;
 use App\Models\Assessment;
 use App\Models\AnswersPeer;
+use App\Models\Mahasiswa;
+use App\Models\Dosen;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 
@@ -28,118 +31,130 @@ class AssessmentMahasiswa extends Controller
 
     public function getDataSelf()
     {
-        $userId = Auth::id();
+        try {
+            $user = Auth::user();
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not authenticated'
+                ], 401);
+            }
 
-        $projects = Project::whereExists(function ($query) {
-            $query->from('assessment')
-                ->whereColumn('project.tahun_ajaran', 'assessment.tahun_ajaran')
-                ->whereColumn('project.nama_proyek', 'assessment.nama_proyek')
-                ->where('assessment.type', 'selfAssessment');
-        })
-            ->whereExists(function ($query) use ($userId) {
-                $query->from('kelompok')
-                    ->whereColumn('project.tahun_ajaran', 'kelompok.tahun_ajaran')
-                    ->whereColumn('project.nama_proyek', 'kelompok.nama_proyek')
-                    ->where('kelompok.user_id', $userId);
-            })
+            $mahasiswa = Mahasiswa::where('user_id', $user->id)->first();
+            if (!$mahasiswa) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Mahasiswa data not found'
+                ], 404);
+            }
 
-            ->get();
+            $groups = Group::with(['project' => function($query) {
+                    $query->withCount(['assessments' => function($query) {
+                        $query->where('type', 'selfAssessment'); 
+                    }]);
+                }])
+                ->where('mahasiswa_id', $mahasiswa->id)
+                ->get();
 
-        return response()->json($projects);
+            $assessments = $groups->map(function ($group) {
+                return [
+                    'id' => $group->id,
+                    'batch_year' => $group->batch_year,
+                    'project_name' => $group->project->project_name,
+                    'status' => $group->project->status,
+                    'created_at' => $group->created_at,
+                    'total_questions' => $group->project->assessments_count,
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'assessments' => $assessments
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching assessments: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function getDataPeer()
     {
-        $userId = Auth::id();
+        try {
+            $user = Auth::user();
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not authenticated'
+                ], 401);
+            }
 
-        $projects = Project::whereExists(function ($query) {
-            $query->from('assessment')
-                ->whereColumn('project.tahun_ajaran', 'assessment.tahun_ajaran')
-                ->whereColumn('project.nama_proyek', 'assessment.nama_proyek')
-                ->where('assessment.type', 'peerAssessment');
-        })
-            ->whereExists(function ($query) use ($userId) {
-                $query->from('kelompok')
-                    ->whereColumn('project.tahun_ajaran', 'kelompok.tahun_ajaran')
-                    ->whereColumn('project.nama_proyek', 'kelompok.nama_proyek')
-                    ->where('kelompok.user_id', $userId);
-            })
+            $mahasiswa = Mahasiswa::where('user_id', $user->id)->first();
+            if (!$mahasiswa) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Mahasiswa data not found'
+                ], 404);
+            }
 
-            ->get();
+            $groups = Group::with(['project' => function($query) {
+                    $query->withCount(['assessments' => function($query) {
+                        $query->where('type', 'peerAssessment');
+                    }]);
+                }])
+                ->where('mahasiswa_id', $mahasiswa->id)
+                ->whereHas('project', function($query) {
+                    $query->whereHas('assessments', function($query) {
+                        $query->where('type', 'peerAssessment');
+                    });
+                })
+                ->get();
 
-        return response()->json($projects);
-    }
-    public function getKelompokByUser(Request $request)
-    {
-        $userId = auth()->id();
-        $tahunAjaran = $request->input('tahun_ajaran');
-        $proyek = $request->input('proyek');
+            $assessments = $groups->map(function ($group) {
+                return [
+                    'id' => $group->id,
+                    'batch_year' => $group->batch_year,
+                    'project_name' => $group->project->project_name,
+                    'status' => $group->project->status,
+                    'created_at' => $group->created_at,
+                    'total_questions' => $group->project->assessments_count,
+                ];
+            });
 
-        if (!$tahunAjaran || !$proyek) {
-            Log::warning('Tahun Ajaran atau Proyek tidak ditemukan pada request', [
-                'tahun_ajaran' => $tahunAjaran,
-                'proyek' => $proyek
+            return response()->json([
+                'success' => true,
+                'assessments' => $assessments
             ]);
-            return response()->json(['message' => 'Tahun ajaran atau proyek tidak ditemukan'], 400);
-        }
 
-        Log::info('Menerima request untuk getKelompokByUser', [
-            'user_id' => $userId,
-            'tahun_ajaran' => $tahunAjaran,
-            'proyek' => $proyek
-        ]);
-
-        $totalQuestions = Assessment::where('tahun_ajaran', $tahunAjaran)
-            ->where('nama_proyek', $proyek)
-            ->where('type', 'peerAssessment')
-            ->count();
-
-        $userGroup = Kelompok::where('user_id', $userId)
-            ->where('tahun_ajaran', $tahunAjaran)
-            ->where('nama_proyek', $proyek)
-            ->value('kelompok');
-
-        $kelompok = Kelompok::with('user')
-            ->where('kelompok', $userGroup)
-            ->where('tahun_ajaran', $tahunAjaran)
-            ->where('nama_proyek', $proyek)
-            ->where('user_id', '!=', $userId)
-            ->get();
-
-        $filteredKelompok = $kelompok->filter(function ($member) use ($userId, $totalQuestions) {
-            $completedAnswers = AnswersPeer::where('user_id', $userId)
-                ->where('peer_id', $member->user_id)
-                ->count();
-
-            return $completedAnswers < $totalQuestions;
-        });
-
-        Log::info('Query untuk getKelompokByUser', [
-            'total_questions' => $totalQuestions,
-            'original_members' => $kelompok->count(),
-            'filtered_members' => $filteredKelompok->count(),
-        ]);
-
-        if ($filteredKelompok->isEmpty()) {
-            Log::info('Tidak ada anggota kelompok yang tersisa untuk dinilai', [
-                'user_id' => $userId,
-                'tahun_ajaran' => $tahunAjaran,
-                'proyek' => $proyek
+        } catch (\Exception $e) {
+            Log::error('Error in getDataPeer:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching peer assessments: ' . $e->getMessage()
+            ], 500);
         }
-
-        return response()->json($filteredKelompok->values());
     }
-
-    public function searchByNim(Request $request)
+    public function checkData()
     {
-        $nim = $request->query('nim');
-        $user = User::where('nim', $nim)->first();
+        $assessments = Assessment::where('type', 'peerAssessment')->get();
+        $groups = Group::all();
+        $projects = Project::whereHas('assessments', function($query) {
+            $query->where('type', 'peerAssessment');
+        })->get();
 
-        if ($user) {
-            return response()->json(['user_id' => $user->id]);
-        } else {
-            return response()->json(['error' => 'User not found'], 404);
-        }
+        return response()->json([
+            'assessments_count' => $assessments->count(),
+            'groups_count' => $groups->count(),
+            'projects_with_peer_assessments' => $projects->count(),
+            'sample_assessment' => $assessments->first(),
+            'sample_group' => $groups->first(),
+            'sample_project' => $projects->first(),
+        ]);
     }
+
 }

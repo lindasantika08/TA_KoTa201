@@ -41,10 +41,10 @@ export default {
         const groupedAssessments = computed(() => {
             const groups = {};
             props.assessments.forEach((assessment) => {
-                if (!groups[assessment.aspek]) {
-                    groups[assessment.aspek] = [];
+                if (!groups[assessment.aspect]) {
+                    groups[assessment.aspect] = [];
                 }
-                groups[assessment.aspek].push(assessment);
+                groups[assessment.aspect].push(assessment);
             });
             return groups;
         });
@@ -53,8 +53,8 @@ export default {
             try {
                 const response = await axios.get("/api/get-question-id", {
                     params: {
-                        tahun_ajaran: props.tahunAjaran,
-                        nama_proyek: props.namaProyek,
+                        batch_year: props.tahunAjaran,
+                        project_name: props.namaProyek,
                     },
                 });
 
@@ -122,14 +122,14 @@ export default {
                             </button>
                         </div>
                         <div class="mt-6 space-y-8">
-                            <div v-for="(group, aspek) in groupedAssessments" :key="aspek">
-                                <Card :title="aspek" :description="'Total Pertanyaan: ' + group.length">
+                            <div v-for="(group, aspect) in groupedAssessments" :key="aspect">
+                                <Card :title="aspect" :description="'Total Pertanyaan: ' + group.length">
                                     <template #actions>
                                         <div>
                                             <div v-for="(assessment, index) in group" :key="assessment.id" class="mt-4">
                                                 <h3 class="text-lg font-semibold mb-2">
                                                     {{ index + 1 }}.
-                                                    {{ assessment.pertanyaan }}
+                                                    {{ assessment.question }}
                                                 </h3>
                                                 <h4 class="text-sm text-gray-600">
                                                     {{ assessment.kriteria }}

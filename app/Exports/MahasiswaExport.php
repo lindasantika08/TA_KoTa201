@@ -28,7 +28,7 @@ class MahasiswaExport implements FromCollection, WithHeadings, WithTitle, WithSt
     {
         // Get the classroom for the specified prodi and batch year
         $classroom = ClassRoom::where('prodi_id', $this->prodiId)
-            ->where('batch_year', $this->batchYear)
+            ->where('angkatan', $this->batchYear)
             ->with(['prodi.major', 'prodi'])
             ->first();
 
@@ -36,7 +36,7 @@ class MahasiswaExport implements FromCollection, WithHeadings, WithTitle, WithSt
             // Get existing students data
             $existingData = Mahasiswa::whereHas('classRoom', function ($query) {
                     $query->where('prodi_id', $this->prodiId)
-                          ->where('batch_year', $this->batchYear);
+                          ->where('angkatan', $this->batchYear);
                 })
                 ->with(['user', 'classRoom.prodi.major'])
                 ->whereHas('user', function ($query) {
@@ -53,7 +53,7 @@ class MahasiswaExport implements FromCollection, WithHeadings, WithTitle, WithSt
                         'no' => $index + 1,
                         'jurusan' => $mahasiswa->classRoom->prodi->major->major_name ?? '',
                         'prodi' => $mahasiswa->classRoom->prodi->prodi_name ?? '',
-                        'angkatan' => $mahasiswa->classRoom->batch_year ?? '',
+                        'angkatan' => $mahasiswa->classRoom->angkatan ?? '',
                         'class' => $mahasiswa->classRoom->class_name ?? '',
                         'name' => $mahasiswa->user->name ?? '',
                         'nim' => $mahasiswa->nim ?? '',

@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('answers', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('mahasiswa_id')->constrained('mahasiswa')->nullable();
+            $table->foreignUuid('mahasiswa_id')->nullable()->constrained('mahasiswa');
             $table->foreignUuid('question_id')->constrained('assessment');
-            $table->foreignUuid('dosen_id')->constrained('dosen')->nullable();
+            $table->foreignUuid('dosen_id')->nullable()->constrained('dosen');
             $table->string('answer');
             $table->integer('score');
             $table->string('status')->default('pending');

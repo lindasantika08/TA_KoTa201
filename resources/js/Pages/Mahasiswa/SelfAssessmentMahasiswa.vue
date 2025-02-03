@@ -66,8 +66,6 @@ export default {
     },
     computed: {
         currentQuestion() {
-            console.log('Current question index:', this.currentQuestionIndex);
-            console.log('Current question:', this.questions[this.currentQuestionIndex]);
             return this.questions[this.currentQuestionIndex] || null;
         },
         canSubmitAll() {
@@ -80,17 +78,12 @@ export default {
                         savedAnswer.score !== null;
                 });
         },
-        currentProgress() {
-            const answered = Object.keys(this.temporaryAnswers).length;
-            return {
-                answered,
-                total: this.questions.length,
-                isComplete: answered === this.questions.length
-            };
-        },
     },
     async created() {
-        console.log('Component created - starting fetch');
+        const savedTemp = localStorage.getItem('temporaryAnswers');
+        if (savedTemp) {
+            this.temporaryAnswers = JSON.parse(savedTemp);
+        }
         await this.fetchQuestions();
         await this.fetchStudentsInfo();
         await this.loadExistingAnswer();
@@ -107,11 +100,11 @@ export default {
                 console.log('Nama Proyek:', this.namaProyek);
 
                 const params = {
-                    tahun_ajaran: this.tahunAjaran,
-                    nama_proyek: this.namaProyek
+                    batch_year: this.tahunAjaran,
+                    project_name: this.namaProyek
                 };
 
-                const response = await axios.get('/api/questions-dosen', { params });
+                const response = await axios.get('/api/questions', { params });
 
                 console.log('API Response:', response);
 
@@ -148,44 +141,43 @@ export default {
             console.log('Score set to:', value);
         },
 
-        submitAnswer() {
-            if (!this.currentQuestion) {
-                console.log('No current question available');
-                return;
-            }
+        async submitAnswer() {
+            if (!this.currentQuestion) return;
 
             if (!this.score) {
                 alert('Silakan pilih nilai terlebih dahulu');
                 return;
             }
 
-            console.log('Submitting answer for question:', this.currentQuestion.id);
-
-            const payload = {
-                question_id: this.currentQuestion.id,
-                answer: this.answer,
-                score: this.score,
-                status: 'submitted'
-            };
-
-            axios.post('/api/save-answer', payload)
-                .then((response) => {
-                    console.log('Answer saved:', response);
-                    alert(response.data.message);
-                    if (response.data.message === 'Answer saved successfully') {
-                        this.nextQuestion();
-                        this.score = null;
-                        this.answer = '';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error saving answer:', error);
-                    alert('Gagal menyimpan jawaban. Silakan coba lagi.');
+            try {
+                const response = await axios.post('/api/save-answer-mhs', {
+                    answers: [{
+                        question_id: this.currentQuestion.id,
+                        answer: this.answer,
+                        score: this.score,
+                        status: 'submitted'
+                    }]
                 });
+
+                if (response.data.message.includes('successfully')) {
+                    delete this.temporaryAnswers[this.currentQuestion.id];
+                    localStorage.setItem('temporaryAnswers', JSON.stringify(this.temporaryAnswers));
+
+                    alert(response.data.message);
+
+                    if (this.currentQuestionIndex < this.questions.length - 1) {
+                        this.currentQuestionIndex++;
+                        await this.loadExistingAnswer();
+                    }
+                }
+            } catch (error) {
+                console.error('Error saving answer:', error);
+                const errorMessage = error.response?.data?.message || 'Gagal menyimpan jawaban. Silakan coba lagi.';
+                alert(errorMessage);
+            }
         },
         async nextQuestion() {
             await this.saveTemporaryAnswer();
-
             if (this.currentQuestionIndex < this.questions.length - 1) {
                 this.currentQuestionIndex++;
                 await this.loadExistingAnswer();
@@ -201,18 +193,19 @@ export default {
         async loadExistingAnswer() {
             if (!this.currentQuestion) return;
 
-            const tempAnswer = this.temporaryAnswers[this.currentQuestion.id];
-            if (tempAnswer) {
-                this.answer = tempAnswer.answer;
-                this.score = tempAnswer.score;
-                return;
-            }
-
             try {
-                const response = await axios.get(`/api/get-answer/${this.currentQuestion.id}`);
-                if (response.data) {
-                    this.answer = response.data.answer || '';
-                    this.score = response.data.score || null;
+                const response = await axios.get(`/api/get-answer-mhs/${this.currentQuestion.id}`);
+
+                const tempAnswer = this.temporaryAnswers[this.currentQuestion.id];
+                if (tempAnswer) {
+                    this.answer = tempAnswer.answer;
+                    this.score = tempAnswer.score;
+                    return;
+                }
+
+                if (response.data && response.data.answer) {
+                    this.answer = response.data.answer;
+                    this.score = response.data.score;
                 } else {
                     this.answer = '';
                     this.score = null;
@@ -225,11 +218,13 @@ export default {
         },
         saveTemporaryAnswer() {
             if (this.currentQuestion) {
-                if (this.answer && this.answer.trim() !== '' && this.score !== null) {
+                if (this.answer || this.score) {
                     this.temporaryAnswers[this.currentQuestion.id] = {
                         answer: this.answer,
                         score: this.score
                     };
+
+                    localStorage.setItem('temporaryAnswers', JSON.stringify(this.temporaryAnswers));
                 }
             }
         },
@@ -242,10 +237,6 @@ export default {
         async handleSubmitAll() {
             this.saveTemporaryAnswer();
 
-            console.log('Temporary Answers:', this.temporaryAnswers);
-            console.log('Can Submit All:', this.canSubmitAll);
-            console.log('Questions:', this.questions);
-
             if (!this.canSubmitAll) {
                 alert('Mohon lengkapi semua jawaban terlebih dahulu');
                 return;
@@ -255,30 +246,19 @@ export default {
         },
 
         async submitAllAnswers() {
-            this.saveTemporaryAnswer();
-
             try {
-                this.questions.forEach(question => {
-                    if (!this.temporaryAnswers[question.id]) {
-                        this.temporaryAnswers[question.id] = {
-                            answer: this.answer,
-                            score: this.score
-                        };
-                    }
-                });
-
                 const allAnswers = this.questions.map(question => ({
                     question_id: question.id,
-                    answer: this.temporaryAnswers[question.id].answer,
-                    score: this.temporaryAnswers[question.id].score,
+                    answer: this.temporaryAnswers[question.id]?.answer || '',
+                    score: this.temporaryAnswers[question.id]?.score || null,
                     status: 'submitted'
                 }));
 
                 const response = await axios.post('/api/save-all-answers', { answers: allAnswers });
 
                 if (response.data.success) {
+                    this.clearFormFields();
                     alert('Semua jawaban berhasil disimpan!');
-                    this.temporaryAnswers = {};
                     this.$inertia.visit('/mahasiswa/assessment/self');
                 }
             } catch (error) {
@@ -289,6 +269,26 @@ export default {
                 this.showConfirmModal = false;
             }
         },
+
+        clearFormFields() {
+            this.answer = '';
+            this.score = null;
+            this.temporaryAnswers = {};
+            localStorage.removeItem('temporaryAnswers');
+        },
+
+        mounted() {
+            window.addEventListener('beforeunload', (event) => {
+                if (Object.keys(this.temporaryAnswers).length > 0) {
+                    event.preventDefault();
+                    event.returnValue = '';
+                }
+            });
+        },
+
+        beforeDestroy() {
+            window.removeEventListener('beforeunload');
+        }
 
     },
 
@@ -363,7 +363,7 @@ export default {
                             </div>
 
                             <div class="bg-white p-6 rounded-lg shadow-md">
-                                <p class="text-gray-700 mb-4">{{ currentQuestion.pertanyaan }}</p>
+                                <p class="text-gray-700 mb-4">{{ currentQuestion.question }}</p>
                                 <div class="score-container mt-4">
                                     <div class="slider-container">
                                         <div class="track"></div>
@@ -400,7 +400,7 @@ export default {
                                         Save Answer
                                     </button>
 
-                                    <button v-if="currentQuestionIndex === questions.length-1" type="button"
+                                    <button v-if="currentQuestionIndex === questions.length - 1" type="button"
                                         @click="handleSubmitAll" :disabled="isSubmitting"
                                         class="px-4 py-2 bg-green-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed">
                                         {{ isSubmitting ? 'Mengirim...' : 'Send' }}

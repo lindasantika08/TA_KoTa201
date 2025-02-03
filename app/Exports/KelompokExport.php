@@ -17,12 +17,15 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
     protected $tahunAjaran;
     protected $namaProyek;
     protected $semester;
+    protected $angkatan;
+    
 
-    public function __construct($tahunAjaran, $namaProyek, $semester)
+    public function __construct($tahunAjaran, $namaProyek, $semester, $angkatan)
     {
         $this->tahunAjaran = $tahunAjaran;
         $this->namaProyek = $namaProyek;
         $this->semester = $semester;
+        $this->angkatan = $angkatan;
     }
 
     public function collection()
@@ -53,14 +56,17 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
             })
             ->leftJoin('users as dosen_user', 'dosen.user_id', '=', 'dosen_user.id')
             ->where('prodi.major_id', $projectMajor)
+            ->where('class_room.angkatan', $this->angkatan)
             ->select(
                 DB::raw('(@row_number:=@row_number + 1) AS no'),
                 DB::raw("'{$this->tahunAjaran}' as batch_year"),
                 DB::raw("'{$this->namaProyek}' as project_name"),
+                DB::raw("'{$this->angkatan}' as angkatan"),
                 'users.name as mahasiswa_name',
                 'mahasiswa.nim',
                 DB::raw('COALESCE(CONCAT(dosen_user.name, \' - \', dosen.kode_dosen), \'\') as dosen_manajer'),
-                DB::raw('COALESCE(groups.`group`, \'\') as kelompok')
+                DB::raw('COALESCE(groups.`group`, \'\') as kelompok'),
+                
             )
             ->from(DB::raw('(SELECT @row_number:=0) as r, mahasiswa'))
             ->get();
@@ -70,7 +76,7 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
 
     public function headings(): array
     {
-        return ['No', 'Tahun Ajaran', 'Proyek', 'Nama', 'NIM', 'Dosen Manajer', 'Kelompok'];
+        return ['No', 'Tahun Ajaran', 'Proyek', 'Angkatan', 'Nama', 'NIM', 'Dosen Manajer', 'Kelompok'];
     }
 
     public function registerEvents(): array
@@ -103,14 +109,14 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
                     ->setFormula1('"' . implode(',', array_unique($dosenList)) . '"');
 
                 for ($row = 2; $row <= $lastRow; $row++) {
-                    $worksheet->getCell('F' . $row)->setDataValidation(clone $validation);
+                    $worksheet->getCell('G' . $row)->setDataValidation(clone $validation);
                 }
 
-                $worksheet->getStyle('A1:G' . $lastRow)->getBorders()->getAllBorders()->setBorderStyle('thin');
-                $worksheet->getStyle('A1:G1')->getFont()->setBold(true);
-                $worksheet->getStyle('A1:G1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $worksheet->getStyle('A1:H' . $lastRow)->getBorders()->getAllBorders()->setBorderStyle('thin');
+                $worksheet->getStyle('A1:H1')->getFont()->setBold(true);
+                $worksheet->getStyle('A1:H1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
                 $worksheet->getStyle('A2:A' . $lastRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-                $worksheet->getStyle('B2:G' . $lastRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+                $worksheet->getStyle('B2:H' . $lastRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
             }
         ];
     }

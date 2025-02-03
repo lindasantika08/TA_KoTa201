@@ -37,16 +37,16 @@ class UserManagementController extends Controller
     public function getMahasiswa(Request $request)
     {
         // Ambil parameter dari request
-        $angkatan = $request->get('batch_year');
+        $angkatan = $request->get('angkatan');
         $class = $request->get('class_name');
     
         // Mulai query untuk mengambil data mahasiswa
         $query = Mahasiswa::with(['classRoom', 'user']);
     
-        // Filter berdasarkan angkatan (batch_year)
+        // Filter berdasarkan angkatan (angkatan)
         if ($angkatan) {
             $query->whereHas('classRoom', function ($q) use ($angkatan) {
-                $q->where('batch_year', $angkatan);
+                $q->where('angkatan', $angkatan);
             });
         }
     
@@ -236,12 +236,12 @@ class UserManagementController extends Controller
 
     public function getAngkatan()
     {
-        // Ambil batch_year yang unik berdasarkan mahasiswa dengan role 'mahasiswa'
+        // Ambil angkatan yang unik berdasarkan mahasiswa dengan role 'mahasiswa'
         $angkatan = Mahasiswa::join('users', 'users.id', '=', 'mahasiswa.user_id') // Join dengan tabel users
             ->join('class_room', 'class_room.id', '=', 'mahasiswa.class_id') // Join dengan tabel class_room
             ->where('users.role', 'mahasiswa') // Pastikan role adalah 'mahasiswa'
             ->distinct()
-            ->pluck('class_room.batch_year'); // Ambil batch_year dari class_room
+            ->pluck('class_room.angkatan'); // Ambil angkatan dari class_room
     
         return response()->json($angkatan);
     }

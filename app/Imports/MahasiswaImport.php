@@ -44,7 +44,7 @@ class MahasiswaImport implements ToModel, WithHeadingRow, WithBatchInserts
             $classRoom = ClassRoom::firstOrCreate([
                 'class_name' => $row['kelas'],
                 'prodi_id' => $prodi->id,
-                'batch_year' => $row['angkatan']
+                'angkatan' => $row['angkatan']
             ]);
 
             // Cek apakah user sudah ada

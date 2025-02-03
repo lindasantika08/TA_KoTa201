@@ -51,9 +51,9 @@
                 </button>
               </template>
 
-              <!-- Menampilkan Angkatan (batch_year) -->
-              <template #column-batch_year="{ item }">
-                {{ item.class_room.batch_year }}
+              <!-- Menampilkan Angkatan (angkatan) -->
+              <template #column-angkatan="{ item }">
+                {{ item.class_room.angkatan }}
               </template>
 
               <!-- Menampilkan Kelas (class_name) -->
@@ -115,7 +115,7 @@ export default {
       users: [],
       headers: [
         { key: "no", label: "No" },
-        { key: "batch_year", label: "Angkatan" },
+        { key: "angkatan", label: "Angkatan" },
         { key: "class", label: "Kelas" },
         { key: "name", label: "Nama" },
         { key: "nim", label: "NIM" },
@@ -138,7 +138,7 @@ export default {
       try {
         const response = await axios.get("/api/get-mahasiswa", {
           params: {
-            batch_year: this.selectedAngkatan,
+            angkatan: this.selectedAngkatan,
             class_name: this.selectedClass,
           },
         });

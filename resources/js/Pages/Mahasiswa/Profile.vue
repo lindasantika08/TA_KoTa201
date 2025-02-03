@@ -72,23 +72,34 @@
             <div class="flex justify-between items-center mb-4">
               <h2 class="text-lg font-semibold">Identitas Diri</h2>
               <button
-                class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+                @click="handleEditSave"
+                class="px-4 py-2 rounded-lg"
+                :class="
+                  isEditMode
+                    ? 'bg-green-500 hover:bg-green-600'
+                    : 'bg-blue-500 hover:bg-blue-600'
+                "
               >
-                Edit
+                <span class="text-white">{{
+                  isEditMode ? "Simpan" : "Edit"
+                }}</span>
               </button>
             </div>
 
             <!-- Data Identitas Mahasiswa -->
-            <div class="grid grid-cols-1 gap-4">
+            <form
+              @submit.prevent="handleEditSave"
+              class="grid grid-cols-1 gap-4"
+            >
               <div>
                 <label class="block text-sm font-medium text-gray-700"
                   >Nama Lengkap</label
                 >
                 <input
+                  v-model="formData.nama"
                   type="text"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
-                  :value="namaMahasiswa"
-                  readonly
+                  :class="inputClass"
+                  :readonly="!isEditMode"
                 />
               </div>
 
@@ -97,10 +108,10 @@
                   >NIM</label
                 >
                 <input
+                  v-model="formData.nim"
                   type="text"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
-                  :value="nimMahasiswa"
-                  readonly
+                  :class="inputClass"
+                  :readonly="!isEditMode"
                 />
               </div>
 
@@ -109,10 +120,10 @@
                   >Prodi</label
                 >
                 <input
+                  v-model="formData.prodi"
                   type="text"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
-                  :value="prodiMahasiswa"
-                  readonly
+                  :class="inputClass"
+                  :readonly="!isEditMode"
                 />
               </div>
 
@@ -121,10 +132,10 @@
                   >Jurusan</label
                 >
                 <input
+                  v-model="formData.jurusan"
                   type="text"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
-                  :value="jurusanMahasiswa"
-                  readonly
+                  :class="inputClass"
+                  :readonly="!isEditMode"
                 />
               </div>
 
@@ -133,10 +144,10 @@
                   >Email</label
                 >
                 <input
+                  v-model="formData.email"
                   type="email"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
-                  :value="emailMahasiswa"
-                  readonly
+                  :class="inputClass"
+                  :readonly="!isEditMode"
                 />
               </div>
 
@@ -145,13 +156,13 @@
                   >Telepon</label
                 >
                 <input
+                  v-model="formData.telepon"
                   type="tel"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
-                  :value="teleponMahasiswa"
-                  readonly
+                  :class="inputClass"
+                  :readonly="!isEditMode"
                 />
               </div>
-            </div>
+            </form>
           </Card>
         </div>
       </main>
@@ -178,14 +189,27 @@ export default {
     return {
       breadcrumbs: [{ text: "Profile", href: "/Mahasiswa/profile" }],
       isDropdownVisible: false,
+      isEditMode: false,
       profileImage: "", // Ganti dengan URL gambar asli jika ada
-      namaMahasiswa: "",
-      nimMahasiswa: "",
-      prodiMahasiswa: "",
-      jurusanMahasiswa: "",
-      emailMahasiswa: "",
-      teleponMahasiswa: "",
+      formData: {
+        nama: "",
+        nim: "",
+        prodi: "",
+        jurusan: "",
+        email: "",
+        telepon: "",
+      },
+      originalData: null,
     };
+  },
+  computed: {
+    inputClass() {
+      return {
+        "w-full px-3 py-2 border rounded-md": true,
+        "bg-white border-gray-300": this.isEditMode,
+        "bg-gray-100 border-gray-300": !this.isEditMode,
+      };
+    },
   },
   mounted() {
     this.fetchProfile(); // Pastikan profil diambil dulu
@@ -195,32 +219,55 @@ export default {
       axios
         .get("/api/get-profile") // Endpoint API untuk mendapatkan data profil
         .then((response) => {
-          // Set data yang didapat dari API
           const profileData = response.data;
-          this.namaMahasiswa = profileData.nama;
-          this.nimMahasiswa = profileData.nim;
-          this.prodiMahasiswa = profileData.prodi;
-          this.jurusanMahasiswa = profileData.jurusan;
-          this.emailMahasiswa = profileData.email;
-          this.teleponMahasiswa = profileData.telepon || ""; // Atur telepon jika ada
-          this.profileImage = profileData.photo || ""; // Update foto profil
-          console.log("Response dari API:", response.data);
+          this.formData = {
+            nama: profileData.nama,
+            nim: profileData.nim,
+            prodi: profileData.prodi,
+            jurusan: profileData.jurusan,
+            email: profileData.email,
+            telepon: profileData.telepon || "",
+          };
+          this.originalData = { ...this.formData }; // Simpan salinan data asli
+          this.profileImage = profileData.photo || "";
         })
         .catch((error) => {
-          console.error("Error fetching profile data:", error);
+          console.error("Error mengambil data profil:", error);
         });
     },
+    handleEditSave() {
+      if (this.isEditMode) {
+        // Mode Simpan
+        axios
+          .put("/api/mahasiswa/update-profile", this.formData)
+          .then((response) => {
+            alert("Data berhasil disimpan!");
+            this.originalData = { ...this.formData }; // Update data asli
+            this.isEditMode = false;
+          })
+          .catch((error) => {
+            alert("Gagal menyimpan data. Silakan coba lagi.");
+            console.error("Error menyimpan data:", error);
+          });
+      } else {
+        // Mode Edit
+        this.isEditMode = true;
+      }
+    },
+    // Jika user membatalkan edit
+    cancelEdit() {
+      this.formData = { ...this.originalData }; // Kembalikan ke data asli
+      this.isEditMode = false;
+    },
     toggleDropdown() {
-      // Jika tidak ada foto, buka file input untuk memilih foto baru
       if (!this.profileImage) {
         this.openFileInput();
       } else {
-        // Jika ada foto, tampilkan dropdown
         this.isDropdownVisible = !this.isDropdownVisible;
       }
     },
     openFileInput() {
-      this.$refs.fileInput.click(); 
+      this.$refs.fileInput.click();
       this.isDropdownVisible = false;
     },
     handleFileUpload(event) {
@@ -236,7 +283,7 @@ export default {
             },
           })
           .then((response) => {
-            const baseUrl = "/storage/"; 
+            const baseUrl = "/storage/";
             this.profileImage = baseUrl + response.data.path;
             this.isDropdownVisible = false;
           })
@@ -246,15 +293,19 @@ export default {
       }
     },
     deleteProfilePhoto() {
-      axios
-        .delete("/api/mahasiswa/delete-profile-photo")
-        .then(() => {
-          this.profileImage = ""; 
-          this.isDropdownVisible = false;
-        })
-        .catch((error) => {
-          console.error("Error deleting profile photo:", error);
-        });
+      if (confirm("Apakah Anda yakin ingin menghapus foto profil?")) {
+        axios
+          .delete("/api/mahasiswa/delete-profile-photo")
+          .then(() => {
+            this.profileImage = "";
+            this.isDropdownVisible = false;
+            alert("Foto profil berhasil dihapus!");
+          })
+          .catch((error) => {
+            alert("Gagal menghapus foto. Silakan coba lagi.");
+            console.error("Error menghapus foto:", error);
+          });
+      }
     },
   },
 };

@@ -4,6 +4,8 @@ import SidebarMahasiswa from "@/Components/SidebarMahasiswa.vue";
 import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
 import Breadcrumb from "@/Components/Breadcrumb.vue";
+import dayjs from 'dayjs';
+import { router } from '@inertiajs/vue3';
 
 export default {
   name: "MahasiswaReport",
@@ -55,16 +57,36 @@ export default {
 
     updateStats() {
       this.stats.totalProjects = this.projectList.length;
-      this.stats.activeProjects = this.projectList.filter(p => p.status === 'aktif').length;
-      this.stats.completedProjects = this.projectList.filter(p => p.status === 'nonaktif').length;
+      // Adjust status check based on your actual status values
+      this.stats.activeProjects = this.projectList.filter(p => p.status.toLowerCase() === 'active').length;
+      this.stats.completedProjects = this.projectList.filter(p => p.status.toLowerCase() === 'nonActive').length;
     },
 
+    
     handleProjectDetail(project) {
-      window.location.href = `/mahasiswa/project/report-detail?tahun_ajaran=${project.tahun_ajaran}&nama_proyek=${project.nama_proyek}&kelompok=${project.nama_kelompok}`;
+      console.log("Batch Year:", project.tahun_ajaran);
+      console.log("Project Name:", project.nama_proyek);
+      console.log("Group:", project.nama_kelompok);
+
+      // Navigasi menggunakan Vue Router dari Inertia.js
+      router.get(
+        "/mahasiswa/project-score-details",
+        {
+          tahun_ajaran: project.tahun_ajaran,
+          nama_proyek: project.nama_proyek,
+          kelompok: project.nama_kelompok,
+        },
+        {
+          preserveState: true,
+          preserveScroll: true,
+        }
+      );
     },
+
 
     getStatusColor(status) {
-      return status === 'aktif' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+      const normalizedStatus = status.toLowerCase();
+      return normalizedStatus === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
     }
   },
 

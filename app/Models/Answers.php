@@ -14,7 +14,6 @@ class Answers extends Model
     protected $table = 'answers';
 
     protected $fillable = [
-        'id',
         'mahasiswa_id',
         'question_id',
         'dosen_id',

@@ -15,6 +15,11 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Exports\AssessmentExport;
+use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Excel as ExcelType; // Jika perlu menggunakan tipe Excel
+use PhpOffice\PhpSpreadsheet\IOFactory; // Jika kamu perlu menggunakan IOFactory secara langsung
+
 
 
 class AssessmentController extends Controller
@@ -183,7 +188,7 @@ class AssessmentController extends Controller
         $batchYear = $request->query('batch_year');
         $projectName = $request->query('project_name');
 
-        $assessments = Assessment::with('typeCriteria') // Simplified eager loading
+        $assessments = Assessment::with('typeCriteria')
             ->select(
                 'assessment.id',
                 'assessment.type',
@@ -208,44 +213,6 @@ class AssessmentController extends Controller
             'projectName' => $projectName
         ]);
     }
-
-    public function getAssessmentsWithBobotPeer(Request $request)
-    {
-        $tahunAjaran = $request->query('tahun_ajaran');
-        $namaProyek = $request->query('nama_proyek');
-
-        $assessments = Assessment::join('type_criteria', function ($join) {
-            $join->on('assessment.aspek', '=', 'type_criteria.aspek')
-                ->on('assessment.kriteria', '=', 'type_criteria.kriteria');
-        })
-            ->select(
-                'assessment.id',
-                'assessment.type',
-                'assessment.pertanyaan',
-                'assessment.aspek',
-                'assessment.kriteria',
-                'type_criteria.bobot_1',
-                'type_criteria.bobot_2',
-                'type_criteria.bobot_3',
-                'type_criteria.bobot_4',
-                'type_criteria.bobot_5'
-            )
-            ->when($tahunAjaran, function ($query, $tahunAjaran) {
-                $query->where('assessment.tahun_ajaran', $tahunAjaran);
-            })
-            ->when($namaProyek, function ($query, $namaProyek) {
-                $query->where('assessment.nama_proyek', $namaProyek);
-            })
-            ->where('assessment.type', 'peerAssessment')
-            ->get();
-
-        return Inertia::render('Dosen/PeerAssessment', [
-            'assessments' => $assessments,
-            'tahunAjaran' => $tahunAjaran,
-            'namaProyek' => $namaProyek,
-        ]);
-    }
-
 
     public function CreteProyek()
     {

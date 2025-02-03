@@ -15,7 +15,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->string('class_name');
             $table->foreignUuid('prodi_id')->constrained('prodi');
-            $table->string('batch_year');
+            $table->string('angkatan');
             $table->softDeletes();
             $table->timestamps();
         });

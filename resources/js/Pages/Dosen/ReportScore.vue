@@ -4,21 +4,25 @@ import Sidebar from "@/Components/Sidebar.vue";
 import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
 import Breadcrumb from "@/Components/Breadcrumb.vue";
-import ApexChart from 'apexcharts';
-import VueApexCharts from 'vue3-apexcharts';
+import ApexChart from "apexcharts";
+import VueApexCharts from "vue3-apexcharts";
 
 export default {
   props: {
-    tahunAjaran: {
+    batch_year: {
       type: String,
       required: true,
     },
-    namaProyek: {
+    project_name: {
       type: String,
       required: true,
     },
     kelompok: {
       type: String,
+      required: true,
+    },
+    initialData: {
+      type: Object,
       required: true,
     },
   },
@@ -45,11 +49,13 @@ export default {
       return Object.keys(this.userAnalysis);
     },
     selectedUserData() {
-      return this.selectedUserId ? this.userAnalysis[this.selectedUserId] : null;
+      return this.selectedUserId
+        ? this.userAnalysis[this.selectedUserId]
+        : null;
     },
   },
   mounted() {
-    if (this.tahunAjaran && this.namaProyek && this.kelompok) {
+    if (this.batch_year && this.project_name && this.kelompok) {
       this.fetchQuestions();
       this.fetchPeerQuestions();
       this.fetchKelompokAnalysis();
@@ -62,30 +68,52 @@ export default {
       this.loading = true;
       this.error = null;
 
-      if (this.tahunAjaran && this.namaProyek && this.kelompok) {
+      console.log("Starting fetchKelompokAnalysis with params:", {
+        batch_year: this.batch_year,
+        project_name: this.project_name,
+        kelompok: this.kelompok,
+      });
+
+      if (this.batch_year && this.project_name && this.kelompok) {
         try {
+          console.log("Making API request to /api/report/kelompok/answers");
           const response = await axios.get("/api/report/kelompok/answers", {
             params: {
-              tahun_ajaran: this.tahunAjaran,
-              nama_proyek: this.namaProyek,
+              batch_year: this.batch_year,
+              project_name: this.project_name,
               kelompok: this.kelompok,
             },
           });
+          console.log("API Response received:", response);
+          console.log("Response data:", response.data);
+
           this.userAnalysis = response.data;
+          console.log("Updated userAnalysis:", this.userAnalysis);
         } catch (error) {
-          console.error("Gagal mengambil analisis:", error);
+          console.error("Gagal mengambil analisis. Error details:", {
+            message: error.message,
+            response: error.response?.data,
+            status: error.response?.status,
+            statusText: error.response?.statusText,
+          });
           this.error = "Gagal memuat data";
         } finally {
+          console.log("Request completed. Loading status:", this.loading);
           this.loading = false;
         }
       } else {
+        console.warn("Missing required parameters:", {
+          batch_year: this.batch_year,
+          project_name: this.project_name,
+          kelompok: this.kelompok,
+        });
         this.error = "Tahun Ajaran, Nama Proyek, atau Kelompok tidak valid";
         this.loading = false;
       }
     },
     async fetchQuestions() {
       try {
-        const response = await axios.get("/api/questions");
+        const response = await axios.get("/api/questions-dosen");
         this.questions = response.data;
       } catch (error) {
         console.error("Gagal memuat pertanyaan:", error);
@@ -93,25 +121,92 @@ export default {
     },
     async fetchPeerQuestions() {
       try {
-        const response = await axios.get("/api/questions-peer", {
+        const response = await axios.get("/api/questions-peer-dosen", {
           params: {
-            tahun_ajaran: this.tahunAjaran,
-            nama_proyek: this.namaProyek,
+            batch_year: this.batch_year,
+            project_name: this.project_name,
           },
         });
-        this.peerQuestions = response.data.reduce((acc, question) => {
-          acc[question.id] = question.pertanyaan;
-          return acc;
-        }, {});
+
+        // Simpan data mentah tanpa reactive proxy
+        this.peerQuestions = Object.fromEntries(
+          response.data.map((question) => [
+            question.id,
+            {
+              id: question.id,
+              pertanyaan: question.question, // Pastikan field ini sesuai dengan API
+              type: question.type,
+              aspect: question.aspect,
+              criteria: question.criteria,
+            },
+          ])
+        );
+
+        console.log("Stored peer questions:", this.peerQuestions);
       } catch (error) {
         console.error("Gagal memuat pertanyaan peer:", error);
       }
     },
-    getQuestionText(questionId) {
-      return this.questions[questionId] || "Pertanyaan tidak ditemukan";
-    },
+
     getPeerQuestionText(questionId) {
-      return this.peerQuestions[questionId] || "Pertanyaan tidak ditemukan";
+      // Pastikan questionId valid
+      if (!questionId) {
+        console.warn("Invalid questionId:", questionId);
+        return "Pertanyaan tidak ditemukan";
+      }
+
+      // Akses object langsung
+      const question = this.peerQuestions[questionId];
+      if (!question) {
+        console.warn("Question not found for ID:", questionId);
+        return "Pertanyaan tidak ditemukan";
+      }
+
+      // Pastikan mengakses field yang benar
+      return (
+        question.pertanyaan || question.question || "Pertanyaan tidak ditemukan"
+      );
+    },
+
+    groupPeerEvaluations(evaluatedByPeers) {
+      if (!evaluatedByPeers || !Array.isArray(evaluatedByPeers)) {
+        return [];
+      }
+
+      return evaluatedByPeers.map((group) => {
+        // Flatten evaluator structure
+        const evaluatorDetails = Object.values(
+          group.evaluated_by || {}
+        ).flatMap((evaluator) => {
+          if (evaluator.evaluated_by) {
+            return Object.values(evaluator.evaluated_by);
+          }
+          return [evaluator];
+        });
+
+        const names = evaluatorDetails.map((evaluator) => evaluator.name);
+
+        // Process answers dengan penanganan yang lebih baik
+        const processedAnswers = evaluatorDetails.flatMap((evaluator) =>
+          (evaluator.answers || []).map((answer) => {
+            const questionText = this.getPeerQuestionText(answer.question_id);
+
+            return {
+              ...answer,
+              evaluator_name: evaluator.name,
+              pertanyaan: questionText,
+            };
+          })
+        );
+
+        return {
+          aspek: group.aspek,
+          kriteria: group.kriteria,
+          names: names,
+          total_score: group.total_score,
+          answers: processedAnswers,
+        };
+      });
     },
     calculateTotalAverage(userId) {
       const userData = this.userAnalysis[userId];
@@ -132,18 +227,18 @@ export default {
     },
     calculateAverageSelfScores() {
       const userIds = Object.keys(this.userAnalysis);
-      
-      const allAspects = userIds.flatMap(userId => 
-        this.userAnalysis[userId].self_assessment || []
+
+      const allAspects = userIds.flatMap(
+        (userId) => this.userAnalysis[userId].self_assessment || []
       );
 
       const aspectGroups = allAspects.reduce((acc, aspect) => {
         const key = `${aspect.aspek}-${aspect.kriteria}`;
         if (!acc[key]) {
-          acc[key] = { 
-            aspek: aspect.aspek, 
-            kriteria: aspect.kriteria, 
-            scores: [] 
+          acc[key] = {
+            aspek: aspect.aspek,
+            kriteria: aspect.kriteria,
+            scores: [],
           };
         }
         if (aspect.total_score) {
@@ -152,12 +247,16 @@ export default {
         return acc;
       }, {});
 
-      return Object.values(aspectGroups).map(group => ({
+      return Object.values(aspectGroups).map((group) => ({
         aspek: group.aspek,
         kriteria: group.kriteria,
-        averageScore: group.scores.length > 0 
-          ? (group.scores.reduce((sum, score) => sum + score, 0) / group.scores.length).toFixed(2)
-          : "0.00"
+        averageScore:
+          group.scores.length > 0
+            ? (
+                group.scores.reduce((sum, score) => sum + score, 0) /
+                group.scores.length
+              ).toFixed(2)
+            : "0.00",
       }));
     },
     groupPeerEvaluations(evaluatedByPeers) {
@@ -166,21 +265,22 @@ export default {
       }
 
       return evaluatedByPeers.map((group) => {
-        const evaluatorDetails = Object.values(group.evaluated_by || {})
-          .flatMap(evaluator => {
-            if (evaluator.evaluated_by) {
-              return Object.values(evaluator.evaluated_by);
-            }
-            return [evaluator];
-          });
+        const evaluatorDetails = Object.values(
+          group.evaluated_by || {}
+        ).flatMap((evaluator) => {
+          if (evaluator.evaluated_by) {
+            return Object.values(evaluator.evaluated_by);
+          }
+          return [evaluator];
+        });
 
         const names = evaluatorDetails.map((evaluator) => evaluator.name);
 
-        const processedAnswers = evaluatorDetails.flatMap((evaluator) => 
+        const processedAnswers = evaluatorDetails.flatMap((evaluator) =>
           evaluator.answers.map((answer) => ({
             ...answer,
             evaluator_name: evaluator.name,
-            pertanyaan: this.getPeerQuestionText(answer.question_id)
+            pertanyaan: this.getPeerQuestionText(answer.question_id),
           }))
         );
 
@@ -196,22 +296,26 @@ export default {
     calculateAnalysisScores(userData) {
       if (!userData.self_assessment || !userData.evaluated_by_peers) return [];
 
-      const analysisScores = userData.self_assessment.map(selfAspect => {
+      const analysisScores = userData.self_assessment.map((selfAspect) => {
         const peerEvaluations = userData.evaluated_by_peers.filter(
-          peer => peer.aspek === selfAspect.aspek
+          (peer) => peer.aspek === selfAspect.aspek
         );
-        
-        const averagePeerScore = peerEvaluations.length > 0
-          ? peerEvaluations.reduce((sum, peer) => sum + (peer.total_score || 0), 0) / peerEvaluations.length
-          : 0;
+
+        const averagePeerScore =
+          peerEvaluations.length > 0
+            ? peerEvaluations.reduce(
+                (sum, peer) => sum + (peer.total_score || 0),
+                0
+              ) / peerEvaluations.length
+            : 0;
 
         const selfScore = selfAspect.total_score || 0;
         const scoreDifference = selfScore - averagePeerScore;
 
         let status;
-        if (scoreDifference > 0) status = 'Over';
-        else if (scoreDifference < 0) status = 'Under';
-        else status = 'Match';
+        if (scoreDifference > 0) status = "Over";
+        else if (scoreDifference < 0) status = "Under";
+        else status = "Match";
 
         return {
           aspek: selfAspect.aspek,
@@ -219,7 +323,7 @@ export default {
           selfScore: selfScore.toFixed(2),
           averagePeerScore: averagePeerScore.toFixed(2),
           scoreDifference: scoreDifference.toFixed(2),
-          status: status
+          status: status,
         };
       });
 
@@ -227,152 +331,162 @@ export default {
     },
     preparePeerComparisonChartData(userData) {
       const analysisScores = this.calculateAnalysisScores(userData);
-      
+
       return {
         series: [
           {
-            name: 'Skor Sendiri',
-            data: analysisScores.map(score => parseFloat(score.selfScore))
+            name: "Skor Sendiri",
+            data: analysisScores.map((score) => parseFloat(score.selfScore)),
           },
           {
-            name: 'Rata-rata Peer',
-            data: analysisScores.map(score => parseFloat(score.averagePeerScore))
-          }
+            name: "Rata-rata Peer",
+            data: analysisScores.map((score) =>
+              parseFloat(score.averagePeerScore)
+            ),
+          },
         ],
         options: {
           chart: {
-            type: 'radar',
-            height: 350
+            type: "radar",
+            height: 350,
           },
-          labels: analysisScores.map(score => `${score.aspek} - ${score.kriteria}`),
+          labels: analysisScores.map(
+            (score) => `${score.aspek} - ${score.kriteria}`
+          ),
           plotOptions: {
             radar: {
               polygons: {
-                strokeColors: '#e8e8e8',
+                strokeColors: "#e8e8e8",
                 fill: {
-                  colors: ['#f7f7f7', '#fff']
-                }
-              }
-            }
+                  colors: ["#f7f7f7", "#fff"],
+                },
+              },
+            },
           },
-          colors: ['#FF4560', '#00E396'],
+          colors: ["#FF4560", "#00E396"],
           markers: {
             size: 4,
-            colors: ['#FF4560', '#00E396'],
-            strokeColors: '#fff',
+            colors: ["#FF4560", "#00E396"],
+            strokeColors: "#fff",
             strokeWidth: 2,
             hover: {
-              size: 7
-            }
+              size: 7,
+            },
           },
           tooltip: {
             y: {
               formatter: function (val) {
-                return val.toFixed(2)
-              }
-            }
+                return val.toFixed(2);
+              },
+            },
           },
           yaxis: {
             show: false,
             min: 0,
-            max: 5
+            max: 5,
           },
           xaxis: {
-            show: true
+            show: true,
           },
           fill: {
-            opacity: 0.4
+            opacity: 0.4,
           },
           title: {
-            text: 'Perbandingan Skor',
-            align: 'center'
+            text: "Perbandingan Skor",
+            align: "center",
           },
           legend: {
-            position: 'bottom',
-            horizontalAlign: 'center'
+            position: "bottom",
+            horizontalAlign: "center",
           },
-        }
+        },
       };
     },
     prepareSelfComparisonChartData(userData) {
-      const selfScores = userData.self_assessment 
-        ? userData.self_assessment.map(aspect => parseFloat(aspect.total_score || 0).toFixed(2))
+      const selfScores = userData.self_assessment
+        ? userData.self_assessment.map((aspect) =>
+            parseFloat(aspect.total_score || 0).toFixed(2)
+          )
         : [];
-      
-      const averageSelfScores = this.calculateAverageSelfScores().map(score => parseFloat(score.averageScore));
 
-      const labels = userData.self_assessment 
-        ? userData.self_assessment.map(aspect => `${aspect.aspek} - ${aspect.kriteria}`)
+      const averageSelfScores = this.calculateAverageSelfScores().map((score) =>
+        parseFloat(score.averageScore)
+      );
+
+      const labels = userData.self_assessment
+        ? userData.self_assessment.map(
+            (aspect) => `${aspect.aspek} - ${aspect.kriteria}`
+          )
         : [];
 
       return {
         series: [
           {
-            name: 'Skor Sendiri',
-            data: selfScores
+            name: "Skor Sendiri",
+            data: selfScores,
           },
           {
-            name: 'Rata-rata Self Kelompok',
-            data: averageSelfScores
-          }
+            name: "Rata-rata Self Kelompok",
+            data: averageSelfScores,
+          },
         ],
         options: {
           chart: {
-            type: 'radar',
-            height: 350
+            type: "radar",
+            height: 350,
           },
           labels: labels,
           plotOptions: {
             radar: {
               polygons: {
-                strokeColors: '#e8e8e8',
+                strokeColors: "#e8e8e8",
                 fill: {
-                  colors: ['#f7f7f7', '#fff']
-                }
-              }
-            }
+                  colors: ["#f7f7f7", "#fff"],
+                },
+              },
+            },
           },
-          colors: ['#FF4560', '#3B82F6'],
+          colors: ["#FF4560", "#3B82F6"],
           markers: {
             size: 4,
-            colors: ['#FF4560', '#3B82F6'],
-            strokeColors: '#fff',
+            colors: ["#FF4560", "#3B82F6"],
+            strokeColors: "#fff",
             strokeWidth: 2,
             hover: {
-              size: 7
-            }
+              size: 7,
+            },
           },
           tooltip: {
             y: {
               formatter: function (val) {
-                return val.toFixed(2)
-              }
-            }
+                return val.toFixed(2);
+              },
+            },
           },
           yaxis: {
             show: false,
             min: 0,
-            max: 5
+            max: 5,
           },
           xaxis: {
-            show: true
+            show: true,
           },
           fill: {
-            opacity: 0.4
+            opacity: 0.4,
           },
           title: {
-            text: 'Perbandingan Skor Self Assessment',
-            align: 'center'
+            text: "Perbandingan Skor Self Assessment",
+            align: "center",
           },
           legend: {
-            position: 'bottom',
-            horizontalAlign: 'center'
+            position: "bottom",
+            horizontalAlign: "center",
           },
-        }
+        },
       };
-    }
-  }
-}
+    },
+  },
+};
 </script>
 
 <template>
@@ -382,14 +496,19 @@ export default {
       <Navbar userName="Dosen" />
       <main class="p-6">
         <div class="mb-4">
-          <Breadcrumb :items="breadcrumbs" />
+          <Breadcrumb
+            :items="[
+              { text: 'Report', href: '/dosen/report' },
+              { text: `${kelompok}`, href: '#' },
+            ]"
+          />
         </div>
-        
+
         <div class="grid grid-cols-2 gap-4">
           <Card title="Detail Kelompok">
-            <div v-if="tahunAjaran && namaProyek && kelompok">
-              <p><strong>Tahun Ajaran:</strong> {{ tahunAjaran }}</p>
-              <p><strong>Nama Proyek:</strong> {{ namaProyek }}</p>
+            <div v-if="batch_year && project_name && kelompok">
+              <p><strong>Tahun Ajaran:</strong> {{ batch_year }}</p>
+              <p><strong>Nama Proyek:</strong> {{ project_name }}</p>
               <p><strong>Kelompok:</strong> {{ kelompok }}</p>
             </div>
             <div v-else>
@@ -398,14 +517,11 @@ export default {
           </Card>
 
           <Card title="Pilih Peserta">
-            <select 
-              v-model="selectedUserId" 
-              class="w-full p-2 border rounded"
-            >
+            <select v-model="selectedUserId" class="w-full p-2 border rounded">
               <option value="" disabled>Pilih Peserta</option>
-              <option 
-                v-for="(userData, userId) in userAnalysis" 
-                :key="userId" 
+              <option
+                v-for="(userData, userId) in userAnalysis"
+                :key="userId"
                 :value="userId"
               >
                 {{ userData.name }}
@@ -413,192 +529,523 @@ export default {
             </select>
           </Card>
 
-          <Card v-if="selectedUserData" title="Perbandingan Skor Peer" class="col-span-2">
-            <ApexChart 
+          <Card
+            v-if="selectedUserData"
+            title="Perbandingan Skor Peer"
+            class="col-span-2"
+          >
+            <ApexChart
               type="radar"
               height="350"
               :series="preparePeerComparisonChartData(selectedUserData).series"
-              :options="preparePeerComparisonChartData(selectedUserData).options"
+              :options="
+                preparePeerComparisonChartData(selectedUserData).options
+              "
             />
           </Card>
 
-          <Card v-if="selectedUserData" title="Perbandingan Skor Self Assessment" class="col-span-2">
-            <ApexChart 
+          <Card
+            v-if="selectedUserData"
+            title="Perbandingan Skor Self Assessment"
+            class="col-span-2"
+          >
+            <ApexChart
               type="radar"
               height="350"
               :series="prepareSelfComparisonChartData(selectedUserData).series"
-              :options="prepareSelfComparisonChartData(selectedUserData).options"
+              :options="
+                prepareSelfComparisonChartData(selectedUserData).options
+              "
             />
           </Card>
         </div>
-        
+
         <div v-if="loading" class="text-center mt-4">Memuat...</div>
         <div v-else-if="error" class="text-red-500 mt-4">{{ error }}</div>
         <div v-else-if="selectedUserData">
-          <Card 
-            :title="`Analisis Jawaban - ${selectedUserData.name}`" 
+          <Card
+            :title="`Analisis Jawaban - ${selectedUserData.name}`"
             class="mt-4"
           >
             <!-- Self Assessment Section -->
-            <div v-if="selectedUserData.self_assessment && selectedUserData.self_assessment.length">
-              <h3 class="font-bold mb-2">Self Assessment</h3>
-              <table class="w-full border-collapse">
-                <thead>
-                  <tr class="bg-gray-200">
-                    <th class="border p-2">Aspek</th>
-                    <th class="border p-2">Kriteria</th>
-                    <th class="border p-2">Skor Total</th>
-                    <th class="border p-2">Detail Pertanyaan</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(aspek, index) in selectedUserData.self_assessment" :key="index">
-                    <td class="border p-2">{{ aspek.aspek }}</td>
-                    <td class="border p-2">{{ aspek.kriteria }}</td>
-                    <td class="border p-2">
-                      {{ aspek.total_score ? aspek.total_score.toFixed(2) : "N/A" }}
-                    </td>
-                    <td class="border p-2">
-                      <table class="w-full">
-                        <thead>
-                          <tr>
-                            <th>Pertanyaan</th>
-                            <th>Skor</th>
-                            <th>Jawaban</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr v-for="pertanyaan in aspek.questions" :key="pertanyaan.question_id">
-                            <td>{{ pertanyaan.pertanyaan }}</td>
-                            <td>{{ pertanyaan.score || "N/A" }}</td>
-                            <td>{{ pertanyaan.answer || "-" }}</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <p v-else class="text-center">Tidak ada data analisis</p>
+            <div
+              v-if="
+                selectedUserData.self_assessment &&
+                selectedUserData.self_assessment.length
+              "
+            >
+              <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                <div class="bg-gradient-to-r from-blue-600 to-blue-700 p-4">
+                  <h3 class="text-white text-lg font-bold">Self Assessment</h3>
+                </div>
 
-            <!-- Peer Evaluation Section -->
-            <div class="mt-4">
-              <div class="flex items-center mb-2">
-                <h3 class="font-bold mr-2">Evaluasi dari Peer</h3>
-                <span class="text-gray-600">
-                  (Total Average: {{ calculateTotalAverage(selectedUserId) }})
-                </span>
-              </div>
-              
-              <div v-if="selectedUserData.evaluated_by_peers && selectedUserData.evaluated_by_peers.length">
-                <template 
-                  v-for="(peerGroup, index) in groupPeerEvaluations(selectedUserData.evaluated_by_peers)" 
-                  :key="index"
-                >
-                  <div class="bg-white shadow rounded-lg overflow-hidden mb-4">
-                    <div class="bg-gray-100 p-3 flex justify-between items-center">
-                      <div>
-                        <p class="font-semibold text-gray-700">
-                          <span class="font-bold">Aspek:</span> {{ peerGroup.aspek }}
-                        </p>
-                        <p class="text-gray-600">
-                          <span class="font-bold">Kriteria:</span> {{ peerGroup.kriteria }}
-                        </p>
-                      </div>
-                      <div class="text-right">
-                        <p class="text-sm text-gray-600">
-                          <span class="font-bold">Total Skor:</span> 
-                          {{ peerGroup.total_score ? peerGroup.total_score.toFixed(2) : 'N/A' }}
-                        </p>
-                        <p class="text-sm text-gray-500">
-                          Dievaluasi Oleh: {{ peerGroup.names.join(", ") }}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div class="overflow-x-auto">
-                      <table class="w-full">
-                        <thead class="bg-gray-200">
-                          <tr>
-                            <th class="p-3 text-left">Penilai</th>
-                            <th class="p-3 text-left">Pertanyaan</th>
-                            <th class="p-3 text-center">Skor</th>
-                            <th class="p-3 text-left">Jawaban</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr
-                            v-for="(answer, idx) in peerGroup.answers"
-                            :key="idx"
-                            class="border-b hover:bg-gray-50 transition-colors"
+                <div class="p-4">
+                  <div
+                    v-for="(aspek, index) in selectedUserData.self_assessment"
+                    :key="index"
+                    class="mb-6 last:mb-0"
+                  >
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                      <!-- Aspek Header -->
+                      <div class="flex justify-between items-center mb-4">
+                        <div>
+                          <h4 class="text-lg font-semibold text-gray-800">
+                            {{ aspek.aspek }}
+                          </h4>
+                          <p class="text-sm text-gray-600">
+                            {{ aspek.kriteria }}
+                          </p>
+                        </div>
+                        <div class="text-right">
+                          <div class="text-sm text-gray-600">Total Skor</div>
+                          <div
+                            class="text-2xl font-bold"
+                            :class="{
+                              'text-green-600': aspek.total_score >= 4,
+                              'text-yellow-600':
+                                aspek.total_score >= 2.5 &&
+                                aspek.total_score < 4,
+                              'text-red-600': aspek.total_score < 2.5,
+                            }"
                           >
-                            <td class="p-3 text-sm">
-                              <span class="font-medium text-gray-700">
-                                {{ answer.evaluator_name }}
-                              </span>
-                            </td>
-                            <td class="p-3 text-sm text-gray-600">
-                              {{ answer.pertanyaan }}
-                            </td>
-                            <td class="p-3 text-center">
-                              <span 
-                                :class="[
-                                  'px-2 py-1 rounded text-xs font-semibold',
-                                  answer.score >= 4 ? 'bg-green-100 text-green-800' : 
-                                  answer.score >= 2 ? 'bg-yellow-100 text-yellow-800' : 
-                                  'bg-red-100 text-red-800'
-                                ]"
+                            {{
+                              aspek.total_score
+                                ? aspek.total_score.toFixed(2)
+                                : "N/A"
+                            }}
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Questions Table -->
+                      <div
+                        class="bg-white rounded-lg border border-gray-200 overflow-hidden"
+                      >
+                        <table class="w-full">
+                          <thead>
+                            <tr class="bg-gray-50 border-b border-gray-200">
+                              <th
+                                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/2"
                               >
-                                {{ answer.score || 'N/A' }}
-                              </span>
-                            </td>
-                            <td class="p-3 text-sm text-gray-700">
-                              {{ answer.answer || '-' }}
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
+                                Pertanyaan
+                              </th>
+                              <th
+                                class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24"
+                              >
+                                Skor
+                              </th>
+                              <th
+                                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                              >
+                                Jawaban
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody class="divide-y divide-gray-200">
+                            <tr
+                              v-for="(pertanyaan, qIndex) in aspek.questions"
+                              :key="qIndex"
+                              class="hover:bg-gray-50 transition-colors"
+                            >
+                              <td class="px-4 py-3 text-sm text-gray-900">
+                                {{ pertanyaan.pertanyaan }}
+                              </td>
+                              <td class="px-4 py-3 text-center">
+                                <span
+                                  class="inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-medium"
+                                  :class="{
+                                    'bg-green-100 text-green-800':
+                                      pertanyaan.score >= 4,
+                                    'bg-yellow-100 text-yellow-800':
+                                      pertanyaan.score >= 2.5 &&
+                                      pertanyaan.score < 4,
+                                    'bg-red-100 text-red-800':
+                                      pertanyaan.score < 2.5,
+                                    'bg-gray-100 text-gray-800':
+                                      !pertanyaan.score,
+                                  }"
+                                >
+                                  {{ pertanyaan.score || "N/A" }}
+                                </span>
+                              </td>
+                              <td class="px-4 py-3 text-sm text-gray-500">
+                                <div class="max-w-xl">
+                                  {{ pertanyaan.answer || "-" }}
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   </div>
-                </template>
+                </div>
               </div>
-              <p v-else class="text-center text-gray-500">Tidak ada data evaluasi peer</p>
+            </div>
+            <p v-else class="text-center text-gray-500 p-4">
+              Tidak ada data self assessment
+            </p>
+
+            <!-- Peer Evaluation Section -->
+            <div class="mt-6">
+              <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                <div
+                  class="bg-gradient-to-r from-purple-600 to-purple-700 p-4 flex justify-between items-center"
+                >
+                  <h3 class="text-white text-lg font-bold">
+                    Evaluasi dari Peer
+                  </h3>
+                  <div class="bg-white bg-opacity-20 rounded-lg px-4 py-2">
+                    <span class="text-white text-sm">Total Average: </span>
+                    <span class="text-white font-bold">{{
+                      calculateTotalAverage(selectedUserId)
+                    }}</span>
+                  </div>
+                </div>
+
+                <div class="p-4">
+                  <div
+                    v-if="
+                      selectedUserData.evaluated_by_peers &&
+                      selectedUserData.evaluated_by_peers.length
+                    "
+                  >
+                    <div
+                      v-for="(peerGroup, index) in groupPeerEvaluations(
+                        selectedUserData.evaluated_by_peers
+                      )"
+                      :key="index"
+                      class="mb-6 last:mb-0"
+                    >
+                      <div class="bg-gray-50 p-4 rounded-lg">
+                        <!-- Peer Group Header -->
+                        <div
+                          class="flex flex-wrap md:flex-nowrap justify-between items-start gap-4 mb-4"
+                        >
+                          <div>
+                            <h4 class="text-lg font-semibold text-gray-800">
+                              {{ peerGroup.aspek }}
+                            </h4>
+                            <p class="text-sm text-gray-600">
+                              {{ peerGroup.kriteria }}
+                            </p>
+                            <div class="mt-2 flex flex-wrap gap-2">
+                              <span
+                                v-for="(name, nameIdx) in peerGroup.names"
+                                :key="nameIdx"
+                                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
+                              >
+                                {{ name }}
+                              </span>
+                            </div>
+                          </div>
+                          <div class="text-right flex-shrink-0">
+                            <div class="text-sm text-gray-600">Total Skor</div>
+                            <div
+                              class="text-2xl font-bold"
+                              :class="{
+                                'text-green-600': peerGroup.total_score >= 4,
+                                'text-yellow-600':
+                                  peerGroup.total_score >= 2.5 &&
+                                  peerGroup.total_score < 4,
+                                'text-red-600': peerGroup.total_score < 2.5,
+                              }"
+                            >
+                              {{
+                                peerGroup.total_score
+                                  ? peerGroup.total_score.toFixed(2)
+                                  : "N/A"
+                              }}
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Answers Table -->
+                        <div
+                          class="bg-white rounded-lg border border-gray-200 overflow-hidden"
+                        >
+                          <table class="w-full">
+                            <thead>
+                              <tr class="bg-gray-50 border-b border-gray-200">
+                                <th
+                                  class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                >
+                                  Penilai
+                                </th>
+                                <th
+                                  class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                >
+                                  Pertanyaan
+                                </th>
+                                <th
+                                  class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24"
+                                >
+                                  Skor
+                                </th>
+                                <th
+                                  class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                >
+                                  Jawaban
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                              <tr
+                                v-for="(answer, idx) in peerGroup.answers"
+                                :key="idx"
+                                class="hover:bg-gray-50 transition-colors"
+                              >
+                                <td class="px-4 py-3">
+                                  <div
+                                    class="text-sm font-medium text-gray-900"
+                                  >
+                                    {{ answer.evaluator_name }}
+                                  </div>
+                                </td>
+                                <td class="px-4 py-3">
+                                  <div class="text-sm text-gray-900">
+                                    {{ answer.pertanyaan }}
+                                  </div>
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                  <span
+                                    class="inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-medium"
+                                    :class="{
+                                      'bg-green-100 text-green-800':
+                                        answer.score >= 4,
+                                      'bg-yellow-100 text-yellow-800':
+                                        answer.score >= 2.5 && answer.score < 4,
+                                      'bg-red-100 text-red-800':
+                                        answer.score < 2.5,
+                                      'bg-gray-100 text-gray-800':
+                                        !answer.score,
+                                    }"
+                                  >
+                                    {{ answer.score || "N/A" }}
+                                  </span>
+                                </td>
+                                <td class="px-4 py-3">
+                                  <div class="text-sm text-gray-500 max-w-xl">
+                                    {{ answer.answer || "-" }}
+                                  </div>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <p v-else class="text-center text-gray-500 p-4">
+                    Tidak ada data evaluasi peer
+                  </p>
+                </div>
+              </div>
             </div>
 
             <!-- Analysis Score Section -->
-            <div class="mt-4">
-              <h3 class="font-bold mb-2">Analysis Score</h3>
-              <table class="w-full border-collapse">
-                <thead class="bg-gray-200">
-                  <tr>
-                    <th class="border p-2">Aspek</th>
-                    <th class="border p-2">Kriteria</th>
-                    <th class="border p-2">Skor Total (Self)</th>
-                    <th class="border p-2">Average Skor (Peer)</th>
-                    <th class="border p-2">Selisih Skor</th>
-                    <th class="border p-2">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr 
-                    v-for="(score, index) in calculateAnalysisScores(selectedUserData)" 
-                    :key="index"
-                    :class="{
-                      'bg-green-100': score.status === 'Over',
-                      'bg-yellow-100': score.status === 'Match',
-                      'bg-red-100': score.status === 'Under'
-                    }"
-                  >
-                    <td class="border p-2">{{ score.aspek }}</td>
-                    <td class="border p-2">{{ score.kriteria }}</td>
-                    <td class="border p-2">{{ score.selfScore }}</td>
-                    <td class="border p-2">{{ score.averagePeerScore }}</td>
-                    <td class="border p-2">{{ score.scoreDifference }}</td>
-                    <td class="border p-2 font-bold">{{ score.status }}</td>
-                  </tr>
-                </tbody>
-              </table>
+            <!-- Analysis Score Section -->
+            <div class="mt-6">
+              <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                <div class="bg-gradient-to-r from-indigo-600 to-indigo-700 p-4">
+                  <h3 class="text-white text-lg font-bold">Analysis Score</h3>
+                </div>
+
+                <div class="p-4">
+                  <div class="bg-gray-50 p-4 rounded-lg">
+                    <!-- Score Summary Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                      <div
+                        class="bg-green-50 rounded-lg p-4 border border-green-200"
+                      >
+                        <div class="text-sm font-medium text-green-600 mb-1">
+                          Over Estimation
+                        </div>
+                        <div class="text-2xl font-bold text-green-700">
+                          {{
+                            calculateAnalysisScores(selectedUserData).filter(
+                              (s) => s.status === "Over"
+                            ).length
+                          }}
+                        </div>
+                        <div class="text-xs text-green-600 mt-1">
+                          Aspects where self-score More Then peer-score
+                        </div>
+                      </div>
+
+                      <div
+                        class="bg-yellow-50 rounded-lg p-4 border border-yellow-200"
+                      >
+                        <div class="text-sm font-medium text-yellow-600 mb-1">
+                          Matched Estimation
+                        </div>
+                        <div class="text-2xl font-bold text-yellow-700">
+                          {{
+                            calculateAnalysisScores(selectedUserData).filter(
+                              (s) => s.status === "Match"
+                            ).length
+                          }}
+                        </div>
+                        <div class="text-xs text-yellow-600 mt-1">
+                          Aspects where self-score Same peer-score
+                        </div>
+                      </div>
+
+                      <div
+                        class="bg-red-50 rounded-lg p-4 border border-red-200"
+                      >
+                        <div class="text-sm font-medium text-red-600 mb-1">
+                          Under Estimation
+                        </div>
+                        <div class="text-2xl font-bold text-red-700">
+                          {{
+                            calculateAnalysisScores(selectedUserData).filter(
+                              (s) => s.status === "Under"
+                            ).length
+                          }}
+                        </div>
+                        <div class="text-xs text-red-600 mt-1">
+                          Aspects where self-score Less Then peer-score
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Detailed Analysis Table -->
+                    <div
+                      class="bg-white rounded-lg border border-gray-200 overflow-hidden"
+                    >
+                      <table class="w-full">
+                        <thead>
+                          <tr class="bg-gray-50 border-b border-gray-200">
+                            <th
+                              class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                              Aspek
+                            </th>
+                            <th
+                              class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                              Kriteria
+                            </th>
+                            <th
+                              class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                              Self Score
+                            </th>
+                            <th
+                              class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                              Peer Score
+                            </th>
+                            <th
+                              class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                              Selisih
+                            </th>
+                            <th
+                              class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                              Status
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                          <tr
+                            v-for="(score, index) in calculateAnalysisScores(
+                              selectedUserData
+                            )"
+                            :key="index"
+                            class="hover:bg-gray-50 transition-colors"
+                          >
+                            <td class="px-4 py-3">
+                              <div class="text-sm font-medium text-gray-900">
+                                {{ score.aspek }}
+                              </div>
+                            </td>
+                            <td class="px-4 py-3">
+                              <div class="text-sm text-gray-500">
+                                {{ score.kriteria }}
+                              </div>
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                              <div class="text-sm font-semibold text-gray-900">
+                                {{ score.selfScore }}
+                              </div>
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                              <div class="text-sm font-semibold text-gray-900">
+                                {{ score.averagePeerScore }}
+                              </div>
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                              <span
+                                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium"
+                                :class="{
+                                  'bg-green-100 text-green-800':
+                                    parseFloat(score.scoreDifference) > 0,
+                                  'bg-yellow-100 text-yellow-800':
+                                    parseFloat(score.scoreDifference) === 0,
+                                  'bg-red-100 text-red-800':
+                                    parseFloat(score.scoreDifference) < 0,
+                                }"
+                              >
+                                {{
+                                  score.scoreDifference >= 0
+                                    ? "+" + score.scoreDifference
+                                    : score.scoreDifference
+                                }}
+                              </span>
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                              <span
+                                class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
+                                :class="{
+                                  'bg-green-100 text-green-800':
+                                    score.status === 'Over',
+                                  'bg-yellow-100 text-yellow-800':
+                                    score.status === 'Match',
+                                  'bg-red-100 text-red-800':
+                                    score.status === 'Under',
+                                }"
+                              >
+                                {{ score.status }}
+                              </span>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <!-- Legend -->
+                    <div
+                      class="mt-4 flex flex-wrap gap-4 text-xs text-gray-500"
+                    >
+                      <div class="flex items-center gap-2">
+                        <span
+                          class="w-3 h-3 inline-block bg-green-100 rounded-full border border-green-200"
+                        ></span>
+                        <span
+                          >Over: Self score lebih tinggi dari peer score</span
+                        >
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <span
+                          class="w-3 h-3 inline-block bg-yellow-100 rounded-full border border-yellow-200"
+                        ></span>
+                        <span>Match: Self score sama dengan peer score</span>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <span
+                          class="w-3 h-3 inline-block bg-red-100 rounded-full border border-red-200"
+                        ></span>
+                        <span
+                          >Under: Self score lebih rendah dari peer score</span
+                        >
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </Card>
         </div>

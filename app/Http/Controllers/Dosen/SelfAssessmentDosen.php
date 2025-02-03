@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Mahasiswa;
+namespace App\Http\Controllers\Dosen;
 
 use App\Http\Controllers\Controller;
 use App\Models\TypeCriteria;
@@ -18,44 +18,66 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class SelfAssessment extends Controller
+class SelfAssessmentDosen extends Controller
 {
-    public function assessment(Request $request)
+
+    public function getUserInfoDosen(Request $request)
     {
-        Log::info('Request received in assessment:', $request->all());
+        try {
+            $user = Auth::user();
 
-        $validated = $request->validate([
-            'batch_year' => 'required|string',
-            'project_name' => 'required|string',
-        ]);
+            if (!$user) {
+                return response()->json(['error' => 'User not authenticated'], 401);
+            }
 
-        Log::info('Validated data:', $validated);
+            $dosen = Dosen::with('user')
+                ->where('user_id', $user->id)
+                ->first();
 
-        return Inertia::render('Mahasiswa/SelfAssessmentMahasiswa', [
-            'batch_year' => $validated['batch_year'],
-            'project_name' => $validated['project_name'],
-        ]);
+            if (!$dosen) {
+                return response()->json(['error' => 'Dosen record not found'], 404);
+            }
+
+            $kelompok = Group::where('dosen_id', $dosen->id)
+                ->with('project') 
+                ->first();
+
+            $userInfo = [
+                'id' => $dosen->id,
+                'nip' => $dosen->nip,
+                'name' => $user->name,
+                'group' => $kelompok ? $kelompok->name : 'Tidak Ditemukan',
+                'project' => $kelompok && $kelompok->project ? $kelompok->project->project_name : 'Tidak Ditemukan',
+                'date' => now()->format('d F Y')
+            ];
+
+            return response()->json($userInfo);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to fetch user info',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function getQuestionsByProject(Request $request)
     {
         try {
             $user = Auth::user();
-            // dd($user);
             if (!$user) {
                 throw new \Exception('User not authenticated');
             }
             Log::info('User found:', ['id' => $user->id, 'name' => $user->name]);
 
-            $mahasiswa = Mahasiswa::where('user_id', $user->id)->first();
-            if (!$mahasiswa) {
-                throw new \Exception('Mahasiswa not found for user ID: ' . $user->id);
+            $dosen = Dosen::where('user_id', $user->id)->first();
+            if (!$dosen) {
+                throw new \Exception('Dosen not found for user ID: ' . $user->id);
             }
-            Log::info('Mahasiswa found:', ['id' => $mahasiswa->id, 'nim' => $mahasiswa->nim]);
+            Log::info('Dosen found:', ['id' => $dosen->id, 'nim' => $dosen->nim]);
 
-            $group = Group::where('mahasiswa_id', $mahasiswa->id)->first();
+            $group = Group::where('dosen_id', $dosen->id)->first();
             if (!$group) {
-                throw new \Exception('Group not found for mahasiswa ID: ' . $mahasiswa->id);
+                throw new \Exception('Group not found for dosen ID: ' . $dosen->id);
             }
             Log::info('Group found:', [
                 'id' => $group->id, 
@@ -114,29 +136,6 @@ class SelfAssessment extends Controller
         }
     }
 
-    public function getUserInfo(Request $request)
-    {
-        $user = Auth::user();
-        $mahasiswa = Mahasiswa::with(['classRoom', 'classRoom.prodi', 'classRoom.prodi.major'])
-            ->where('user_id', $user->id)
-            ->first();
-        
-        $group = Group::where('mahasiswa_id', $mahasiswa->id)
-            ->with(['project', 'mahasiswa'])
-            ->first();
-
-        $userInfo = [
-            'nim' => $mahasiswa->nim,
-            'name' => $user->name,
-            'class' => $mahasiswa->classRoom->class_name,
-            'group' => $group ? $group->group : 'Not Assigned',
-            'project' => $group ? $group->project->project_name : 'Not Assigned',
-            'date' => now()->format('d F Y')
-        ];
-
-        return response()->json($userInfo);
-    }
-
     public function saveAnswer(Request $request)
     {
         DB::beginTransaction();
@@ -150,10 +149,10 @@ class SelfAssessment extends Controller
             ]);
 
             $user = Auth::user();
-            $mahasiswa = Mahasiswa::where('user_id', $user->id)->first();
+            $dosen = Dosen::where('user_id', $user->id)->first();
             
-            if (!$mahasiswa) {
-                throw new \Exception('Mahasiswa tidak ditemukan');
+            if (!$dosen) {
+                throw new \Exception('Dosen tidak ditemukan');
             }
 
             $savedAnswers = [];
@@ -161,11 +160,11 @@ class SelfAssessment extends Controller
                 $answer = Answers::updateOrCreate(
                     [
                         'question_id' => $answerData['question_id'],
-                        'mahasiswa_id' => $mahasiswa->id
+                        'dosen_id' => $dosen->id
                     ],
                     [
                         'question_id' => $answerData['question_id'],
-                        'mahasiswa_id' => $mahasiswa->id,
+                        'dosen_id' => $dosen->id,
                         'answer' => $answerData['answer'],
                         'score' => $answerData['score'],
                         'status' => $answerData['status']
@@ -194,6 +193,42 @@ class SelfAssessment extends Controller
         }
     }
 
+    public function getAnswer($questionId)
+    {
+        try {
+            $user = Auth::user();
+            $dosen = Dosen::where('user_id', $user->id)->first();
+            
+            if (!$dosen) {
+                throw new \Exception('Dosen tidak ditemukan');
+            }
+
+            $answer = Answers::where([
+                'question_id' => $questionId,
+                'dosen_id' => $dosen->id
+            ])->first();
+
+            if (!$answer) {
+                return response()->json(null);
+            }
+
+            return response()->json([
+                'answer' => $answer->answer,
+                'score' => $answer->score
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error in getAnswer:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'error' => 'Failed to get answer: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function saveAllAnswers(Request $request)
     {
         DB::beginTransaction();
@@ -207,10 +242,10 @@ class SelfAssessment extends Controller
             ]);
     
             $user = Auth::user();
-            $mahasiswa = Mahasiswa::where('user_id', $user->id)->first();
+            $dosen = Dosen::where('user_id', $user->id)->first();
             
-            if (!$mahasiswa) {
-                throw new \Exception('Mahasiswa tidak ditemukan untuk user_id: ' . $user->id);
+            if (!$dosen) {
+                throw new \Exception('Dosen tidak ditemukan untuk user_id: ' . $user->id);
             }
     
             foreach ($validated['answers'] as $answerData) {
@@ -219,13 +254,13 @@ class SelfAssessment extends Controller
                     'answer' => $answerData['answer'],
                     'score' => $answerData['score'],
                     'status' => $answerData['status'],
-                    'mahasiswa_id' => $mahasiswa->id
+                    'dosen_id' => $dosen->id
                 ];
     
                 Answers::updateOrCreate(
                     [
                         'question_id' => $dataToSave['question_id'],
-                        'mahasiswa_id' => $mahasiswa->id
+                        'dosen_id' => $dosen->id
                     ],
                     $dataToSave
                 );
@@ -247,42 +282,6 @@ class SelfAssessment extends Controller
             return response()->json([
                 'success' => false,
                 'error' => 'Failed to save answers: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    public function getAnswer($questionId)
-    {
-        try {
-            $user = Auth::user();
-            $mahasiswa = Mahasiswa::where('user_id', $user->id)->first();
-            
-            if (!$mahasiswa) {
-                throw new \Exception('Mahasiswa tidak ditemukan');
-            }
-
-            $answer = Answers::where([
-                'question_id' => $questionId,
-                'mahasiswa_id' => $mahasiswa->id
-            ])->first();
-
-            if (!$answer) {
-                return response()->json(null);
-            }
-
-            return response()->json([
-                'answer' => $answer->answer,
-                'score' => $answer->score
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Error in getAnswer:', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'error' => 'Failed to get answer: ' . $e->getMessage()
             ], 500);
         }
     }

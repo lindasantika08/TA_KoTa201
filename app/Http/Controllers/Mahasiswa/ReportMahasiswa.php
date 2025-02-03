@@ -7,11 +7,14 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Models\Kelompok;
+use Illuminate\Support\Facades\Log;
+use App\Models\Project;
+use App\Models\Group;
 use App\Models\Answers;
 use App\Models\AnswersPeer;
 use App\Models\Assessment;
 use App\Models\User;
+use App\Models\Mahasiswa;
 
 class ReportMahasiswa extends Controller
 {
@@ -26,35 +29,39 @@ class ReportMahasiswa extends Controller
         return Inertia::render('Mahasiswa/ReportScoreMahasiswa');
     }
 
+
     public function getProjects()
     {
         try {
             $userId = Auth::id();
 
-            // Query dengan join antara tabel kelompok dan project
-            $kelompokList = DB::table('kelompok')
-                ->join('project', function ($join) {
-                    $join->on('kelompok.tahun_ajaran', '=', 'project.tahun_ajaran')
-                        ->on('kelompok.nama_proyek', '=', 'project.nama_proyek');
-                })
-                ->where('kelompok.user_id', $userId)
-                ->select(
-                    'kelompok.id',
-                    'kelompok.nama_proyek',
-                    'kelompok.tahun_ajaran',
-                    'kelompok.kelompok',
-                    'project.status'
-                )
+            // Get the mahasiswa record associated with the user
+            $mahasiswa = Mahasiswa::where('user_id', $userId)->first();
+
+            if (!$mahasiswa) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Mahasiswa not found'
+                ], 404);
+            }
+
+            // Get groups associated with the mahasiswa, including project data
+            $groups = Group::with(['project' => function ($query) {
+                $query->select('id', 'project_name', 'batch_year', 'status', 'semester');
+            }])
+                ->where('mahasiswa_id', $mahasiswa->id)
                 ->get();
 
-            // Format data menjadi sesuai output
-            $projects = $kelompokList->map(function ($kelompok) {
+            // Format the response to match your frontend expectations
+            $projects = $groups->map(function ($group) {
                 return [
-                    'id' => $kelompok->id,
-                    'nama_proyek' => $kelompok->nama_proyek,
-                    'tahun_ajaran' => $kelompok->tahun_ajaran,
-                    'nama_kelompok' => $kelompok->kelompok,
-                    'status' => $kelompok->status ?? 'Tidak Diketahui',
+                    'id' => $group->id,
+                    'nama_proyek' => $group->project->project_name,
+                    'tahun_ajaran' => $group->project->batch_year,
+                    'nama_kelompok' => $group->group, // Using the 'group' field from your model
+                    'status' => $group->project->status ?? 'Tidak Diketahui',
+                    // Add semester if needed in frontend
+                    'semester' => $group->project->semester
                 ];
             });
 
@@ -70,68 +77,110 @@ class ReportMahasiswa extends Controller
         }
     }
 
+    public function getProjectScoreDetailsView(Request $request)
+    {
+        return Inertia::render('Mahasiswa/ReportScoreMahasiswa', [
+            'batchYear' => $request->query('batch_year'),
+            'projectId' => $request->query('project_id'),  // Changed from project_name
+            'kelompok' => $request->query('kelompok'),
+        ]);
+    }
+
     public function getProjectScoreDetails(Request $request)
     {
-        $tahunAjaran = $request->input('tahun_ajaran');
-        $namaProyek = $request->input('nama_proyek');
-        $userId = Auth::id(); // Get logged in user ID
+        $batchYear = $request->input('batch_year');
+        $projectId = $request->input('project_id');
+        $userId = Auth::id();
+
+        // Add logging
+        Log::info('Request parameters:', [
+            'batch_year' => $batchYear,
+            'project_id' => $projectId,
+            'user_id' => $userId
+        ]);
 
         try {
-            // Get user's group
-            $kelompok = Kelompok::where('tahun_ajaran', $tahunAjaran)
-                ->where('nama_proyek', $namaProyek)
-                ->where('user_id', $userId)
-                ->first();
+            // Get mahasiswa record for the logged-in user
+            $mahasiswa = Mahasiswa::where('user_id', $userId)->first();
 
-            if (!$kelompok) {
-                return response()->json([], 200);
+            // Add logging
+            Log::info('Mahasiswa found:', ['mahasiswa' => $mahasiswa]);
+
+            if (!$mahasiswa) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Mahasiswa not found'
+                ], 404);
             }
 
-            // Get user name
-            $userName = User::where('id', $userId)->value('name');
+            // Get user's group for this project
+            $group = Group::where('batch_year', $batchYear)
+                ->where('project_id', $projectId)
+                ->where('mahasiswa_id', $mahasiswa->id)
+                ->first();
 
-            // Self Assessments
-            $selfAssessments = Assessment::where('tahun_ajaran', $tahunAjaran)
-                ->where('nama_proyek', $namaProyek)
+            // Add logging
+            Log::info('Group found:', ['group' => $group]);
+
+            if (!$group) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Group not found'
+                ], 404);
+            }
+
+            // Get assessments for this project with logging
+            $selfAssessments = Assessment::where('batch_year', $batchYear)
+                ->where('project_id', $projectId)
                 ->where('type', 'selfAssessment')
                 ->get();
 
+            Log::info('Self Assessments found:', ['count' => $selfAssessments->count()]);
+
             $selfAspekKriteriaAnalysis = $this->analyzeAssessments(
                 $selfAssessments,
-                $userId,
+                $mahasiswa->id,
                 'selfAssessment',
-                $tahunAjaran,
-                $namaProyek
+                $batchYear,
+                $projectId
             );
 
-            // Peer Assessments
-            $peerAssessments = Assessment::where('tahun_ajaran', $tahunAjaran)
-                ->where('nama_proyek', $namaProyek)
+            // Peer Assessments with logging
+            $peerAssessments = Assessment::where('batch_year', $batchYear)
+                ->where('project_id', $projectId)
                 ->where('type', 'peerAssessment')
                 ->get();
 
+            Log::info('Peer Assessments found:', ['count' => $peerAssessments->count()]);
+
             $peerAspekKriteriaAnalysis = $this->analyzeAssessments(
                 $peerAssessments,
-                $userId,
+                $mahasiswa->id,
                 'peerAssessment',
-                $tahunAjaran,
-                $namaProyek
+                $batchYear,
+                $projectId
             );
 
             // Prepare user results
             $userResults = [
                 'user_id' => $userId,
                 'name' => $userName ?? 'Tidak dikenal',
-                'kelompok' => $kelompok->kelompok,
+                'kelompok' => $group->group,
                 'self_assessment' => $selfAspekKriteriaAnalysis->values(),
                 'peer_assessment' => $peerAspekKriteriaAnalysis->values(),
             ];
+
+            Log::info('Final response:', ['userResults' => $userResults]);
 
             return response()->json([
                 'status' => 'success',
                 'data' => $userResults
             ]);
         } catch (\Exception $e) {
+            Log::error('Error in getProjectScoreDetails:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
 
             return response()->json([
                 'status' => 'error',
@@ -141,45 +190,70 @@ class ReportMahasiswa extends Controller
         }
     }
 
-    private function analyzeAssessments($assessments, $userId, $assessmentType, $tahunAjaran, $namaProyek)
+    private function analyzeAssessments($assessments, $mahasiswaId, $assessmentType, $batchYear, $projectId)
     {
-        // Filter assessments by tahun_ajaran and nama_proyek
-        $filteredAssessments = $assessments->filter(function ($assessment) use ($tahunAjaran, $namaProyek) {
-            return $assessment->tahun_ajaran === $tahunAjaran && $assessment->nama_proyek === $namaProyek;
+        Log::info('Starting analyzeAssessments', [
+            'assessmentType' => $assessmentType,
+            'mahasiswaId' => $mahasiswaId,
+            'assessmentCount' => $assessments->count()
+        ]);
+
+        // Filter assessments by batch_year and project_id
+        $filteredAssessments = $assessments->filter(function ($assessment) use ($batchYear, $projectId) {
+            return $assessment->batch_year === $batchYear && $assessment->project_id === $projectId;
         });
 
+        Log::info('Filtered assessments count:', ['count' => $filteredAssessments->count()]);
+
         if ($filteredAssessments->isEmpty()) {
+            Log::warning('No assessments found after filtering');
             return collect([]);
         }
 
-        return $filteredAssessments->groupBy(function ($assessment) {
-            return $assessment->aspek . '_' . $assessment->kriteria;
-        })->map(function ($groupAssessments) use ($userId, $assessmentType) {
+        $result = $filteredAssessments->groupBy(function ($assessment) {
+            if (!$assessment->typeCriteria) {
+                Log::error('typeCriteria relation not found for assessment:', ['assessment_id' => $assessment->id]);
+                return null;
+            }
+            return $assessment->typeCriteria->aspect . '_' . $assessment->typeCriteria->criteria;
+        })->map(function ($groupAssessments) use ($mahasiswaId, $assessmentType) {
             $questionIds = $groupAssessments->pluck('id');
 
+            // Get answers based on assessment type
             $answers = $assessmentType === 'selfAssessment'
                 ? Answers::whereIn('question_id', $questionIds)
-                ->where('user_id', $userId)
+                ->where('mahasiswa_id', $mahasiswaId)
                 ->get()
                 : AnswersPeer::whereIn('question_id', $questionIds)
-                ->where('peer_id', $userId)
+                ->where('peer_id', $mahasiswaId)
                 ->get();
 
+            Log::info('Answers found for group:', [
+                'questionIds' => $questionIds,
+                'answersCount' => $answers->count()
+            ]);
+
+            $typeCriteria = $groupAssessments->first()->typeCriteria;
+
             return [
-                'aspek' => $groupAssessments->first()->aspek,
-                'kriteria' => $groupAssessments->first()->kriteria,
+                'aspek' => $typeCriteria->aspect,
+                'kriteria' => $typeCriteria->criteria,
                 'total_score' => $answers->avg('score'),
                 'total_answers' => $answers->count(),
                 'questions' => $groupAssessments->map(function ($assessment) use ($answers) {
                     $relatedAnswer = $answers->where('question_id', $assessment->id)->first();
                     return [
                         'question_id' => $assessment->id,
-                        'pertanyaan' => $assessment->pertanyaan,
+                        'pertanyaan' => $assessment->question,
                         'score' => $relatedAnswer ? $relatedAnswer->score : null,
                         'answer' => $relatedAnswer ? $relatedAnswer->answer : null
                     ];
                 })
             ];
         });
+
+        Log::info('Analysis result count:', ['count' => $result->count()]);
+
+        return $result;
     }
 }

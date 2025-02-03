@@ -3,13 +3,14 @@
 namespace App\Http\Controllers\Dosen;
 
 use App\Http\Controllers\Controller;
-use App\Models\Kelompok;
+use App\Models\Group;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Project;
 use App\Models\Answers;
 use App\Models\AnswersPeer;
 use App\Models\User;
+use App\Models\Mahasiswa;
 use App\Models\Assessment;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\JsonResponse;
@@ -23,26 +24,26 @@ class ReportController extends Controller
 
     public function getDropdownOptions(Request $request): JsonResponse
     {
-        // Ambil data tahun ajaran yang unik
-        $tahunAjaranOptions = Project::select('tahun_ajaran')->distinct()->pluck('tahun_ajaran');
+        // Ambil data batch_year yang unik
+        $batchYearOptions = Project::select('batch_year')->distinct()->pluck('batch_year');
 
-        // Jika ada tahun ajaran yang dipilih, ambil nama proyek berdasarkan tahun ajaran tersebut
-        $namaProyekOptions = Project::select('nama_proyek', 'tahun_ajaran')
-            ->when($request->tahun_ajaran, function ($query, $tahunAjaran) {
-                return $query->where('tahun_ajaran', $tahunAjaran);
+        // Jika ada batch_year yang dipilih, ambil project_name berdasarkan batch_year tersebut
+        $projectNameOptions = Project::select('project_name', 'batch_year')
+            ->when($request->batch_year, function ($query, $batchYear) {
+                return $query->where('batch_year', $batchYear);
             })
             ->distinct()
             ->get();
 
-        // Gabungkan data tahun ajaran dan nama proyek
+        // Gabungkan data batch_year dan project_name
         $combinedOptions = [];
-        foreach ($tahunAjaranOptions as $tahun) {
-            foreach ($namaProyekOptions->where('tahun_ajaran', $tahun) as $proyek) {
+        foreach ($batchYearOptions as $year) {
+            foreach ($projectNameOptions->where('batch_year', $year) as $project) {
                 $combinedOptions[] = [
-                    'value' => "{$tahun} - {$proyek->nama_proyek}",
-                    'label' => "{$tahun} - {$proyek->nama_proyek}", // Atau bisa menggunakan 'value' jika hanya ingin memilih tahun ajaran dan nama proyek
-                    'tahunAjaran' => $tahun,
-                    'namaProyek' => $proyek->nama_proyek,
+                    'value' => "{$year} - {$project->project_name}",
+                    'label' => "{$year} - {$project->project_name}",
+                    'batchYear' => $year,
+                    'projectName' => $project->project_name,
                 ];
             }
         }
@@ -53,19 +54,22 @@ class ReportController extends Controller
         ]);
     }
 
+
     public function getKelompokReport(Request $request): JsonResponse
     {
         // Validasi parameter yang diterima
         $request->validate([
-            'tahun_ajaran' => 'required|string',
-            'nama_proyek' => 'required|string',
+            'batch_year' => 'required|string',
+            'project_name' => 'required|string',
         ]);
 
-        // Ambil data kelompok berdasarkan tahun ajaran dan nama proyek
-        $kelompokData = Kelompok::where('tahun_ajaran', $request->tahun_ajaran)
-            ->where('nama_proyek', $request->nama_proyek)
-            ->with('user') // Eager load relasi user
-            ->get(['id', 'kelompok', 'user_id']); // Ambil kolom id, kelompok, dan user_id
+        // Ambil data kelompok berdasarkan batch_year dan project_name
+        $kelompokData = Group::whereHas('project', function ($query) use ($request) {
+            $query->where('batch_year', $request->batch_year)
+                ->where('project_name', $request->project_name);
+        })
+            ->with(['mahasiswa.user']) // Eager load relasi mahasiswa dan user
+            ->get(['id', 'group', 'mahasiswa_id']);
 
         // Jika tidak ada data, beri respon kosong
         if ($kelompokData->isEmpty()) {
@@ -75,25 +79,28 @@ class ReportController extends Controller
             ]);
         }
 
-        // Group data berdasarkan nama kelompok (kelompok)
-        $groupedKelompok = $kelompokData->groupBy('kelompok');
+        // Group data berdasarkan nama kelompok (group)
+        $groupedKelompok = $kelompokData->groupBy('group');
 
         // Format data kelompok dan merge jika ada kelompok yang sama
         $kelompokList = $groupedKelompok->map(function ($group, $kelompokName) {
             // Ambil ID pertama dari kelompok
             $kelompok = [
-                'id' => $group->pluck('id')->first(),  // ID kelompok
-                'nama_kelompok' => $kelompokName,  // Nama kelompok
-                'anggota' => [], // Menyimpan anggota kelompok
+                'id' => $group->pluck('id')->first(),
+                'nama_kelompok' => $kelompokName,
+                'anggota' => [],
             ];
 
-            // Ambil semua anggota dengan user_id terkait
+            // Ambil semua anggota dengan mahasiswa_id terkait
             foreach ($group as $item) {
-                // Menambahkan nama anggota berdasarkan user_id
-                $kelompok['anggota'][] = [
-                    'user_id' => $item->user_id,
-                    'name' => $item->user->name,  // Ambil nama pengguna dari relasi user
-                ];
+                // Pastikan mahasiswa dan user ada
+                if ($item->mahasiswa && $item->mahasiswa->user) {
+                    $kelompok['anggota'][] = [
+                        'mahasiswa_id' => $item->mahasiswa_id,
+                        'name' => $item->mahasiswa->user->name, // Ambil nama dari relasi user
+                        'nim' => $item->mahasiswa->nim, // Optional: tambahkan NIM jika diperlukan
+                    ];
+                }
             }
 
             return $kelompok;
@@ -105,11 +112,12 @@ class ReportController extends Controller
         ]);
     }
 
+
     public function getScoreKelompok(Request $request)
     {
         // Ambil parameter dari query string
-        $tahunAjaran = $request->query('tahun_ajaran');
-        $namaProyek = $request->query('nama_proyek');
+        $tahunAjaran = $request->query('batch_year');
+        $namaProyek = $request->query('project_name');
         $kelompok = $request->query('kelompok');
 
         // Log data untuk melihat apakah parameter diterima
@@ -119,167 +127,205 @@ class ReportController extends Controller
             'kelompok' => $kelompok,
         ]);
 
-        // Cek apakah parameter ada dan ambil data kelompok
-        $kelompokDetail = Kelompok::where('tahun_ajaran', $tahunAjaran)
-            ->where('nama_proyek', $namaProyek)
-            ->where('kelompok', $kelompok)
-            ->first();
+        // Validasi input
+        if (!$tahunAjaran || !$namaProyek || !$kelompok) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Parameter tidak lengkap'
+            ], 400);
+        }
+
+        // Mencari project_id berdasarkan nama proyek
+        $project = Project::where('project_name', $namaProyek)->first();
+
+        if (!$project) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Project tidak ditemukan'
+            ], 404);
+        }
+
+        // Ambil data kelompok dengan relasi
+        $groupMembers = Group::with(['mahasiswa', 'project'])
+            ->where('batch_year', $tahunAjaran)
+            ->where('project_id', $project->id)
+            ->where('group', $kelompok)
+            ->get();
+
+        if ($groupMembers->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data kelompok tidak ditemukan'
+            ], 404);
+        }
 
         return Inertia::render('Dosen/ReportScore', [
-            'tahunAjaran' => $tahunAjaran,
-            'namaProyek' => $namaProyek,
+            'batch_year' => $tahunAjaran,
+            'project_name' => $namaProyek,
             'kelompok' => $kelompok,
+            'initialData' => [
+                'groupMembers' => $groupMembers,
+                'project' => $project
+            ]
         ]);
     }
 
     public function getKelompokAnswers(Request $request)
     {
-        $tahunAjaran = $request->input('tahun_ajaran');
-        $namaProyek = $request->input('nama_proyek');
+        $tahunAjaran = $request->input('batch_year');
+        $namaProyek = $request->input('project_name');
         $kelompok = $request->input('kelompok');
 
         try {
-            // Retrieve user_ids for the specific group
-            $userIds = Kelompok::where('tahun_ajaran', $tahunAjaran)
-                ->where('nama_proyek', $namaProyek)
-                ->where('kelompok', $kelompok)
-                ->pluck('user_id');
+            // Get project ID first
+            $project = Project::where('batch_year', $tahunAjaran)
+                ->where('project_name', $namaProyek)
+                ->first();
 
-            if ($userIds->isEmpty()) {
+            if (!$project) {
                 return response()->json([], 200);
             }
 
-            // Get user names based on user_ids
-            $userNames = User::whereIn('id', $userIds)->pluck('name', 'id');
+            // Retrieve mahasiswa_ids for the specific group
+            $mahasiswaIds = Group::where('batch_year', $tahunAjaran)
+                ->where('project_id', $project->id)
+                ->where('group', $kelompok)
+                ->pluck('mahasiswa_id');
 
-            // Process each user's assessments
-            $userResults = $userIds->mapWithKeys(function ($userId) use ($tahunAjaran, $namaProyek, $userNames, $kelompok) {
+            if ($mahasiswaIds->isEmpty()) {
+                return response()->json([], 200);
+            }
+
+            // Get mahasiswa names and their associated user IDs
+            $mahasiswaDetails = Mahasiswa::whereIn('id', $mahasiswaIds)
+                ->with('user')
+                ->get()
+                ->mapWithKeys(function ($mahasiswa) {
+                    return [$mahasiswa->id => [
+                        'name' => $mahasiswa->user->name,
+                        'user_id' => $mahasiswa->user_id
+                    ]];
+                });
+
+            // Process each mahasiswa's assessments
+            $mahasiswaResults = $mahasiswaIds->mapWithKeys(function ($mahasiswaId) use ($tahunAjaran, $project, $mahasiswaDetails) {
                 // Self Assessments
-                $selfAssessments = Assessment::where('tahun_ajaran', $tahunAjaran)
-                    ->where('nama_proyek', $namaProyek)
+                $selfAssessments = Assessment::where('batch_year', $tahunAjaran)
+                    ->where('project_id', $project->id)
                     ->where('type', 'selfAssessment')
+                    ->with('typeCriteria')
                     ->get();
 
-                $selfAspekKriteriaAnalysis = $this->analyzeAssessments($selfAssessments, $userId, 'selfAssessment', $tahunAjaran, $namaProyek);
+                $selfAspekKriteriaAnalysis = $this->analyzeAssessments($selfAssessments, $mahasiswaId, 'self', $project->id);
 
                 // Peer Assessments
-                $peerAssessments = Assessment::where('tahun_ajaran', $tahunAjaran)
-                    ->where('nama_proyek', $namaProyek)
+                $peerAssessments = Assessment::where('batch_year', $tahunAjaran)
+                    ->where('project_id', $project->id)
                     ->where('type', 'peerAssessment')
+                    ->with('typeCriteria')
                     ->get();
 
-                $peerAspekKriteriaAnalysis = $this->analyzeAssessments($peerAssessments, $userId, 'peerAssessment', $tahunAjaran, $namaProyek);
+                $peerAspekKriteriaAnalysis = $this->analyzeAssessments($peerAssessments, $mahasiswaId, 'peer', $project->id);
 
-                // Peer Evaluations
+                // Get all peer evaluations for this mahasiswa
                 $peerEvaluations = AnswersPeer::select(
-                    'answerspeer.*',
-                    'assessment.pertanyaan',
-                    'assessment.aspek',
-                    'assessment.kriteria'
+                    'answers_peer.*',
+                    'assessment.id as assessment_id',
+                    'assessment.question',
+                    'type_criteria.aspect',
+                    'type_criteria.criteria'
                 )
-                    ->join('assessment', 'answerspeer.question_id', '=', 'assessment.id')
-                    ->join('kelompok', 'answerspeer.user_id', '=', 'kelompok.user_id')
-                    ->where('assessment.tahun_ajaran', $tahunAjaran)
-                    ->where('assessment.nama_proyek', $namaProyek)
-                    ->where('answerspeer.peer_id', $userId)
-                    ->where('kelompok.tahun_ajaran', $tahunAjaran)
-                    ->where('kelompok.nama_proyek', $namaProyek)
-                    ->where('kelompok.kelompok', $kelompok)
-                    ->get()
-                    ->groupBy(function ($item) {
-                        return $item->aspek . '_' . $item->kriteria;
-                    })
-                    ->map(function ($answers, $aspekKriteria) use ($userNames) {
-                        list($aspek, $kriteria) = explode('_', $aspekKriteria);
+                    ->join('assessment', 'answers_peer.question_id', '=', 'assessment.id')
+                    ->join('type_criteria', 'assessment.criteria_id', '=', 'type_criteria.id')
+                    ->where('assessment.batch_year', $tahunAjaran)
+                    ->where('assessment.project_id', $project->id)
+                    ->where('answers_peer.peer_id', $mahasiswaId)
+                    ->get();
 
-                        // Group by user to capture all evaluators and their answers
-                        $evaluatorGroups = $answers->groupBy('user_id');
+                // Group peer evaluations by aspect and criteria
+                $groupedPeerEvaluations = $peerEvaluations->groupBy(function ($item) {
+                    return $item->aspect . '_' . $item->criteria;
+                })->map(function ($groupAnswers) use ($mahasiswaDetails) {
+                    $aspek = $groupAnswers->first()->aspect;
+                    $kriteria = $groupAnswers->first()->criteria;
 
-                        $processedEvaluators = $evaluatorGroups->map(function ($userAnswers) use ($userNames) {
-                            $userName = $userNames[$userAnswers->first()->user_id] ?? 'Tidak dikenal';
+                    // Group answers by evaluator (mahasiswa_id)
+                    $evaluatorGroups = $groupAnswers->groupBy('mahasiswa_id');
 
-                            return [
-                                'name' => $userName,
-                                'total_score' => $userAnswers->avg('score'),
-                                'answers' => $userAnswers->map(function ($answer) {
-                                    return [
-                                        'question_id' => $answer->question_id,
-                                        'pertanyaan' => $answer->pertanyaan,
-                                        'score' => $answer->score,
-                                        'answer' => $answer->answer,
-                                        'aspek' => $answer->aspek,
-                                        'kriteria' => $answer->kriteria,
-                                    ];
-                                })
-                            ];
-                        });
-
+                    $evaluatedBy = $evaluatorGroups->map(function ($answers, $evaluatorId) use ($mahasiswaDetails) {
                         return [
-                            'aspek' => $aspek,
-                            'kriteria' => $kriteria,
+                            'name' => $mahasiswaDetails[$evaluatorId]['name'] ?? 'Unknown',
                             'total_score' => $answers->avg('score'),
-                            'total_answers' => $answers->count(),
-                            'evaluated_by' => $processedEvaluators
+                            'answers' => $answers->map(function ($answer) {
+                                return [
+                                    'question_id' => $answer->assessment_id,
+                                    'pertanyaan' => $answer->question, // Include the question text
+                                    'score' => $answer->score,
+                                    'answer' => $answer->answer
+                                ];
+                            })->values()
                         ];
-                    })->filter()
-                    ->values();
+                    });
+
+                    return [
+                        'aspek' => $aspek,
+                        'kriteria' => $kriteria,
+                        'total_score' => $groupAnswers->avg('score'),
+                        'evaluated_by' => $evaluatedBy
+                    ];
+                })->values();
 
                 return [
-                    $userId => [
-                        'user_id' => $userId,
-                        'name' => $userNames[$userId] ?? 'Tidak dikenal',
+                    $mahasiswaId => [
+                        'mahasiswa_id' => $mahasiswaId,
+                        'name' => $mahasiswaDetails[$mahasiswaId]['name'] ?? 'Unknown',
                         'self_assessment' => $selfAspekKriteriaAnalysis->values(),
                         'peer_assessment' => $peerAspekKriteriaAnalysis->values(),
-                        'evaluated_by_peers' => $peerEvaluations,
-                    ],
+                        'evaluated_by_peers' => $groupedPeerEvaluations
+                    ]
                 ];
             });
 
-            return response()->json($userResults);
+            return response()->json($mahasiswaResults);
         } catch (\Exception $e) {
             Log::error('Error in getKelompokAnswers: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan saat memproses data.',
-                'error' => $e->getMessage(),
+                'error' => $e->getMessage()
             ], 500);
         }
     }
 
-    private function analyzeAssessments($assessments, $userId, $assessmentType, $tahunAjaran, $namaProyek)
+    private function analyzeAssessments($assessments, $mahasiswaId, $assessmentType, $projectId)
     {
-        // Filter assessments by tahun_ajaran and nama_proyek
-        $filteredAssessments = $assessments->filter(function ($assessment) use ($tahunAjaran, $namaProyek) {
-            return $assessment->tahun_ajaran === $tahunAjaran && $assessment->nama_proyek === $namaProyek;
-        });
-
-        if ($filteredAssessments->isEmpty()) {
+        if ($assessments->isEmpty()) {
             return collect([]);
         }
 
-        return $filteredAssessments->groupBy(function ($assessment) {
-            return $assessment->aspek . '_' . $assessment->kriteria;
-        })->map(function ($groupAssessments) use ($userId, $assessmentType) {
+        return $assessments->groupBy(function ($assessment) {
+            return $assessment->typeCriteria->aspect . '_' . $assessment->typeCriteria->criteria;
+        })->map(function ($groupAssessments) use ($mahasiswaId, $assessmentType) {
             $questionIds = $groupAssessments->pluck('id');
 
-            $answers = $assessmentType === 'selfAssessment'
+            $answers = $assessmentType === 'self'
                 ? Answers::whereIn('question_id', $questionIds)
-                ->where('user_id', $userId)
+                ->where('mahasiswa_id', $mahasiswaId)
                 ->get()
                 : AnswersPeer::whereIn('question_id', $questionIds)
-                ->where('peer_id', $userId)
+                ->where('peer_id', $mahasiswaId)
                 ->get();
 
             return [
-                'aspek' => $groupAssessments->first()->aspek,
-                'kriteria' => $groupAssessments->first()->kriteria,
+                'aspek' => $groupAssessments->first()->typeCriteria->aspect,
+                'kriteria' => $groupAssessments->first()->typeCriteria->criteria,
                 'total_score' => $answers->avg('score'),
                 'total_answers' => $answers->count(),
                 'questions' => $groupAssessments->map(function ($assessment) use ($answers) {
                     $relatedAnswer = $answers->where('question_id', $assessment->id)->first();
                     return [
                         'question_id' => $assessment->id,
-                        'pertanyaan' => $assessment->pertanyaan,
+                        'pertanyaan' => $assessment->question,
                         'score' => $relatedAnswer ? $relatedAnswer->score : null,
                         'answer' => $relatedAnswer ? $relatedAnswer->answer : null
                     ];
