@@ -8,6 +8,7 @@ use App\Http\Controllers\Dosen\KelolaKelompokController;
 use App\Http\Controllers\Dosen\FeedbackController;
 use App\Http\Controllers\Dosen\ReportController;
 use App\Http\Controllers\Dosen\AnswerController;
+use App\Http\Controllers\Dosen\ProfileController;
 use App\Http\Controllers\Dosen\UserManagementController;
 
 use App\Http\Controllers\Mahasiswa\AssessmentMahasiswa;
@@ -33,7 +34,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/dashboard/self', [DashboardDosen::class, 'dashboardself'])->name('dashboardself');
         Route::get('/dashboard/peer', [DashboardDosen::class, 'dashboardpeer'])->name('dashboardpeer');
         Route::get('/notifications', [DashboardDosen::class, 'notifications'])->name('notifications');
-        Route::get('/profile', [DashboardDosen::class, 'profile'])->name('profile');
+        Route::get('/profile', [ProfileController::class, 'profile'])->name('profile');
         Route::get('/self', [AssessmentController::class, 'self'])->name('dosen.self-assessment');
         Route::get('/peer', [AssessmentController::class, 'peer'])->name('dosen.peer-assessment');
         Route::post('/assessment/import', [AssessmentController::class, 'import'])->name('assessment.import');

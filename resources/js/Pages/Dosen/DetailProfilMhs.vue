@@ -10,9 +10,9 @@
         </div>
 
         <!-- Wrapper untuk membuat card sejajar -->
-        <div class="flex gap-4">
+        <div class="flex gap-4 w-full">
           <!-- Card 1: Profile Mahasiswa -->
-          <Card class="w-1/4 text-center p-6" title="ProfileMhs">
+          <Card class="flex-[1] text-center p-6 max-h-[320px]" title="ProfileMhs">
             <div class="flex flex-col items-center">
               <!-- Foto Profil -->
               <div class="relative">
@@ -26,7 +26,7 @@
           </Card>
 
           <!-- Card 2: Informasi Akademik -->
-          <Card :title="'Profile Mhs - ' + user_name" class="w-3/4 p-6">
+          <Card :title="'Profile Mhs - ' + user_name" class="flex-[3] p-6 h-full">
 
             <!-- Data Identitas Mahasiswa -->
             <div class="grid grid-cols-1 gap-4">
@@ -108,8 +108,6 @@ export default {
     };
   },
   mounted() {
-    console.log('User ID:', this.user_id);  // Cek nilai user_id
-  // Ambil data profil mahasiswa dari API berdasarkan user_id yang diterima sebagai prop
   this.fetchProfile(this.user_id);
   },
   methods: {
@@ -125,27 +123,15 @@ export default {
           this.jurusanMahasiswa = profileData.jurusan;
           this.emailMahasiswa = profileData.email;
           this.teleponMahasiswa = profileData.telepon || ''; // Atur telepon jika ada
-          // Jika ada foto profil
-          this.fetchProfilePhoto(this.user_id); // Menampilkan foto profil
+          this.profileImage = profileData.photo || ""; // Update foto profil
         })
         .catch((error) => {
           console.error("Error fetching profile data:", error);
         });
     },
     openFileInput() {
-      this.$refs.fileInput.click(); // Menampilkan file input ketika tombol edit diklik
+      this.$refs.fileInput.click(); 
     },
-    fetchProfilePhoto() {
-      axios
-        .get(`/api/kelola-kelompok/get-profile-photo/${this.user_id}`) // Ambil URL foto profil
-        .then((response) => {
-          this.profileImage = response.data.photo_url || this.profileImage;
-        })
-        .catch((error) => {
-          console.error("Error fetching profile photo:", error);
-        });
-    },
-    
   },
 };
 </script>

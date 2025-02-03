@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignUuid('user_id')->constrained('users');
             $table->foreignUuid('class_id')->constrained('class_room');
             $table->string('nim', 9)->unique();
+            $table->string('telepon', 15)->nullable();
             $table->softDeletes();
             $table->timestamps();
         });

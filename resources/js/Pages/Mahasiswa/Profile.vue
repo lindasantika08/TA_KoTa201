@@ -10,18 +10,56 @@
         </div>
 
         <!-- Wrapper untuk membuat card sejajar -->
-        <div class="flex gap-4">
+        <div class="flex gap-4 w-full">
           <!-- Card 1: Profile Mahasiswa -->
-          <Card class="w-1/4 text-center p-6" title="Profile">
+          <Card class="flex-[1] text-center p-6 max-h-[320px]" title="Profile">
             <div class="flex flex-col items-center">
               <!-- Foto Profil -->
               <div class="relative">
-                <img :src="profileImage" alt="Foto Profil" class="w-32 h-32 rounded-full border-4 border-gray-300" />
-                <button @click="openFileInput" class="absolute bottom-0 right-0 bg-gray-800 text-white p-2 rounded-full"
-                  title="Ubah Foto">
+                <img
+                  :src="profileImage"
+                  alt="Foto Profil"
+                  class="w-32 h-32 rounded-full border-4 border-gray-300"
+                />
+                <button
+                  @click="toggleDropdown"
+                  class="absolute bottom-0 right-0 bg-gray-800 text-white p-2 rounded-full"
+                  title="Ubah Foto"
+                >
                   ✏️
                 </button>
-                <input ref="fileInput" type="file" @change="handleFileUpload" class="hidden" />
+
+                <!-- Dropdown untuk ubah dan hapus foto -->
+                <div
+                  v-if="isDropdownVisible && profileImage"
+                  class="absolute bottom-0 right-0 bg-white shadow-lg rounded-lg w-40 mt-2"
+                >
+                  <ul class="flex flex-col">
+                    <li>
+                      <button
+                        @click="openFileInput"
+                        class="w-full px-4 py-2 text-blue-500 text-left hover:bg-gray-100"
+                      >
+                        Ubah Foto
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        @click="deleteProfilePhoto"
+                        class="w-full px-4 py-2 text-red-500 text-left hover:bg-gray-100"
+                      >
+                        Hapus Foto
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+
+                <input
+                  ref="fileInput"
+                  type="file"
+                  @change="handleFileUpload"
+                  class="hidden"
+                />
               </div>
               <h2 class="text-lg font-semibold mt-4">{{ namaMahasiswa }}</h2>
               <p class="text-gray-600">{{ nimMahasiswa }}</p>
@@ -29,11 +67,13 @@
           </Card>
 
           <!-- Card 2: Informasi Akademik -->
-          <Card class="w-3/4 p-6">
+          <Card class="flex-[3] p-6 h-full">
             <!-- Header Card dengan Button Edit -->
             <div class="flex justify-between items-center mb-4">
               <h2 class="text-lg font-semibold">Identitas Diri</h2>
-              <button class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+              <button
+                class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+              >
                 Edit
               </button>
             </div>
@@ -41,39 +81,75 @@
             <!-- Data Identitas Mahasiswa -->
             <div class="grid grid-cols-1 gap-4">
               <div>
-                <label class="block text-sm font-medium text-gray-700">Nama Lengkap</label>
-                <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
-                  :value="namaMahasiswa" readonly />
+                <label class="block text-sm font-medium text-gray-700"
+                  >Nama Lengkap</label
+                >
+                <input
+                  type="text"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                  :value="namaMahasiswa"
+                  readonly
+                />
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-gray-700">NIM</label>
-                <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
-                  :value="nimMahasiswa" readonly />
+                <label class="block text-sm font-medium text-gray-700"
+                  >NIM</label
+                >
+                <input
+                  type="text"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                  :value="nimMahasiswa"
+                  readonly
+                />
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-gray-700">Prodi</label>
-                <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
-                  :value="prodiMahasiswa" readonly />
+                <label class="block text-sm font-medium text-gray-700"
+                  >Prodi</label
+                >
+                <input
+                  type="text"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                  :value="prodiMahasiswa"
+                  readonly
+                />
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-gray-700">Jurusan</label>
-                <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
-                  :value="jurusanMahasiswa" readonly />
+                <label class="block text-sm font-medium text-gray-700"
+                  >Jurusan</label
+                >
+                <input
+                  type="text"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                  :value="jurusanMahasiswa"
+                  readonly
+                />
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-gray-700">Email</label>
-                <input type="email" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
-                  :value="emailMahasiswa" readonly />
+                <label class="block text-sm font-medium text-gray-700"
+                  >Email</label
+                >
+                <input
+                  type="email"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                  :value="emailMahasiswa"
+                  readonly
+                />
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-gray-700">Telepon</label>
-                <input type="tel" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
-                  :value="teleponMahasiswa" readonly />
+                <label class="block text-sm font-medium text-gray-700"
+                  >Telepon</label
+                >
+                <input
+                  type="tel"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                  :value="teleponMahasiswa"
+                  readonly
+                />
               </div>
             </div>
           </Card>
@@ -101,6 +177,7 @@ export default {
   data() {
     return {
       breadcrumbs: [{ text: "Profile", href: "/Mahasiswa/profile" }],
+      isDropdownVisible: false,
       profileImage: "", // Ganti dengan URL gambar asli jika ada
       namaMahasiswa: "",
       nimMahasiswa: "",
@@ -111,8 +188,7 @@ export default {
     };
   },
   mounted() {
-    // Ambil data profil mahasiswa dari API
-    this.fetchProfile();
+    this.fetchProfile(); // Pastikan profil diambil dulu
   },
   methods: {
     fetchProfile() {
@@ -126,26 +202,26 @@ export default {
           this.prodiMahasiswa = profileData.prodi;
           this.jurusanMahasiswa = profileData.jurusan;
           this.emailMahasiswa = profileData.email;
-          this.teleponMahasiswa = profileData.telepon || ''; // Atur telepon jika ada
-          // Jika ada foto profil
-          this.fetchProfilePhoto(); // Menampilkan foto profil
+          this.teleponMahasiswa = profileData.telepon || ""; // Atur telepon jika ada
+          this.profileImage = profileData.photo || ""; // Update foto profil
+          console.log("Response dari API:", response.data);
         })
         .catch((error) => {
           console.error("Error fetching profile data:", error);
         });
     },
-    openFileInput() {
-      this.$refs.fileInput.click(); // Menampilkan file input ketika tombol edit diklik
+    toggleDropdown() {
+      // Jika tidak ada foto, buka file input untuk memilih foto baru
+      if (!this.profileImage) {
+        this.openFileInput();
+      } else {
+        // Jika ada foto, tampilkan dropdown
+        this.isDropdownVisible = !this.isDropdownVisible;
+      }
     },
-    fetchProfilePhoto() {
-      axios
-        .get("/api/mahasiswa/get-profile-photo") // Ambil URL foto profil
-        .then((response) => {
-          this.profileImage = response.data.photo_url || this.profileImage;
-        })
-        .catch((error) => {
-          console.error("Error fetching profile photo:", error);
-        });
+    openFileInput() {
+      this.$refs.fileInput.click(); 
+      this.isDropdownVisible = false;
     },
     handleFileUpload(event) {
       const file = event.target.files[0];
@@ -160,9 +236,9 @@ export default {
             },
           })
           .then((response) => {
-            // Update gambar profil setelah berhasil diupload
-            this.profileImage = response.data.photo_url;
-            this.fetchProfile();
+            const baseUrl = "/storage/"; 
+            this.profileImage = baseUrl + response.data.path;
+            this.isDropdownVisible = false;
           })
           .catch((error) => {
             console.error("Error uploading profile photo:", error);
@@ -171,9 +247,10 @@ export default {
     },
     deleteProfilePhoto() {
       axios
-        .post("/api/mahasiswa/delete-profile-photo")
+        .delete("/api/mahasiswa/delete-profile-photo")
         .then(() => {
-          this.profileImage = "https://via.placeholder.com/150"; // Ganti dengan gambar placeholder
+          this.profileImage = ""; 
+          this.isDropdownVisible = false;
         })
         .catch((error) => {
           console.error("Error deleting profile photo:", error);

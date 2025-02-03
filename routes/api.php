@@ -11,6 +11,7 @@ use App\Http\Controllers\Dosen\KelolaProyekController;
 use App\Http\Controllers\Dosen\KelolaKelompokController;
 use App\Http\Controllers\Dosen\ReportController;
 use App\Http\Controllers\Dosen\UserManagementController;
+use App\Http\Controllers\Dosen\ProfileController;
 
 use App\Http\Controllers\Mahasiswa\AssessmentMahasiswa;
 use App\Http\Controllers\Mahasiswa\DashboardMahasiswa;
@@ -55,7 +56,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/kelola-kelompok/export', [KelolaKelompokController::class, 'exportTemplate']);
     Route::post('/kelola-kelompok/import', [KelolaKelompokController::class, 'importData']);
     Route::get('/kelola-kelompok/get-profile/{user_id}', [KelolaKelompokController::class, 'getProfile']);
-    Route::get('/kelola-kelompok/get-profile-photo/{user_id}', [KelolaKelompokController::class, 'getProfilePhoto']);
 
     Route::post('/save-answer-peerDosen', [AnswerController::class, 'AnswersPeerDosen']);
     Route::get('/users/search', [AnswerController::class, 'searchByNip']);
@@ -85,6 +85,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/save-answer', [AssessmentController::class, 'saveAnswer']);
     Route::post('/save-all-answers', [AssessmentController::class, 'saveAllAnswers']);
 
+    //Dosen Profile
+    Route::get('/get-profile-dosen', [ProfileController::class, 'getProfile']);
+    Route::post('/dosen/upload-profile-photo', [ProfileController::class, 'uploadProfilePhoto']);
+    Route::put('/dosen/update-profile', [ProfileController::class, 'updateProfile']);
+    Route::delete('/dosen/delete-profile-photo', [ProfileController::class, 'deleteProfilePhoto']);
 
     //mahasiswa
     Route::get('/bobot', [SelfAssessment::class, 'getFilteredBobot']);
@@ -124,7 +129,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     //Mahasiswa Profile
     Route::get('/get-profile', [ProfileMahasiswa::class, 'getProfile']);
-    Route::get('/mahasiswa/get-profile-photo', [ProfileMahasiswa::class, 'getProfilePhoto']);
     Route::post('/mahasiswa/upload-profile-photo', [ProfileMahasiswa::class, 'uploadProfilePhoto']);
     Route::delete('/mahasiswa/delete-profile-photo', [ProfileMahasiswa::class, 'deleteProfilePhoto']);
 });

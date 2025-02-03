@@ -22,8 +22,9 @@ class DosenImport implements ToModel, WithHeadingRow, WithBatchInserts, OnEachRo
 
     public function __construct()
     {
-        // Cache data major
         $this->majors = Major::pluck('id', 'major_name')->toArray();
+        // Simpan data NIP yang ada sebelum import
+        // $this->oldNipMapping = Dosen::pluck('nip', 'id')->toArray();
     }
 
     public function model(array $row)
@@ -47,19 +48,21 @@ class DosenImport implements ToModel, WithHeadingRow, WithBatchInserts, OnEachRo
                 return null;
             }
 
-            // Tambahkan NIP ke daftar yang telah diproses
-            $this->processedNips[] = $row['nip'];
-
             DB::beginTransaction();
             try {
-                // Cek dosen berdasarkan NIP
-                $existingDosen = Dosen::where('nip', $row['nip'])->first();
+                // Cari dosen berdasarkan kode_dosen (sebagai identifier unik)
+                $existingDosen = Dosen::where('kode_dosen', $row['kode_dosen'])->first();
+                
+                // Jika tidak ditemukan dengan kode_dosen, cari berdasarkan NIP
+                if (!$existingDosen) {
+                    $existingDosen = Dosen::where('nip', $row['nip'])->first();
+                }
 
                 // Cek user berdasarkan email
                 $existingUser = User::where('email', $row['email'])->first();
 
-                if ($existingDosen || $existingUser) {
-                    // Update data yang sudah ada
+                if ($existingDosen) {
+                    // Update user yang terkait
                     if ($existingUser) {
                         $existingUser->update([
                             'name' => $row['name'],
@@ -77,42 +80,38 @@ class DosenImport implements ToModel, WithHeadingRow, WithBatchInserts, OnEachRo
                         ]);
                     }
 
-                    if ($existingDosen) {
-                        $existingDosen->update([
-                            'user_id' => $existingUser->id,
-                            'nip' => $row['nip'],
-                            'major_id' => $majorId,
-                            'kode_dosen' => $row['kode_dosen']
-                        ]);
-                    } else {
-                        // Buat data dosen baru
-                        Dosen::create([
-                            'user_id' => $existingUser->id,
-                            'major_id' => $majorId,
-                            'nip' => $row['nip'],
-                            'kode_dosen' => $row['kode_dosen']
+                    // Update data dosen
+                    $existingDosen->update([
+                        'user_id' => $existingUser->id,
+                        'nip' => $row['nip'],
+                        'major_id' => $majorId,
+                        'kode_dosen' => $row['kode_dosen']
+                    ]);
+
+                    // Tambahkan NIP baru ke daftar yang telah diproses
+                    $this->processedNips[] = $row['nip'];
+                } else {
+                    // Buat data baru jika tidak ditemukan
+                    if (!$existingUser) {
+                        $existingUser = User::create([
+                            'id' => Str::uuid(),
+                            'name' => $row['name'],
+                            'email' => $row['email'],
+                            'password' => bcrypt('qwert1234'),
+                            'role' => 'dosen'
                         ]);
                     }
 
-                    DB::commit();
-                    return null;
+                    $newDosen = Dosen::create([
+                        'user_id' => $existingUser->id,
+                        'major_id' => $majorId,
+                        'nip' => $row['nip'],
+                        'kode_dosen' => $row['kode_dosen']
+                    ]);
+
+                    // Tambahkan NIP baru ke daftar yang telah diproses
+                    $this->processedNips[] = $row['nip'];
                 }
-
-                // Buat user dan dosen baru jika keduanya belum ada
-                $user = User::create([
-                    'id' => Str::uuid(),
-                    'name' => $row['name'],
-                    'email' => $row['email'],
-                    'password' => bcrypt('qwert1234'),
-                    'role' => 'dosen'
-                ]);
-
-                Dosen::create([
-                    'user_id' => $user->id,
-                    'major_id' => $majorId,
-                    'nip' => $row['nip'],
-                    'kode_dosen' => $row['kode_dosen']
-                ]);
 
                 DB::commit();
                 return null;
@@ -145,65 +144,47 @@ class DosenImport implements ToModel, WithHeadingRow, WithBatchInserts, OnEachRo
         try {
             $currentUser = Auth::user();
 
-            // Log NIPs yang diproses untuk debugging
             Log::info('NIPs yang diproses:', ['nips' => $this->processedNips]);
 
-            // Dapatkan ID dosen yang harus dipertahankan
-            $preservedDosenIds = Dosen::whereIn('nip', $this->processedNips)
-                ->pluck('id')
-                ->toArray();
-
-            // Tambahkan ID dosen pengguna saat ini jika ada
+            // Hanya hapus data yang benar-benar tidak ada di file import
+            // dan bukan milik user yang sedang login
             if ($currentUser && $currentUser->dosen) {
-                $preservedDosenIds[] = $currentUser->dosen->id;
+                $this->processedNips[] = $currentUser->dosen->nip;
             }
 
-            // Log ID yang dipertahankan untuk debugging
-            Log::info('ID Dosen yang dipertahankan:', ['ids' => $preservedDosenIds]);
-
-            // Dapatkan record dosen yang akan dihapus
-            $dosensToDelete = Dosen::whereNotIn('id', $preservedDosenIds)->get();
-
-            // Log dosen yang akan dihapus
-            foreach ($dosensToDelete as $dosen) {
-                Log::info('Akan menghapus dosen:', [
-                    'dosen_id' => $dosen->id,
-                    'user_id' => $dosen->user_id,
-                    'nip' => $dosen->nip,
-                    'nama' => $dosen->user ? $dosen->user->name : 'Tidak ada User',
-                    'kode_dosen' => $dosen->kode_dosen
-                ]);
+            // PENTING: Jangan hapus data jika tidak ada NIP yang diproses
+            if (empty($this->processedNips)) {
+                Log::warning('Tidak ada NIP yang diproses, membatalkan penghapusan');
+                return;
             }
 
-            // Hapus dosen dan user terkait
+            // Dapatkan dosen yang akan dihapus
+            $dosensToDelete = Dosen::whereNotIn('nip', $this->processedNips)
+                                 ->get();
+
             DB::transaction(function () use ($dosensToDelete) {
                 foreach ($dosensToDelete as $dosen) {
                     try {
-                        // Simpan user_id sebelum menghapus dosen
                         $userId = $dosen->user_id;
 
-                        // Force delete dosen (bypass soft delete)
-                        $dosenResult = $dosen->forceDelete();
-                        Log::info('Hasil penghapusan dosen:', [
+                        // Log sebelum penghapusan
+                        Log::info('Menghapus dosen:', [
                             'dosen_id' => $dosen->id,
-                            'berhasil' => $dosenResult
+                            'nip' => $dosen->nip,
+                            'kode_dosen' => $dosen->kode_dosen
                         ]);
 
-                        // Setelah dosen dihapus, cek apakah user memiliki dosen lain
-                        // Termasuk yang soft deleted
-                        $userHasOtherDosen = Dosen::withTrashed()
-                            ->where('user_id', $userId)
+                        $dosen->delete(); // Gunakan soft delete
+
+                        // Cek apakah user memiliki dosen lain
+                        $userHasOtherDosen = Dosen::where('user_id', $userId)
+                            ->where('id', '!=', $dosen->id)
                             ->exists();
 
                         if (!$userHasOtherDosen) {
-                            // Hapus user jika tidak memiliki dosen lain
                             $user = User::find($userId);
                             if ($user) {
-                                $userResult = $user->delete();
-                                Log::info('Hasil penghapusan user:', [
-                                    'user_id' => $userId,
-                                    'berhasil' => $userResult
-                                ]);
+                                $user->delete(); // Gunakan soft delete
                             }
                         }
                     } catch (\Exception $e) {
@@ -220,7 +201,8 @@ class DosenImport implements ToModel, WithHeadingRow, WithBatchInserts, OnEachRo
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            throw $e;
+            // Tidak throw exception di destructor
+            Log::error('Error in destructor: ' . $e->getMessage());
         }
     }
 }

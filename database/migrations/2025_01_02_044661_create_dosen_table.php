@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignUuid('user_id')->constrained('users');
             $table->string('nip', 21)->unique();
             $table->string('kode_dosen')->unique();
+            $table->string('telepon', 15)->nullable();
             $table->foreignUuid('major_id')->constrained('major');
             $table->softDeletes();
             $table->timestamps();

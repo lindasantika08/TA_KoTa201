@@ -129,6 +129,9 @@ class KelolaKelompokController extends Controller
         return response()->json(['message' => 'Data mahasiswa tidak ditemukan.'], 404);
     }
 
+    // Periksa apakah mahasiswa memiliki foto dan buat URL dengan asset()
+    $photoUrl = $mahasiswa->user->photo ? asset('storage/' . $mahasiswa->user->photo) : null;
+
     // Kembalikan data mahasiswa dengan relasi terkait
     return response()->json([
         'nama' => $mahasiswa->user->name,
@@ -136,8 +139,9 @@ class KelolaKelompokController extends Controller
         'prodi' => $mahasiswa->classRoom->prodi->prodi_name,
         'jurusan' => $mahasiswa->classRoom->prodi->major->major_name,
         'email' => $mahasiswa->user->email,
-        // 'telepon' => $mahasiswa->user->phone, // Misalkan ada kolom telepon di tabel user
+        'telepon' => $mahasiswa->user->phone, // Misalkan ada kolom telepon di tabel user
         // 'photo' => $mahasiswa->user->photo, // Misalkan ada kolom photo di tabel user
+        'photo' => $photoUrl,
     ]);
 }
 

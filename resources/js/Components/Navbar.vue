@@ -18,11 +18,34 @@ export default {
     return {
       showProfileMenu: false,
       isLoggingOut: false,
+      userName: "",
     };
+  },
+  mounted() {
+    this.fetchUserName();  // Ambil nama pengguna saat komponen dimuat
   },
   methods: {
     toggleProfileMenu() {
       this.showProfileMenu = !this.showProfileMenu;
+    },
+
+    async fetchUserName() {
+      try {
+        const token = localStorage.getItem("auth_token");
+
+        if (token) {
+          const response = await axios.get("/api/user", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          this.userName = response.data.name;  // Set userName berdasarkan respons API
+        } else {
+          console.log("Token tidak ditemukan");
+        }
+      } catch (error) {
+        console.error("Gagal mendapatkan data pengguna:", error);
+      }
     },
 
     async logout() {
