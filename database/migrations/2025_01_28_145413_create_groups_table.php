@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('groups', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('batch_year');
-            $table->string('angkatan');
+            $table->string('angkatan')->nullable();
             $table->foreignUuid('project_id')->constrained('project');
             $table->foreignUuid('mahasiswa_id')->constrained('mahasiswa');
             $table->string('group'); 

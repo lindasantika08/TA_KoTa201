@@ -64,6 +64,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/questions-peer-dosen', [PeerAssessmentDosen::class, 'getQuestionsByProjectPeer']);
     Route::post('/save-answer-peer-dosen', [PeerAssessmentDosen::class, 'saveAnswerPeer']);
     Route::post('/save-all-answers-peer-dosen', [PeerAssessmentDosen::class, 'saveAllAnswersPeerDosen']);
+    Route::get('/get-answer-peer-dosen/{questionId}', [PeerAssessmentDosen::class, 'getAnswerPeer']);
 
     // Manage Group
     Route::get('/kelola-kelompok/export', [KelolaKelompokController::class, 'exportTemplate']);
@@ -74,7 +75,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/users/search', [AnswerController::class, 'searchByNip']);
     Route::get('/kelompok-dosen', [AnswerController::class, 'getKelompokDosen']);
     Route::get('/answered-peers-dosen', [AnswerController::class, 'answeredPeersDosen']);
-    Route::get('/get-answer-peerDosen/{questionId}', [AnswerController::class, 'getAnswerPeerDosen']);
     Route::get('/answers/statistics', [AnswerController::class, 'getStatistics']);
     Route::get('/answers/statistics-peer', [AnswerController::class, 'getStatisticsPeer']);
     Route::get('projects/active', [DashboardDosen::class, 'getActiveProjects']);
@@ -92,7 +92,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/assessment/projects', [ProjectController::class, 'getProjectsWithAssessments']);
     Route::get('/proyek-self-assessment', [ProjectController::class, 'getDataSelf']);
-    Route::post('/save-answer', [AssessmentController::class, 'saveAnswer']);
     Route::post('/save-all-answers', [AssessmentController::class, 'saveAllAnswers']);
 
     //Dosen Profile
@@ -100,17 +99,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/dosen/upload-profile-photo', [ProfileController::class, 'uploadProfilePhoto']);
     Route::put('/dosen/update-profile', [ProfileController::class, 'updateProfile']);
     Route::delete('/dosen/delete-profile-photo', [ProfileController::class, 'deleteProfilePhoto']);
-
-    //mahasiswa
-    Route::get('/bobot', [SelfAssessment::class, 'getFilteredBobot']);
-    Route::get('/self-assessment', [AssessmentMahasiswa::class, 'getDataSelf']);
-    Route::get('/peer-assessment', [AssessmentMahasiswa::class, 'getDataPeer']);
-    Route::get('/questions', [SelfAssessment::class, 'getQuestionsByProject']);
-    Route::get('/questions-peer', [PeerAssessment::class, 'getQuestionsByProject']);
-    Route::get('/type-kriteria', [SelfAssessment::class, '']);
-    Route::post('/save-answer', [AssessmentController::class, 'saveAnswer']);
-    Route::get('/proyek-self-assessment', [ProjectController::class, 'getDataSelf']);
-    Route::get('/proyek-Peer-assessment', [ProjectController::class, 'getDataPeer']);
 
     //REPORT DOSEN
     Route::get('/dropdown-options', [ReportController::class, 'getDropdownOptions']);
@@ -133,6 +121,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user-info', [SelfAssessment::class, 'getUserInfo']);
     Route::post('/save-all-answers', [SelfAssessment::class, 'saveAllAnswers']);
     Route::get('/get-answer-mhs/{questionId}', [SelfAssessment::class, 'getAnswer']);
+
+    // assessment & project mhs
+    Route::get('/bobot', [SelfAssessment::class, 'getFilteredBobot']);
+    Route::get('/self-assessment', [AssessmentMahasiswa::class, 'getDataSelf']);
+    Route::get('/peer-assessment', [AssessmentMahasiswa::class, 'getDataPeer']);
+    Route::get('/questions', [SelfAssessment::class, 'getQuestionsByProject']);
+    Route::get('/questions-peer', [PeerAssessment::class, 'getQuestionsByProject']);
+    Route::get('/type-kriteria', [SelfAssessment::class, '']);
+    Route::get('/proyek-self-assessment', [ProjectController::class, 'getDataSelf']);
+    Route::get('/proyek-Peer-assessment', [ProjectController::class, 'getDataPeer']);
 
     // peer assessment mhs
     Route::get('/peer-assessment', [AssessmentMahasiswa::class, 'getDataPeer']);

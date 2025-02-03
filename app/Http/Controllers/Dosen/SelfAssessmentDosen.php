@@ -62,49 +62,22 @@ class SelfAssessmentDosen extends Controller
 
     public function getQuestionsByProject(Request $request)
     {
-        try {
-            $user = Auth::user();
-            if (!$user) {
-                throw new \Exception('User not authenticated');
-            }
-            Log::info('User found:', ['id' => $user->id, 'name' => $user->name]);
+        $tahunAjaran = $request->query('batch_year');
+        $namaProyek = $request->query('project_name');
 
-            $dosen = Dosen::where('user_id', $user->id)->first();
-            if (!$dosen) {
-                throw new \Exception('Dosen not found for user ID: ' . $user->id);
-            }
-            Log::info('Dosen found:', ['id' => $dosen->id, 'nim' => $dosen->nim]);
+        $project = Project::where('batch_year', $tahunAjaran)
+            ->where('project_name', $namaProyek)
+            ->first();
 
-            $group = Group::where('dosen_id', $dosen->id)->first();
-            if (!$group) {
-                throw new \Exception('Group not found for dosen ID: ' . $dosen->id);
-            }
-            Log::info('Group found:', [
-                'id' => $group->id, 
-                'group' => $group->group,
-                'project_id' => $group->project_id
-            ]);
+        if (!$project) {
+            return response()->json(['error' => 'Project not found'], 404);
+        }
 
-            $project = Project::find($group->project_id);
-            if (!$project) {
-                throw new \Exception('Project not found for ID: ' . $group->project_id);
-            }
-            Log::info('Project found:', [
-                'id' => $project->id,
-                'name' => $project->project_name,
-                'batch_year' => $project->batch_year
-            ]);
-
-            $assessments = Assessment::with('typeCriteria')
-                ->where('project_id', $project->id)
-                ->where('type', 'selfAssessment')
-                ->get();
-
-            if ($assessments->isEmpty()) {
-                throw new \Exception('No assessments found for project ID: ' . $project->id);
-            }
-
-            $formattedAssessments = $assessments->map(function ($assessment) {
+        $assessments = Assessment::with('typeCriteria')
+            ->where('project_id', $project->id)
+            ->where('type', 'selfAssessment')
+            ->get()
+            ->map(function ($assessment) {
                 $criteria = TypeCriteria::find($assessment->criteria_id);
                 return [
                     'id' => $assessment->id,
@@ -120,20 +93,7 @@ class SelfAssessmentDosen extends Controller
                 ];
             });
 
-            Log::info('Assessments found:', ['count' => $formattedAssessments->count()]);
-
-            return response()->json($formattedAssessments);
-
-        } catch (\Exception $e) {
-            Log::error('Error in getQuestionsByProject:', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'error' => $e->getMessage()
-            ], 404);
-        }
+        return response()->json($assessments);
     }
 
     public function saveAnswer(Request $request)
