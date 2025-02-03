@@ -80,6 +80,11 @@ export default {
         this.temporaryAnswers[this.selectedMember][q.id]?.score !== undefined
       );
     },
+    availableMembers() {
+      return this.kelompok.filter(member =>
+        !this.answeredPeers.includes(member.mahasiswa_id)
+      );
+    }
   },
 
   watch: {
@@ -92,7 +97,6 @@ export default {
     selectedMember: {
       immediate: true,
       handler(newVal) {
-        console.log('Selected member updated:', newVal);
         if (newVal) {
           try {
             this.currentQuestionIndex = 0;
@@ -127,6 +131,9 @@ export default {
     console.log('Current question:', this.currentQuestion);
   },
 
+  async created() {
+    await this.fetchAnsweredPeers();
+  },
 
   methods: {
     async initializeData() {
@@ -271,24 +278,47 @@ export default {
       }
 
       try {
-        const response = await axios.post("/api/save-answer-peer", {
-          mahasiswa_id: mahasiswaData.mahasiswa_id,
-          peer_id: this.selectedMember,
-          question_id: this.currentQuestion.id,
-          answer: this.answer,
-          score: this.score,
-          status: "submitted",
-        });
+        this.saveTemporaryAnswer();
 
-        if (response.data.success) {
+        const answersToSubmit = [];
+
+        const peerAnswers = this.temporaryAnswers[this.selectedMember] || {};
+
+        for (const [questionId, answerData] of Object.entries(peerAnswers)) {
+          if (!answerData.answer && answerData.score === 0) continue;
+
+          answersToSubmit.push({
+            mahasiswa_id: mahasiswaData.mahasiswa_id,
+            peer_id: this.selectedMember,
+            question_id: questionId,
+            answer: answerData.answer,
+            score: answerData.score,
+            status: "submitted"
+          });
+        }
+
+        const responses = await Promise.all(
+          answersToSubmit.map(answer =>
+            axios.post("/api/save-answer-peer", answer)
+          )
+        );
+
+        const allSuccess = responses.every(response => response.data.success);
+
+        if (allSuccess) {
+          this.temporaryAnswers[this.selectedMember] = {};
+          localStorage.setItem('temporaryAnswers', JSON.stringify(this.temporaryAnswers));
+
           this.nextQuestion();
           this.saveCurrentState();
+
+          alert("Answer saved successfully");
         } else {
-          alert("Gagal menyimpan jawaban: " + response.data.message);
+          alert("Some answers failed to save. Please try again.");
         }
       } catch (error) {
-        console.error("Error submitting answer:", error);
-        alert("Gagal menyimpan jawaban. Silakan coba lagi.");
+        console.error("Error submitting answers:", error);
+        alert("Failed to save the answer. Please try again.");
       }
     },
 
@@ -344,9 +374,15 @@ export default {
       if (!this.selectedMember || !this.currentQuestion) return;
 
       try {
+        const mahasiswaData = await this.fetchUserIdByNim(this.studentInfo.nim);
+        if (!mahasiswaData) {
+          console.error("Failed to fetch user ID");
+          return;
+        }
+
         const response = await axios.get("/api/existing-peer-answers", {
           params: {
-            user_id: await this.fetchUserIdByNim(this.studentInfo.nim),
+            mahasiswa_id: mahasiswaData.mahasiswa_id,
             peer_id: this.selectedMember,
             question_id: this.currentQuestion.id,
           },
@@ -359,13 +395,24 @@ export default {
           this.answer = existingAnswer.answer || "";
           this.score = existingAnswer.score || 0;
 
-          this.$nextTick(() => {
-            this.answer = this.answer;
-            this.score = this.score;
-          });
+          if (!this.temporaryAnswers[this.selectedMember]) {
+            this.temporaryAnswers[this.selectedMember] = {};
+          }
+
+          this.temporaryAnswers[this.selectedMember][this.currentQuestion.id] = {
+            answer: this.answer,
+            score: this.score
+          };
+
+          localStorage.setItem('temporaryAnswers', JSON.stringify(this.temporaryAnswers));
+        } else {
+          this.answer = "";
+          this.score = 0;
         }
       } catch (error) {
         console.error("Error checking existing answer:", error);
+        this.answer = "";
+        this.score = 0;
       }
     },
 
@@ -425,7 +472,7 @@ export default {
       }
     },
     async loadExistingAnswers() {
-      if (!this.selectedMember) return;
+      if (!this.selectedMember || !this.currentQuestion) return;
 
       try {
         const mahasiswaData = await this.fetchUserIdByNim(this.studentInfo.nim);
@@ -434,38 +481,49 @@ export default {
           return;
         }
 
-        const response = await axios.get("/api/existing-peer-answers", {
+        this.answer = "";
+        this.score = 0;
+
+        if (this.temporaryAnswers[this.selectedMember]?.[this.currentQuestion.id]) {
+          const tempData = this.temporaryAnswers[this.selectedMember][this.currentQuestion.id];
+          this.answer = tempData.answer;
+          this.score = tempData.score;
+          return;
+        }
+
+        const response = await axios.get(`/api/get-answer-peer/${this.currentQuestion.id}`, {
           params: {
             mahasiswa_id: mahasiswaData.mahasiswa_id,
-            peer_id: this.selectedMember,
-            question_id: this.currentQuestion.id
+            peer_id: this.selectedMember
           }
         });
 
-        console.log('Existing Answer Response:', response.data);
+        if (!this.temporaryAnswers[this.selectedMember]) {
+          this.temporaryAnswers[this.selectedMember] = {};
+        }
 
-        if (response.data && response.data.length > 0) {
-          const existingAnswer = response.data[0];
-
-          this.answer = existingAnswer.answer || "";
-          this.score = existingAnswer.score || 0;
-
-          if (!this.temporaryAnswers[this.selectedMember]) {
-            this.temporaryAnswers[this.selectedMember] = {};
-          }
+        if (response.data) {
           this.temporaryAnswers[this.selectedMember][this.currentQuestion.id] = {
-            answer: this.answer,
-            score: this.score
+            answer: response.data.answer || "",
+            score: response.data.score || 0
           };
 
-          this.$nextTick(() => {
-            this.answer = this.answer;
-            this.score = this.score;
-          });
+          this.answer = response.data.answer || "";
+          this.score = response.data.score || 0;
         }
+
+        localStorage.setItem('temporaryAnswers', JSON.stringify(this.temporaryAnswers));
+
       } catch (error) {
-        console.error("Error loading existing answers:", error);
+        console.error("Error loading existing answer:", error);
+        this.answer = "";
+        this.score = 0;
       }
+    },
+
+    async handleMemberChange(newMemberId) {
+      this.selectedMember = newMemberId;
+      await this.loadExistingAnswers();
     },
 
     async submitAllAnswers() {
@@ -523,6 +581,14 @@ export default {
         this.isSubmitting = false;
       }
     },
+    async fetchAnsweredPeers() {
+      try {
+        const response = await axios.get('/api/answered-peers');
+        this.answeredPeers = response.data.answered_peers;
+      } catch (error) {
+        console.error('Error fetching answered peers:', error);
+      }
+    },
 
     resetForm() {
       this.temporaryAnswers = {};
@@ -556,7 +622,7 @@ export default {
           </div>
 
           <template v-else>
-            <div class="grid grid-cols-2 gap-6 text-sm leading-6 mb-6">
+            <div class="grid grid-cols-2 gap-6 text-sx leading-6 mb-6">
               <div>
                 <p><strong>NIM:</strong> {{ studentInfo.nim }}</p>
                 <p><strong>Nama Lengkap:</strong> {{ studentInfo.name }}</p>
@@ -573,16 +639,16 @@ export default {
 
             <div class="mb-6" v-if="currentQuestionIndex === 0">
               <label for="select-member" class="block text-sm font-medium text-gray-700 mb-2">
-                Pilih Teman Kelompok untuk Dinilai
+                Choose a Friend Group to Assess
               </label>
               <select id="select-member" v-model="selectedMember"
                 class="block w-full rounded-md border border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
                 <option disabled value="">-- Pilih Teman Kelompok --</option>
-                <option v-for="member in kelompok" :key="member.mahasiswa_id" :value="member.mahasiswa_id">
+                <option v-for="member in availableMembers" :key="member.mahasiswa_id" :value="member.mahasiswa_id"
+                  v-show="!answeredPeers.includes(member.mahasiswa_id)">
                   {{ member.name }} ({{ member.nim }})
                 </option>
               </select>
-
             </div>
 
             <div v-if="error" class="text-center py-8 text-red-600">
