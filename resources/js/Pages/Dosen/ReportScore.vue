@@ -330,161 +330,275 @@ export default {
       return analysisScores;
     },
     preparePeerComparisonChartData(userData) {
-      const analysisScores = this.calculateAnalysisScores(userData);
+  const analysisScores = this.calculateAnalysisScores(userData);
 
-      return {
-        series: [
-          {
-            name: "Skor Sendiri",
-            data: analysisScores.map((score) => parseFloat(score.selfScore)),
-          },
-          {
-            name: "Rata-rata Peer",
-            data: analysisScores.map((score) =>
-              parseFloat(score.averagePeerScore)
-            ),
-          },
-        ],
-        options: {
-          chart: {
-            type: "radar",
-            height: 350,
-          },
-          labels: analysisScores.map(
-            (score) => `${score.aspek} - ${score.kriteria}`
-          ),
-          plotOptions: {
-            radar: {
-              polygons: {
-                strokeColors: "#e8e8e8",
-                fill: {
-                  colors: ["#f7f7f7", "#fff"],
-                },
-              },
+  return {
+    series: [
+      {
+        name: "Skor Sendiri",
+        data: analysisScores.map((score) => parseFloat(score.selfScore)),
+      },
+      {
+        name: "Rata-rata Peer",
+        data: analysisScores.map((score) => parseFloat(score.averagePeerScore)),
+      },
+    ],
+    options: {
+      chart: {
+        type: "radar",
+        height: 400,
+        toolbar: {
+          show: true,
+        },
+      },
+      labels: analysisScores.map(
+        (score) => `${score.aspek} - ${score.kriteria}`
+      ),
+      plotOptions: {
+        radar: {
+          polygons: {
+            strokeColors: "#e8e8e8",
+            fill: {
+              colors: ["#f7f7f7", "#fff"],
             },
           },
+        },
+      },
+      colors: ["#FF4560", "#00E396"],
+      markers: {
+        size: 6,
+        colors: ["#FF4560", "#00E396"],
+        strokeColors: "#fff",
+        strokeWidth: 2,
+        hover: {
+          size: 9,
+        },
+      },
+      tooltip: {
+        y: {
+          formatter: function (val) {
+            return val.toFixed(2);
+          },
+        },
+        marker: {
+          show: true,
+        },
+        custom: function ({ series, seriesIndex, dataPointIndex, w }) {
+          const score = analysisScores[dataPointIndex];
+          return (
+            '<div class="apexcharts-tooltip-title" style="font-size: 14px;">' +
+            w.config.labels[dataPointIndex] +
+            '</div>' +
+            '<div style="color: #FF4560; font-size: 14px;">Skor Sendiri: ' +
+            score.selfScore +
+            '</div>' +
+            '<div style="color: #00E396; font-size: 14px;">Rata-rata Peer: ' +
+            score.averagePeerScore +
+            '</div>'
+          );
+        },
+      },
+      yaxis: {
+        show: true,
+        min: 0,
+        max: 5,
+        tickAmount: 5,
+        labels: {
+          formatter: function (val) {
+            return val.toFixed(1);
+          },
+        },
+      },
+      xaxis: {
+        show: true,
+        labels: {
+          style: {
+            fontSize: "12px",
+          },
+        },
+      },
+      fill: {
+        opacity: 0.4,
+      },
+      title: {
+        text: "Perbandingan Skor",
+        align: "center",
+        style: {
+          fontSize: "16px",
+          fontWeight: "bold",
+        },
+      },
+      legend: {
+        position: "bottom",
+        horizontalAlign: "center",
+        markers: {
+          width: 16,
+          height: 16,
+        },
+        itemMargin: {
+          horizontal: 10,
+          vertical: 10,
+        },
+      },
+      dataLabels: {
+        enabled: true,
+        formatter: function (val) {
+          return val.toFixed(2);
+        },
+        style: {
+          fontSize: "12px",
           colors: ["#FF4560", "#00E396"],
-          markers: {
-            size: 4,
-            colors: ["#FF4560", "#00E396"],
-            strokeColors: "#fff",
-            strokeWidth: 2,
-            hover: {
-              size: 7,
+        },
+      },
+      grid: {
+        show: true,
+        strokeDashArray: 2,
+        borderColor: "#e8e8e8",
+      },
+    },
+  };
+},
+prepareSelfComparisonChartData(userData) {
+  const selfScores = userData.self_assessment
+    ? userData.self_assessment.map((aspect) =>
+        parseFloat(aspect.total_score || 0).toFixed(2)
+      )
+    : [];
+
+  const averageSelfScores = this.calculateAverageSelfScores().map((score) =>
+    parseFloat(score.averageScore)
+  );
+
+  const labels = userData.self_assessment
+    ? userData.self_assessment.map(
+        (aspect) => `${aspect.aspek} - ${aspect.kriteria}`
+      )
+    : [];
+
+  return {
+    series: [
+      {
+        name: "Skor Sendiri",
+        data: selfScores,
+      },
+      {
+        name: "Rata-rata Self Kelompok",
+        data: averageSelfScores,
+      },
+    ],
+    options: {
+      chart: {
+        type: "radar",
+        height: 400,
+        toolbar: {
+          show: true,
+        },
+      },
+      labels: labels,
+      plotOptions: {
+        radar: {
+          polygons: {
+            strokeColors: "#e8e8e8",
+            fill: {
+              colors: ["#f7f7f7", "#fff"],
             },
-          },
-          tooltip: {
-            y: {
-              formatter: function (val) {
-                return val.toFixed(2);
-              },
-            },
-          },
-          yaxis: {
-            show: false,
-            min: 0,
-            max: 5,
-          },
-          xaxis: {
-            show: true,
-          },
-          fill: {
-            opacity: 0.4,
-          },
-          title: {
-            text: "Perbandingan Skor",
-            align: "center",
-          },
-          legend: {
-            position: "bottom",
-            horizontalAlign: "center",
           },
         },
-      };
-    },
-    prepareSelfComparisonChartData(userData) {
-      const selfScores = userData.self_assessment
-        ? userData.self_assessment.map((aspect) =>
-            parseFloat(aspect.total_score || 0).toFixed(2)
-          )
-        : [];
-
-      const averageSelfScores = this.calculateAverageSelfScores().map((score) =>
-        parseFloat(score.averageScore)
-      );
-
-      const labels = userData.self_assessment
-        ? userData.self_assessment.map(
-            (aspect) => `${aspect.aspek} - ${aspect.kriteria}`
-          )
-        : [];
-
-      return {
-        series: [
-          {
-            name: "Skor Sendiri",
-            data: selfScores,
+      },
+      colors: ["#FF4560", "#3B82F6"],
+      markers: {
+        size: 6,
+        colors: ["#FF4560", "#3B82F6"],
+        strokeColors: "#fff",
+        strokeWidth: 2,
+        hover: {
+          size: 9,
+        },
+      },
+      tooltip: {
+        y: {
+          formatter: function (val) {
+            return val.toFixed(2);
           },
-          {
-            name: "Rata-rata Self Kelompok",
-            data: averageSelfScores,
+        },
+        marker: {
+          show: true,
+        },
+        custom: function ({ series, seriesIndex, dataPointIndex, w }) {
+          const aspect = userData.self_assessment[dataPointIndex];
+          return (
+            '<div class="apexcharts-tooltip-title" style="font-size: 14px;">' +
+            w.config.labels[dataPointIndex] +
+            '</div>' +
+            '<div style="color: #FF4560; font-size: 14px;">Skor Sendiri: ' +
+            aspect.total_score.toFixed(2) +
+            '</div>' +
+            '<div style="color: #3B82F6; font-size: 14px;">Rata-rata Self Kelompok: ' +
+            averageSelfScores[dataPointIndex] +
+            '</div>'
+          );
+        },
+      },
+      yaxis: {
+        show: true,
+        min: 0,
+        max: 5,
+        tickAmount: 5,
+        labels: {
+          formatter: function (val) {
+            return val.toFixed(1);
           },
-        ],
-        options: {
-          chart: {
-            type: "radar",
-            height: 350,
+        },
+      },
+      xaxis: {
+        show: true,
+        labels: {
+          style: {
+            fontSize: "12px",
           },
-          labels: labels,
-          plotOptions: {
-            radar: {
-              polygons: {
-                strokeColors: "#e8e8e8",
-                fill: {
-                  colors: ["#f7f7f7", "#fff"],
-                },
-              },
-            },
-          },
+        },
+      },
+      fill: {
+        opacity: 0.4,
+      },
+      title: {
+        text: "Perbandingan Skor Self Assessment",
+        align: "center",
+        style: {
+          fontSize: "16px",
+          fontWeight: "bold",
+        },
+      },
+      legend: {
+        position: "bottom",
+        horizontalAlign: "center",
+        markers: {
+          width: 16,
+          height: 16,
+        },
+        itemMargin: {
+          horizontal: 10,
+          vertical: 10,
+        },
+      },
+      dataLabels: {
+        enabled: true,
+        formatter: function (val) {
+          return val.toFixed(2);
+        },
+        style: {
+          fontSize: "12px",
           colors: ["#FF4560", "#3B82F6"],
-          markers: {
-            size: 4,
-            colors: ["#FF4560", "#3B82F6"],
-            strokeColors: "#fff",
-            strokeWidth: 2,
-            hover: {
-              size: 7,
-            },
-          },
-          tooltip: {
-            y: {
-              formatter: function (val) {
-                return val.toFixed(2);
-              },
-            },
-          },
-          yaxis: {
-            show: false,
-            min: 0,
-            max: 5,
-          },
-          xaxis: {
-            show: true,
-          },
-          fill: {
-            opacity: 0.4,
-          },
-          title: {
-            text: "Perbandingan Skor Self Assessment",
-            align: "center",
-          },
-          legend: {
-            position: "bottom",
-            horizontalAlign: "center",
-          },
         },
-      };
+      },
+      grid: {
+        show: true,
+        strokeDashArray: 2,
+        borderColor: "#e8e8e8",
+      },
     },
+  };
+},
   },
 };
 </script>
@@ -603,7 +717,7 @@ export default {
                             :class="{
                               'text-green-600': aspek.total_score >= 4,
                               'text-yellow-600':
-                                aspek.total_score >= 2.5 &&
+                                aspek.total_score >= 3&&
                                 aspek.total_score < 4,
                               'text-red-600': aspek.total_score < 2.5,
                             }"
@@ -652,12 +766,12 @@ export default {
                               </td>
                               <td class="px-4 py-3 text-center">
                                 <span
-                                  class="inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-medium"
+                                  class="inline-flex items-center justify-center px-3py-1 rounded-full text-xs font-medium"
                                   :class="{
                                     'bg-green-100 text-green-800':
                                       pertanyaan.score >= 4,
                                     'bg-yellow-100 text-yellow-800':
-                                      pertanyaan.score >= 2.5 &&
+                                      pertanyaan.score >= 3&&
                                       pertanyaan.score < 4,
                                     'bg-red-100 text-red-800':
                                       pertanyaan.score < 2.5,
@@ -733,7 +847,7 @@ export default {
                               <span
                                 v-for="(name, nameIdx) in peerGroup.names"
                                 :key="nameIdx"
-                                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
+                                class="inline-flex items-center px-3py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
                               >
                                 {{ name }}
                               </span>
@@ -746,7 +860,7 @@ export default {
                               :class="{
                                 'text-green-600': peerGroup.total_score >= 4,
                                 'text-yellow-600':
-                                  peerGroup.total_score >= 2.5 &&
+                                  peerGroup.total_score >= 3&&
                                   peerGroup.total_score < 4,
                                 'text-red-600': peerGroup.total_score < 2.5,
                               }"
@@ -809,12 +923,12 @@ export default {
                                 </td>
                                 <td class="px-4 py-3 text-center">
                                   <span
-                                    class="inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-medium"
+                                    class="inline-flex items-center justify-center px-3py-1 rounded-full text-xs font-medium"
                                     :class="{
                                       'bg-green-100 text-green-800':
                                         answer.score >= 4,
                                       'bg-yellow-100 text-yellow-800':
-                                        answer.score >= 2.5 && answer.score < 4,
+                                        answer.score >= 3&& answer.score < 4,
                                       'bg-red-100 text-red-800':
                                         answer.score < 2.5,
                                       'bg-gray-100 text-gray-800':
@@ -979,7 +1093,7 @@ export default {
                             </td>
                             <td class="px-4 py-3 text-center">
                               <span
-                                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium"
+                                class="inline-flex items-center px-3py-1 rounded-full text-xs font-medium"
                                 :class="{
                                   'bg-green-100 text-green-800':
                                     parseFloat(score.scoreDifference) > 0,

@@ -79,10 +79,37 @@ class ReportMahasiswa extends Controller
 
     public function getProjectScoreDetailsView(Request $request)
     {
+        // Validasi input request untuk memastikan data yang diterima benar
+        $validatedData = $request->validate([
+            'tahun_ajaran' => 'required|string|max:10',
+            'nama_proyek' => 'required|string|max:255',
+            'kelompok' => 'required|string|max:10',
+        ]);
+
+        // Ambil parameter dari request
+        $batchYear = $validatedData['tahun_ajaran'];
+        $projectName = $validatedData['nama_proyek'];
+        $kelompok = $validatedData['kelompok'];
+
+        $project = Project::where('project_name', $projectName)
+            ->where('batch_year', $batchYear)
+            ->firstOrFail();
+
+        $group = Group::where('group', $kelompok)
+            ->where('project_id', $project->id)
+            ->where('batch_year', $batchYear)
+            ->first();
+
+        if (!$group) {
+            return redirect()->route('mahasiswa.dashboard')->withErrors('Kelompok tidak ditemukan untuk proyek ini.');
+        }
+
         return Inertia::render('Mahasiswa/ReportScoreMahasiswa', [
-            'batchYear' => $request->query('batch_year'),
-            'projectId' => $request->query('project_id'),  // Changed from project_name
-            'kelompok' => $request->query('kelompok'),
+            'batchYear' => $batchYear,
+            'projectId' => $project->id,
+            'projectName' => $project->project_name,  // Add this line
+            'kelompok' => $kelompok,
+            'userName' => auth()->user()->name,
         ]);
     }
 
@@ -90,12 +117,14 @@ class ReportMahasiswa extends Controller
     {
         $batchYear = $request->input('batch_year');
         $projectId = $request->input('project_id');
+        $kelompok = $request->input('kelompok');
         $userId = Auth::id();
 
         // Add logging
         Log::info('Request parameters:', [
             'batch_year' => $batchYear,
             'project_id' => $projectId,
+            'kelompok' => $kelompok,
             'user_id' => $userId
         ]);
 
@@ -164,8 +193,8 @@ class ReportMahasiswa extends Controller
             // Prepare user results
             $userResults = [
                 'user_id' => $userId,
-                'name' => $userName ?? 'Tidak dikenal',
-                'kelompok' => $group->group,
+                'name' => Auth::user()->name ?? 'Tidak dikenal',  // Correctly retrieve user name
+                'kelompok' => $group->group,  // Add group info here
                 'self_assessment' => $selfAspekKriteriaAnalysis->values(),
                 'peer_assessment' => $peerAspekKriteriaAnalysis->values(),
             ];
@@ -235,6 +264,11 @@ class ReportMahasiswa extends Controller
 
             $typeCriteria = $groupAssessments->first()->typeCriteria;
 
+            // Get peer names
+            $peerNames = $groupAssessments->map(function ($assessment) {
+                return $assessment->peer->name ?? 'Unknown Peer'; // Ensure peer name is available
+            })->unique()->values();
+
             return [
                 'aspek' => $typeCriteria->aspect,
                 'kriteria' => $typeCriteria->criteria,
@@ -248,7 +282,8 @@ class ReportMahasiswa extends Controller
                         'score' => $relatedAnswer ? $relatedAnswer->score : null,
                         'answer' => $relatedAnswer ? $relatedAnswer->answer : null
                     ];
-                })
+                }),
+                'peer_names' => $peerNames // Include peer names in the result
             ];
         });
 
