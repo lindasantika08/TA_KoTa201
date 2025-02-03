@@ -1,221 +1,219 @@
-<script>
+<script setup>
+import { ref, computed, onMounted } from "vue";
 import SidebarMahasiswa from "@/Components/SidebarMahasiswa.vue";
 import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
 import Breadcrumb from "@/Components/Breadcrumb.vue";
+import VueApexCharts from "vue3-apexcharts";
 import axios from "axios";
-import VueApexCharts from 'vue3-apexcharts';
 
-export default {
-  name: "ReportScoreMahasiswa",
-  components: {
-    SidebarMahasiswa,
-    Navbar,
-    Card,
-    Breadcrumb,
-    apexchart: VueApexCharts,
+const props = defineProps({
+  batchYear: {
+    type: String,
+    required: true,
   },
+  projectId: {
+    type: Number,
+    required: true,
+  },
+  projectName: {
+    // Add this prop
+    type: String,
+    required: true,
+  },
+  kelompok: {
+    type: String,
+    required: true,
+  },
+  userName: {
+    type: String,
+    required: true,
+  },
+});
 
-  data() {
+// Reactive state
+const breadcrumbs = ref([
+  { text: "Report", href: "/mahasiswa/project/report" },
+  { text: "Detail Score", href: null },
+]);
+
+const scoreData = ref(null);
+const loading = ref(false);
+const error = ref(null);
+const activeTab = ref("overview");
+
+// Computed properties
+const projectScoreDetails = computed(() => scoreData.value);
+
+const analysisScores = computed(() => {
+  if (!scoreData.value?.self_assessment || !scoreData.value?.peer_assessment)
+    return [];
+
+  return scoreData.value.self_assessment.map((selfAspect) => {
+    const peerEvaluations = scoreData.value.peer_assessment.filter(
+      (peer) => peer.aspek === selfAspect.aspek
+    );
+
+    const averagePeerScore =
+      peerEvaluations.length > 0
+        ? peerEvaluations.reduce(
+            (sum, peer) => sum + (peer.total_score || 0),
+            0
+          ) / peerEvaluations.length
+        : 0;
+
+    const selfScore = selfAspect.total_score || 0;
+    const scoreDifference = selfScore - averagePeerScore;
+
     return {
-      breadcrumbs: [
-        { text: "Report", href: "/mahasiswa/project/report" },
-        { text: "Detail Score", href: null },
-      ],
-      projectDetails: {
-        batch_year: "",
-        project_id: "",
-        nama_kelompok: "",
-      },
-      scoreData: null,
-      loading: false,
-      error: null,
+      aspek: selfAspect.aspek,
+      kriteria: selfAspect.kriteria,
+      selfScore: selfScore.toFixed(2),
+      averagePeerScore: averagePeerScore.toFixed(2),
+      scoreDifference: scoreDifference.toFixed(2),
+      status:
+        scoreDifference > 0 ? "Over" : scoreDifference < 0 ? "Under" : "Match",
+      questions: selfAspect.questions,
     };
-  },
+  });
+});
 
-  computed: {
-    chartOptions() {
-      const analysisScores = this.calculateAnalysisScores();
-      
-      return {
-        chart: {
-          type: 'radar',
-          height: 400,
-        },
-        series: [
-          {
-            name: 'Self Score',
-            data: analysisScores.map(score => parseFloat(score.selfScore))
-          },
-          {
-            name: 'Peer Average',
-            data: analysisScores.map(score => parseFloat(score.averagePeerScore))
-          }
-        ],
-        options: {
-          chart: {
-            type: 'radar',
-          },
-          labels: analysisScores.map(score => `${score.aspek} - ${score.kriteria}`),
-          colors: ['#FF4560', '#00E396'],
-          markers: {
-            size: 4,
-            colors: ['#FF4560', '#00E396'],
-            strokeColor: '#fff',
-            strokeWidth: 2,
-          },
-          tooltip: {
-            y: {
-              formatter: (val) => val.toFixed(2)
-            }
-          },
-          plotOptions: {
-            radar: {
-              size: 140,
-              polygons: {
-                strokeColors: '#e9e9e9',
-                fill: {
-                  colors: ['#f8f8f8', '#fff']
-                }
-              }
-            }
-          },
-          title: {
-            text: 'Score Comparison',
-            align: 'center',
-          },
-          yaxis: {
-            min: 0,
-            max: 5,
-            tickAmount: 5
-          },
-          legend: {
-            position: 'bottom',
-            horizontalAlign: 'center',
-          }
-        }
-      };
+const radarChartOptions = computed(() => ({
+  chart: {
+    type: "radar",
+    height: "100%",  // Changed from fixed height to 100%
+    width: "100%",
+    dropShadow: {
+      enabled: true,
+      blur: 1,
+      left: 1,
+      top: 1,
     },
-
-    hasRequiredParams() {
-      return Boolean(this.projectDetails.batch_year && this.projectDetails.project_id);
-    }
-  },
-
-  methods: {
-    async fetchProjectScoreDetails() {
-      if (!this.hasRequiredParams) {
-        this.error = 'Missing required parameters (batch_year or project_id)';
-        return;
-      }
-
-      this.loading = true;
-      this.error = null;
-      
-      try {
-        const response = await axios.get('/api/project-score-details', {
-          params: {
-            batch_year: this.projectDetails.batch_year,
-            project_id: this.projectDetails.project_id,
-          },
-          headers: {
-            'Accept': 'application/json',
-          }
-        });
-
-        if (response.data?.status === 'success' && response.data?.data) {
-          this.scoreData = response.data.data;
-          console.log('Score Data Set:', this.scoreData);
-        } else {
-          throw new Error('Invalid response format from API');
-        }
-
-      } catch (error) {
-        console.error('API Error:', error);
-        if (error.response) {
-          // Error response from server
-          this.error = error.response.data.message || 'Server error occurred';
-        } else if (error.request) {
-          // Request made but no response
-          this.error = 'No response from server. Please check your connection.';
-        } else {
-          // Error in request setup
-          this.error = error.message || 'Failed to fetch project details';
-        }
-      } finally {
-        this.loading = false;
-      }
+    toolbar: {
+      show: true,
     },
-
-    calculateAnalysisScores() {
-      if (!this.scoreData) return [];
-
-      const analysisScores = [];
-      const selfAssessments = this.scoreData.self_assessment || [];
-      const peerAssessments = this.scoreData.peer_assessment || [];
-
-      // Create map of peer scores
-      const peerScoresMap = new Map();
-      peerAssessments.forEach(peer => {
-        const key = `${peer.aspek}_${peer.kriteria}`;
-        peerScoresMap.set(key, peer.total_score);
-      });
-
-      // Process self assessments
-      selfAssessments.forEach(self => {
-        const key = `${self.aspek}_${self.kriteria}`;
-        const peerScore = peerScoresMap.get(key) || 0;
-        const selfScore = self.total_score || 0;
-        const difference = parseFloat((selfScore - peerScore).toFixed(2));
-
-        let status = 'Match';
-        if (difference > 0.5) status = 'Over';
-        else if (difference < -0.5) status = 'Under';
-
-        analysisScores.push({
-          aspek: self.aspek,
-          kriteria: self.kriteria,
-          selfScore: selfScore.toFixed(2),
-          averagePeerScore: peerScore.toFixed(2),
-          scoreDifference: difference,
-          status: status,
-          questions: self.questions
-        });
-      });
-
-      return analysisScores;
+  },
+  series: [
+    {
+      name: "Self Assessment",
+      data: analysisScores.value.map((score) => parseFloat(score.selfScore)),
     },
-
-    retryFetch() {
-      this.fetchProjectScoreDetails();
-    }
+    {
+      name: "Peer Average",
+      data: analysisScores.value.map((score) =>
+        parseFloat(score.averagePeerScore)
+      ),
+    },
+  ],
+  labels: analysisScores.value.map((score) => score.aspek),
+  colors: ["#4F46E5", "#10B981"],
+  stroke: {
+    width: 3,  // Increased from 2
   },
-
-  mounted() {
-    const urlParams = new URLSearchParams(window.location.search);
-    this.projectDetails.batch_year = urlParams.get("batch_year");
-    this.projectDetails.project_id = urlParams.get("project_id");
-    
-    if (this.hasRequiredParams) {
-      this.fetchProjectScoreDetails();
-    }
+  fill: {
+    opacity: 0.4,
   },
-
-  watch: {
-    // Watch for changes in URL parameters
-    '$route.query': {
-      handler(newQuery) {
-        this.projectDetails.batch_year = newQuery.batch_year;
-        this.projectDetails.project_id = newQuery.project_id;
-        
-        if (this.hasRequiredParams) {
-          this.fetchProjectScoreDetails();
-        }
+  markers: {
+    size: 8,  // Increased from 6
+    hover: {
+      size: 10,  // Increased from 8
+    },
+  },
+  tooltip: {
+    y: {
+      formatter: (val) => val.toFixed(2),
+    },
+  },
+  yaxis: {
+    show: true,
+    min: 0,
+    max: 5,
+    tickAmount: 5,
+    labels: {
+      formatter: (val) => val.toFixed(1),
+      style: {
+        fontSize: "16px",  // Increased from 14px
       },
-      deep: true
+    },
+  },
+  xaxis: {
+    labels: {
+      style: {
+        fontSize: "16px",  // Increased from 14px
+      },
+    },
+  },
+  legend: {
+    position: "bottom",
+    horizontalAlign: "center",
+    fontSize: "16px",  // Increased from 14px
+    markers: {
+      width: 20,  // Increased from 18
+      height: 20,  // Increased from 18
+    },
+    itemMargin: {
+      horizontal: 20,  // Increased from 15
+    },
+  },
+}));
+
+// Methods
+const fetchProjectScoreDetails = async () => {
+  loading.value = true;
+  error.value = null;
+
+  try {
+    const response = await axios.get("/api/project-score-details", {
+      params: {
+        batch_year: props.batchYear,
+        project_id: props.projectId,
+        kelompok: props.kelompok,
+      },
+    });
+
+    if (response.data.status === "success") {
+      scoreData.value = response.data.data;
+    } else {
+      error.value = response.data.message || "Failed to fetch project details";
     }
+  } catch (err) {
+    error.value =
+      err.response?.data?.message || "Failed to fetch project details";
+    console.error("Error fetching project details:", err);
+  } finally {
+    loading.value = false;
   }
 };
+
+// Calculate summary statistics
+const calculateSummaryStats = computed(() => {
+  if (!analysisScores.value.length) return null;
+
+  const selfScores = analysisScores.value.map((score) =>
+    parseFloat(score.selfScore)
+  );
+  const peerScores = analysisScores.value.map((score) =>
+    parseFloat(score.averagePeerScore)
+  );
+
+  return {
+    averageSelfScore: (
+      selfScores.reduce((a, b) => a + b, 0) / selfScores.length
+    ).toFixed(2),
+    averagePeerScore: (
+      peerScores.reduce((a, b) => a + b, 0) / peerScores.length
+    ).toFixed(2),
+    highestSelfScore: Math.max(...selfScores).toFixed(2),
+    lowestSelfScore: Math.min(...selfScores).toFixed(2),
+    highestPeerScore: Math.max(...peerScores).toFixed(2),
+    lowestPeerScore: Math.min(...peerScores).toFixed(2),
+  };
+});
+
+// Lifecycle hooks
+onMounted(() => {
+  fetchProjectScoreDetails();
+});
 </script>
 
 <template>
@@ -223,144 +221,333 @@ export default {
     <SidebarMahasiswa role="mahasiswa" />
 
     <div class="flex-1">
-      <Navbar userName="Mahasiswa" />
-      
-      <main class="p-6">
-        <div class="mb-6">
-          <Breadcrumb :items="breadcrumbs" />
-          <h1 class="text-2xl font-bold text-gray-800 mt-4">Project Score Details</h1>
+      <Navbar :userName="userName" />
+
+      <div class="p-6 space-y-6">
+        <Breadcrumb :items="breadcrumbs" />
+
+        <!-- Header Section -->
+        <div class="flex justify-between items-center">
+          <h1 class="text-3xl font-bold text-gray-800">
+            Project Score Dashboard
+          </h1>
+          <div class="text-sm text-gray-500">
+            Last updated: {{ new Date().toLocaleDateString() }}
+          </div>
         </div>
 
-        <div class="space-y-6">
-          <!-- Loading State -->
-          <div v-if="loading" class="text-center py-4">
-            <div class="animate-pulse">
-              <div class="h-4 bg-gray-200 rounded w-3/4 mx-auto mb-4"></div>
-              <div class="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
-            </div>
-            <p class="text-gray-600 mt-4">Loading project details...</p>
-          </div>
+        <!-- Loading and Error States -->
+        <div v-if="loading" class="flex justify-center p-8">
+          <div
+            class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"
+          ></div>
+        </div>
 
-          <!-- Error State -->
-          <div v-else-if="error" class="bg-red-50 border border-red-200 rounded-md p-4">
-            <div class="flex items-center">
-              <svg class="h-5 w-5 text-red-400 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+        <div v-if="error" class="bg-red-50 border-l-4 border-red-500 p-4">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <svg
+                class="h-5 w-5 text-red-400"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clip-rule="evenodd"
+                />
               </svg>
-              <p class="text-red-600">{{ error }}</p>
             </div>
-            <button 
-              @click="retryFetch"
-              class="mt-3 px-4 py-2 bg-red-100 text-red-600 rounded-md hover:bg-red-200 transition-colors duration-200"
+            <div class="ml-3">
+              <p class="text-sm text-red-700">{{ error }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="projectScoreDetails && !loading" class="space-y-6">
+          <!-- Project Overview Card -->
+          <Card class="bg-white shadow-lg">
+            <template #title>
+              <div class="flex items-center space-x-2">
+                <svg
+                  class="w-5 h-5 text-gray-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+                <span>Project Overview</span>
+              </div>
+            </template>
+
+            <div
+              class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4"
             >
-              Retry
-            </button>
+              <div class="p-4 bg-gray-50 rounded-lg">
+                <div class="text-sm font-medium text-gray-500">
+                  Student Name
+                </div>
+                <div class="mt-1 text-lg font-semibold">{{ userName }}</div>
+              </div>
+              <div class="p-4 bg-gray-50 rounded-lg">
+                <div class="text-sm font-medium text-gray-500">
+                  Academic Year
+                </div>
+                <div class="mt-1 text-lg font-semibold">{{ batchYear }}</div>
+              </div>
+              <div class="p-4 bg-gray-50 rounded-lg">
+                <div class="text-sm font-medium text-gray-500">
+                  Project Name
+                </div>
+                <div class="mt-1 text-lg font-semibold">
+                  {{ projectName }}
+                </div>
+              </div>
+              <div class="p-4 bg-gray-50 rounded-lg">
+                <div class="text-sm font-medium text-gray-500">Group</div>
+                <div class="mt-1 text-lg font-semibold">
+                  {{ projectScoreDetails.kelompok }}
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          <!-- Navigation Tabs -->
+          <div class="border-b border-gray-200">
+            <nav class="-mb-px flex space-x-8">
+              <button
+                v-for="tab in ['overview', 'details', 'analysis']"
+                :key="tab"
+                @click="activeTab = tab"
+                :class="[
+                  activeTab === tab
+                    ? 'border-indigo-500 text-indigo-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                  'whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm',
+                ]"
+              >
+                {{ tab.charAt(0).toUpperCase() + tab.slice(1) }}
+              </button>
+            </nav>
           </div>
 
-          <!-- Score Content -->
-          <div v-else-if="scoreData" class="space-y-6">
-            <!-- Student Information Card -->
-            <Card title="Student Information" class="bg-white shadow-lg">
-              <div class="p-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <!-- Student Name -->
-                  <div class="bg-gray-50 rounded-lg p-4 border border-gray-100 hover:border-blue-200 transition-colors duration-200">
-                    <h3 class="text-sm font-medium text-gray-500 mb-2 flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                      Name
-                    </h3>
-                    <p class="text-lg font-semibold text-gray-900">{{ scoreData.name }}</p>
-                  </div>
+     <!-- Tab Contents -->
+  <div v-if="activeTab === 'overview'" class="space-y-6">
+    <!-- Radar Chart -->
+    <Card class="bg-white">
+      <template #title>Score Comparison</template>
+      <div class="p-4 w-full aspect-square max-w-[1000px] mx-auto">
+        <VueApexCharts
+          type="radar"
+          :height="'100%'"
+          :options="radarChartOptions"
+          :series="radarChartOptions.series"
+        />
+      </div>
+    </Card>
+  </div>
 
-                  <!-- Batch Year -->
-                  <div class="bg-gray-50 rounded-lg p-4 border border-gray-100 hover:border-blue-200 transition-colors duration-200">
-                    <h3 class="text-sm font-medium text-gray-500 mb-2 flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      Batch Year
-                    </h3>
-                    <p class="text-lg font-semibold text-gray-900">{{ projectDetails.batch_year }}</p>
+          <div v-if="activeTab === 'details'" class="space-y-6">
+            <!-- Detailed Scores -->
+            <Card
+              v-for="score in analysisScores"
+              :key="score.aspek"
+              class="bg-white"
+            >
+              <template #title
+                >{{ score.aspek }} - {{ score.kriteria }}</template
+              >
+              <div class="p-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  <div class="p-3 bg-indigo-50 rounded-lg">
+                    <div class="text-sm text-indigo-600 font-medium">
+                      Self Score
+                    </div>
+                    <div class="text-2xl font-bold text-indigo-700">
+                      {{ score.selfScore }}
+                    </div>
                   </div>
+                  <div class="p-3 bg-emerald-50 rounded-lg">
+                    <div class="text-sm text-emerald-600 font-medium">
+                      Peer Average
+                    </div>
+                    <div class="text-2xl font-bold text-emerald-700">
+                      {{ score.averagePeerScore }}
+                    </div>
+                  </div>
+                  <div
+                    class="p-3 rounded-lg"
+                    :class="{
+                      'bg-green-50': score.status === 'Over',
+                      'bg-yellow-50': score.status === 'Match',
+                      'bg-red-50': score.status === 'Under',
+                    }"
+                  >
+                    <div
+                      class="text-sm font-medium"
+                      :class="{
+                        'text-green-600': score.status === 'Over',
+                        'text-yellow-600': score.status === 'Match',
+                        'text-red-600': score.status === 'Under',
+                      }"
+                    >
+                      Score Difference
+                    </div>
+                    <div
+                      class="text-2xl font-bold"
+                      :class="{
+                        'text-green-700': score.status === 'Over',
+                        'text-yellow-700': score.status === 'Match',
+                        'text-red-700': score.status === 'Under',
+                      }"
+                    >
+                      {{ score.scoreDifference }}
+                    </div>
+                  </div>
+                </div>
 
-                  <!-- Project ID -->
-                  <div class="bg-gray-50 rounded-lg p-4 border border-gray-100 hover:border-blue-200 transition-colors duration-200">
-                    <h3 class="text-sm font-medium text-gray-500 mb-2 flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      Project ID
-                    </h3>
-                    <p class="text-lg font-semibold text-gray-900">{{ projectDetails.project_id }}</p>
+                <!-- Questions and Answers -->
+                <div class="space-y-4">
+                  <div
+                    v-for="question in score.questions"
+                    :key="question.question_id"
+                    class="p-4 bg-gray-50 rounded-lg"
+                  >
+                    <div class="font-medium text-gray-700">
+                      {{ question.pertanyaan }}
+                    </div>
+                    <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <div class="text-sm text-gray-500">Answer</div>
+                        <div class="text-gray-700">{{ question.answer }}</div>
+                      </div>
+                      <div>
+                        <div class="text-sm text-gray-500">Score</div>
+                        <div class="text-gray-700">{{ question.score }}</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </Card>
+          </div>
 
-            <!-- Spider Web Chart -->
-            <Card title="Score Comparison Chart" class="bg-white shadow-lg">
-              <div class="p-6">
-                <apexchart
-                  v-if="scoreData && calculateAnalysisScores().length > 0"
-                  type="radar"
-                  height="400"
-                  :options="chartOptions.options"
-                  :series="chartOptions.series"
-                />
-                <p v-else class="text-center text-gray-500">No data available for chart</p>
-              </div>
-            </Card>
-
-            <!-- Analysis Score Card -->
-            <Card title="Score Analysis" class="bg-white shadow-lg">
-              <div class="p-6">
-                <div class="overflow-x-auto">
-                  <table class="w-full border-collapse">
-                    <thead class="bg-gray-100">
-                      <tr>
-                        <th class="border p-2 text-left">Aspek</th>
-                        <th class="border p-2 text-left">Kriteria</th>
-                        <th class="border p-2 text-right">Self Score</th>
-                        <th class="border p-2 text-right">Peer Average</th>
-                        <th class="border p-2 text-right">Difference</th>
-                        <th class="border p-2 text-center">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr 
-                        v-for="score in calculateAnalysisScores()" 
-                        :key="`${score.aspek}-${score.kriteria}`"
+          <div v-if="activeTab === 'analysis'" class="space-y-6">
+            <!-- Analysis Table -->
+            <Card class="bg-white">
+              <template #title>Score Analysis Summary</template>
+              <div class="p-4 overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                  <thead>
+                    <tr>
+                      <th
+                        class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Aspect
+                      </th>
+                      <th
+                        class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Criteria
+                      </th>
+                      <th
+                        class="px-6 py-3 bg-gray-50 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Self Score
+                      </th>
+                      <th
+                        class="px-6 py-3 bg-gray-50 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Peer Average
+                      </th>
+                      <th
+                        class="px-6 py-3 bg-gray-50 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Difference
+                      </th>
+                      <th
+                        class="px-6 py-3 bg-gray-50 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Status
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody class="bg-white divide-y divide-gray-200">
+                    <tr
+                      v-for="score in analysisScores"
+                      :key="`${score.aspek}-${score.kriteria}`"
+                      :class="{
+                        'bg-green-50': score.status === 'Over',
+                        'bg-yellow-50': score.status === 'Match',
+                        'bg-red-50': score.status === 'Under',
+                      }"
+                    >
+                      <td
+                        class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                      >
+                        {{ score.aspek }}
+                      </td>
+                      <td
+                        class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+                      >
+                        {{ score.kriteria }}
+                      </td>
+                      <td
+                        class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900"
+                      >
+                        {{ score.selfScore }}
+                      </td>
+                      <td
+                        class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900"
+                      >
+                        {{ score.averagePeerScore }}
+                      </td>
+                      <td
+                        class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium"
                         :class="{
-                          'bg-green-50': score.status === 'Over',
-                          'bg-yellow-50': score.status === 'Match',
-                          'bg-red-50': score.status === 'Under'
+                          'text-green-700': score.status === 'Over',
+                          'text-yellow-700': score.status === 'Match',
+                          'text-red-700': score.status === 'Under',
                         }"
                       >
-                        <td class="border p-2">{{ score.aspek }}</td>
-                        <td class="border p-2">{{ score.kriteria }}</td>
-                        <td class="border p-2 text-right">{{ score.selfScore }}</td>
-                        <td class="border p-2 text-right">{{ score.averagePeerScore }}</td>
-                        <td class="border p-2 text-right">{{ score.scoreDifference }}</td>
-                        <td class="border p-2 text-center font-medium"
-                            :class="{
-                              'text-green-600': score.status === 'Over',
-                              'text-yellow-600': score.status === 'Match',
-                              'text-red-600': score.status === 'Under'
-                            }"
-                        >
-                          {{ score.status }}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
+                        {{ score.scoreDifference }}
+                      </td>
+                      <td
+                        class="px-6 py-4 whitespace-nowrap text-sm text-center font-medium"
+                        :class="{
+                          'text-green-700': score.status === 'Over',
+                          'text-yellow-700': score.status === 'Match',
+                          'text-red-700': score.status === 'Under',
+                        }"
+                      >
+                        {{ score.status }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </Card>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.text-center {
+  text-align: center;
+}
+.aspect-square {
+  aspect-ratio: 1 / 1;
+}
+.hover\:bg-gray-50:hover {
+  background-color: #f9fafb;
+}
+</style>
