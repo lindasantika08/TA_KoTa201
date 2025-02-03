@@ -227,9 +227,10 @@ class ReportController extends Controller
 
                 $peerAspekKriteriaAnalysis = $this->analyzeAssessments($peerAssessments, $mahasiswaId, 'peer', $project->id);
 
-                // Peer Evaluations
+                // Get all peer evaluations for this mahasiswa
                 $peerEvaluations = AnswersPeer::select(
                     'answers_peer.*',
+                    'assessment.id as assessment_id',
                     'assessment.question',
                     'type_criteria.aspect',
                     'type_criteria.criteria'
@@ -239,54 +240,49 @@ class ReportController extends Controller
                     ->where('assessment.batch_year', $tahunAjaran)
                     ->where('assessment.project_id', $project->id)
                     ->where('answers_peer.peer_id', $mahasiswaId)
-                    ->get()
-                    ->groupBy(function ($item) {
-                        return $item->aspect . '_' . $item->criteria;
-                    })
-                    ->map(function ($answers, $aspekKriteria) use ($mahasiswaDetails) {
-                        list($aspek, $kriteria) = explode('_', $aspekKriteria);
+                    ->get();
 
-                        // Group by mahasiswa to capture all evaluators and their answers
-                        $evaluatorGroups = $answers->groupBy('mahasiswa_id');
+                // Group peer evaluations by aspect and criteria
+                $groupedPeerEvaluations = $peerEvaluations->groupBy(function ($item) {
+                    return $item->aspect . '_' . $item->criteria;
+                })->map(function ($groupAnswers) use ($mahasiswaDetails) {
+                    $aspek = $groupAnswers->first()->aspect;
+                    $kriteria = $groupAnswers->first()->criteria;
 
-                        $processedEvaluators = $evaluatorGroups->map(function ($mahasiswaAnswers) use ($mahasiswaDetails) {
-                            $mahasiswaId = $mahasiswaAnswers->first()->mahasiswa_id;
-                            $mahasiswaName = $mahasiswaDetails[$mahasiswaId]['name'] ?? 'Tidak dikenal';
+                    // Group answers by evaluator (mahasiswa_id)
+                    $evaluatorGroups = $groupAnswers->groupBy('mahasiswa_id');
 
-                            return [
-                                'name' => $mahasiswaName,
-                                'total_score' => $mahasiswaAnswers->avg('score'),
-                                'answers' => $mahasiswaAnswers->map(function ($answer) {
-                                    return [
-                                        'question_id' => $answer->question_id,
-                                        'pertanyaan' => $answer->question,
-                                        'score' => $answer->score,
-                                        'answer' => $answer->answer,
-                                        'aspek' => $answer->aspect,
-                                        'kriteria' => $answer->criteria,
-                                    ];
-                                })
-                            ];
-                        });
-
+                    $evaluatedBy = $evaluatorGroups->map(function ($answers, $evaluatorId) use ($mahasiswaDetails) {
                         return [
-                            'aspek' => $aspek,
-                            'kriteria' => $kriteria,
+                            'name' => $mahasiswaDetails[$evaluatorId]['name'] ?? 'Unknown',
                             'total_score' => $answers->avg('score'),
-                            'total_answers' => $answers->count(),
-                            'evaluated_by' => $processedEvaluators
+                            'answers' => $answers->map(function ($answer) {
+                                return [
+                                    'question_id' => $answer->assessment_id,
+                                    'pertanyaan' => $answer->question, // Include the question text
+                                    'score' => $answer->score,
+                                    'answer' => $answer->answer
+                                ];
+                            })->values()
                         ];
-                    })->filter()
-                    ->values();
+                    });
+
+                    return [
+                        'aspek' => $aspek,
+                        'kriteria' => $kriteria,
+                        'total_score' => $groupAnswers->avg('score'),
+                        'evaluated_by' => $evaluatedBy
+                    ];
+                })->values();
 
                 return [
                     $mahasiswaId => [
                         'mahasiswa_id' => $mahasiswaId,
-                        'name' => $mahasiswaDetails[$mahasiswaId]['name'] ?? 'Tidak dikenal',
+                        'name' => $mahasiswaDetails[$mahasiswaId]['name'] ?? 'Unknown',
                         'self_assessment' => $selfAspekKriteriaAnalysis->values(),
                         'peer_assessment' => $peerAspekKriteriaAnalysis->values(),
-                        'evaluated_by_peers' => $peerEvaluations,
-                    ],
+                        'evaluated_by_peers' => $groupedPeerEvaluations
+                    ]
                 ];
             });
 
@@ -296,7 +292,7 @@ class ReportController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan saat memproses data.',
-                'error' => $e->getMessage(),
+                'error' => $e->getMessage()
             ], 500);
         }
     }
