@@ -115,40 +115,49 @@ class AnswerController extends Controller
 
     public function getListAnswers(Request $request)
     {
-        $tahunAjaran = $request->query('tahun_ajaran');
-        $namaProyek = $request->query('nama_proyek');
+        $batchYear = $request->query('batch_year');
+        $projectId = $request->query('project_id');
 
-        $totalQuestions = Assessment::where('tahun_ajaran', $tahunAjaran)
-            ->where('nama_proyek', $namaProyek)
+        // Validate input
+        if (!$batchYear || !$projectId) {
+            return response()->json(['message' => 'Batch year and project ID are required.'], 400);
+        }
+
+        // Count total self-assessment questions for the project and batch year
+        $totalQuestions = Assessment::where('batch_year', $batchYear)
+            ->where('project_id', $projectId)
             ->where('type', 'selfAssessment')
             ->count();
 
         if ($totalQuestions == 0) {
-            return response()->json(['message' => 'No self-assessment questions found for the specified year and project.'], 404);
+            return response()->json(['message' => 'No self-assessment questions found for the specified batch year and project.'], 404);
         }
 
-        $usersInKelompok = Kelompok::where('tahun_ajaran', $tahunAjaran)
-            ->where('nama_proyek', $namaProyek)
-            ->pluck('user_id');
+        // Get user IDs in the group for the specific project and batch year
+        $usersInGroup = Group::where('batch_year', $batchYear)
+            ->where('project_id', $projectId)
+            ->pluck('mahasiswa_id');
 
-        $answers = Answers::whereIn('user_id', $usersInKelompok)
+        // Fetch answers for the specific project, batch year, and self-assessment type
+        $answers = Answers::whereIn('mahasiswa_id', $usersInGroup)
             ->join('assessment', 'answers.question_id', '=', 'assessment.id')
-            ->where('assessment.tahun_ajaran', $tahunAjaran)
-            ->where('assessment.nama_proyek', $namaProyek)
+            ->where('assessment.batch_year', $batchYear)
+            ->where('assessment.project_id', $projectId)
             ->where('assessment.type', 'selfAssessment')
             ->get();
 
-        $userAnswers = $answers->groupBy('user_id');
+        $userAnswers = $answers->groupBy('mahasiswa_id');
 
         $result = [];
 
-        foreach ($usersInKelompok as $userId) {
-            $user = User::find($userId);
+        foreach ($usersInGroup as $mahasiswaId) {
+            $mahasiswa = Mahasiswa::find($mahasiswaId);
 
-            $userAnswered = isset($userAnswers[$userId]) ? $userAnswers[$userId] : collect();
+            $userAnswered = isset($userAnswers[$mahasiswaId]) ? $userAnswers[$mahasiswaId] : collect();
 
             $answeredQuestionIds = $userAnswered->pluck('question_id');
 
+            // Determine submission status
             if ($answeredQuestionIds->count() === 0) {
                 $status = 'unsubmitted';
             } elseif ($answeredQuestionIds->count() < $totalQuestions) {
@@ -160,7 +169,7 @@ class AnswerController extends Controller
             }
 
             $result[] = [
-                'user' => $user,
+                'mahasiswa' => $mahasiswa,
                 'status' => $status,
                 'answers' => $userAnswered,
             ];

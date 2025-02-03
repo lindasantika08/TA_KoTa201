@@ -16,8 +16,9 @@ export default {
   },
   data() {
     return {
-      tahun_ajaran: '',
-      nama_proyek: '',
+      batch_year: '',
+      project_id: '',
+      project_name: '', // Add project_name to data
       answers: [],
       totalKeseluruhan: 0,
       totalSudahMengisi: 0,
@@ -26,7 +27,7 @@ export default {
       ],
       headers: [
         { key: 'no', label: 'No' },
-        { key: 'nama_pengguna', label: 'Nama Pengguna' },
+        { key: 'nama_mahasiswa', label: 'Nama Mahasiswa' },
         { key: 'status', label: 'Status' },
         { key: 'detail', label: 'Actions' }
       ],
@@ -34,22 +35,32 @@ export default {
   },
   mounted() {
     const query = new URLSearchParams(window.location.search);
-    this.tahun_ajaran = query.get('tahun_ajaran');
-    this.nama_proyek = query.get('nama_proyek');
+    this.batch_year = query.get('batch_year');
+    this.project_id = query.get('project_id');
 
-    if (this.tahun_ajaran && this.nama_proyek) {
+    if (this.batch_year && this.project_id) {
+      this.fetchProjectDetails(); // New method to fetch project details
       this.fetchAnswers();
       this.fetchStatistics();
     } else {
-      console.error('Tahun Ajaran atau Nama Proyek tidak ditemukan!');
+      console.error('Batch Year atau Project ID tidak ditemukan!');
     }
   },
   methods: {
+    fetchProjectDetails() {
+      axios.get(`/api/projects/${this.project_id}`)
+        .then(response => {
+          this.project_name = response.data.name; // Adjust based on your API response structure
+        })
+        .catch(error => {
+          console.error('Error fetching project details:', error);
+        });
+    },
     fetchAnswers() {
       axios.get('/api/answers/list', {
         params: {
-          tahun_ajaran: this.tahun_ajaran,
-          nama_proyek: this.nama_proyek
+          batch_year: this.batch_year,
+          project_id: this.project_id
         }
       })
         .then(response => {
@@ -66,8 +77,8 @@ export default {
     fetchStatistics() {
       axios.get('/api/answers/statistics', {
         params: {
-          tahun_ajaran: this.tahun_ajaran,
-          nama_proyek: this.nama_proyek
+          batch_year: this.batch_year,
+          project_id: this.project_id
         }
       })
         .then(response => {
@@ -79,16 +90,16 @@ export default {
         });
     },
 
-    showDetails(userName, tahunAjaran, namaProyek) {
-      console.log(`Menampilkan detail untuk pengguna: ${userName}`);
-      console.log(`Tahun Ajaran: ${tahunAjaran}, Nama Proyek: ${namaProyek}`);
+    showDetails(mahasiswaName, batchYear, projectId) {
+      console.log(`Menampilkan detail untuk mahasiswa: ${mahasiswaName}`);
+      console.log(`Batch Year: ${batchYear}, Project ID: ${projectId}`);
 
-      router.visit(`/dosen/answers/details?userName=${userName}&tahun_ajaran=${tahunAjaran}&nama_proyek=${namaProyek}`);
+      router.visit(`/dosen/answers/details?mahasiswaName=${mahasiswaName}&batch_year=${batchYear}&project_id=${projectId}`);
 
       console.log("Data yang dikirim:", {
-        userName,
-        tahunAjaran,
-        namaProyek
+        mahasiswaName,
+        batchYear,
+        projectId
       });
     },
   },
@@ -98,11 +109,11 @@ export default {
       let globalIndex = 1;
 
       this.answers.forEach(answer => {
-        const userName = answer.user.name;
-        if (!userGroups[userName]) {
-          userGroups[userName] = {
+        const mahasiswaName = answer.mahasiswa.name;
+        if (!userGroups[mahasiswaName]) {
+          userGroups[mahasiswaName] = {
             index: globalIndex++,
-            userName,
+            mahasiswaName,
             status: answer.status || 'unsubmitted'
           };
         }
@@ -130,10 +141,10 @@ export default {
         </div>
 
         <div class="mb-6 text-sm font-semibold">
-          <h1 class="text-xl font-semibold mb-6 ">Answers Self Assessment</h1>
+          <h1 class="text-xl font-semibold mb-6">Answers Self Assessment</h1>
 
-          <p><strong>Tahun Ajaran : </strong> {{ tahun_ajaran }}</p>
-          <p><strong>Nama Proyek : </strong> {{ nama_proyek }}</p>
+          <p><strong>Batch Year : </strong> {{ batch_year }}</p>
+          <p><strong>Project Name : </strong> {{ project_name }}</p>
 
           <p class="mt-4 text-2xl font-semibold">
             <font-awesome-icon icon="fa-solid fa-user-check" class="mr-4 text-3xl" />
@@ -151,8 +162,8 @@ export default {
               {{ item.index }}
             </template>
 
-            <template #column-nama_pengguna="{ item }">
-              {{ item.userName }}
+            <template #column-nama_mahasiswa="{ item }">
+              {{ item.mahasiswaName }}
             </template>
 
             <template #column-status="{ item }">
@@ -175,7 +186,7 @@ export default {
             <template #column-detail="{ item }">
               <div class="flex justify-center">
                 <button v-if="item.status === 'on progress' || item.status === 'submitted'"
-                  @click="showDetails(item.userName, tahun_ajaran, nama_proyek)"
+                  @click="showDetails(item.mahasiswaName, batch_year, project_id)"
                   class="px-4 py-2 text-white bg-blue-500 rounded-lg hover:bg-blue-700">
                   Detail
                 </button>

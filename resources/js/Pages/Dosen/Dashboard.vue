@@ -20,99 +20,137 @@ export default {
       totalUsers: 0,
       totalGroups: 0,
       completedGroups: 0,
+      combinedOptions: [],
+      selectedOption: null,
     };
   },
   mounted() {
-    const savedProject = localStorage.getItem("selectedProject");
-    if (savedProject) {
-      this.selectedProject = JSON.parse(savedProject);
-      this.fetchStatistics();
-      this.fetchPeerStatistics();
-    }
+    this.initializeSelectedProject();
     this.fetchActiveProjects();
-  },
-  watch: {
-    selectedProject: {
-      handler(newProject) {
-        if (newProject) {
-          localStorage.setItem("selectedProject", JSON.stringify(newProject));
-        }
-        this.fetchStatistics();
-        this.fetchPeerStatistics();
-      },
-      immediate: true,
-    },
+    this.fetchDropdownOptions();
   },
   methods: {
-    fetchActiveProjects() {
-      axios
-        .get("/api/projects/active")
-        .then((response) => {
-          this.activeProjects = response.data;
-        })
-        .catch((error) => {
-          console.error("Error fetching active projects:", error);
-        });
+    initializeSelectedProject() {
+      const savedProject = localStorage.getItem("selectedProject");
+      if (savedProject) {
+        try {
+          this.selectedProject = JSON.parse(savedProject);
+          this.fetchStatistics();
+          this.fetchPeerStatistics();
+        } catch (error) {
+          console.error("Error parsing saved project:", error);
+          localStorage.removeItem("selectedProject");
+        }
+      }
+    },
+    async fetchDropdownOptions() {
+      try {
+        const response = await axios.get("/api/dropdown-options");
+        this.combinedOptions = response.data.options || [];
+
+        const storedOption = localStorage.getItem("selectedOption");
+        if (storedOption) {
+          try {
+            const parsedOption = JSON.parse(storedOption);
+            const matchedOption = this.combinedOptions.find(
+              (option) =>
+                option.batchYear === parsedOption.batchYear &&
+                option.projectName === parsedOption.projectName
+            );
+
+            if (matchedOption) {
+              this.selectedOption = matchedOption;
+              this.selectedOption.batch_year = matchedOption.batchYear;
+              this.selectedOption.project_name = matchedOption.projectName;
+              await this.fetchKelompok();
+            }
+          } catch (error) {
+            console.error("Error parsing localStorage data:", error);
+            localStorage.removeItem("selectedOption");
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching dropdown options:", error);
+      }
+    },
+    async fetchKelompok() {
+      // Implement fetchKelompok method if needed
+      console.log("Fetching Kelompok");
     },
     fetchPeerStatistics() {
-      if (this.selectedProject) {
-        axios
-          .get("/api/answers/statistics-peer", {
-            params: {
-              tahun_ajaran: this.selectedProject.tahun_ajaran,
-              nama_proyek: this.selectedProject.nama_proyek,
-            },
-          })
-          .then((response) => {
-            this.totalGroups = response.data.totalKelompok;
-            this.completedGroups = response.data.kelompokSudahLengkap;
-          })
-          .catch((error) => {
-            console.error("Error fetching peer statistics:", error);
-          });
-      }
+      if (!this.selectedProject) return;
+
+      axios.get("/api/answers/statistics-peer", {
+        params: {
+          batch_year: this.selectedProject.batch_year,
+          project_name: this.selectedProject.project_name,
+        },
+      })
+      .then((response) => {
+        this.totalGroups = response.data.totalKelompok;
+        this.completedGroups = response.data.kelompokSudahLengkap;
+      })
+      .catch((error) => {
+        console.error("Error fetching peer statistics:", error);
+      });
     },
     fetchStatistics() {
-      if (this.selectedProject) {
-        // Log data yang akan dikirim dalam permintaan
-        console.log("Fetching statistics with parameters:");
-        console.log("Tahun Ajaran:", this.selectedProject.tahun_ajaran);
-        console.log("Nama Proyek:", this.selectedProject.nama_proyek);
+      if (!this.selectedProject) return;
 
-        axios
-          .get("/api/answers/statistics", {
-            params: {
-              tahun_ajaran: this.selectedProject.tahun_ajaran,
-              nama_proyek: this.selectedProject.nama_proyek,
-            },
-          })
-          .then((response) => {
-            // Log respons data untuk memastikan data diterima
-            console.log("Statistics response:", response.data);
+      axios.get("/api/answers/statistics", {
+        params: {
+          batch_year: this.selectedProject.batch_year,
+          project_name: this.selectedProject.project_name,
+        },
+      })
+      .then((response) => {
+        this.totalAnswers = response.data.totalSudahMengisi;
+        this.totalUsers = response.data.totalKeseluruhan;
+      })
+      .catch((error) => {
+        console.error("Error fetching statistics:", error);
+      });
+    },
+    handleDropdownChange(event) {
+      const selectedValue = event.target.value;
+      const selectedOption = this.combinedOptions.find(
+        (option) => option.value === selectedValue
+      );
 
-            this.totalAnswers = response.data.totalSudahMengisi;
-            this.totalUsers = response.data.totalKeseluruhan;
-          })
-          .catch((error) => {
-            // Log error jika terjadi masalah saat fetch
-            console.error("Error fetching statistics:", error);
-          });
-      } else {
-        console.log("No project selected. Skipping fetch.");
+      if (selectedOption) {
+        this.selectedOption = selectedOption;
+        localStorage.setItem("selectedOption", JSON.stringify(selectedOption));
+        
+        // Update selected project
+        this.selectedProject = {
+          batch_year: selectedOption.batchYear,
+          project_name: selectedOption.projectName
+        };
+        localStorage.setItem("selectedProject", JSON.stringify(this.selectedProject));
+
+        // Fetch updated statistics
+        this.fetchStatistics();
+        this.fetchPeerStatistics();
       }
     },
-
-    handleListAnswer(item) {
-      router.get('/dosen/answers-self-assessment', {
-        tahun_ajaran: item.tahun_ajaran,
-        nama_proyek: item.nama_proyek
-      }, {
-        preserveState: true
-      });
+    handleListAnswer() {
+      if (this.selectedProject) {
+        router.get('/dosen/answers-self-assessment', {
+          batch_year: this.selectedProject.batch_year,
+          project_name: this.selectedProject.project_name
+        }, {
+          preserveState: true
+        });
+      }
+    },
+    fetchActiveProjects() {
+      // Implement active projects fetching if needed
+      console.log("Fetching Active Projects");
     }
   },
 };
 </script>
+
 
 <template>
   <div class="flex min-h-screen">
@@ -122,15 +160,21 @@ export default {
       <Navbar userName="Dosen" />
       <main class="p-6">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-          <Card title="Self Assessment" class="cursor-pointer hover:shadow-lg transition-shadow"
-            @click="handleListAnswer(selectedProject)">
+          <!-- Self Assessment Card -->
+          <Card title="Self Assessment" 
+            class="cursor-pointer hover:shadow-lg transition-shadow"
+            @click="handleListAnswer(selectedProject)"
+          >
             <template #title>
               <h3 class="text-sm font-bold">Self Assessment</h3>
             </template>
 
             <div v-if="selectedProject" class="mt-2">
               <p class="text-xl font-semibold flex items-center">
-                <font-awesome-icon icon="fa-solid fa-user-check" class="mr-4 text-2xl" />
+                <font-awesome-icon 
+                  icon="fa-solid fa-user-check" 
+                  class="mr-4 text-2xl" 
+                />
                 <span class="text-3xl">{{ totalAnswers }} / {{ totalUsers }}</span>
               </p>
             </div>
@@ -140,17 +184,19 @@ export default {
             </div>
           </Card>
 
-          <!-- Card Peer Assessment -->
+          <!-- Peer Assessment Card -->
           <Card title="Peer Assessment" class="cursor-pointer hover:shadow-lg transition-shadow">
             <template #title>
               <h3 class="text-sm font-bold">Peer Assessment</h3>
             </template>
 
             <div v-if="selectedProject" class="mt-2">
-              
               <p class="text-xl font-semibold flex items-center">
-                <font-awesome-icon icon="fa-solid fa-user-check" class="mr-4 text-2xl" />
-                <span  class="text-3xl">{{ completedGroups }} / {{ totalGroups }}</span>
+                <font-awesome-icon 
+                  icon="fa-solid fa-user-check" 
+                  class="mr-4 text-2xl" 
+                />
+                <span class="text-3xl">{{ completedGroups }} / {{ totalGroups }}</span>
               </p>
             </div>
 
@@ -159,21 +205,36 @@ export default {
             </div>
           </Card>
 
+          <!-- Project Selection Card -->
           <Card title="Project" class="cursor-pointer hover:white transition-shadow">
             <template #title>
               <h3 class="text-sm font-bold">Pilih Proyek</h3>
             </template>
 
             <div class="mt-2">
-              <label for="project-dropdown" class="block text-sm font-medium text-gray-700">Pilih Proyek</label>
-              <select id="project-dropdown" v-model="selectedProject" @change="fetchStatistics"
-                class="block w-full mt-1 rounded-md border-2 border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-lg transition-all"
-                :class="{ 'border-transparent': selectedProject }">
-                <option value="" disabled selected>Pilih Proyek</option>
-                <option v-for="project in activeProjects" :key="project.nama_proyek" :value="project">
-                  {{ project.tahun_ajaran }} - {{ project.nama_proyek }}
-                </option>
-              </select>
+ 
+              <div>
+                  <label for="combinedDropdown" class="block mb-2 text-sm font-medium text-gray-700">
+                    Pilih Batch Year dan Project Name
+                  </label>
+                  <select
+                    id="combinedDropdown"
+                    @change="handleDropdownChange"
+                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  >
+                    <option value="" disabled selected>
+                      Pilih Batch Year - Project Name
+                    </option>
+                    <option
+                      v-for="option in combinedOptions"
+                      :key="option.value"
+                      :value="option.value"
+                      :selected="selectedOption && option.value === selectedOption.value"
+                    >
+                      {{ option.label }}
+                    </option>
+                  </select>
+                </div>
             </div>
           </Card>
         </div>
@@ -185,7 +246,6 @@ export default {
     </div>
   </div>
 </template>
-
 
 
 <style scoped></style>

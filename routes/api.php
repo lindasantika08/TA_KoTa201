@@ -52,6 +52,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/assessment/projects', [ProjectController::class, 'getProjectsWithAssessments']);
     Route::get('/proyek-self-assessment', [ProjectController::class, 'getDataSelf']);
     Route::get('/proyek-Peer-assessment', [ProjectController::class, 'getDataPeer']);
+    Route::get('/projects/active', [DashboardDosen::class, 'getActiveProjects']);
 
     // self assessment dosen
     Route::get('/questions-dosen', [SelfAssessmentDosen::class, 'getQuestionsByProject']);
@@ -59,7 +60,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/save-answer', [SelfAssessmentDosen::class, 'saveAnswer']);
     Route::get('/get-answer/{questionId}', [SelfAssessmentDosen::class, 'getAnswer']);
     Route::post('/save-all-answers-dosen', [SelfAssessmentDosen::class, 'saveAllAnswers']);
-    
+
     // peer assessment dosen
     Route::get('/questions-peer-dosen', [PeerAssessmentDosen::class, 'getQuestionsByProjectPeer']);
     Route::post('/save-answer-peer-dosen', [PeerAssessmentDosen::class, 'saveAnswerPeer']);
