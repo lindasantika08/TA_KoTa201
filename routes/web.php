@@ -77,6 +77,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/manage-dosen/import', [UserManagementController::class, 'ImportDosen'])->name('ImportDosen');
 
         Route::get('/answers/details', [AnswerController::class, 'getDetails']);
+
+        //REPORT
         Route::get('/kelompok/report-detail', [ReportController::class, 'getScoreKelompok']);
     });
 
@@ -100,5 +102,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/projects', [ProjectController::class, 'getUserProjects']);
         Route::get('/assessment-status', [ProjectController::class, 'getAssessmentStatus']);
         route::get('/project/report-detail', [ReportMahasiswa::class, 'getReportScoreView']);
+
+        //-----------REPORT-------------//
+        Route::get('/project-score-details', [ReportMahasiswa::class, 'getProjectScoreDetailsView']);
     });
 });

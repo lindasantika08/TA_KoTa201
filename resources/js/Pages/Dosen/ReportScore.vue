@@ -9,11 +9,11 @@ import VueApexCharts from 'vue3-apexcharts';
 
 export default {
   props: {
-    tahunAjaran: {
+    batch_year: {
       type: String,
       required: true,
     },
-    namaProyek: {
+    project_name: {
       type: String,
       required: true,
     },
@@ -21,6 +21,10 @@ export default {
       type: String,
       required: true,
     },
+    initialData: {
+      type: Object,
+      required: true,
+    }
   },
   components: {
     Sidebar,
@@ -49,7 +53,7 @@ export default {
     },
   },
   mounted() {
-    if (this.tahunAjaran && this.namaProyek && this.kelompok) {
+    if (this.batch_year && this.project_name && this.kelompok) {
       this.fetchQuestions();
       this.fetchPeerQuestions();
       this.fetchKelompokAnalysis();
@@ -59,33 +63,55 @@ export default {
   },
   methods: {
     async fetchKelompokAnalysis() {
-      this.loading = true;
-      this.error = null;
+  this.loading = true;
+  this.error = null;
 
-      if (this.tahunAjaran && this.namaProyek && this.kelompok) {
-        try {
-          const response = await axios.get("/api/report/kelompok/answers", {
-            params: {
-              tahun_ajaran: this.tahunAjaran,
-              nama_proyek: this.namaProyek,
-              kelompok: this.kelompok,
-            },
-          });
-          this.userAnalysis = response.data;
-        } catch (error) {
-          console.error("Gagal mengambil analisis:", error);
-          this.error = "Gagal memuat data";
-        } finally {
-          this.loading = false;
-        }
-      } else {
-        this.error = "Tahun Ajaran, Nama Proyek, atau Kelompok tidak valid";
-        this.loading = false;
-      }
-    },
+  console.log('Starting fetchKelompokAnalysis with params:', {
+    batch_year: this.batch_year,
+    project_name: this.project_name,
+    kelompok: this.kelompok
+  });
+
+  if (this.batch_year && this.project_name && this.kelompok) {
+    try {
+      console.log('Making API request to /api/report/kelompok/answers');
+      const response = await axios.get("/api/report/kelompok/answers", {
+        params: {
+          batch_year: this.batch_year,
+          project_name: this.project_name,
+          kelompok: this.kelompok,
+        },
+      });
+      console.log('API Response received:', response);
+      console.log('Response data:', response.data);
+      
+      this.userAnalysis = response.data;
+      console.log('Updated userAnalysis:', this.userAnalysis);
+    } catch (error) {
+      console.error("Gagal mengambil analisis. Error details:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        statusText: error.response?.statusText
+      });
+      this.error = "Gagal memuat data";
+    } finally {
+      console.log('Request completed. Loading status:', this.loading);
+      this.loading = false;
+    }
+  } else {
+    console.warn('Missing required parameters:', {
+      batch_year: this.batch_year,
+      project_name: this.project_name,
+      kelompok: this.kelompok
+    });
+    this.error = "Tahun Ajaran, Nama Proyek, atau Kelompok tidak valid";
+    this.loading = false;
+  }
+},
     async fetchQuestions() {
       try {
-        const response = await axios.get("/api/questions");
+        const response = await axios.get("/api/questions-dosen");
         this.questions = response.data;
       } catch (error) {
         console.error("Gagal memuat pertanyaan:", error);
@@ -93,10 +119,10 @@ export default {
     },
     async fetchPeerQuestions() {
       try {
-        const response = await axios.get("/api/questions-peer", {
+        const response = await axios.get("/api/questions-peerDosen", {
           params: {
-            tahun_ajaran: this.tahunAjaran,
-            nama_proyek: this.namaProyek,
+            batch_year: this.batch_year,
+            project_name: this.project_name,
           },
         });
         this.peerQuestions = response.data.reduce((acc, question) => {
@@ -382,14 +408,17 @@ export default {
       <Navbar userName="Dosen" />
       <main class="p-6">
         <div class="mb-4">
-          <Breadcrumb :items="breadcrumbs" />
+          <Breadcrumb :items="[
+            { text: 'Report', href: '/dosen/report' },
+            { text: `${kelompok}`, href: '#' }
+          ]" />
         </div>
         
         <div class="grid grid-cols-2 gap-4">
           <Card title="Detail Kelompok">
-            <div v-if="tahunAjaran && namaProyek && kelompok">
-              <p><strong>Tahun Ajaran:</strong> {{ tahunAjaran }}</p>
-              <p><strong>Nama Proyek:</strong> {{ namaProyek }}</p>
+            <div v-if="batch_year && project_name && kelompok">
+              <p><strong>Tahun Ajaran:</strong> {{ batch_year }}</p>
+              <p><strong>Nama Proyek:</strong> {{ project_name }}</p>
               <p><strong>Kelompok:</strong> {{ kelompok }}</p>
             </div>
             <div v-else>

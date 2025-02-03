@@ -70,10 +70,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/changeStatus', [ProjectController::class, 'changeStatus']);
     Route::get('/answers/get-details', [AnswerController::class, 'getDetailsAnswer']);
     Route::get('/answers/{id}', [AnswerController::class, 'showdetail']);
-    Route::get('/dropdown-options', [ReportController::class, 'getDropdownOptions']);
-    Route::get('/kelompok/report', [ReportController::class, 'getKelompokReport']);
-    Route::get('/kelompok/report-detail', [ReportController::class, 'getScoreKelompok']);
-    Route::get('/report/kelompok/answers', [ReportController::class, 'getKelompokAnswers']);
 
     Route::get('/get-mahasiswa', [UserManagementController::class, 'getMahasiswa']);
     Route::get('/get-dosen', [UserManagementController::class, 'getDosen']);
@@ -88,6 +84,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/proyek-self-assessment', [ProjectController::class, 'getDataSelf']);
     Route::get('/proyek-self-assessment', [ProjectController::class, 'getDataSelf']);
     Route::get('/proyek-Peer-assessment', [ProjectController::class, 'getDataPeer']);
+
+    //REPORT DOSEN
+    Route::get('/dropdown-options', [ReportController::class, 'getDropdownOptions']);
+    Route::get('/kelompok/report', [ReportController::class, 'getKelompokReport']);
+    Route::get('/kelompok/report-detail', [ReportController::class, 'getScoreKelompok']);
+    Route::get('/report/kelompok/answers', [ReportController::class, 'getKelompokAnswers']);
 
 
     //-------------------------------------mahasiswa------------------------------------------------//
@@ -132,5 +134,4 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/mahasiswa/get-profile-photo', [ProfileMahasiswa::class, 'getProfilePhoto']);
     Route::post('/mahasiswa/upload-profile-photo', [ProfileMahasiswa::class, 'uploadProfilePhoto']);
     Route::delete('/mahasiswa/delete-profile-photo', [ProfileMahasiswa::class, 'deleteProfilePhoto']);
-
 });
