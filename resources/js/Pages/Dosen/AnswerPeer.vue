@@ -187,28 +187,27 @@ export default {
             }
         },
         async loadExistingAnswer() {
-            if (!this.currentQuestion) return;
+    if (!this.currentQuestion) return;
 
-            const tempAnswer = this.temporaryAnswers[this.currentQuestion.id];
-            if (tempAnswer) {
-                this.answer = tempAnswer.answer;
-                this.score = tempAnswer.score;
-                return;
-            }
+    // First, clear any previous answers
+    this.answer = '';
+    this.score = null;
 
-            try {
-                const response = await axios.get(`/api/get-answer-peerDosen/${this.currentQuestion.id}`);
-                if (response.data) {
-                    this.answer = response.data.answer;
-                    this.score = response.data.score;
-                } else {
-                    this.answer = '';
-                    this.score = null;
-                }
-            } catch (error) {
-                console.error('Error loading existing answer:', error);
+    try {
+        const response = await axios.get(`/api/get-answer-peer-dosen/${this.currentQuestion.id}`, {
+            params: {
+                current_question_id: this.currentQuestion.id
             }
-        },
+        });
+
+        if (response.data && response.data.question_id == this.currentQuestion.id) {
+            this.answer = response.data.answer;
+            this.score = response.data.score;
+        }
+    } catch (error) {
+        console.error('Error loading existing answer:', error);
+    }
+},
         saveTemporaryAnswer() {
             if (this.currentQuestion) {
                 this.temporaryAnswers[this.currentQuestion.id] = {
@@ -248,6 +247,7 @@ export default {
                 const response = await axios.post('/api/save-all-answers-peer-dosen', { answers: allAnswers });
 
                 if (response.data.success) {
+                    this.resetAnswerState();
                     alert('Semua jawaban berhasil disimpan!');
                     this.temporaryAnswers = {};
                     this.$inertia.visit('/dosen/assessment/projectsPeer');
@@ -259,7 +259,12 @@ export default {
                 this.isSubmitting = false;
                 this.showConfirmModal = false;
             }
-        }
+        },
+        resetAnswerState() {
+            this.answer = '';
+            this.score = null;
+            this.temporaryAnswers = {};
+        },
 
     },
 
