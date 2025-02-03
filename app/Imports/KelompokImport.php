@@ -18,6 +18,8 @@ use Throwable;
 
 class KelompokImport implements ToModel, WithHeadingRow, SkipsOnError
 {
+    private $dataBaru = [];
+
     public function model(array $row)
     {
         try {
@@ -32,6 +34,16 @@ class KelompokImport implements ToModel, WithHeadingRow, SkipsOnError
             if (!$mahasiswa) {
                 Log::warning('Mahasiswa not found for NIM:', ['nim' => $row['nim']]);
                 throw new \Exception("Mahasiswa dengan NIM {$row['nim']} tidak ditemukan");
+            }
+
+            // Validate angkatan
+            if ($mahasiswa->classRoom->angkatan != $row['angkatan']) {
+                Log::warning('Angkatan mismatch:', [
+                    'nim' => $row['nim'], 
+                    'mahasiswa_angkatan' => $mahasiswa->classRoom->angkatan, 
+                    'input_angkatan' => $row['angkatan']
+                ]);
+                throw new \Exception("Angkatan tidak sesuai untuk mahasiswa dengan NIM {$row['nim']}");
             }
 
             if (!$mahasiswa->classRoom) {
@@ -61,24 +73,16 @@ class KelompokImport implements ToModel, WithHeadingRow, SkipsOnError
                 }
             }
 
-            Log::info('Project Search Debug', [
-                'batch_year_input' => $mahasiswa->classRoom->prodi->batch_year,
-                'project_name_input' => $row['proyek'],
-                'major_id_input' => $mahasiswa->classRoom->prodi->major->id,
-                'all_projects' => Project::select('batch_year', 'project_name', 'major_id')->get()->toArray()
-            ]);
-            
             $project = Project::where('project_name', $row['proyek'])
-            ->where('major_id', $mahasiswa->classRoom->prodi->major->id)
-            ->first();
+                ->where('major_id', $mahasiswa->classRoom->prodi->major->id)
+                ->first();
 
             if (!$project) {
-            Log::warning('Project not found', [
-                'project_name' => $row['proyek'],
-                'major_id' => $mahasiswa->classRoom->prodi->major->id,
-                'all_projects' => Project::select('batch_year', 'project_name', 'major_id')->get()->toArray()
-            ]);
-            throw new \Exception("Project tidak ditemukan untuk proyek {$row['proyek']}");
+                Log::warning('Project not found', [
+                    'project_name' => $row['proyek'],
+                    'major_id' => $mahasiswa->classRoom->prodi->major->id
+                ]);
+                throw new \Exception("Project tidak ditemukan untuk proyek {$row['proyek']}");
             }
 
             $groupBaru = [
@@ -86,6 +90,7 @@ class KelompokImport implements ToModel, WithHeadingRow, SkipsOnError
                 'group' => $row['kelompok'],
                 'batch_year' => $project->batch_year,
                 'project_id' => $project->id,
+                'angkatan' => $row['angkatan']
             ];
     
             $this->dataBaru[] = $groupBaru;
@@ -100,6 +105,7 @@ class KelompokImport implements ToModel, WithHeadingRow, SkipsOnError
                     'group' => $row['kelompok'],
                     'batch_year' => $project->batch_year,
                     'dosen_id' => $dosen ? $dosen->id : null,
+                    'angkatan' => $row['angkatan']
                 ]
             );
     
@@ -127,7 +133,8 @@ class KelompokImport implements ToModel, WithHeadingRow, SkipsOnError
         foreach ($dataLama as $data) {
             $isFound = collect($dataBaru)->contains(function ($item) use ($data) {
                 return $item['mahasiswa_id'] == $data->mahasiswa_id &&
-                    $item['group'] == $data->group;
+                    $item['group'] == $data->group &&
+                    $item['angkatan'] == $data->angkatan;
             });
 
             if (!$isFound) {
