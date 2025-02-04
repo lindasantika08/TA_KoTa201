@@ -6,6 +6,8 @@ use App\Models\Kelompok;
 use App\Models\Answers;
 use App\Models\User;
 use App\Models\Dosen;
+use App\Models\Mahasiswa;
+use App\Models\Project;
 use App\Models\AnswersPeer;
 use App\Models\Assessment;
 use Illuminate\Http\Request;
@@ -177,110 +179,95 @@ class AnswerController extends Controller
 
         return response()->json($result);
     }
+
     public function getStatisticsPeer(Request $request)
     {
-        $tahunAjaran = $request->query('tahun_ajaran');
-        $namaProyek = $request->query('nama_proyek');
-
-        Log::info('Mendapatkan Statistik:', ['tahun_ajaran' => $tahunAjaran, 'nama_proyek' => $namaProyek]);
-
-        // Ambil semua data kelompok berdasarkan tahun ajaran dan nama proyek
-        $kelompokData = Kelompok::where('tahun_ajaran', $tahunAjaran)
-            ->where('nama_proyek', $namaProyek)
-            ->get()
-            ->groupBy('kelompok');
-
-        Log::info('Data Kelompok:', ['kelompok' => $kelompokData]);
-
-
-        $kelompokStats = $kelompokData->map(function ($kelompok) {
-            $userIds = $kelompok->pluck('user_id'); // Semua user_id dalam kelompok
-            Log::info('User IDs dalam Kelompok:', ['userIds' => $userIds]);
-            $isSubmitted = $userIds->every(function ($userId) use ($userIds) {
-                // Periksa apakah user ini sudah mengisi untuk semua anggota kelompok lain
-                $filledCount = AnswersPeer::where('user_id', $userId)
-                    ->whereIn('peer_id', $userIds->whereNotIn('id', [$userId]))
-                    ->distinct('peer_id')
-                    ->count();
-                Log::info("User $userId Filled Count:", ['filledCount' => $filledCount]);
-                return $filledCount === $userIds->count() - 1; // Semua anggota kecuali dirinya
-            });
-            return $isSubmitted;
-        });
-
-        // Hitung kelompok yang sudah lengkap
-        $kelompokSudahLengkap = $kelompokStats->filter(fn($isSubmitted) => $isSubmitted)->count();
-        $totalKelompok = $kelompokStats->count();
-
-        $finalStats = [
-            'totalKelompok' => $totalKelompok,
-            'kelompokSudahLengkap' => $kelompokSudahLengkap,
-            'kelompokBelumLengkap' => $totalKelompok - $kelompokSudahLengkap,
-        ];
-        Log::info('Final Stats:', $finalStats);
-        return response()->json($finalStats);
-    }
-
-    public function getListAnswersKelompokPeer(Request $request)
-    {
-        $tahunAjaran = $request->query('tahun_ajaran');
-        $namaProyek = $request->query('nama_proyek');
-
-        if (!$tahunAjaran || !$namaProyek) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Tahun Ajaran atau Nama Proyek tidak ditemukan.'
-            ], 400);
-        }
-
         try {
-            // Get unique groups for this academic year and project
-            $groups = Kelompok::where('tahun_ajaran', $tahunAjaran)
-                ->where('nama_proyek', $namaProyek)
-                ->distinct('kelompok')
-                ->pluck('kelompok');
+            $batchYear = $request->query('batch_year');
+            $projectName = $request->query('project_name');
 
-            $results = $groups->map(function ($kelompok) use ($tahunAjaran, $namaProyek) {
-                // Find all users in this group
-                $groupUsers = Kelompok::where('kelompok', $kelompok)
-                    ->where('tahun_ajaran', $tahunAjaran)
-                    ->where('nama_proyek', $namaProyek)
-                    ->pluck('user_id');
+            // Find the project
+            $project = Project::where('batch_year', $batchYear)
+                ->where('project_name', $projectName)
+                ->first();
 
-                // Count total members
-                $totalMahasiswa = $groupUsers->count();
-
-                // Count members who have completed assessments
-                $totalFilled = AnswersPeer::whereIn('user_id', $groupUsers)
-                    ->whereNotNull('status')
-                    ->distinct('user_id')
-                    ->count();
-
-                return [
-                    'nama_kelompok' => $kelompok,
-                    'total_mahasiswa' => $totalMahasiswa,
-                    'total_filled' => $totalFilled,
-                    'user_ids' => $groupUsers->toArray(),
-                    'user_id' => $groupUsers->first() ?? null
-                ];
-            });
-
-            if ($results->isEmpty()) {
+            if (!$project) {
                 return response()->json([
-                    'success' => false,
-                    'message' => 'Tidak ada data ditemukan.'
+                    'message' => 'Project not found'
                 ], 404);
             }
 
+            // Get all groups for this project
+            $allGroups = Group::where('project_id', $project->id)
+                ->select('id', 'group')
+                ->get();
+
+            // Group the groups by their names and get one representative ID for each group name
+            $uniqueGroups = $allGroups->groupBy('group')->map(function ($groups) {
+                return [
+                    'group_id' => $groups->first()->id,
+                    'group_name' => $groups->first()->group
+                ];
+            })->values();
+
+            $groupStatistics = $uniqueGroups->map(function ($uniqueGroup) {
+                // Find all group IDs that share this group name
+                $groupIds = Group::where('group', $uniqueGroup['group_name'])->pluck('id');
+
+                // Find mahasiswa in all instances of this group
+                $groupMembers = Mahasiswa::whereHas('group', function ($query) use ($groupIds) {
+                    $query->whereIn('id', $groupIds);
+                })->get();
+
+                // If no members, mark as not completed
+                if ($groupMembers->isEmpty()) {
+                    return [
+                        'group_id' => $uniqueGroup['group_id'],
+                        'group_name' => $uniqueGroup['group_name'],
+                        'is_completed' => false,
+                        'total_members' => 0
+                    ];
+                }
+
+                // Check if every member has completed peer assessments for every other member
+                $isGroupCompleted = $groupMembers->every(function ($member) use ($groupMembers) {
+                    // Get IDs of other members in the group
+                    $otherMemberIds = $groupMembers->pluck('id')->filter(fn($peerId) => $peerId != $member->id);
+
+                    // Check if this member has assessed every other member
+                    return $otherMemberIds->every(function ($peerId) use ($member) {
+                        return AnswersPeer::where('mahasiswa_id', $member->id)
+                            ->where('peer_id', $peerId)
+                            ->exists();
+                    });
+                });
+
+                return [
+                    'group_id' => $uniqueGroup['group_id'],
+                    'group_name' => $uniqueGroup['group_name'],
+                    'is_completed' => $isGroupCompleted,
+                    'total_members' => $groupMembers->count()
+                ];
+            });
+
+            // Count total groups and completed groups
+            $totalGroups = $uniqueGroups->count();
+            $completedGroups = $groupStatistics->where('is_completed', true)->count();
+
             return response()->json([
-                'success' => true,
-                'data' => $results
+                'totalGroup' => $totalGroups,
+                'groupSudahLengkap' => $completedGroups,
+                'groupBelumLengkap' => $totalGroups - $completedGroups,
+                'groupStatistics' => $groupStatistics
             ]);
         } catch (\Exception $e) {
-            Log::error('Error fetching answers: ' . $e->getMessage());
+            Log::error('Error in getStatisticsPeer', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
-                'success' => false,
-                'message' => 'Terjadi kesalahan saat mengambil data.',
+                'message' => 'An unexpected error occurred',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -288,17 +275,15 @@ class AnswerController extends Controller
 
     public function getListAnswersPeer(Request $request)
     {
-        $tahunAjaran = $request->query('tahun_ajaran');
-        $namaProyek = $request->query('nama_proyek');
-        $kelompok = $request->query('kelompok');
+        $tahunAjaran = $request->query('batch_year');
+        $namaProyek = $request->query('project_name');
 
         Log::info('Parameter diterima:', [
             'tahun_ajaran' => $tahunAjaran,
             'nama_proyek' => $namaProyek,
-            'kelompok' => $kelompok,
         ]);
 
-        if (!$tahunAjaran || !$namaProyek || !$kelompok) {
+        if (!$tahunAjaran || !$namaProyek) {
             return response()->json([
                 'success' => false,
                 'message' => 'Parameter tidak lengkap.',
@@ -306,20 +291,81 @@ class AnswerController extends Controller
         }
 
         try {
-            $answers = AnswersPeer::select('answerspeer.*', 'assessment.pertanyaan')
-                ->join('assessment', 'answerspeer.question_id', '=', 'assessment.id')
-                ->join('kelompok', 'answerspeer.user_id', '=', 'kelompok.user_id')
-                ->where('assessment.tahun_ajaran', $tahunAjaran)
-                ->where('assessment.nama_proyek', $namaProyek)
-                ->where('kelompok.tahun_ajaran', $tahunAjaran)
-                ->where('kelompok.nama_proyek', $namaProyek)
-                ->where('kelompok.kelompok', $kelompok)
-                ->with(['user', 'peer'])
+            // Find the project with eager loading
+            $project = Project::where('project_name', $namaProyek)
+                ->where('batch_year', $tahunAjaran)
+                ->with(['groups' => function ($query) {
+                    $query->select('id', 'project_id', 'group')
+                        ->distinct('group');
+                }])
+                ->firstOrFail();
+
+            // Get unique groups
+            $groups = $project->groups->pluck('group')->unique()->values();
+
+            // Get answers for all groups in a single query
+            $answers = AnswersPeer::whereIn('mahasiswa_id', function ($query) use ($project) {
+                $query->select('mahasiswa_id')
+                    ->from('groups')
+                    ->where('project_id', $project->id);
+            })
+                ->with([
+                    'mahasiswa' => function ($query) {
+                        $query->with(['user' => function ($q) {
+                            $q->select('id', 'name', 'email');
+                        }]);
+                    },
+                    'peer' => function ($query) {
+                        $query->with(['user' => function ($q) {
+                            $q->select('id', 'name', 'email');
+                        }]);
+                    },
+                    'question' => function ($query) use ($tahunAjaran, $namaProyek) {
+                        $query->where('batch_year', $tahunAjaran)
+                            ->whereHas('project', function ($q) use ($namaProyek) {
+                                $q->where('project_name', $namaProyek);
+                            })
+                            ->select('id', 'question');
+                    }
+                ])
                 ->get();
 
-            Log::info('Hasil query:', ['answers' => $answers->toArray()]);
+            // Transform the answers
+            $transformedAnswers = $answers->map(function ($answer) {
+                // Get the group for this answer
+                $group = Group::where('mahasiswa_id', $answer->mahasiswa_id)
+                    ->value('group');
 
-            if ($answers->isEmpty()) {
+                try {
+                    return [
+                        'id' => $answer->id,
+                        'user' => $answer->mahasiswa->user ? [
+                            'id' => $answer->mahasiswa->user->id,
+                            'name' => $answer->mahasiswa->user->name,
+                            'email' => $answer->mahasiswa->user->email,
+                        ] : null,
+                        'peer' => $answer->peer->user ? [
+                            'id' => $answer->peer->user->id,
+                            'name' => $answer->peer->user->name,
+                            'email' => $answer->peer->user->email,
+                        ] : null,
+                        'pertanyaan' => optional($answer->question)->question,
+                        'answer' => $answer->answer,
+                        'score' => $answer->score,
+                        'status' => $answer->status,
+                        'kelompok' => $group ?? '-'
+                    ];
+                } catch (\Exception $e) {
+                    Log::error('Error transforming answer: ' . $e->getMessage(), [
+                        'answer_id' => $answer->id
+                    ]);
+                    return null;
+                }
+            })
+                ->filter() // Remove any null values from failed transformations
+                ->values(); // Reset array keys
+
+            if ($transformedAnswers->isEmpty()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Tidak ada data ditemukan.',
@@ -328,8 +374,15 @@ class AnswerController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $answers,
+                'data' => $transformedAnswers,
+                'groups' => $groups
             ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            Log::error('Project not found: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Project tidak ditemukan.',
+            ], 404);
         } catch (\Exception $e) {
             Log::error('Error fetching answers: ' . $e->getMessage());
             return response()->json([
@@ -345,14 +398,41 @@ class AnswerController extends Controller
         return Inertia::render('Dosen/ListAnswerPeer');
     }
 
-    public function getListAnswersView()
+    public function getListAnswersView(Request $request)
     {
-        return Inertia::render('Dosen/AnswersSelfAssessment');
+        $batch_year = $request->query('batch_year');
+        $project_name = $request->query('project_name');
+
+        $project = Project::where('project_name', $project_name)
+            ->where('batch_year', $batch_year)
+            ->firstOrFail();
+
+        return Inertia::render('Dosen/AnswersSelfAssessment', [
+            'batch_year' => $batch_year,
+            'projectId' => $project->id,
+            'project_name' => $project->project_name,  // Add this line
+        ]);
     }
 
-    public function getListAnswersPeerView()
+    public function getListAnswersPeerView(Request $request)
     {
-        return Inertia::render('Dosen/AnswersPeerAssessment');
+        $batch_year = $request->query('batch_year');
+        $project_name = $request->query('project_name');
+
+        $project = Project::where('project_name', $project_name)
+            ->where('batch_year', $batch_year)
+            ->firstOrFail();
+
+        $groupCount = Group::where('project_id', $project->id)
+            ->distinct('group')
+            ->count('group');
+
+        return Inertia::render('Dosen/AnswersPeerAssessment', [
+            'batch_year' => $batch_year,
+            'projectId' => $project->id,
+            'project_name' => $project->project_name,
+            'totalGroups' => $groupCount
+        ]);
     }
 
     public function searchByNip(Request $request)
@@ -478,67 +558,49 @@ class AnswerController extends Controller
         }
     }
 
-
-
-
-
     public function getStatistics(Request $request)
     {
         try {
-            $tahunAjaran = urldecode($request->query('tahun_ajaran'));
-            $namaProyek = urldecode($request->query('nama_proyek'));
+            $batchYear = $request->query('batch_year');
+            $projectId = $request->query('project_id');
 
-            Log::info('Input Statistics:', [
-                'tahun_ajaran' => $tahunAjaran,
-                'nama_proyek' => $namaProyek
-            ]);
-
-            // Cari kelompok untuk proyek spesifik
-            $kelompok = Kelompok::where('tahun_ajaran', $tahunAjaran)
-                ->where('nama_proyek', $namaProyek)
+            // Find groups for specific project with mahasiswa loaded
+            $groups = Group::where('batch_year', $batchYear)
+                ->where('project_id', $projectId)
+                ->with('mahasiswa.user') // Eager load mahasiswa and user
                 ->get();
 
-            Log::info('Kelompok Debug', [
-                'total' => $kelompok->count(),
-                'user_ids' => $kelompok->pluck('user_id')
-            ]);
-
-            // Cari jawaban yang terkait dengan proyek spesifik
-            $usersAlreadyFilled = Answers::whereHas('question', function ($query) use ($tahunAjaran, $namaProyek) {
-                $query->where('tahun_ajaran', $tahunAjaran)
-                    ->where('nama_proyek', $namaProyek);
+            $usersAlreadyFilled = Answers::whereHas('question', function ($query) use ($batchYear, $projectId) {
+                $query->where('batch_year', $batchYear)
+                    ->where('project_id', $projectId);
             })
-                ->whereIn('user_id', $kelompok->pluck('user_id'))
-                ->distinct('user_id')
+                ->whereIn('mahasiswa_id', $groups->pluck('mahasiswa_id'))
+                ->distinct('mahasiswa_id')
                 ->count();
 
-            Log::info('Jawaban Debug', [
-                'total_filled' => $usersAlreadyFilled
-            ]);
-
-            // Siapkan detail user yang belum mengisi
-            $unsubmittedUsers = $kelompok->map(function ($item) use ($tahunAjaran, $namaProyek) {
-                $isSubmitted = Answers::whereHas('question', function ($query) use ($tahunAjaran, $namaProyek) {
-                    $query->where('tahun_ajaran', $tahunAjaran)
-                        ->where('nama_proyek', $namaProyek);
+            // Prepare details of users who haven't submitted
+            $submissionStatus = $groups->map(function ($item) use ($batchYear, $projectId) {
+                $isSubmitted = Answers::whereHas('question', function ($query) use ($batchYear, $projectId) {
+                    $query->where('batch_year', $batchYear)
+                        ->where('project_id', $projectId);
                 })
-                    ->where('user_id', $item->user_id)
+                    ->where('mahasiswa_id', $item->mahasiswa_id)
                     ->exists();
 
                 return [
                     'index' => $item->id,
-                    'userName' => $item->user->name,
+                    'mahasiswaName' => optional($item->mahasiswa->user)->name ?? 'Unknown', // Safely retrieve name
                     'status' => $isSubmitted ? 'submitted' : 'unsubmitted'
                 ];
             });
 
             return response()->json([
-                'totalKeseluruhan' => $kelompok->count(),
+                'totalKeseluruhan' => $groups->count(),
                 'totalSudahMengisi' => $usersAlreadyFilled,
-                'unsubmittedUsers' => $unsubmittedUsers
+                'submissionStatus' => $submissionStatus
             ]);
         } catch (\Exception $e) {
-            Log::error('Statistik Error: ' . $e->getMessage() . ' Trace: ' . $e->getTraceAsString());
+            Log::error('Statistics Error: ' . $e->getMessage() . ' Trace: ' . $e->getTraceAsString());
 
             return response()->json([
                 'error' => 'Fatal Error',
@@ -551,48 +613,59 @@ class AnswerController extends Controller
     public function getDetails(Request $request)
     {
         $validated = $request->validate([
-            'userName' => 'required|string',
-            'tahun_ajaran' => 'required|string',
-            'nama_proyek' => 'required|string',
+            'mahasiswaName' => 'required|string', // Changed from userName
+            'batch_year' => 'required|string', // Changed from tahun_ajaran
+            'project_name' => 'required|string', // Changed from nama_proyek
+            'project_id' => 'required|string', // Added project_id
         ]);
 
-        return Inertia::render('Dosen/AnswerDetailSelf')->with([
-            'userName' => $validated['userName'],
-            'tahunAjaran' => $validated['tahun_ajaran'],
-            'namaProyek' => $validated['nama_proyek'],
+        return Inertia::render('Dosen/AnswerDetailSelf', [
+            'mahasiswaName' => $validated['mahasiswaName'],
+            'batch_year' => $validated['batch_year'],
+            'project_name' => $validated['project_name'],
+            'project_id' => $validated['project_id'],
         ]);
     }
 
     public function getDetailsAnswer(Request $request)
     {
         $validated = $request->validate([
-            'userName' => 'required|string',
-            'tahun_ajaran' => 'required|string',
-            'nama_proyek' => 'required|string',
+            'mahasiswaName' => 'required|string', // Changed from userName
+            'batch_year' => 'required|string', // Changed from tahun_ajaran
+            'project_name' => 'required|string', // Changed from nama_proyek
+            'project_id' => 'required|string', // Added project_id
         ]);
 
-        $user = DB::table('users')->where('name', $validated['userName'])->first();
+        // Find user by name
+        $user = User::where('name', $validated['mahasiswaName'])->first();
 
         if (!$user) {
             return response()->json(['error' => 'Pengguna tidak ditemukan'], 404);
         }
 
+        // Find mahasiswa associated with user
+        $mahasiswa = Mahasiswa::where('user_id', $user->id)->first();
+
+        if (!$mahasiswa) {
+            return response()->json(['error' => 'Mahasiswa tidak ditemukan'], 404);
+        }
+
         $answers = Answers::with('question')
-            ->where('user_id', $user->id)
+            ->where('mahasiswa_id', $mahasiswa->id)
             ->whereHas('question', function ($query) use ($validated) {
-                $query->where('tahun_ajaran', $validated['tahun_ajaran'])
-                    ->where('nama_proyek', $validated['nama_proyek']);
+                $query->where('batch_year', $validated['batch_year'])
+                    ->where('project_id', $validated['project_id']);
             })
             ->get();
 
         if ($answers->isEmpty()) {
-            return response()->json(['message' => 'Jawaban tidak ditemukan untuk pengguna ini'], 404);
+            return response()->json(['message' => 'Jawaban tidak ditemukan untuk mahasiswa ini'], 404);
         }
 
         return response()->json([
             'answers' => $answers->map(function ($answer) {
                 return [
-                    'pertanyaan' => $answer->question->pertanyaan,
+                    'pertanyaan' => $answer->question->question,
                     'jawaban' => $answer->answer,
                     'skor' => $answer->score,
                 ];
