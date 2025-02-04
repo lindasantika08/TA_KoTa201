@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('angkatan')->nullable();
             $table->foreignUuid('project_id')->constrained('project');
             $table->foreignUuid('mahasiswa_id')->constrained('mahasiswa');
-            $table->string('group'); 
+            $table->string('group');
             $table->foreignUuid('dosen_id')->constrained('dosen');
             $table->timestamps();
             $table->softDeletes();

@@ -1,11 +1,11 @@
 <script>
-import axios from 'axios';
-import DataTable from "@/Components/DataTable.vue";
 import Navbar from "@/Components/Navbar.vue";
 import Sidebar from "@/Components/Sidebar.vue";
 import Breadcrumb from "@/Components/Breadcrumb.vue";
+import DataTable from "@/Components/DataTable.vue";
 import { ref, computed } from "vue";
 import { router, usePage } from "@inertiajs/vue3";
+import axios from 'axios';
 
 export default {
   components: {
@@ -16,104 +16,85 @@ export default {
   },
   data() {
     return {
-      tahun_ajaran: '',
-      nama_proyek: '',
-      answers: [],
       totalKeseluruhan: 0,
       totalSudahMengisi: 0,
+      submissionStatus: [],
       breadcrumbs: [
         { text: "Self Assessment", href: "/dosen/assessment/projectsSelf" }
       ],
       headers: [
-        { key: 'no', label: 'No' },
-        { key: 'nama_pengguna', label: 'Nama Pengguna' },
-        { key: 'status', label: 'Status' },
-        { key: 'detail', label: 'Actions' }
+        { key: 'no', label: 'No', class: 'text-center' },
+        { key: 'nama_mahasiswa', label: 'Nama Mahasiswa', class: 'w-1/3' },
+        { key: 'status', label: 'Status', class: 'text-center' },
+        { key: 'detail', label: 'Actions', class: 'text-center' }
       ],
+      isLoading: true,
+      error: null
+    };
+  },
+  setup() {
+    const page = usePage();
+    return { 
+      batch_year: computed(() => page.props.batch_year),
+      project_id: computed(() => page.props.projectId),
+      project_name: computed(() => page.props.project_name)
     };
   },
   mounted() {
-    const query = new URLSearchParams(window.location.search);
-    this.tahun_ajaran = query.get('tahun_ajaran');
-    this.nama_proyek = query.get('nama_proyek');
-
-    if (this.tahun_ajaran && this.nama_proyek) {
-      this.fetchAnswers();
+    if (this.batch_year && this.project_id) {
       this.fetchStatistics();
     } else {
-      console.error('Tahun Ajaran atau Nama Proyek tidak ditemukan!');
+      this.error = 'Batch Year atau Project ID tidak ditemukan!';
+      this.isLoading = false;
     }
   },
   methods: {
-    fetchAnswers() {
-      axios.get('/api/answers/list', {
-        params: {
-          tahun_ajaran: this.tahun_ajaran,
-          nama_proyek: this.nama_proyek
-        }
-      })
-        .then(response => {
-          if (Array.isArray(response.data)) {
-            this.answers = response.data;
-          } else {
-            console.error("Data yang diterima tidak sesuai format yang diharapkan.");
-          }
-        })
-        .catch(error => {
-          console.error('Error fetching answers:', error);
-        });
-    },
     fetchStatistics() {
       axios.get('/api/answers/statistics', {
         params: {
-          tahun_ajaran: this.tahun_ajaran,
-          nama_proyek: this.nama_proyek
+          batch_year: this.batch_year,
+          project_id: this.project_id
         }
       })
-        .then(response => {
-          this.totalKeseluruhan = response.data.totalKeseluruhan;
-          this.totalSudahMengisi = response.data.totalSudahMengisi;
-        })
-        .catch(error => {
-          console.error('Error fetching statistics:', error);
-        });
-    },
-
-    showDetails(userName, tahunAjaran, namaProyek) {
-      console.log(`Menampilkan detail untuk pengguna: ${userName}`);
-      console.log(`Tahun Ajaran: ${tahunAjaran}, Nama Proyek: ${namaProyek}`);
-
-      router.visit(`/dosen/answers/details?userName=${userName}&tahun_ajaran=${tahunAjaran}&nama_proyek=${namaProyek}`);
-
-      console.log("Data yang dikirim:", {
-        userName,
-        tahunAjaran,
-        namaProyek
+      .then(response => {
+        this.totalKeseluruhan = response.data.totalKeseluruhan;
+        this.totalSudahMengisi = response.data.totalSudahMengisi;
+        this.submissionStatus = response.data.submissionStatus;
+        this.isLoading = false;
+      })
+      .catch(error => {
+        console.error('Error fetching statistics:', error);
+        this.error = 'Gagal memuat statistik';
+        this.isLoading = false;
       });
     },
+    showDetails(mahasiswaName) {
+      router.visit(`/dosen/answers/details?mahasiswaName=${mahasiswaName}&batch_year=${this.batch_year}&project_name=${this.project_name}&project_id=${this.project_id}`);
+    },
+    getStatusClass(status) {
+      const statusClasses = {
+        'submitted': 'bg-green-100 text-green-800',
+        'unsubmitted': 'bg-red-100 text-red-800',
+        'on progress': 'bg-yellow-100 text-yellow-800'
+      };
+      return statusClasses[status] || 'bg-gray-100 text-gray-800';
+    }
   },
   computed: {
     groupedAnswers() {
-      const userGroups = {};
-      let globalIndex = 1;
-
-      this.answers.forEach(answer => {
-        const userName = answer.user.name;
-        if (!userGroups[userName]) {
-          userGroups[userName] = {
-            index: globalIndex++,
-            userName,
-            status: answer.status || 'unsubmitted'
-          };
-        }
-      });
-
-      const sortedAnswers = Object.values(userGroups).sort((a, b) => {
+      return this.submissionStatus.map((item, index) => ({
+        index: index + 1,
+        mahasiswaName: item.mahasiswaName,
+        status: item.status
+      })).sort((a, b) => {
         const statusOrder = ['submitted', 'on progress', 'unsubmitted'];
         return statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status);
       });
-
-      return sortedAnswers;
+    },
+    submissionPercentage() {
+      return this.totalKeseluruhan > 0 
+        ? Math.round((this.totalSudahMengisi / this.totalKeseluruhan) * 100) 
+        : 0;
     }
   }
 };
@@ -129,44 +110,68 @@ export default {
           <Breadcrumb :items="breadcrumbs" />
         </div>
 
-        <div class="mb-6 text-sm font-semibold">
-          <h1 class="text-xl font-semibold mb-6 ">Answers Self Assessment</h1>
+        <div class="bg-white shadow-md rounded-lg p-6 mb-6">
+          <h1 class="text-2xl font-bold text-gray-800 mb-4">Answers Self Assessment</h1>
 
-          <p><strong>Tahun Ajaran : </strong> {{ tahun_ajaran }}</p>
-          <p><strong>Nama Proyek : </strong> {{ nama_proyek }}</p>
-
-          <p class="mt-4 text-2xl font-semibold">
-            <font-awesome-icon icon="fa-solid fa-user-check" class="mr-4 text-3xl" />
-            Total Mengisi: {{ totalSudahMengisi }} / {{ totalKeseluruhan }}
-          </p>
+          <div class="grid md:grid-cols-3 gap-4">
+            <div>
+              <p class="text-sm text-gray-600">Batch Year</p>
+              <p class="font-semibold text-lg">{{ batch_year }}</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-600">Project Name</p>
+              <p class="font-semibold text-lg">{{ project_name }}</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-600">Submission Progress</p>
+              <div class="flex items-center">
+                <div class="w-full bg-gray-200 rounded-full h-2.5 mr-2">
+                  <div 
+                    class="bg-blue-600 h-2.5 rounded-full" 
+                    :style="`width: ${submissionPercentage}%`"
+                  ></div>
+                </div>
+                <span class="text-sm font-medium text-gray-500">
+                  {{ submissionPercentage }}%
+                </span>
+              </div>
+              <p class="text-lg font-semibold mt-2">
+                Total Mengisi: {{ totalSudahMengisi }} / {{ totalKeseluruhan }}
+              </p>
+            </div>
+          </div>
         </div>
 
-        <div v-if="groupedAnswers.length === 0" class="text-center text-gray-500 py-6">
+        <div v-if="error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+          {{ error }}
+        </div>
+
+        <div v-else-if="groupedAnswers.length === 0" class="bg-gray-100 text-center text-gray-500 py-6 rounded-lg">
           Belum ada jawaban
         </div>
 
         <div v-else>
-          <DataTable :headers="headers" :items="groupedAnswers" class="mt-10">
+          <DataTable 
+            :headers="headers" 
+            :items="groupedAnswers" 
+            class="mt-6 shadow-md rounded-lg overflow-hidden"
+          >
             <template #column-no="{ item }">
-              {{ item.index }}
+              <div class="text-center">{{ item.index }}</div>
             </template>
 
-            <template #column-nama_pengguna="{ item }">
-              {{ item.userName }}
+            <template #column-nama_mahasiswa="{ item }">
+              {{ item.mahasiswaName }}
             </template>
 
             <template #column-status="{ item }">
               <div class="flex justify-center">
-                <span :class="[
-                  'px-2 py-1 rounded-full text-xs font-medium',
-                  item.status === 'unsubmitted'
-                    ? 'bg-red-100 text-red-800'
-                    : item.status === 'on progress'
-                      ? 'bg-yellow-100 text-yellow-800'
-                      : item.status === 'submitted'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-green-100 text-green-800'
-                ]">
+                <span 
+                  :class="[
+                    'px-2 py-1 rounded-full text-xs font-medium',
+                    getStatusClass(item.status)
+                  ]"
+                >
                   {{ item.status }}
                 </span>
               </div>
@@ -174,9 +179,11 @@ export default {
 
             <template #column-detail="{ item }">
               <div class="flex justify-center">
-                <button v-if="item.status === 'on progress' || item.status === 'submitted'"
-                  @click="showDetails(item.userName, tahun_ajaran, nama_proyek)"
-                  class="px-4 py-2 text-white bg-blue-500 rounded-lg hover:bg-blue-700">
+                <button 
+                  v-if="item.status === 'submitted'"
+                  @click="showDetails(item.mahasiswaName)"
+                  class="px-4 py-2 text-white bg-blue-500 rounded-lg hover:bg-blue-700 transition-colors"
+                >
                   Detail
                 </button>
               </div>

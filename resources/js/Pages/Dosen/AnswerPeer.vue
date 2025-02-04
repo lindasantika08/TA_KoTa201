@@ -76,7 +76,17 @@ export default {
             });
         },
     },
+
+    created() {
+        this.$router.beforeEach((to, from, next) => {
+            if (from.name === 'assessment' && to.name !== 'assessment') {
+                this.clearAssessmentData();
+            }
+            next();
+        });
+    },
     async created() {
+        this.loadSavedState();
         await this.fetchQuestions();
         await this.fetchStudentsInfo();
     },
@@ -135,40 +145,78 @@ export default {
             console.log('Score set to:', value);
         },
 
-        submitAnswer() {
-            if (!this.currentQuestion) {
-                console.log('No current question available');
-                return;
+        saveCurrentState() {
+            // Save the current question's state
+            if (!this.currentQuestion) return;
+
+            // Ensure temporaryAnswers exists
+            if (!this.temporaryAnswers) {
+                this.temporaryAnswers = {};
             }
 
-            if (!this.score) {
-                alert('Silakan pilih nilai terlebih dahulu');
-                return;
-            }
-
-            const payload = {
-                question_id: this.currentQuestion.id,
+            // Save the state for the current question
+            this.temporaryAnswers[this.currentQuestion.id] = {
                 answer: this.answer,
-                score: this.score,
-                status: 'submitted'
+                score: this.score
             };
 
-            console.log('Payload:', payload);
+            // Persist to localStorage
+            localStorage.setItem('temporaryAnswers', JSON.stringify(this.temporaryAnswers));
+        },
 
-            axios.post('/api/save-answer-peer-dosen', payload)
-                .then((response) => {
-                    console.log('Answer saved:', response);
-                    alert(response.data.message);
-                    if (response.data.message === 'Answer saved successfully') {
-                        this.nextQuestion();
-                        this.score = null;
-                        this.answer = '';
+        loadSavedState() {
+            // Retrieve saved state from localStorage
+            const savedAnswers = localStorage.getItem('temporaryAnswers');
+
+            if (savedAnswers) {
+                try {
+                    this.temporaryAnswers = JSON.parse(savedAnswers);
+                } catch (error) {
+                    console.error('Error parsing saved answers:', error);
+                    this.temporaryAnswers = {};
+                }
+            }
+        },
+
+        async submitAnswer() {
+            if (!this.currentQuestion) return;
+
+            try {
+                this.saveTemporaryAnswer();
+
+                const answersToSubmit = [];
+
+                for (const [questionId, answerData] of Object.entries(this.temporaryAnswers)) {
+                    // Hanya submit jawaban yang memiliki isi
+                    if (answerData.answer || answerData.score > 0) {
+                        answersToSubmit.push({
+                            question_id: questionId,
+                            answer: answerData.answer,
+                            score: answerData.score,
+                            status: "submitted"
+                        });
                     }
-                })
-                .catch(error => {
-                    console.error('Error saving answer:', error);
-                    alert('Gagal menyimpan jawaban. Silakan coba lagi.');
-                });
+                }
+
+                const responses = await Promise.all(
+                    answersToSubmit.map(answer =>
+                        axios.post("/api/save-answer-peer-dosen", answer)
+                    )
+                );
+
+                // Tidak peduli dengan pertanyaan yang tidak terjawab
+                this.temporaryAnswers = {};
+                localStorage.setItem('temporaryAnswers', JSON.stringify(this.temporaryAnswers));
+
+                this.nextQuestion();
+                this.saveCurrentState();
+
+                alert("Answer saved successfully");
+
+            } catch (error) {
+                console.error("Error submitting answers:", error);
+                alert("Failed to save the answer. Please try again.");
+            }
         },
         async nextQuestion() {
             this.saveTemporaryAnswer();
@@ -187,34 +235,41 @@ export default {
             }
         },
         async loadExistingAnswer() {
-    if (!this.currentQuestion) return;
+            if (!this.currentQuestion) return;
 
-    // First, clear any previous answers
-    this.answer = '';
-    this.score = null;
-
-    try {
-        const response = await axios.get(`/api/get-answer-peer-dosen/${this.currentQuestion.id}`, {
-            params: {
-                current_question_id: this.currentQuestion.id
+            const tempAnswer = this.temporaryAnswers[this.currentQuestion.id];
+            if (tempAnswer) {
+                this.answer = tempAnswer.answer;
+                this.score = tempAnswer.score;
+                return;
             }
-        });
 
-        if (response.data && response.data.question_id == this.currentQuestion.id) {
-            this.answer = response.data.answer;
-            this.score = response.data.score;
-        }
-    } catch (error) {
-        console.error('Error loading existing answer:', error);
-    }
-},
+            try {
+                const response = await axios.get(`/api/get-answer-peerDosen/${this.currentQuestion.id}`);
+                if (response.data) {
+                    this.answer = response.data.answer;
+                    this.score = response.data.score;
+                } else {
+                    this.answer = '';
+                    this.score = null;
+                }
+            } catch (error) {
+                console.error('Error loading existing answer:', error);
+            }
+        },
         saveTemporaryAnswer() {
-            if (this.currentQuestion) {
-                this.temporaryAnswers[this.currentQuestion.id] = {
-                    answer: this.answer,
-                    score: this.score
-                };
+            if (!this.currentQuestion) return;
+
+            if (!this.temporaryAnswers) {
+                this.temporaryAnswers = {};
             }
+
+            this.temporaryAnswers[this.currentQuestion.id] = {
+                answer: this.answer,
+                score: this.score,
+            };
+
+            localStorage.setItem('temporaryAnswers', JSON.stringify(this.temporaryAnswers));
         },
         checkAllAnswered() {
             this.allAnswered = this.questions.every(question =>
@@ -247,7 +302,6 @@ export default {
                 const response = await axios.post('/api/save-all-answers-peer-dosen', { answers: allAnswers });
 
                 if (response.data.success) {
-                    this.resetAnswerState();
                     alert('Semua jawaban berhasil disimpan!');
                     this.temporaryAnswers = {};
                     this.$inertia.visit('/dosen/assessment/projectsPeer');
@@ -260,10 +314,22 @@ export default {
                 this.showConfirmModal = false;
             }
         },
-        resetAnswerState() {
-            this.answer = '';
-            this.score = null;
+
+        clearAssessmentData() {
+            // Clear localStorage
+            localStorage.removeItem('temporaryAnswers');
+            localStorage.removeItem('peerAssessmentState');
+
+            // Reset component data
             this.temporaryAnswers = {};
+            this.answers = {};
+            this.currentQuestionIndex = 0;
+            this.answer = '';
+            this.score = 0;
+        },
+
+        beforeDestroy() {
+            this.clearAssessmentData();
         },
 
     },
