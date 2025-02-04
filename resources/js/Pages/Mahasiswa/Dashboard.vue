@@ -79,7 +79,7 @@ export default {
         .then(response => {
           this.projects = response.data.projects;
           if (this.projects.length > 0) {
-            this.selectedProject = this.projects[0].nama_proyek;
+            this.selectedProject = this.projects[0].project_name;
           }
         })
         .catch(error => {
@@ -93,7 +93,7 @@ export default {
         .then(response => {
           const projectStatuses = response.data.projects || [];
           const currentProjectStatus = projectStatuses.find(
-            project => project.nama_proyek === projectName
+            project => project.project_name === projectName
           );
 
           this.selfAssessmentStatus = currentProjectStatus
@@ -162,7 +162,7 @@ export default {
               <select
                 class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 v-model="selectedProject">
-                <option v-for="project in projects" :value="project.nama_proyek">{{ project.nama_proyek }}</option>
+                <option v-for="project in projects" :value="project.project_name">{{ project.project_name }}</option>
               </select>
             </div>
           </Card>

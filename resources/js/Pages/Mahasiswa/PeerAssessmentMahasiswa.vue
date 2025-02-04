@@ -81,9 +81,17 @@ export default {
       );
     },
     availableMembers() {
-      return this.kelompok.filter(member =>
+      console.log('Kelompok:', this.kelompok);
+      console.log('Answered Peers:', this.answeredPeers);
+
+      if (!this.kelompok || !this.answeredPeers) return [];
+
+      const filtered = this.kelompok.filter(member =>
         !this.answeredPeers.includes(member.mahasiswa_id)
       );
+
+      console.log('Available Members:', filtered);
+      return filtered;
     }
   },
 
@@ -125,10 +133,6 @@ export default {
 
   created() {
     this.initializeData();
-    console.log('Initial kelompok data:', this.kelompok);
-    console.log('Current user ID:', this.currentUserId);
-    console.log('Selected member:', this.selectedMember);
-    console.log('Current question:', this.currentQuestion);
   },
 
   async created() {
@@ -583,8 +587,13 @@ export default {
     },
     async fetchAnsweredPeers() {
       try {
-        const response = await axios.get('/api/answered-peers');
+        const response = await axios.get('/api/answered-peers', {
+          params: {
+            project_id: this.namaProyek 
+          }
+        });
         this.answeredPeers = response.data.answered_peers;
+        console.log('Answered Peers:', this.answeredPeers);
       } catch (error) {
         console.error('Error fetching answered peers:', error);
       }
@@ -644,8 +653,7 @@ export default {
               <select id="select-member" v-model="selectedMember"
                 class="block w-full rounded-md border border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
                 <option disabled value="">-- Pilih Teman Kelompok --</option>
-                <option v-for="member in availableMembers" :key="member.mahasiswa_id" :value="member.mahasiswa_id"
-                  v-show="!answeredPeers.includes(member.mahasiswa_id)">
+                <option v-for="member in availableMembers" :key="member.mahasiswa_id" :value="member.mahasiswa_id">
                   {{ member.name }} ({{ member.nim }})
                 </option>
               </select>
