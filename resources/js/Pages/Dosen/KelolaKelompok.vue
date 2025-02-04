@@ -29,6 +29,7 @@ export default {
       headers: [
         { label: "Tahun Ajaran", key: "batch_year" },
         { label: "Nama Proyek", key: "project_name" },
+        { label: "Angkatan", key: "angkatan" },
         { label: "Kelompok", key: "group" },
         { label: "Manager Dosen", key: "dosen" },
         { label: "Anggota Kelompok", key: "anggota" },
@@ -42,14 +43,23 @@ export default {
   mounted() {
     console.log("Data Kelompok:", this.kelompok);
     this.fetchProjects();
+    // Check if angkatan exists in the raw data
+  this.kelompok.forEach(dosenGroup => {
+    dosenGroup.projects.forEach(project => {
+      console.log("Project Angkatan:", project.classroom?.angkatan);
+    });
+  });
 
     // Flatten the nested structure
     this.filteredKelompok = this.kelompok.flatMap(dosenGroup =>
       dosenGroup.projects.map(project => ({
         ...project,
-        dosen: dosenGroup.dosen_name
+        dosen: dosenGroup.dosen_name,
+       // Ambil angkatan dari first group
+       angkatan: project.angkatan || "-",
       }))
     );
+     console.log("Filtered Kelompok:", this.filteredKelompok);
   },
   methods: {
     async fetchProjects() {
@@ -65,7 +75,8 @@ export default {
         this.filteredKelompok = this.kelompok.flatMap(dosenGroup =>
           dosenGroup.projects.map(project => ({
             ...project,
-            dosen: dosenGroup.dosen_name
+            dosen: dosenGroup.dosen_name,
+            angkatan: project.angkatan || "-",
           }))
         );
         return;
@@ -80,7 +91,8 @@ export default {
           )
           .map(project => ({
             ...project,
-            dosen: dosenGroup.dosen_name
+            dosen: dosenGroup.dosen_name,
+            angkatan: project.angkatan || "-",
           }))
       );
     },
@@ -128,6 +140,10 @@ export default {
           </div>
 
           <DataTable :headers="headers" :items="filteredKelompok">
+            <template v-slot:column-angkatan="{ item }">
+              <span>{{ item.angkatan }}</span>
+            </template>
+
             <template v-slot:column-anggota="{ item }">
               <ul>
                 <li v-for="(anggota, index) in item.anggota" :key="index">

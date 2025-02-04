@@ -62,4 +62,8 @@ class Group extends Model
         return $this->belongsTo(Dosen::class, 'dosen_id');
     }
 
+    public function classroom()
+    {
+        return $this->belongsTo(ClassRoom::class, 'angkatan', 'angkatan');
+    }
 }

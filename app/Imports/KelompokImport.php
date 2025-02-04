@@ -39,8 +39,8 @@ class KelompokImport implements ToModel, WithHeadingRow, SkipsOnError
             // Validate angkatan
             if ($mahasiswa->classRoom->angkatan != $row['angkatan']) {
                 Log::warning('Angkatan mismatch:', [
-                    'nim' => $row['nim'], 
-                    'mahasiswa_angkatan' => $mahasiswa->classRoom->angkatan, 
+                    'nim' => $row['nim'],
+                    'mahasiswa_angkatan' => $mahasiswa->classRoom->angkatan,
                     'input_angkatan' => $row['angkatan']
                 ]);
                 throw new \Exception("Angkatan tidak sesuai untuk mahasiswa dengan NIM {$row['nim']}");
@@ -92,9 +92,9 @@ class KelompokImport implements ToModel, WithHeadingRow, SkipsOnError
                 'project_id' => $project->id,
                 'angkatan' => $row['angkatan']
             ];
-    
+
             $this->dataBaru[] = $groupBaru;
-    
+
             $group = Group::updateOrCreate(
                 [
                     'project_id' => $project->id,
@@ -108,14 +108,13 @@ class KelompokImport implements ToModel, WithHeadingRow, SkipsOnError
                     'angkatan' => $row['angkatan']
                 ]
             );
-    
+
             if (end($this->dataBaru) === $groupBaru) {
                 $this->cleanupOldData($project->id, $this->dataBaru);
             }
-    
+
             DB::commit();
             return null;
-    
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error in import:', [
@@ -128,7 +127,13 @@ class KelompokImport implements ToModel, WithHeadingRow, SkipsOnError
 
     private function cleanupOldData($projectId, $dataBaru)
     {
-        $dataLama = Group::where('project_id', $projectId)->get();
+        // Ambil angkatan yang sedang diimpor dari data terbaru
+        $angkatanTerbaru = collect($dataBaru)->pluck('angkatan')->unique();
+
+        // Ambil semua data lama yang memiliki project_id yang sama
+        $dataLama = Group::where('project_id', $projectId)
+            ->whereIn('angkatan', $angkatanTerbaru) // Hanya ambil data lama dengan angkatan yang sama
+            ->get();
 
         foreach ($dataLama as $data) {
             $isFound = collect($dataBaru)->contains(function ($item) use ($data) {
@@ -137,15 +142,18 @@ class KelompokImport implements ToModel, WithHeadingRow, SkipsOnError
                     $item['angkatan'] == $data->angkatan;
             });
 
+            // Hanya hapus data jika tidak ditemukan dalam batch terbaru dengan angkatan yang sama
             if (!$isFound) {
                 $data->delete();
                 Log::info('Deleted old group:', [
                     'mahasiswa_id' => $data->mahasiswa_id,
                     'group' => $data->group,
+                    'angkatan' => $data->angkatan,
                 ]);
             }
         }
     }
+
 
     public function onError(Throwable $e)
     {

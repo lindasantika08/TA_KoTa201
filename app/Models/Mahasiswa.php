@@ -47,4 +47,7 @@ class Mahasiswa extends Model
     {
         return $this->hasMany(Group::class, 'mahasiswa_id');
     }
+
+
 }
+

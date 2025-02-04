@@ -56,9 +56,13 @@ class KelolaKelompokController extends Controller
 
         $kelompokData = Group::with([
             'mahasiswa.user',
+            'mahasiswa.classRoom',
             'dosen.user',
             'project'
         ])
+        ->whereHas('project', function ($query) {
+            $query->where('status', 'active'); // Sesuaikan dengan nama kolom status di tabel projects
+        })
             ->get()
             ->groupBy('project_id')
             ->map(function ($projectGroups) {
@@ -74,13 +78,20 @@ class KelolaKelompokController extends Controller
                             ];
                         })->unique('nim')->values();
 
+                        // Ambil angkatan dari classroom mahasiswa di group
+                        $angkatan = optional($firstGroup->mahasiswa->classRoom)->angkatan ?? 'N/A';
+
                         return [
                             'dosen_name' => optional($firstGroup->dosen->user)->name ?? 'Unnamed Dosen',
                             'projects' => [[
                                 'project_name' => optional($firstGroup->project)->project_name ?? 'N/A',
                                 'batch_year' => optional($firstGroup->project)->batch_year ?? 'N/A',
                                 'group' => $firstGroup->group,
-                                'anggota' => $members
+                                'anggota' => $members,
+                                'angkatan' => $angkatan,
+                                'classroom' => [
+                                    'angkatan' => $angkatan
+                                ]
                             ]]
                         ];
                     })
