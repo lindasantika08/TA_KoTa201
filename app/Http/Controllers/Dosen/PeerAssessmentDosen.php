@@ -203,4 +203,39 @@ class PeerAssessmentDosen extends Controller
             ], 500);
         }
     }
+
+    public function getAnswerPeer($questionId, Request $request)
+{
+    try {
+        $validated = $request->validate([
+            'dosen_id' => 'required|string|exists:dosen,id',
+        ]);
+
+        $answer = AnswersPeer::where([
+            'dosen_id' => $validated['dosen_id'],
+            'question_id' => $questionId
+        ])->first();
+
+        return response()->json($answer);
+
+    } catch (ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validasi gagal.',
+            'errors' => $e->errors()
+        ], 422);
+    } catch (\Exception $e) {
+        Log::error('Error in getAnswerPeer:', [
+            'message' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Terjadi kesalahan saat mengambil jawaban.',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
 }
