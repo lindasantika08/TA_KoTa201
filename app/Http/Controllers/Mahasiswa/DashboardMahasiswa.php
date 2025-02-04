@@ -5,11 +5,12 @@ namespace App\Http\Controllers\Mahasiswa;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use App\Models\Kelompok;
+use App\Models\Group;
 use App\Models\Project;
 use App\Models\Answers;
 use App\Models\AnswersPeer;
 use App\Models\Assessment;
+use App\Models\Mahasiswa;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
@@ -20,8 +21,6 @@ class DashboardMahasiswa extends Controller
     {
         return Inertia::render('Mahasiswa/Dashboard');
     }
-
-
 
     public function getMahasiswaByClass($classId) {
         $mahasiswaKelas = User::whereHas('mahasiswa', function($query) use ($classId) {
@@ -35,15 +34,19 @@ class DashboardMahasiswa extends Controller
 
     public function getUserProject() {
         $user = Auth::user();
-        $kelompok = Kelompok::where('user_id', $user->id)->get();
         
-        if ($kelompok->isEmpty()) {
+        $mahasiswa = Mahasiswa::where('user_id', $user->id)->first();
+        
+        if (!$mahasiswa) {
             return response()->json(['projects' => []]);
         }
         
-        $projects = Project::whereIn('tahun_ajaran', $kelompok->pluck('tahun_ajaran'))
-            ->where('status', 'aktif')
-            ->get();
+        $projects = $mahasiswa->group()->with('project')
+            ->whereHas('project', function($query) {
+                $query->where('status', 'Active');
+            })
+            ->get()
+            ->pluck('project');
         
         return response()->json(['projects' => $projects]);
     }
@@ -51,12 +54,9 @@ class DashboardMahasiswa extends Controller
     public function getSelfAssessmentStatus() {
         $user = Auth::user();
         
-        $userProjects = Kelompok::where('user_id', $user->id)
-            ->select('tahun_ajaran', 'nama_proyek', 'kelompok')
-            ->distinct()
-            ->get();
+        $mahasiswa = Mahasiswa::where('user_id', $user->id)->first();
         
-        if ($userProjects->isEmpty()) {
+        if (!$mahasiswa) {
             return response()->json([
                 'selfAssessmentStatus' => 'Not Started',
                 'peerAssessmentStatus' => 'Not Started',
@@ -64,44 +64,61 @@ class DashboardMahasiswa extends Controller
             ]);
         }
         
-        $selfAssessmentQuestions = Assessment::where('type', 'selfAssessment')->count();
-        $peerAssessmentQuestions = Assessment::where('type', 'peerAssessment')->count();
+        $userGroups = Group::where('mahasiswa_id', $mahasiswa->id)
+            ->with('project')
+            ->get();
         
-        $projectStatuses = $userProjects->map(function($kelompok) use ($user, $selfAssessmentQuestions, $peerAssessmentQuestions) {
-            $groupPeers = Kelompok::where([
-                'tahun_ajaran' => $kelompok->tahun_ajaran,
-                'nama_proyek' => $kelompok->nama_proyek,
-                'kelompok' => $kelompok->kelompok 
-            ])->where('user_id', '!=', $user->id)->pluck('user_id');
+        if ($userGroups->isEmpty()) {
+            return response()->json([
+                'selfAssessmentStatus' => 'Not Started',
+                'peerAssessmentStatus' => 'Not Started',
+                'projects' => []
+            ]);
+        }
         
-            $selfAssessmentCount = Answers::whereHas('question', function($query) use ($kelompok) {
+        $projectStatuses = $userGroups->map(function($group) use ($mahasiswa) {
+            $project = $group->project;
+            
+            $selfAssessmentQuestions = Assessment::where('type', 'selfAssessment')
+                ->where('project_id', $project->id)
+                ->count();
+            
+            $peerAssessmentQuestions = Assessment::where('type', 'peerAssessment')
+                ->where('project_id', $project->id)
+                ->count();
+            
+            $groupPeers = Group::where('project_id', $project->id)
+                ->where('group', $group->group)
+                ->where('mahasiswa_id', '!=', $mahasiswa->id)
+                ->pluck('mahasiswa_id');
+            
+            $selfAssessmentCount = Answers::whereHas('question', function($query) use ($project) {
                     $query->where('type', 'selfAssessment')
-                          ->where('tahun_ajaran', $kelompok->tahun_ajaran)
-                          ->where('nama_proyek', $kelompok->nama_proyek);
+                          ->where('project_id', $project->id);
                 })
-                ->where('user_id', $user->id)
+                ->where('mahasiswa_id', $mahasiswa->id)
                 ->count();
-        
+            
             $totalExpectedPeerAnswers = $peerAssessmentQuestions * count($groupPeers);
-        
-            $peerAssessmentCount = AnswersPeer::where('user_id', $user->id)
-                ->whereHas('kelompok', function($query) use ($kelompok) {
-                    $query->where('tahun_ajaran', $kelompok->tahun_ajaran)
-                          ->where('nama_proyek', $kelompok->nama_proyek);
+            
+            $peerAssessmentCount = Answers::where('mahasiswa_id', $mahasiswa->id)
+                ->whereHas('question', function($query) use ($project) {
+                    $query->where('type', 'peerAssessment')
+                          ->where('project_id', $project->id);
                 })
                 ->count();
-        
+            
             $selfAssessmentStatus = $selfAssessmentCount == 0 
                 ? 'Not Started' 
                 : ($selfAssessmentCount < $selfAssessmentQuestions ? 'Pending' : 'Completed');
-        
+            
             $peerAssessmentStatus = $peerAssessmentCount == 0 
                 ? 'Not Started' 
                 : ($peerAssessmentCount < $totalExpectedPeerAnswers ? 'Pending' : 'Completed');
-        
+            
             return [
-                'tahun_ajaran' => $kelompok->tahun_ajaran,
-                'nama_proyek' => $kelompok->nama_proyek,
+                'batch_year' => $project->batch_year,
+                'project_name' => $project->project_name,
                 'selfAssessmentStatus' => $selfAssessmentStatus,
                 'peerAssessmentStatus' => $peerAssessmentStatus,
                 'selfAssessmentCount' => $selfAssessmentCount,
@@ -130,38 +147,56 @@ class DashboardMahasiswa extends Controller
     public function getPeerAssessmentDetails(Request $request) {
         $user = Auth::user();
         
-        $selectedProject = $request->input('project');
+        $mahasiswa = Mahasiswa::where('user_id', $user->id)->first();
         
-        $query = Kelompok::where('user_id', $user->id);
-        if ($selectedProject) {
-            $query->where('nama_proyek', $selectedProject);
+        if (!$mahasiswa) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Mahasiswa not found'
+            ], 404);
         }
         
-        $kelompok = $query->first();
+        $selectedProject = $request->input('project');
         
-        if (!$kelompok) {
+        $query = Group::where('mahasiswa_id', $mahasiswa->id)
+            ->with('project');
+        
+        if ($selectedProject) {
+            $query->whereHas('project', function($q) use ($selectedProject) {
+                $q->where('project_name', $selectedProject);
+            });
+        }
+        
+        $group = $query->first();
+        
+        if (!$group) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'No projects found'
             ], 404);
         }
         
-        $groupPeers = Kelompok::where([
-            'tahun_ajaran' => $kelompok->tahun_ajaran,
-            'nama_proyek' => $kelompok->nama_proyek,
-            'kelompok' => $kelompok->kelompok
-        ])->where('user_id', '!=', $user->id)->get();
+        $project = $group->project;
         
-        $groupPeerIds = $groupPeers->pluck('user_id');
-        $peerAssessmentQuestions = Assessment::where('type', 'peerAssessment')->count();
+        $groupPeers = Group::where('project_id', $project->id)
+            ->where('group', $group->group)
+            ->where('mahasiswa_id', '!=', $mahasiswa->id)
+            ->with('mahasiswa')
+            ->get();
         
-        $completedPeerAssessments = $groupPeerIds->mapWithKeys(function($peerId) use ($user, $kelompok, $peerAssessmentQuestions) {
-            $completedCount = AnswersPeer::where('user_id', $user->id)
-                ->where('peer_id', $peerId)
-                ->whereHas('kelompok', function($query) use ($kelompok) {
-                    $query->where('tahun_ajaran', $kelompok->tahun_ajaran)
-                          ->where('nama_proyek', $kelompok->nama_proyek);
+        $groupPeerIds = $groupPeers->pluck('mahasiswa_id');
+        
+        $peerAssessmentQuestions = Assessment::where('type', 'peerAssessment')
+            ->where('project_id', $project->id)
+            ->count();
+        
+        $completedPeerAssessments = $groupPeerIds->mapWithKeys(function($peerId) use ($mahasiswa, $project, $peerAssessmentQuestions) {
+            $completedCount = AnswersPeer::where('mahasiswa_id', $mahasiswa->id)
+                ->whereHas('question', function($query) use ($project, $peerId) {
+                    $query->where('type', 'peerAssessment')
+                          ->where('project_id', $project->id);
                 })
+                ->where('peer_id', $peerId)
                 ->count();
             
             $isCompleted = $completedCount == $peerAssessmentQuestions;
@@ -180,8 +215,8 @@ class DashboardMahasiswa extends Controller
             'group_size' => $groupPeers->count(),
             'group_peers' => $groupPeers->map(function($peer) {
                 return [
-                    'id' => $peer->user_id,
-                    'name' => $peer->user->name
+                    'id' => $peer->mahasiswa_id,
+                    'name' => $peer->mahasiswa->user->name
                 ];
             }),
             'completed_peer_assessments' => $completedPeerAssessments,
