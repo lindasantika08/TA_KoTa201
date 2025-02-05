@@ -61,7 +61,7 @@ class KelolaKelompokController extends Controller
             'project'
         ])
         ->whereHas('project', function ($query) {
-            $query->where('status', 'active'); // Sesuaikan dengan nama kolom status di tabel projects
+            $query->where('status', 'active'); 
         })
             ->get()
             ->groupBy('project_id')
