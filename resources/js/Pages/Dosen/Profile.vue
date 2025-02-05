@@ -249,7 +249,8 @@ export default {
           },
         })
           .then((response) => {
-            this.profileImage = response.data.path;
+            // this.profileImage = response.data.path;
+            this.fetchProfile();
             this.isDropdownVisible = false;
             alert("Foto profil berhasil diupload!");
           })

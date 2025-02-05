@@ -308,129 +308,192 @@ export default {
 };
 </script>
 
+
 <template>
-    <div class="flex min-h-screen">
+    <div class="flex min-h-screen bg-gray-50">
         <Sidebar role="dosen" />
         <div class="flex-1">
             <Navbar userName="dosen" />
             <main class="p-6">
-                <div class="mb-4">
+                <div class="mb-6">
                     <Breadcrumb :items="breadcrumbs" />
                 </div>
 
-                <Card title="FORMULIR PENGISIAN SELF ASSESSMENT" class="w-full">
-                    <div class="grid grid-cols-2 gap-6 text-sx leading-6 mb-6">
-                        <div>
-                            <p><strong>NIP:</strong> {{ studentInfo.nip }}</p>
-                            <p><strong>Nama Lengkap:</strong> {{ studentInfo.name }}</p>
-                        </div>
-                        <div>
-                            <p><strong>Proyek:</strong> {{ studentInfo.project }}</p>
-                            <p><strong>Tanggal Pengisian:</strong> {{ studentInfo.date }}</p>
+                <Card title="Self Assessment Form" class="w-full">
+                    <!-- User Info Section -->
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 mb-6">
+                        <h2 class="text-xl font-semibold mb-4 text-gray-800">Lecturer Information</h2>
+                        <div class="grid md:grid-cols-2 gap-6 text-sm">
+                            <div class="space-y-3">
+                                <div class="flex items-center">
+                                    <span class="w-32 text-gray-600 font-medium">NIP:</span>
+                                    <span class="text-gray-900">{{ studentInfo.nip }}</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="w-32 text-gray-600 font-medium">Full Name:</span>
+                                    <span class="text-gray-900">{{ studentInfo.name }}</span>
+                                </div>
+                            </div>
+                            <div class="space-y-3">
+                                <div class="flex items-center">
+                                    <span class="w-32 text-gray-600 font-medium">Project:</span>
+                                    <span class="text-gray-900">{{ studentInfo.project }}</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="w-32 text-gray-600 font-medium">Date:</span>
+                                    <span class="text-gray-900">{{ studentInfo.date }}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <Card>
-                        <div v-if="loading" class="text-center py-8">
-                            <p>Load Questions...</p>
+                        <!-- Loading State -->
+                        <div v-if="loading" class="flex items-center justify-center py-12">
+                            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
                         </div>
 
-                        <div v-else-if="error" class="text-center py-8 text-red-600">
-                            <p>{{ error }}</p>
+                        <!-- Error State -->
+                        <div v-else-if="error" class="text-center py-8">
+                            <div class="text-red-600 mb-4">{{ error }}</div>
                             <button @click="fetchQuestions"
-                                class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                                class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
                                 Try Again
                             </button>
                         </div>
 
-                        <div v-else-if="currentQuestion" class="space-y-6">
-                            <div class="bg-gray-50 p-4 rounded-lg">
-                                <h3 class="font-semibold text-lg mb-4">
-                                    Question {{ currentQuestionIndex + 1 }} dari {{ questions.length }}
-                                </h3>
-                                <p class="mb-2"><strong>Aspek:</strong> {{ currentQuestion.aspect }}</p>
-                                <p><strong>Kriteria:</strong> {{ currentQuestion.criteria }}</p>
+                        <!-- Question Display -->
+                        <div v-else-if="currentQuestion" class="space-y-8">
+                            <!-- Progress Bar -->
+                            <div class="mb-6">
+                                <div class="flex justify-between text-sm text-gray-600 mb-2">
+                                    <span>Question Progress</span>
+                                    <span>{{ currentQuestionIndex + 1 }} of {{ questions.length }}</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                    <div class="bg-blue-500 h-2.5 rounded-full transition-all duration-300"
+                                        :style="{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }">
+                                    </div>
+                                </div>
                             </div>
 
-                            <div class="overflow-x-auto">
-                                <table class="min-w-full border-collapse border border-gray-200">
-                                    <thead>
-                                        <tr>
-                                            <th v-for="header in headers" :key="header.key"
-                                                class="border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
-                                                {{ header.label }}
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td v-for="header in headers" :key="header.key"
-                                                class="border border-gray-200 px-4 py-2 text-sm text-center">
-                                                {{ currentQuestion[header.key] }}
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            <!-- Question Content -->
+                            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+                                <div class="space-y-4">
+                                    <div class="flex gap-4">
+                                        <div class="flex-1">
+                                            <h3 class="text-lg font-semibold text-gray-900">Aspect</h3>
+                                            <p class="text-gray-700">{{ currentQuestion.aspect }}</p>
+                                        </div>
+                                        <div class="flex-1">
+                                            <h3 class="text-lg font-semibold text-gray-900">Criteria</h3>
+                                            <p class="text-gray-700">{{ currentQuestion.criteria }}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-6">
+                                        <h3 class="text-lg font-semibold text-gray-900 mb-3">Question</h3>
+                                        <p class="text-gray-700 text-lg">{{ currentQuestion.question }}</p>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div class="bg-white p-6 rounded-lg shadow-md">
-                                <p class="text-gray-700 mb-4">{{ currentQuestion.question }}</p>
-                                <div class="score-container mt-4">
+                            <!-- Scoring Criteria Table -->
+                            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4">Scoring Criteria</h3>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-gray-200">
+                                        <thead>
+                                            <tr>
+                                                <th v-for="header in headers" :key="header.key"
+                                                    class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    {{ header.label }}
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="bg-white divide-y divide-gray-200">
+                                            <tr>
+                                                <td v-for="header in headers" :key="header.key"
+                                                    class="px-6 py-4 whitespace-pre-wrap text-sm text-gray-700">
+                                                    {{ currentQuestion[header.key] }}
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Score Selection -->
+                            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4">Score Selection</h3>
+                                <div class="score-container">
                                     <div class="slider-container">
                                         <div class="track"></div>
                                         <div class="points">
-                                            <div class="point" v-for="scale in [1, 2, 3, 4, 5]" :key="scale"
-                                                @click="setScore(scale)" :class="{ active: score === scale }">
+                                            <div v-for="scale in [1, 2, 3, 4, 5]" :key="scale"
+                                                @click="setScore(scale)"
+                                                class="point-wrapper">
+                                                <div class="point" :class="{ active: score === scale }"></div>
+                                                <span class="point-label" :class="{ 'text-blue-600 font-medium': score === scale }">
+                                                    {{ scale }}
+                                                </span>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="values">
-                                        <span v-for="scale in [1, 2, 3, 4, 5]" :key="scale" class="value">
-                                            {{ scale }}
-                                        </span>
                                     </div>
                                 </div>
                             </div>
 
-                            <form @submit.prevent="submitAnswer" class="space-y-4">
-                                <div>
-                                    <textarea id="answer" v-model="answer" rows="4"
-                                        class="block w-full rounded-md border border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
-                                        placeholder="Berikan alasannya... (Apakah Anda menghadapi kesulitan atau kemudahan dalam mengumpulkan iklan)"
-                                        required></textarea>
+                            <!-- Answer Form -->
+                            <form @submit.prevent="submitAnswer" class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4">Justification</h3>
+                                <div class="space-y-4">
+                                    <textarea
+                                        id="answer"
+                                        v-model="answer"
+                                        rows="4"
+                                        class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        placeholder="Please provide your reasoning..."
+                                        required
+                                    ></textarea>
+
+                                    <div class="flex justify-between items-center pt-4">
+                                        <button
+                                            type="button"
+                                            @click="prevQuestion"
+                                            :disabled="currentQuestionIndex === 0"
+                                            class="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                            Previous
+                                        </button>
+
+                                        <button
+                                            type="submit"
+                                            class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                                            Save Answer
+                                        </button>
+
+                                        <button
+                                            v-if="currentQuestionIndex === questions.length - 1"
+                                            type="button"
+                                            @click="handleSubmitAll"
+                                            :disabled="isSubmitting"
+                                            class="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                            {{ isSubmitting ? 'Submitting...' : 'Submit All' }}
+                                        </button>
+                                        <button
+                                            v-else
+                                            type="button"
+                                            @click="nextQuestion"
+                                            class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                                            Next
+                                        </button>
+                                    </div>
                                 </div>
-
-                                <div class="flex justify-between items-center pt-4">
-                                    <button type="button" @click="prevQuestion" :disabled="currentQuestionIndex === 0"
-                                        class="px-4 py-2 bg-yellow-400 text-white rounded hover:bg-blue-600">
-                                        Previous
-                                    </button>
-
-                                    <button type="submit"
-                                        class="px-4 py-2 bg-blue-400 text-white rounded hover:bg-blue-600">
-                                        Save Answer
-                                    </button>
-
-                                    <button v-if="currentQuestionIndex === questions.length - 1" type="button"
-                                        @click="handleSubmitAll" :disabled="isSubmitting"
-                                        class="px-4 py-2 bg-green-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed">
-                                        {{ isSubmitting ? 'Mengirim...' : 'Send' }}
-                                    </button>
-                                    <button v-else type="button" @click="nextQuestion"
-                                        :disabled="currentQuestionIndex === questions.length - 1"
-                                        class="px-4 py-2 bg-green-500 text-white rounded hover:bg-blue-600">
-                                        Next
-                                    </button>
-                                </div>
-
-                                <ConfirmModal :show="showConfirmModal" title="Konfirmasi Pengiriman"
-                                    message="Apakah Anda yakin semua jawaban sudah sesuai? Setelah dikirim, jawaban tidak dapat diubah kembali."
-                                    @close="showConfirmModal = false" @confirm="submitAllAnswers" />
                             </form>
                         </div>
 
-                        <div v-else class="text-center py-8">
-                            <p>Nothing Question.</p>
+                        <!-- No Questions State -->
+                        <div v-else class="text-center py-12">
+                            <div class="text-gray-500 text-lg">No questions available.</div>
                         </div>
                     </Card>
                 </Card>
@@ -438,6 +501,7 @@ export default {
         </div>
     </div>
 </template>
+
 <style scoped>
 .score-container {
     margin: 20px 0;
@@ -446,12 +510,13 @@ export default {
 .slider-container {
     position: relative;
     margin: 40px 0;
+    padding: 0 10px;
 }
 
 .track {
     width: 100%;
     height: 4px;
-    background: #ddd;
+    background: #e5e7eb;
     position: relative;
 }
 
@@ -460,46 +525,47 @@ export default {
     justify-content: space-between;
     position: absolute;
     width: 100%;
-    top: -8px;
+    top: -10px;
+}
+
+.point-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
 }
 
 .point {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     background: #fff;
-    border: 2px solid #85ccda;
+    border: 2px solid #3b82f6;
     border-radius: 50%;
-    cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
+    margin-bottom: 8px;
 }
 
 .point.active {
-    background: #8be1f3;
+    background: #3b82f6;
     transform: scale(1.2);
-    border-color: #85ccda;
 }
 
 .point:hover {
     transform: scale(1.1);
+    background: #bfdbfe;
 }
 
-.values {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 10px;
-}
-
-.value {
-    font-size: 16px;
-    color: #666;
-    cursor: pointer;
+.point-label {
+    font-size: 14px;
+    color: #6b7280;
+    transition: all 0.2s ease;
 }
 
 .selected-value {
     text-align: center;
     margin-top: 20px;
     font-size: 18px;
-    font-weight: bold;
-    color: #85ccda;
+    font-weight: 600;
+    color: #3b82f6;
 }
 </style>
