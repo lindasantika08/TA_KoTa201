@@ -29,8 +29,8 @@ class ProfileController extends Controller
             return response()->json(['message' => 'Data Dosen tidak ditemukan.'], 404);
         }
 
-       // Periksa apakah Dosen memiliki foto dan buat URL dengan asset()
-    $photoUrl = $dosen->user->photo ? asset('storage/' . $dosen->user->photo) : null;
+        // Periksa apakah Dosen memiliki foto dan buat URL dengan asset()
+        $photoUrl = $dosen->user->photo ? asset('storage/' . $dosen->user->photo) : null;
 
         // Kembalikan data Dosen dengan relasi terkait
         return response()->json([
@@ -69,7 +69,7 @@ class ProfileController extends Controller
 
         // Upload foto baru
         $path = $request->file('photo')->store('profile_photos', 'public');
-        
+
         // Simpan path foto ke database
         $dosen->user->photo = $path;
         $dosen->user->save();
@@ -98,33 +98,32 @@ class ProfileController extends Controller
     }
 
     public function updateProfile(Request $request)
-{
-    $user = Auth::user();
-    $dosen = Dosen::where('user_id', $user->id)->first();
+    {
+        $user = Auth::user();
+        $dosen = Dosen::where('user_id', $user->id)->first();
 
-    if (!$dosen) {
-        return response()->json(['message' => 'Data Dosen tidak ditemukan.'], 404);
+        if (!$dosen) {
+            return response()->json(['message' => 'Data Dosen tidak ditemukan.'], 404);
+        }
+
+        // Validasi input yang diterima
+        $validated = $request->validate([
+            'nama' => 'required|string|max:255',
+            'nip' => 'required|string|max:21',
+            'jurusan' => 'required|string|max:255',
+            'email' => 'required|email',
+            'telepon' => 'nullable|string|max:15', // Pastikan Anda memvalidasi telepon
+        ]);
+
+        // Update data dosen dengan data yang valid
+        $dosen->user->name = $validated['nama'];
+        $dosen->nip = $validated['nip'];
+        $dosen->major->major_name = $validated['jurusan'];
+        $dosen->user->email = $validated['email'];
+        $dosen->phone = $validated['telepon'];
+        $dosen->user->save();
+        $dosen->save();
+
+        return response()->json(['message' => 'Profile updated successfully.']);
     }
-
-    // Validasi input yang diterima
-    $validated = $request->validate([
-        'nama' => 'required|string|max:255',
-        'nip' => 'required|string|max:21',
-        'jurusan' => 'required|string|max:255',
-        'email' => 'required|email',
-        'telepon' => 'nullable|string|max:15', // Pastikan Anda memvalidasi telepon
-    ]);
-
-    // Update data dosen dengan data yang valid
-    $dosen->user->name = $validated['nama'];
-    $dosen->nip = $validated['nip'];
-    $dosen->major->major_name = $validated['jurusan'];
-    $dosen->user->email = $validated['email'];
-    $dosen->phone = $validated['telepon'];
-    $dosen->user->save();
-    $dosen->save();
-
-    return response()->json(['message' => 'Profile updated successfully.']);
-}
-
 }

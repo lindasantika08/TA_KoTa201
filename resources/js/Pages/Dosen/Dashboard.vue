@@ -185,165 +185,214 @@ export default {
 </script>
 
 <template>
-  <div class="flex min-h-screen">
+  <div class="flex min-h-screen bg-gray-50">
     <Sidebar role="dosen" />
-
     <div class="flex-1">
       <Navbar userName="Dosen" />
       <main class="p-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-          <!-- Self Assessment Card -->
-          <Card 
-            title="Self Assessment" 
-            class="cursor-pointer hover:shadow-lg transition-shadow"
-            @click="handleListAnswer()"
-          >
-            <template #title>
-              <h3 class="text-sm font-bold">Self Assessment</h3>
-            </template>
-
-            <div v-if="selectedProject" class="mt-2">
-              <p class="text-xl font-semibold flex items-center">
-                <font-awesome-icon 
-                  icon="fa-solid fa-user" 
-                  class="mr-4 text-2xl" 
-                />
-                <span class="text-3xl">{{ totalAnswers }} / {{ totalUsers }}</span>
-              </p>
-              <p class="text-sm text-gray-600 mt-1">
-                Users Completed Self Assessment
-              </p>
-            </div>
-
-            <div v-else class="mt-2">
-              <p class="text-lg">Pilih proyek untuk melihat statistik.</p>
-            </div>
-          </Card>
-
-          <!-- Peer Assessment Card section -->
-<Card 
-  title="Peer Assessment" 
-  class="cursor-pointer hover:shadow-lg transition-shadow"
->
-  <template #title>
-    <h3 class="text-sm font-bold">Peer Assessment</h3>
-  </template>
-
-  <div v-if="selectedProject" class="mt-2">
-    <!-- Main card content - clickable area -->
-    <div @click="handleListAnswerPeer()">
-      <p class="text-xl font-semibold flex items-center">
-        <font-awesome-icon 
-          icon="fa-solid fa-users" 
-          class="mr-4 text-2xl" 
-        />
-        <span class="text-3xl">{{ completedGroups }} / {{ totalGroups }}</span>
-      </p>
-      <p class="text-sm text-gray-600 mt-1">
-        Groups Completed Peer Assessment
-      </p>
-    </div>
-    
-    <!-- Group Details Section with Toggle - separate click handler -->
-    <div class="mt-4" @click.stop>
-      <button 
-        @click="showGroupDetails = !showGroupDetails"
-        class="flex items-center justify-between w-full text-sm font-semibold mb-2 hover:bg-gray-50 p-2 rounded-lg transition-colors duration-200"
-      >
-        <span>Group Details</span>
-        <font-awesome-icon 
-          :icon="showGroupDetails ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down'"
-          class="text-gray-600 transition-transform duration-200"
-        />
-      </button>
-      
-      <!-- Expandable Content -->
-      <transition
-        enter-active-class="transition duration-200 ease-out"
-        enter-from-class="transform scale-y-0 opacity-0"
-        enter-to-class="transform scale-y-100 opacity-100"
-        leave-active-class="transition duration-200 ease-in"
-        leave-from-class="transform scale-y-100 opacity-100"
-        leave-to-class="transform scale-y-0 opacity-0"
-      >
-        <div v-if="showGroupDetails" class="space-y-2 origin-top">
-          <template v-if="groupStatistics.length > 0">
-            <div 
-              v-for="group in groupStatistics" 
-              :key="group.group_id" 
-              class="flex justify-between items-center bg-gray-100 p-2 rounded-lg hover:bg-gray-200 transition-colors duration-200"
+        <!-- Project Selection Header -->
+        <div class="mb-8">
+          <h1 class="text-2xl font-bold text-gray-800 mb-4">Assessment Dashboard</h1>
+          <div class="bg-white rounded-lg shadow p-4">
+            <label for="combinedDropdown" class="block text-sm font-medium text-gray-700 mb-2">
+              Select Project
+            </label>
+            <select
+              id="combinedDropdown"
+              @change="handleDropdownChange"
+              class="w-full md:w-1/2 rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             >
-              <div class="flex flex-col">
-                <span class="text-sm font-medium">{{ group.group_name }}</span>
-                <span class="text-xs text-gray-600">{{ group.total_members }} members</span>
-              </div>
-              <span 
-                :class="[
-                  'px-2 py-1 rounded-full text-xs font-medium',
-                  group.is_completed 
-                    ? 'bg-green-200 text-green-800' 
-                    : 'bg-red-200 text-red-800'
-                ]"
+              <option value="" disabled selected>Select Batch Year - Project Name</option>
+              <option
+                v-for="option in combinedOptions"
+                :key="option.value"
+                :value="option.value"
+                :selected="selectedOption && option.value === selectedOption.value"
               >
-                {{ group.is_completed ? 'Completed' : 'Pending' }}
-              </span>
-            </div>
-          </template>
-          <p v-else class="text-sm text-gray-500 italic">
-            No group details available
-          </p>
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
         </div>
-      </transition>
-    </div>
-  </div>
 
-  <div v-else class="mt-2">
-    <p class="text-lg">Pilih proyek untuk melihat statistik.</p>
-  </div>
-</Card>
-
-          <!-- Project Selection Card -->
-          <Card title="Project" class="cursor-pointer hover:white transition-shadow">
-            <template #title>
-              <h3 class="text-sm font-bold">Pilih Proyek</h3>
-            </template>
-
-            <div class="mt-2">
-              <div>
-                <label 
-                  for="combinedDropdown" 
-                  class="block mb-2 text-sm font-medium text-gray-700"
-                >
-                  Pilih Batch Year dan Project Name
-                </label>
-                <select
-                  id="combinedDropdown"
-                  @change="handleDropdownChange"
-                  class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                >
-                  <option value="" disabled selected>
-                    Pilih Batch Year - Project Name
-                  </option>
-                  <option
-                    v-for="option in combinedOptions"
-                    :key="option.value"
-                    :value="option.value"
-                    :selected="selectedOption && option.value === selectedOption.value"
-                  >
-                    {{ option.label }}
-                  </option>
-                </select>
+        <!-- Statistics Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <!-- Self Assessment Card -->
+          <div 
+            @click="handleListAnswer()"
+            class="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer overflow-hidden"
+          >
+            <div class="p-6">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-800">Self Assessment</h3>
+                <font-awesome-icon icon="fa-solid fa-user" class="text-blue-500 text-xl" />
+              </div>
+              
+              <div v-if="selectedProject">
+                <div class="flex items-end gap-2">
+                  <span class="text-3xl font-bold text-gray-900">{{ totalAnswers }}/{{ totalUsers }}</span>
+                  <span class="text-sm text-gray-600 mb-1">completed</span>
+                </div>
+                
+                <div class="mt-4">
+                  <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      class="bg-blue-500 h-2 rounded-full transition-all duration-500"
+                      :style="{ width: `${(totalAnswers / totalUsers) * 100}%` }"
+                    ></div>
+                  </div>
+                  <p class="text-sm text-gray-600 mt-2">
+                    {{ Math.round((totalAnswers / totalUsers) * 100) }}% Completion Rate
+                  </p>
+                </div>
+              </div>
+              <div v-else>
+                <p class="text-gray-500">Please select a project to view statistics</p>
               </div>
             </div>
-          </Card>
-        </div>
+          </div>
 
-        <Card title="Dashboard" class="mt-8">
-          <template #actions></template>
-        </Card>
+          <!-- Peer Assessment Card -->
+          <div class="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
+            <div class="p-6">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-800">Peer Assessment</h3>
+                <font-awesome-icon icon="fa-solid fa-users" class="text-green-500 text-xl" />
+              </div>
+
+              <div v-if="selectedProject">
+                <div 
+                  @click="handleListAnswerPeer()"
+                  class="cursor-pointer"
+                >
+                  <div class="flex items-end gap-2">
+                    <span class="text-3xl font-bold text-gray-900">{{ completedGroups }}/{{ totalGroups }}</span>
+                    <span class="text-sm text-gray-600 mb-1">groups completed</span>
+                  </div>
+
+                  <div class="mt-4">
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        class="bg-green-500 h-2 rounded-full transition-all duration-500"
+                        :style="{ width: `${(completedGroups / totalGroups) * 100}%` }"
+                      ></div>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-2">
+                      {{ Math.round((completedGroups / totalGroups) * 100) }}% Group Completion Rate
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Group Details Expansion -->
+                <div class="mt-4 border-t pt-4">
+                  <button 
+                    @click="showGroupDetails = !showGroupDetails"
+                    class="flex items-center justify-between w-full text-sm font-medium text-gray-700 hover:bg-gray-50 p-2 rounded-lg"
+                  >
+                    <span>Group Details</span>
+                    <font-awesome-icon 
+                      :icon="showGroupDetails ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down'"
+                      class="text-gray-500 transition-transform duration-200"
+                    />
+                  </button>
+
+                  <transition
+                    enter-active-class="transition duration-200 ease-out"
+                    enter-from-class="transform scale-y-0 opacity-0"
+                    enter-to-class="transform scale-y-100 opacity-100"
+                    leave-active-class="transition duration-200 ease-in"
+                    leave-from-class="transform scale-y-100 opacity-100"
+                    leave-to-class="transform scale-y-0 opacity-0"
+                  >
+                    <div v-if="showGroupDetails" class="space-y-2 mt-2 origin-top">
+                      <template v-if="groupStatistics.length > 0">
+                        <div 
+                          v-for="group in groupStatistics" 
+                          :key="group.group_id" 
+                          class="bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors duration-200"
+                        >
+                          <div class="flex items-center justify-between">
+                            <div>
+                              <h4 class="font-medium text-gray-800">{{ group.group_name }}</h4>
+                              <p class="text-xs text-gray-600">{{ group.total_members }} members</p>
+                            </div>
+                            <span 
+                              :class="[
+                                'px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1',
+                                group.is_completed 
+                                  ? 'bg-green-100 text-green-800' 
+                                  : 'bg-yellow-100 text-yellow-800'
+                              ]"
+                            >
+                              <font-awesome-icon 
+                                :icon="group.is_completed ? 'fa-check-circle' : 'fa-hourglass-half'"
+                                class="text-xs"
+                              />
+                              {{ group.is_completed ? 'Completed' : 'In Progress' }}
+                            </span>
+                          </div>
+                        </div>
+                      </template>
+                      <p v-else class="text-sm text-gray-500 italic text-center py-4">
+                        No group data available
+                      </p>
+                    </div>
+                  </transition>
+                </div>
+              </div>
+              <div v-else>
+                <p class="text-gray-500">Please select a project to view statistics</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Project Summary Card -->
+          <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-semibold text-gray-800">Project Summary</h3>
+              <font-awesome-icon icon="fa-solid fa-project-diagram" class="text-purple-500 text-xl" />
+            </div>
+
+            <div v-if="selectedProject" class="space-y-4">
+              <div>
+                <p class="text-sm text-gray-600">Selected Project</p>
+                <p class="font-medium text-gray-800">{{ selectedOption?.projectName }}</p>
+              </div>
+              <div>
+                <p class="text-sm text-gray-600">Batch Year</p>
+                <p class="font-medium text-gray-800">{{ selectedOption?.batchYear }}</p>
+              </div>
+              <div class="pt-4 border-t">
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="bg-purple-50 rounded-lg p-3">
+                    <p class="text-sm text-purple-600 mb-1">Total Users</p>
+                    <p class="text-xl font-semibold text-purple-900">{{ totalUsers }}</p>
+                  </div>
+                  <div class="bg-purple-50 rounded-lg p-3">
+                    <p class="text-sm text-purple-600 mb-1">Total Groups</p>
+                    <p class="text-xl font-semibold text-purple-900">{{ totalGroups }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div v-else>
+              <p class="text-gray-500">Please select a project to view summary</p>
+            </div>
+          </div>
+        </div>
       </main>
     </div>
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

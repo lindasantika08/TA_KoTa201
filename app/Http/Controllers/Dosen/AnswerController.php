@@ -197,12 +197,12 @@ class AnswerController extends Controller
                 ], 404);
             }
 
-            // Get all groups for this project
+            // Get all groups for this specific project
             $allGroups = Group::where('project_id', $project->id)
                 ->select('id', 'group')
                 ->get();
 
-            // Group the groups by their names and get one representative ID for each group name
+            // Group the groups by their names but only within this project
             $uniqueGroups = $allGroups->groupBy('group')->map(function ($groups) {
                 return [
                     'group_id' => $groups->first()->id,
@@ -210,11 +210,13 @@ class AnswerController extends Controller
                 ];
             })->values();
 
-            $groupStatistics = $uniqueGroups->map(function ($uniqueGroup) {
-                // Find all group IDs that share this group name
-                $groupIds = Group::where('group', $uniqueGroup['group_name'])->pluck('id');
+            $groupStatistics = $uniqueGroups->map(function ($uniqueGroup) use ($project) {
+                // Find all group IDs that share this group name WITHIN THIS PROJECT
+                $groupIds = Group::where('group', $uniqueGroup['group_name'])
+                    ->where('project_id', $project->id)
+                    ->pluck('id');
 
-                // Find mahasiswa in all instances of this group
+                // Find mahasiswa in all instances of this group within this project
                 $groupMembers = Mahasiswa::whereHas('group', function ($query) use ($groupIds) {
                     $query->whereIn('id', $groupIds);
                 })->get();
@@ -265,7 +267,6 @@ class AnswerController extends Controller
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-
             return response()->json([
                 'message' => 'An unexpected error occurred',
                 'error' => $e->getMessage()
@@ -291,7 +292,6 @@ class AnswerController extends Controller
         }
 
         try {
-            // Find the project with eager loading
             $project = Project::where('project_name', $namaProyek)
                 ->where('batch_year', $tahunAjaran)
                 ->with(['groups' => function ($query) {
@@ -300,15 +300,14 @@ class AnswerController extends Controller
                 }])
                 ->firstOrFail();
 
-            // Get unique groups
             $groups = $project->groups->pluck('group')->unique()->values();
 
-            // Get answers for all groups in a single query
-            $answers = AnswersPeer::whereIn('mahasiswa_id', function ($query) use ($project) {
-                $query->select('mahasiswa_id')
-                    ->from('groups')
-                    ->where('project_id', $project->id);
+            $answers = AnswersPeer::whereHas('question', function ($query) use ($tahunAjaran) {
+                $query->where('batch_year', $tahunAjaran);
             })
+                ->whereHas('mahasiswa.group.project', function ($query) use ($namaProyek) {
+                    $query->where('project_name', $namaProyek);
+                })
                 ->with([
                     'mahasiswa' => function ($query) {
                         $query->with(['user' => function ($q) {
@@ -320,22 +319,15 @@ class AnswerController extends Controller
                             $q->select('id', 'name', 'email');
                         }]);
                     },
-                    'question' => function ($query) use ($tahunAjaran, $namaProyek) {
-                        $query->where('batch_year', $tahunAjaran)
-                            ->whereHas('project', function ($q) use ($namaProyek) {
-                                $q->where('project_name', $namaProyek);
-                            })
-                            ->select('id', 'question');
+                    'question' => function ($query) {
+                        $query->select('id', 'question');
                     }
                 ])
                 ->get();
 
-            // Transform the answers
             $transformedAnswers = $answers->map(function ($answer) {
-                // Get the group for this answer
                 $group = Group::where('mahasiswa_id', $answer->mahasiswa_id)
                     ->value('group');
-
                 try {
                     return [
                         'id' => $answer->id,
@@ -361,9 +353,7 @@ class AnswerController extends Controller
                     ]);
                     return null;
                 }
-            })
-                ->filter() // Remove any null values from failed transformations
-                ->values(); // Reset array keys
+            })->filter()->values();
 
             if ($transformedAnswers->isEmpty()) {
                 return response()->json([
