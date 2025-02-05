@@ -33,32 +33,53 @@ class PeerAssessment extends Controller
             $mahasiswa = Mahasiswa::with(['user', 'classRoom'])
                 ->where('user_id', $user->id)
                 ->first();
-
+            
             if (!$mahasiswa) {
                 return response()->json([
                     'message' => 'Data mahasiswa tidak ditemukan'
                 ], 404);
             }
-
-            $latestGroup = Group::with('project')
+            
+            // Ambil parameter dari query string atau gunakan null jika tidak ada
+            $batchYear = request()->query('batch_year');
+            $projectName = request()->query('project_name');
+            
+            Log::info('User Info Peer Request', [
+                'user_id' => $user->id,
+                'batch_year' => $batchYear,
+                'project_name' => $projectName
+            ]);
+            
+            // Cari group yang sesuai dengan batch_year dan project_name
+            $specificGroup = Group::with('project')
+                ->where('mahasiswa_id', $mahasiswa->id)
+                ->when($batchYear && $projectName, function ($query) use ($batchYear, $projectName) {
+                    return $query->whereHas('project', function($q) use ($batchYear, $projectName) {
+                        $q->where('batch_year', $batchYear)
+                          ->where('project_name', $projectName);
+                    });
+                })
+                ->first();
+            
+            // Jika tidak ditemukan group spesifik, cari group terakhir
+            $latestGroup = $specificGroup ?? Group::with('project')
                 ->where('mahasiswa_id', $mahasiswa->id)
                 ->orderBy('created_at', 'desc')
                 ->first();
-
+            
             $responseData = [
                 'id' => $mahasiswa->id,
                 'nim' => $mahasiswa->nim,
                 'name' => $user->name,
                 'kelas' => $mahasiswa->classRoom->class_name ?? '',
-                'group' => $latestGroup ? $latestGroup->group : '',
-                'project_name' => $latestGroup ? $latestGroup->project->project_name : '',
-                'batch_year' => $latestGroup ? $latestGroup->batch_year : ''
+                'group' => $latestGroup ? $latestGroup->group : null,
+                'project_name' => $latestGroup && $latestGroup->project ? $latestGroup->project->project_name : null,
+                'batch_year' => $latestGroup && $latestGroup->project ? $latestGroup->project->batch_year : null
             ];
-
+            
             return response()->json($responseData);
-
         } catch (\Exception $e) {
-            Log::error('Error in getUserInfo: ' . $e->getMessage());
+            Log::error('Error in getUserInfoPeer: ' . $e->getMessage());
             return response()->json([
                 'message' => 'Terjadi kesalahan saat mengambil data user'
             ], 500);
