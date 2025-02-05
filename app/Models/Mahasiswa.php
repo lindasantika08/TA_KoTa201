@@ -48,6 +48,10 @@ class Mahasiswa extends Model
         return $this->hasMany(Group::class, 'mahasiswa_id');
     }
 
+    public function major()
+    {
+        return $this->belongsTo(Major::class, 'major_id');
+    }
     public function report()
     {
         return $this->hasMany(Report::class, 'mahasiswa_id');
