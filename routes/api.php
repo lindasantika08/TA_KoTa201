@@ -102,11 +102,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/dosen/update-profile', [ProfileController::class, 'updateProfile']);
     Route::delete('/dosen/delete-profile-photo', [ProfileController::class, 'deleteProfilePhoto']);
 
-    //REPORT DOSEN
+    //Dosen Report
     Route::get('/dropdown-options', [ReportController::class, 'getDropdownOptions']);
     Route::get('/kelompok/report', [ReportController::class, 'getKelompokReport']);
     Route::get('/kelompok/report-detail', [ReportController::class, 'getScoreKelompok']);
     Route::get('/report/kelompok/answers', [ReportController::class, 'getKelompokAnswers']);
+    Route::post('/report/storeReport', [ReportController::class, 'storeReport']);
 
 
     //-------------------------------------mahasiswa------------------------------------------------//

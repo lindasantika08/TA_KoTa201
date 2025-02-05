@@ -42,6 +42,7 @@ export default {
       questions: {},
       peerQuestions: {},
       selectedUserId: null,
+      successMessage: null,
     };
   },
   computed: {
@@ -49,14 +50,12 @@ export default {
       return Object.keys(this.userAnalysis);
     },
     selectedUserData() {
-      return this.selectedUserId
-        ? this.userAnalysis[this.selectedUserId]
-        : null;
+      return this.selectedUserId ? this.userAnalysis[this.selectedUserId] : null;
     },
   },
   mounted() {
     if (this.batch_year && this.project_name && this.kelompok) {
-      this.fetchQuestions();
+      this.saveReport();
       this.fetchPeerQuestions();
       this.fetchKelompokAnalysis();
     } else {
@@ -68,57 +67,22 @@ export default {
       this.loading = true;
       this.error = null;
 
-      console.log("Starting fetchKelompokAnalysis with params:", {
-        batch_year: this.batch_year,
-        project_name: this.project_name,
-        kelompok: this.kelompok,
-      });
-
-      if (this.batch_year && this.project_name && this.kelompok) {
-        try {
-          console.log("Making API request to /api/report/kelompok/answers");
-          const response = await axios.get("/api/report/kelompok/answers", {
-            params: {
-              batch_year: this.batch_year,
-              project_name: this.project_name,
-              kelompok: this.kelompok,
-            },
-          });
-          console.log("API Response received:", response);
-          console.log("Response data:", response.data);
-
-          this.userAnalysis = response.data;
-          console.log("Updated userAnalysis:", this.userAnalysis);
-        } catch (error) {
-          console.error("Gagal mengambil analisis. Error details:", {
-            message: error.message,
-            response: error.response?.data,
-            status: error.response?.status,
-            statusText: error.response?.statusText,
-          });
-          this.error = "Gagal memuat data";
-        } finally {
-          console.log("Request completed. Loading status:", this.loading);
-          this.loading = false;
-        }
-      } else {
-        console.warn("Missing required parameters:", {
-          batch_year: this.batch_year,
-          project_name: this.project_name,
-          kelompok: this.kelompok,
+      try {
+        const response = await axios.get("/api/report/kelompok/answers", {
+          params: {
+            batch_year: this.batch_year,
+            project_name: this.project_name,
+            kelompok: this.kelompok,
+          },
         });
-        this.error = "Tahun Ajaran, Nama Proyek, atau Kelompok tidak valid";
+        this.userAnalysis = response.data;
+      } catch (error) {
+        this.error = "Gagal memuat data";
+      } finally {
         this.loading = false;
       }
     },
-    async fetchQuestions() {
-      try {
-        const response = await axios.get("/api/questions-dosen");
-        this.questions = response.data;
-      } catch (error) {
-        console.error("Gagal memuat pertanyaan:", error);
-      }
-    },
+
     async fetchPeerQuestions() {
       try {
         const response = await axios.get("/api/questions-peer-dosen", {
@@ -128,53 +92,42 @@ export default {
           },
         });
 
-        // Simpan data mentah tanpa reactive proxy
         this.peerQuestions = Object.fromEntries(
           response.data.map((question) => [
             question.id,
             {
               id: question.id,
-              pertanyaan: question.question, // Pastikan field ini sesuai dengan API
+              pertanyaan: question.question,
               type: question.type,
               aspect: question.aspect,
               criteria: question.criteria,
             },
           ])
         );
-
-        console.log("Stored peer questions:", this.peerQuestions);
       } catch (error) {
         console.error("Gagal memuat pertanyaan peer:", error);
       }
     },
-
     getPeerQuestionText(questionId) {
-      // Pastikan questionId valid
       if (!questionId) {
         console.warn("Invalid questionId:", questionId);
         return "Pertanyaan tidak ditemukan";
       }
 
-      // Akses object langsung
       const question = this.peerQuestions[questionId];
       if (!question) {
         console.warn("Question not found for ID:", questionId);
         return "Pertanyaan tidak ditemukan";
       }
 
-      // Pastikan mengakses field yang benar
-      return (
-        question.pertanyaan || question.question || "Pertanyaan tidak ditemukan"
-      );
+      return question.pertanyaan || question.question || "Pertanyaan tidak ditemukan";
     },
-
     groupPeerEvaluations(evaluatedByPeers) {
       if (!evaluatedByPeers || !Array.isArray(evaluatedByPeers)) {
         return [];
       }
 
       return evaluatedByPeers.map((group) => {
-        // Flatten evaluator structure
         const evaluatorDetails = Object.values(
           group.evaluated_by || {}
         ).flatMap((evaluator) => {
@@ -186,17 +139,12 @@ export default {
 
         const names = evaluatorDetails.map((evaluator) => evaluator.name);
 
-        // Process answers dengan penanganan yang lebih baik
         const processedAnswers = evaluatorDetails.flatMap((evaluator) =>
-          (evaluator.answers || []).map((answer) => {
-            const questionText = this.getPeerQuestionText(answer.question_id);
-
-            return {
-              ...answer,
-              evaluator_name: evaluator.name,
-              pertanyaan: questionText,
-            };
-          })
+          evaluator.answers.map((answer) => ({
+            ...answer,
+            evaluator_name: evaluator.name,
+            pertanyaan: this.getPeerQuestionText(answer.question_id),
+          }))
         );
 
         return {
@@ -259,40 +207,6 @@ export default {
             : "0.00",
       }));
     },
-    groupPeerEvaluations(evaluatedByPeers) {
-      if (!evaluatedByPeers || !Array.isArray(evaluatedByPeers)) {
-        return [];
-      }
-
-      return evaluatedByPeers.map((group) => {
-        const evaluatorDetails = Object.values(
-          group.evaluated_by || {}
-        ).flatMap((evaluator) => {
-          if (evaluator.evaluated_by) {
-            return Object.values(evaluator.evaluated_by);
-          }
-          return [evaluator];
-        });
-
-        const names = evaluatorDetails.map((evaluator) => evaluator.name);
-
-        const processedAnswers = evaluatorDetails.flatMap((evaluator) =>
-          evaluator.answers.map((answer) => ({
-            ...answer,
-            evaluator_name: evaluator.name,
-            pertanyaan: this.getPeerQuestionText(answer.question_id),
-          }))
-        );
-
-        return {
-          aspek: group.aspek,
-          kriteria: group.kriteria,
-          names: names,
-          total_score: group.total_score,
-          answers: processedAnswers,
-        };
-      });
-    },
     calculateAnalysisScores(userData) {
       if (!userData.self_assessment || !userData.evaluated_by_peers) return [];
 
@@ -325,281 +239,370 @@ export default {
           scoreDifference: scoreDifference.toFixed(2),
           status: status,
         };
-      });
 
+        
+      });
+      
       return analysisScores;
     },
     preparePeerComparisonChartData(userData) {
-  const analysisScores = this.calculateAnalysisScores(userData);
+      const analysisScores = this.calculateAnalysisScores(userData);
 
-  return {
-    series: [
-      {
-        name: "Skor Sendiri",
-        data: analysisScores.map((score) => parseFloat(score.selfScore)),
-      },
-      {
-        name: "Rata-rata Peer",
-        data: analysisScores.map((score) => parseFloat(score.averagePeerScore)),
-      },
-    ],
-    options: {
-      chart: {
-        type: "radar",
-        height: 400,
-        toolbar: {
-          show: true,
-        },
-      },
-      labels: analysisScores.map(
-        (score) => `${score.aspek} - ${score.kriteria}`
-      ),
-      plotOptions: {
-        radar: {
-          polygons: {
-            strokeColors: "#e8e8e8",
-            fill: {
-              colors: ["#f7f7f7", "#fff"],
+      return {
+        series: [
+          {
+            name: "Skor Sendiri",
+            data: analysisScores.map((score) => parseFloat(score.selfScore)),
+          },
+          {
+            name: "Rata-rata Peer",
+            data: analysisScores.map((score) => parseFloat(score.averagePeerScore)),
+          },
+        ],
+        options: {
+          chart: {
+            type: "radar",
+            height: 400,
+            toolbar: {
+              show: true,
             },
           },
-        },
-      },
-      colors: ["#FF4560", "#00E396"],
-      markers: {
-        size: 6,
-        colors: ["#FF4560", "#00E396"],
-        strokeColors: "#fff",
-        strokeWidth: 2,
-        hover: {
-          size: 9,
-        },
-      },
-      tooltip: {
-        y: {
-          formatter: function (val) {
-            return val.toFixed(2);
+          labels: analysisScores.map(
+            (score) => `${score.aspek} - ${score.kriteria}`
+          ),
+          plotOptions: {
+            radar: {
+              polygons: {
+                strokeColors: "#e8e8e8",
+                fill: {
+                  colors: ["#f7f7f7", "#fff"],
+                },
+              },
+            },
           },
-        },
-        marker: {
-          show: true,
-        },
-        custom: function ({ series, seriesIndex, dataPointIndex, w }) {
-          const score = analysisScores[dataPointIndex];
-          return (
-            '<div class="apexcharts-tooltip-title" style="font-size: 14px;">' +
-            w.config.labels[dataPointIndex] +
-            '</div>' +
-            '<div style="color: #FF4560; font-size: 14px;">Skor Sendiri: ' +
-            score.selfScore +
-            '</div>' +
-            '<div style="color: #00E396; font-size: 14px;">Rata-rata Peer: ' +
-            score.averagePeerScore +
-            '</div>'
-          );
-        },
-      },
-      yaxis: {
-        show: true,
-        min: 0,
-        max: 5,
-        tickAmount: 5,
-        labels: {
-          formatter: function (val) {
-            return val.toFixed(1);
-          },
-        },
-      },
-      xaxis: {
-        show: true,
-        labels: {
-          style: {
-            fontSize: "12px",
-          },
-        },
-      },
-      fill: {
-        opacity: 0.4,
-      },
-      title: {
-        text: "Perbandingan Skor",
-        align: "center",
-        style: {
-          fontSize: "16px",
-          fontWeight: "bold",
-        },
-      },
-      legend: {
-        position: "bottom",
-        horizontalAlign: "center",
-        markers: {
-          width: 16,
-          height: 16,
-        },
-        itemMargin: {
-          horizontal: 10,
-          vertical: 10,
-        },
-      },
-      dataLabels: {
-        enabled: true,
-        formatter: function (val) {
-          return val.toFixed(2);
-        },
-        style: {
-          fontSize: "12px",
           colors: ["#FF4560", "#00E396"],
-        },
-      },
-      grid: {
-        show: true,
-        strokeDashArray: 2,
-        borderColor: "#e8e8e8",
-      },
-    },
-  };
-},
-prepareSelfComparisonChartData(userData) {
-  const selfScores = userData.self_assessment
-    ? userData.self_assessment.map((aspect) =>
-        parseFloat(aspect.total_score || 0).toFixed(2)
-      )
-    : [];
-
-  const averageSelfScores = this.calculateAverageSelfScores().map((score) =>
-    parseFloat(score.averageScore)
-  );
-
-  const labels = userData.self_assessment
-    ? userData.self_assessment.map(
-        (aspect) => `${aspect.aspek} - ${aspect.kriteria}`
-      )
-    : [];
-
-  return {
-    series: [
-      {
-        name: "Skor Sendiri",
-        data: selfScores,
-      },
-      {
-        name: "Rata-rata Self Kelompok",
-        data: averageSelfScores,
-      },
-    ],
-    options: {
-      chart: {
-        type: "radar",
-        height: 400,
-        toolbar: {
-          show: true,
-        },
-      },
-      labels: labels,
-      plotOptions: {
-        radar: {
-          polygons: {
-            strokeColors: "#e8e8e8",
-            fill: {
-              colors: ["#f7f7f7", "#fff"],
+          markers: {
+            size: 6,
+            colors: ["#FF4560", "#00E396"],
+            strokeColors: "#fff",
+            strokeWidth: 2,
+            hover: {
+              size: 9,
             },
           },
-        },
-      },
-      colors: ["#FF4560", "#3B82F6"],
-      markers: {
-        size: 6,
-        colors: ["#FF4560", "#3B82F6"],
-        strokeColors: "#fff",
-        strokeWidth: 2,
-        hover: {
-          size: 9,
-        },
-      },
-      tooltip: {
-        y: {
-          formatter: function (val) {
-            return val.toFixed(2);
+          tooltip: {
+            y: {
+              formatter: function (val) {
+                return val.toFixed(2);
+              },
+            },
+            marker: {
+              show: true,
+            },
+            custom: function ({ series, seriesIndex, dataPointIndex, w }) {
+              const score = analysisScores[dataPointIndex];
+              return (
+                '<div class="apexcharts-tooltip-title" style="font-size: 14px;">' +
+                w.config.labels[dataPointIndex] +
+                '</div>' +
+                '<div style="color: #FF4560; font-size: 14px;">Skor Sendiri: ' +
+                score.selfScore +
+                '</div>' +
+                '<div style="color: #00E396; font-size: 14px;">Rata-rata Peer: ' +
+                score.averagePeerScore +
+                '</div>'
+              );
+            },
+          },
+          yaxis: {
+            show: true,
+            min: 0,
+            max: 5,
+            tickAmount: 5,
+            labels: {
+              formatter: function (val) {
+                return val.toFixed(1);
+              },
+            },
+          },
+          xaxis: {
+            show: true,
+            labels: {
+              style: {
+                fontSize: "12px",
+              },
+            },
+          },
+          fill: {
+            opacity: 0.4,
+          },
+          title: {
+            text: "Perbandingan Skor",
+            align: "center",
+            style: {
+              fontSize: "16px",
+              fontWeight: "bold",
+            },
+          },
+          legend: {
+            position: "bottom",
+            horizontalAlign: "center",
+            markers: {
+              width: 16,
+              height: 16,
+            },
+            itemMargin: {
+              horizontal: 10,
+              vertical: 10,
+            },
+          },
+          dataLabels: {
+            enabled: true,
+            formatter: function (val) {
+              return val.toFixed(2);
+            },
+            style: {
+              fontSize: "12px",
+              colors: ["#FF4560", "#00E396"],
+            },
+          },
+          grid: {
+            show: true,
+            strokeDashArray: 2,
+            borderColor: "#e8e8e8",
           },
         },
-        marker: {
-          show: true,
-        },
-        custom: function ({ series, seriesIndex, dataPointIndex, w }) {
-          const aspect = userData.self_assessment[dataPointIndex];
-          return (
-            '<div class="apexcharts-tooltip-title" style="font-size: 14px;">' +
-            w.config.labels[dataPointIndex] +
-            '</div>' +
-            '<div style="color: #FF4560; font-size: 14px;">Skor Sendiri: ' +
-            aspect.total_score.toFixed(2) +
-            '</div>' +
-            '<div style="color: #3B82F6; font-size: 14px;">Rata-rata Self Kelompok: ' +
-            averageSelfScores[dataPointIndex] +
-            '</div>'
-          );
-        },
-      },
-      yaxis: {
-        show: true,
-        min: 0,
-        max: 5,
-        tickAmount: 5,
-        labels: {
-          formatter: function (val) {
-            return val.toFixed(1);
-          },
-        },
-      },
-      xaxis: {
-        show: true,
-        labels: {
-          style: {
-            fontSize: "12px",
-          },
-        },
-      },
-      fill: {
-        opacity: 0.4,
-      },
-      title: {
-        text: "Perbandingan Skor Self Assessment",
-        align: "center",
-        style: {
-          fontSize: "16px",
-          fontWeight: "bold",
-        },
-      },
-      legend: {
-        position: "bottom",
-        horizontalAlign: "center",
-        markers: {
-          width: 16,
-          height: 16,
-        },
-        itemMargin: {
-          horizontal: 10,
-          vertical: 10,
-        },
-      },
-      dataLabels: {
-        enabled: true,
-        formatter: function (val) {
-          return val.toFixed(2);
-        },
-        style: {
-          fontSize: "12px",
-          colors: ["#FF4560", "#3B82F6"],
-        },
-      },
-      grid: {
-        show: true,
-        strokeDashArray: 2,
-        borderColor: "#e8e8e8",
-      },
+      };
     },
-  };
-},
+    prepareSelfComparisonChartData(userData) {
+      const selfScores = userData.self_assessment
+        ? userData.self_assessment.map((aspect) =>
+            parseFloat(aspect.total_score || 0).toFixed(2)
+          )
+        : [];
+
+      const averageSelfScores = this.calculateAverageSelfScores().map((score) =>
+        parseFloat(score.averageScore)
+      );
+
+      const labels = userData.self_assessment
+        ? userData.self_assessment.map(
+            (aspect) => `${aspect.aspek} - ${aspect.kriteria}`
+          )
+        : [];
+
+      return {
+        series: [
+          {
+            name: "Skor Sendiri",
+            data: selfScores,
+          },
+          {
+            name: "Rata-rata Self Kelompok",
+            data: averageSelfScores,
+          },
+        ],
+        options: {
+          chart: {
+            type: "radar",
+            height: 400,
+            toolbar: {
+              show: true,
+            },
+          },
+          labels: labels,
+          plotOptions: {
+            radar: {
+              polygons: {
+                strokeColors: "#e8e8e8",
+                fill: {
+                  colors: ["#f7f7f7", "#fff"],
+                },
+              },
+            },
+          },
+          colors: ["#FF4560", "#3B82F6"],
+          markers: {
+            size: 6,
+            colors: ["#FF4560", "#3B82F6"],
+            strokeColors: "#fff",
+            strokeWidth: 2,
+            hover: {
+              size: 9,
+            },
+          },
+          tooltip: {
+            y: {
+              formatter: function (val) {
+                return val.toFixed(2);
+              },
+            },
+            marker: {
+              show: true,
+            },
+            custom: function ({ series, seriesIndex, dataPointIndex, w }) {
+              const aspect = userData.self_assessment[dataPointIndex];
+              return (
+                '<div class="apexcharts-tooltip-title" style="font-size: 14px;">' +
+                w.config.labels[dataPointIndex] +
+                '</div>' +
+                '<div style="color: #FF4560; font-size: 14px;">Skor Sendiri: ' +
+                aspect.total_score.toFixed(2) +
+                '</div>' +
+                '<div style="color: #3B82F6; font-size: 14px;">Rata-rata Self Kelompok: ' +
+                averageSelfScores[dataPointIndex] +
+                '</div>'
+              );
+            },
+          },
+          yaxis: {
+            show: true,
+            min: 0,
+            max: 5,
+            tickAmount: 5,
+            labels: {
+              formatter: function (val) {
+                return val.toFixed(1);
+              },
+            },
+          },
+          xaxis: {
+            show: true,
+            labels: {
+              style: {
+                fontSize: "12px",
+              },
+            },
+          },
+          fill: {
+            opacity: 0.4,
+          },
+          title: {
+            text: "Perbandingan Skor Self Assessment",
+            align: "center",
+            style: {
+              fontSize: "16px",
+              fontWeight: "bold",
+            },
+          },
+          legend: {
+            position: "bottom",
+            horizontalAlign: "center",
+            markers: {
+              width: 16,
+              height: 16,
+            },
+            itemMargin: {
+              horizontal: 10,
+              vertical: 10,
+            },
+          },
+          dataLabels: {
+            enabled: true,
+            formatter: function (val) {
+              return val.toFixed(2);
+            },
+            style: {
+              fontSize: "12px",
+              colors: ["#FF4560", "#3B82F6"],
+            },
+          },
+          grid: {
+            show: true,
+            strokeDashArray: 2,
+            borderColor: "#e8e8e8",
+          },
+        },
+      };
+    },
+    prepareReportData(score) {
+    return {
+      project_id: this.project_id, // Assuming you have this from your route or props
+      group_id: this.group_id,     // Assuming you have this from your route or props
+      mahasiswa_id: this.selectedUserData.mahasiswa_id,
+      batch_year: this.batch_year,
+      project_name: this.project_name,
+      kelompok: this.kelompok,
+      typeCriteria_id: score.typeCriteriaId,
+      skor_self: parseFloat(score.selfScore),
+      skor_peer: parseFloat(score.averagePeerScore),
+      selisih: parseFloat(score.scoreDifference),
+      nilai_total: (parseFloat(score.selfScore) + parseFloat(score.averagePeerScore)) / 2,
+      status: score.status
+    };
   },
+
+  async saveReport(reportData) {
+    try {
+      const response = await fetch('/api/report/storeReport', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify(reportData)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error saving report:', error);
+      throw error;
+    }
+  },
+
+  async saveAnalysisScores() {
+    if (!this.selectedUserData) {
+      throw new Error('No user selected');
+    }
+
+    const scores = this.calculateAnalysisScores(this.selectedUserData);
+    
+    try {
+      const savePromises = scores.map(score => 
+        this.saveReport(this.prepareReportData(score))
+      );
+      const results = await Promise.all(savePromises);
+      
+      return {
+        success: true,
+        message: 'All reports saved successfully',
+        results
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Failed to save some reports',
+        error: error.message
+      };
+    }
+  },
+
+  async handleSaveAnalysis() {
+    if (!this.selectedUserData) {
+      alert('Please select a user first');
+      return;
+    }
+
+    this.loading = true;
+    try {
+      const result = await this.saveAnalysisScores();
+      if (result.success) {
+        alert('Analysis scores saved successfully!');
+      } else {
+        alert('Failed to save analysis scores: ' + result.message);
+      }
+    } catch (error) {
+      console.error('Error in handleSaveAnalysis:', error);
+      alert('An error occurred while saving the analysis scores');
+    } finally {
+      this.loading = false;
+    }
+  }
+}
 };
 </script>
 
@@ -958,177 +961,177 @@ prepareSelfComparisonChartData(userData) {
             </div>
 
             <!-- Analysis Score Section -->
-            <!-- Analysis Score Section -->
-            <div class="mt-6">
-              <div class="bg-white rounded-lg shadow-sm overflow-hidden">
-                <div class="bg-gradient-to-r from-indigo-600 to-indigo-700 p-4">
-                  <h3 class="text-white text-lg font-bold">Analysis Score</h3>
-                </div>
+              <!-- Analysis Score Section -->
+              <div class="mt-6">
+                <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                  <div class="bg-gradient-to-r from-indigo-600 to-indigo-700 p-4">
+                    <h3 class="text-white text-lg font-bold">Analysis Score</h3>
+                  </div>
 
-                <div class="p-4">
-                  <div class="bg-gray-50 p-4 rounded-lg">
-                    <!-- Score Summary Cards -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                      <div
-                        class="bg-green-50 rounded-lg p-4 border border-green-200"
-                      >
-                        <div class="text-sm font-medium text-green-600 mb-1">
-                          Over Estimation
+                  <div class="p-4">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                      <!-- Score Summary Cards -->
+                      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div
+                          class="bg-green-50 rounded-lg p-4 border border-green-200"
+                        >
+                          <div class="text-sm font-medium text-green-600 mb-1">
+                            Over Estimation
+                          </div>
+                          <div class="text-2xl font-bold text-green-700">
+                            {{
+                              calculateAnalysisScores(selectedUserData).filter(
+                                (s) => s.status === "Over"
+                              ).length
+                            }}
+                          </div>
+                          <div class="text-xs text-green-600 mt-1">
+                            Aspects where self-score More Then peer-score
+                          </div>
                         </div>
-                        <div class="text-2xl font-bold text-green-700">
-                          {{
-                            calculateAnalysisScores(selectedUserData).filter(
-                              (s) => s.status === "Over"
-                            ).length
-                          }}
+
+                        <div
+                          class="bg-yellow-50 rounded-lg p-4 border border-yellow-200"
+                        >
+                          <div class="text-sm font-medium text-yellow-600 mb-1">
+                            Matched Estimation
+                          </div>
+                          <div class="text-2xl font-bold text-yellow-700">
+                            {{
+                              calculateAnalysisScores(selectedUserData).filter(
+                                (s) => s.status === "Match"
+                              ).length
+                            }}
+                          </div>
+                          <div class="text-xs text-yellow-600 mt-1">
+                            Aspects where self-score Same peer-score
+                          </div>
                         </div>
-                        <div class="text-xs text-green-600 mt-1">
-                          Aspects where self-score More Then peer-score
+
+                        <div
+                          class="bg-red-50 rounded-lg p-4 border border-red-200"
+                        >
+                          <div class="text-sm font-medium text-red-600 mb-1">
+                            Under Estimation
+                          </div>
+                          <div class="text-2xl font-bold text-red-700">
+                            {{
+                              calculateAnalysisScores(selectedUserData).filter(
+                                (s) => s.status === "Under"
+                              ).length
+                            }}
+                          </div>
+                          <div class="text-xs text-red-600 mt-1">
+                            Aspects where self-score Less Then peer-score
+                          </div>
                         </div>
                       </div>
 
+                      <!-- Detailed Analysis Table -->
                       <div
-                        class="bg-yellow-50 rounded-lg p-4 border border-yellow-200"
+                        class="bg-white rounded-lg border border-gray-200 overflow-hidden"
                       >
-                        <div class="text-sm font-medium text-yellow-600 mb-1">
-                          Matched Estimation
-                        </div>
-                        <div class="text-2xl font-bold text-yellow-700">
-                          {{
-                            calculateAnalysisScores(selectedUserData).filter(
-                              (s) => s.status === "Match"
-                            ).length
-                          }}
-                        </div>
-                        <div class="text-xs text-yellow-600 mt-1">
-                          Aspects where self-score Same peer-score
-                        </div>
-                      </div>
-
-                      <div
-                        class="bg-red-50 rounded-lg p-4 border border-red-200"
-                      >
-                        <div class="text-sm font-medium text-red-600 mb-1">
-                          Under Estimation
-                        </div>
-                        <div class="text-2xl font-bold text-red-700">
-                          {{
-                            calculateAnalysisScores(selectedUserData).filter(
-                              (s) => s.status === "Under"
-                            ).length
-                          }}
-                        </div>
-                        <div class="text-xs text-red-600 mt-1">
-                          Aspects where self-score Less Then peer-score
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Detailed Analysis Table -->
-                    <div
-                      class="bg-white rounded-lg border border-gray-200 overflow-hidden"
-                    >
-                      <table class="w-full">
-                        <thead>
-                          <tr class="bg-gray-50 border-b border-gray-200">
-                            <th
-                              class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                            >
-                              Aspek
-                            </th>
-                            <th
-                              class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                            >
-                              Kriteria
-                            </th>
-                            <th
-                              class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
-                            >
-                              Self Score
-                            </th>
-                            <th
-                              class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
-                            >
-                              Peer Score
-                            </th>
-                            <th
-                              class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
-                            >
-                              Selisih
-                            </th>
-                            <th
-                              class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
-                            >
-                              Status
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200">
-                          <tr
-                            v-for="(score, index) in calculateAnalysisScores(
-                              selectedUserData
-                            )"
-                            :key="index"
-                            class="hover:bg-gray-50 transition-colors"
-                          >
-                            <td class="px-4 py-3">
-                              <div class="text-sm font-medium text-gray-900">
-                                {{ score.aspek }}
-                              </div>
-                            </td>
-                            <td class="px-4 py-3">
-                              <div class="text-sm text-gray-500">
-                                {{ score.kriteria }}
-                              </div>
-                            </td>
-                            <td class="px-4 py-3 text-center">
-                              <div class="text-sm font-semibold text-gray-900">
-                                {{ score.selfScore }}
-                              </div>
-                            </td>
-                            <td class="px-4 py-3 text-center">
-                              <div class="text-sm font-semibold text-gray-900">
-                                {{ score.averagePeerScore }}
-                              </div>
-                            </td>
-                            <td class="px-4 py-3 text-center">
-                              <span
-                                class="inline-flex items-center px-3py-1 rounded-full text-xs font-medium"
-                                :class="{
-                                  'bg-green-100 text-green-800':
-                                    parseFloat(score.scoreDifference) > 0,
-                                  'bg-yellow-100 text-yellow-800':
-                                    parseFloat(score.scoreDifference) === 0,
-                                  'bg-red-100 text-red-800':
-                                    parseFloat(score.scoreDifference) < 0,
-                                }"
+                        <table class="w-full">
+                          <thead>
+                            <tr class="bg-gray-50 border-b border-gray-200">
+                              <th
+                                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                               >
-                                {{
-                                  score.scoreDifference >= 0
-                                    ? "+" + score.scoreDifference
-                                    : score.scoreDifference
-                                }}
-                              </span>
-                            </td>
-                            <td class="px-4 py-3 text-center">
-                              <span
-                                class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
-                                :class="{
-                                  'bg-green-100 text-green-800':
-                                    score.status === 'Over',
-                                  'bg-yellow-100 text-yellow-800':
-                                    score.status === 'Match',
-                                  'bg-red-100 text-red-800':
-                                    score.status === 'Under',
-                                }"
+                                Aspek
+                              </th>
+                              <th
+                                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                               >
-                                {{ score.status }}
-                              </span>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
+                                Kriteria
+                              </th>
+                              <th
+                                class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                              >
+                                Self Score
+                              </th>
+                              <th
+                                class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                              >
+                                Peer Score
+                              </th>
+                              <th
+                                class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                              >
+                                Selisih
+                              </th>
+                              <th
+                                class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                              >
+                                Status
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody class="divide-y divide-gray-200">
+                            <tr
+                              v-for="(score, index) in calculateAnalysisScores(
+                                selectedUserData
+                              )"
+                              :key="index"
+                              class="hover:bg-gray-50 transition-colors"
+                            >
+                              <td class="px-4 py-3">
+                                <div class="text-sm font-medium text-gray-900">
+                                  {{ score.aspek }}
+                                </div>
+                              </td>
+                              <td class="px-4 py-3">
+                                <div class="text-sm text-gray-500">
+                                  {{ score.kriteria }}
+                                </div>
+                              </td>
+                              <td class="px-4 py-3 text-center">
+                                <div class="text-sm font-semibold text-gray-900">
+                                  {{ score.selfScore }}
+                                </div>
+                              </td>
+                              <td class="px-4 py-3 text-center">
+                                <div class="text-sm font-semibold text-gray-900">
+                                  {{ score.averagePeerScore }}
+                                </div>
+                              </td>
+                              <td class="px-4 py-3 text-center">
+                                <span
+                                  class="inline-flex items-center px-3py-1 rounded-full text-xs font-medium"
+                                  :class="{
+                                    'bg-green-100 text-green-800':
+                                      parseFloat(score.scoreDifference) > 0,
+                                    'bg-yellow-100 text-yellow-800':
+                                      parseFloat(score.scoreDifference) === 0,
+                                    'bg-red-100 text-red-800':
+                                      parseFloat(score.scoreDifference) < 0,
+                                  }"
+                                >
+                                  {{
+                                    score.scoreDifference >= 0
+                                      ? "+" + score.scoreDifference
+                                      : score.scoreDifference
+                                  }}
+                                </span>
+                              </td>
+                              <td class="px-4 py-3 text-center">
+                                <span
+                                  class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
+                                  :class="{
+                                    'bg-green-100 text-green-800':
+                                      score.status === 'Over',
+                                    'bg-yellow-100 text-yellow-800':
+                                      score.status === 'Match',
+                                    'bg-red-100 text-red-800':
+                                      score.status === 'Under',
+                                  }"
+                                >
+                                  {{ score.status }}
+                                </span>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
 
                     <!-- Legend -->
                     <div
@@ -1161,6 +1164,7 @@ prepareSelfComparisonChartData(userData) {
                 </div>
               </div>
             </div>
+          
           </Card>
         </div>
         <div v-else class="text-center text-gray-500 mt-4">
@@ -1168,6 +1172,7 @@ prepareSelfComparisonChartData(userData) {
         </div>
       </main>
     </div>
+
   </div>
 </template>
 

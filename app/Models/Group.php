@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use PhpParser\Builder\Function_;
+use PhpParser\Node\Expr\FuncCall;
 
 class Group extends Model
 {
@@ -65,5 +67,10 @@ class Group extends Model
     public function classroom()
     {
         return $this->belongsTo(ClassRoom::class, 'angkatan', 'angkatan');
+    }
+
+    public function report()
+    {
+        return $this->hasMany(Report::class, 'group_id');
     }
 }

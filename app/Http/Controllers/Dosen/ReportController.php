@@ -10,9 +10,11 @@ use App\Models\Project;
 use App\Models\Answers;
 use App\Models\AnswersPeer;
 use App\Models\User;
+use App\Models\Report;
 use App\Models\Mahasiswa;
 use App\Models\Assessment;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\JsonResponse;
 
 class ReportController extends Controller
@@ -332,5 +334,34 @@ class ReportController extends Controller
                 })
             ];
         });
+    }
+
+    public function storeReport(Request $request)
+    {
+        try {
+            DB::beginTransaction();
+
+            // Validate the incoming request
+            $validatedData = $request->validate([
+                'project_id' => 'required|exists:projects,id',
+                'group_id' => 'required|exists:groups,id',
+                'mahasiswa_id' => 'required|exists:mahasiswas,id',
+                'typeCriteria_id' => 'required|exists:type_criterias,id',
+                'skor_self' => 'required|numeric|between:0,5',
+                'skor_peer' => 'required|numeric|between:0,5',
+                'selisih' => 'required|numeric|between:-5,5',
+                'nilai_total' => 'nullable|numeric|between:0,5',
+            ]);
+
+            // Create the report
+            Report::create($validatedData);
+
+            DB::commit();
+
+            return response()->json(['message' => 'Report berhasil disimpan'], 201);
+        } catch (\Exception $e) {
+            DB::rollback();
+            return response()->json(['message' => 'Gagal menyimpan report', 'error' => $e->getMessage()], 500);
+        }
     }
 }

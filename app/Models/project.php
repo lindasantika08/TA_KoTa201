@@ -75,5 +75,8 @@ class Project extends Model
         return $this->hasMany(Group::class, 'project_id');
     }
 
-    
+    public function reports()
+    {
+        return $this->hasMany(report::class, 'project_id');
+    }
 }
