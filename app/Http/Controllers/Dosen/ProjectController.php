@@ -14,8 +14,13 @@ class ProjectController extends Controller
 {
     public function index()
     {
-        return response()->json(Project::select('batch_year', 'semester', 'project_name')->get());
+        $projects = Project::select('batch_year', 'semester', 'project_name')
+            ->where('status', 'active') // Menambahkan filter hanya untuk project yang aktif
+            ->get();
+
+        return response()->json($projects);
     }
+
 
     public function getProjectsWithAssessmentsSelf()
     {

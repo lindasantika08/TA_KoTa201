@@ -87,6 +87,7 @@ Route::middleware('auth:sanctum')->group(function () {
     //Manage User Dosen dan Mahasiswa (Role Dosen)
     Route::get('/get-mahasiswa', [UserManagementController::class, 'getMahasiswa']);
     Route::get('/get-dosen', [UserManagementController::class, 'getDosen']);
+    Route::get('/get-dosen/detail/{user_id}', [UserManagementController::class, 'getProfileDosen']);
     Route::get('/get-jurusan', [UserManagementController::class, 'getJurusanList']);
     Route::get('/get-prodi/{majorId}', [UserManagementController::class, 'getProdiByMajor']);
     Route::get('/get-angkatan', [UserManagementController::class, 'getAngkatan']);

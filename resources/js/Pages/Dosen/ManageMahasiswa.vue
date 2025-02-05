@@ -44,7 +44,7 @@
             <!-- Data Table -->
             <DataTable :headers="headers" :items="users" class="mt-10">
               <template #column-actions="{ item }">
-                <button @click="detailUser(item)"
+                <button @click="detailUser(item.user_id)"
                   class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                   <font-awesome-icon icon="fa-solid fa-eye" class="mr-2" />
                   Detail
@@ -81,7 +81,7 @@
         </Card>
 
         <button @click="inputMahasiswa"
-          class="fixed bottom-10 right-10 bg-blue-500 text-white rounded-full p-6 shadow-lg hover:bg-blue-600 focus:outline-none">
+        class="fixed bottom-8 right-8 flex items-center justify-center w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105">
           <font-awesome-icon :icon="['fas', 'plus']" />
         </button>
       </main>
@@ -175,8 +175,8 @@ export default {
     inputMahasiswa() {
       router.visit("/dosen/manage-mahasiswa/input");
     },
-    detailUser(user) {
-      router.visit(`/dosen/manage-mahasiswa/detail`);
+    detailUser(user_id) {
+      router.visit(`/dosen/manage-mahasiswa/detail?user_id=${user_id}`);
     },
   },
 };

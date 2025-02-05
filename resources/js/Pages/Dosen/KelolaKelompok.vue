@@ -33,7 +33,6 @@ export default {
         { label: "Kelompok", key: "group" },
         { label: "Manager Dosen", key: "dosen" },
         { label: "Anggota Kelompok", key: "anggota" },
-        { label: "Aksi", key: "aksi" },
       ],
       projects: [],
       selectedProject: "",
@@ -146,26 +145,19 @@ export default {
 
             <template v-slot:column-anggota="{ item }">
               <ul>
-                <li v-for="(anggota, index) in item.anggota" :key="index">
-                  <a href="#" @click.prevent="goToProfile(anggota.user_id)" class="text-blue-900 hover:underline">
-                    - {{ anggota.name }}
+                <li v-for="(anggota, index) in item.anggota" :key="index" class="flex items-center space-x-2">
+                  <span class="text-gray-400">•</span>
+                  <a href="#" @click.prevent="goToProfile(anggota.user_id)" class="text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200">
+                     {{ anggota.name }}
                   </a>
                 </li>
               </ul>
-            </template>
-
-            <template v-slot:column-aksi="{ item }">
-              <button @click="showDetail(item.id)"
-                class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                <font-awesome-icon icon="fa-solid fa-eye" class="mr-2" />
-                Detail
-              </button>
             </template>
           </DataTable>
         </Card>
 
         <button @click="createKelompok('/dosen/kelola-kelompok/create')"
-          class="fixed bottom-10 right-10 bg-blue-500 text-white rounded-full p-6 shadow-lg hover:bg-blue-600 focus:outline-none">
+        class="fixed bottom-8 right-8 flex items-center justify-center w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105">
           <font-awesome-icon :icon="['fas', 'plus']" />
         </button>
       </main>
