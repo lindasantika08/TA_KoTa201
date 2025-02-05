@@ -28,11 +28,11 @@ export default {
                 'date': '',
             })
         },
-        tahunAjaran: {
+        batch_year: {
             type: String,
             default: ''
         },
-        namaProyek: {
+        project_name: {
             type: String,
             default: ''
         }
@@ -96,15 +96,15 @@ export default {
             this.error = null;
 
             try {
-                console.log('Tahun Ajaran:', this.tahunAjaran);
-                console.log('Nama Proyek:', this.namaProyek);
+                console.log('Tahun Ajaran:', this.batch_year);
+                console.log('Nama Proyek:', this.project_name);
 
-                const params = {
-                    batch_year: this.tahunAjaran,
-                    project_name: this.namaProyek
-                };
-
-                const response = await axios.get('/api/questions', { params });
+                const response = await axios.get('/api/questions', {
+                    params: {
+                        batch_year: this.batch_year,
+                        project_name: this.project_name
+                    }
+                });
 
                 console.log('API Response:', response);
 
@@ -120,15 +120,26 @@ export default {
                 console.error('Error details:', {
                     message: error.message,
                     response: error.response,
-                    status: error.response?.status
+                    status: error.response?.status,
+                    data: error.response?.data
                 });
-                this.error = `Error loading questions: ${error.message}`;
+
+                this.error = error.response?.data?.error || `Error loading questions: ${error.message}`;
                 this.loading = false;
             }
         },
         async fetchStudentsInfo() {
             try {
-                const response = await axios.get('/api/user-info');
+                const batch_year = this.$page.props.batch_year || this.$route.query.batch_year;
+                const project_name = this.$page.props.project_name || this.$route.query.project_name;
+
+                const response = await axios.get('/api/user-info', {
+                    params: {
+                        batch_year: batch_year,
+                        project_name: project_name
+                    }
+                });
+
                 if (response.data) {
                     this.studentInfo = response.data;
                 }
@@ -314,7 +325,7 @@ export default {
                         </div>
                         <div>
                             <p><strong>Kelompok:</strong> {{ studentInfo.group }}</p>
-                            <p><strong>Proyek:</strong> {{ studentInfo.project }}</p>
+                            <p><strong>Proyek:</strong> {{ studentInfo.project_name }}</p>
                             <p><strong>Tanggal Pengisian:</strong> {{ studentInfo.date }}</p>
                         </div>
                     </div>
