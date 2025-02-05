@@ -61,4 +61,9 @@ class TypeCriteria extends Model
 
         return $this->hasMany(Assessment::class, 'criteria_id');
     }
+
+    public function report()
+    {
+        return $this->hasMany(Report::class, 'typeCriteria_id');
+    }
 }
