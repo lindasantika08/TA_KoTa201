@@ -55,7 +55,7 @@ export default {
   },
   mounted() {
     if (this.batch_year && this.project_name && this.kelompok) {
-      this.saveReport();
+  
       this.fetchPeerQuestions();
       this.fetchKelompokAnalysis();
     } else {
@@ -532,76 +532,6 @@ export default {
     };
   },
 
-  async saveReport(reportData) {
-    try {
-      const response = await fetch('/api/report/storeReport', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        },
-        body: JSON.stringify(reportData)
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Error saving report:', error);
-      throw error;
-    }
-  },
-
-  async saveAnalysisScores() {
-    if (!this.selectedUserData) {
-      throw new Error('No user selected');
-    }
-
-    const scores = this.calculateAnalysisScores(this.selectedUserData);
-    
-    try {
-      const savePromises = scores.map(score => 
-        this.saveReport(this.prepareReportData(score))
-      );
-      const results = await Promise.all(savePromises);
-      
-      return {
-        success: true,
-        message: 'All reports saved successfully',
-        results
-      };
-    } catch (error) {
-      return {
-        success: false,
-        message: 'Failed to save some reports',
-        error: error.message
-      };
-    }
-  },
-
-  async handleSaveAnalysis() {
-    if (!this.selectedUserData) {
-      alert('Please select a user first');
-      return;
-    }
-
-    this.loading = true;
-    try {
-      const result = await this.saveAnalysisScores();
-      if (result.success) {
-        alert('Analysis scores saved successfully!');
-      } else {
-        alert('Failed to save analysis scores: ' + result.message);
-      }
-    } catch (error) {
-      console.error('Error in handleSaveAnalysis:', error);
-      alert('An error occurred while saving the analysis scores');
-    } finally {
-      this.loading = false;
-    }
-  }
 }
 };
 </script>

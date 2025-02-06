@@ -179,26 +179,36 @@ class ReportController extends Controller
         $kelompok = $request->input('kelompok');
 
         try {
-            // Get project ID first
+            // Get project
             $project = Project::where('batch_year', $tahunAjaran)
                 ->where('project_name', $namaProyek)
                 ->first();
 
             if (!$project) {
-                return response()->json([], 200);
+                return response()->json(['message' => 'Project not found'], 404);
             }
 
-            // Retrieve mahasiswa_ids for the specific group
+            // Get group
+            $group = Group::where('batch_year', $tahunAjaran)
+                ->where('project_id', $project->id)
+                ->where('group', $kelompok)
+                ->first();
+
+            if (!$group) {
+                return response()->json(['message' => 'Group not found'], 404);
+            }
+
+            // Retrieve mahasiswa IDs for the group
             $mahasiswaIds = Group::where('batch_year', $tahunAjaran)
                 ->where('project_id', $project->id)
                 ->where('group', $kelompok)
                 ->pluck('mahasiswa_id');
 
             if ($mahasiswaIds->isEmpty()) {
-                return response()->json([], 200);
+                return response()->json(['message' => 'No students found'], 404);
             }
 
-            // Get mahasiswa names and their associated user IDs
+            // Get mahasiswa names and user IDs
             $mahasiswaDetails = Mahasiswa::whereIn('id', $mahasiswaIds)
                 ->with('user')
                 ->get()
@@ -210,7 +220,7 @@ class ReportController extends Controller
                 });
 
             // Process each mahasiswa's assessments
-            $mahasiswaResults = $mahasiswaIds->mapWithKeys(function ($mahasiswaId) use ($tahunAjaran, $project, $mahasiswaDetails) {
+            $mahasiswaResults = $mahasiswaIds->mapWithKeys(function ($mahasiswaId) use ($tahunAjaran, $project, $group, $mahasiswaDetails) {
                 // Self Assessments
                 $selfAssessments = Assessment::where('batch_year', $tahunAjaran)
                     ->where('project_id', $project->id)
@@ -235,7 +245,8 @@ class ReportController extends Controller
                     'assessment.id as assessment_id',
                     'assessment.question',
                     'type_criteria.aspect',
-                    'type_criteria.criteria'
+                    'type_criteria.criteria',
+                    'type_criteria.id as typeCriteria_id'
                 )
                     ->join('assessment', 'answers_peer.question_id', '=', 'assessment.id')
                     ->join('type_criteria', 'assessment.criteria_id', '=', 'type_criteria.id')
@@ -244,14 +255,37 @@ class ReportController extends Controller
                     ->where('answers_peer.peer_id', $mahasiswaId)
                     ->get();
 
-                // Group peer evaluations by aspect and criteria
+                // Group peer evaluations and save to Report
                 $groupedPeerEvaluations = $peerEvaluations->groupBy(function ($item) {
                     return $item->aspect . '_' . $item->criteria;
-                })->map(function ($groupAnswers) use ($mahasiswaDetails) {
+                })->map(function ($groupAnswers) use ($mahasiswaDetails, $project, $group, $mahasiswaId, $selfAspekKriteriaAnalysis, $peerAspekKriteriaAnalysis) {
                     $aspek = $groupAnswers->first()->aspect;
                     $kriteria = $groupAnswers->first()->criteria;
+                    $typeCriteriaId = $groupAnswers->first()->typeCriteria_id;
 
-                    // Group answers by evaluator (mahasiswa_id)
+                    // Calculate average scores
+                    $skorSelf = $selfAspekKriteriaAnalysis->where('kriteria', $kriteria)->avg('total_score') ?? 0;
+                    $skorPeer = $groupAnswers->avg('score');
+                    $selisih = abs($skorSelf - $skorPeer);
+                    $nilaiTotal = ($skorSelf + $skorPeer) / 2;
+
+                    // Save to Report model
+                    Report::updateOrCreate(
+                        [
+                            'project_id' => $project->id,
+                            'group_id' => $group->id,
+                            'mahasiswa_id' => $mahasiswaId,
+                            'typeCriteria_id' => $typeCriteriaId
+                        ],
+                        [
+                            'skor_self' => $skorSelf,
+                            'skor_peer' => $skorPeer,
+                            'selisih' => $selisih,
+                            'nilai_total' => $nilaiTotal,
+                        ]
+                    );
+
+                    // Continue with the original response structure
                     $evaluatorGroups = $groupAnswers->groupBy('mahasiswa_id');
 
                     $evaluatedBy = $evaluatorGroups->map(function ($answers, $evaluatorId) use ($mahasiswaDetails) {
@@ -261,7 +295,7 @@ class ReportController extends Controller
                             'answers' => $answers->map(function ($answer) {
                                 return [
                                     'question_id' => $answer->assessment_id,
-                                    'pertanyaan' => $answer->question, // Include the question text
+                                    'pertanyaan' => $answer->question,
                                     'score' => $answer->score,
                                     'answer' => $answer->answer
                                 ];
@@ -272,7 +306,7 @@ class ReportController extends Controller
                     return [
                         'aspek' => $aspek,
                         'kriteria' => $kriteria,
-                        'total_score' => $groupAnswers->avg('score'),
+                        'total_score' => $skorPeer,
                         'evaluated_by' => $evaluatedBy
                     ];
                 })->values();
@@ -298,6 +332,7 @@ class ReportController extends Controller
             ], 500);
         }
     }
+
 
     private function analyzeAssessments($assessments, $mahasiswaId, $assessmentType, $projectId)
     {
