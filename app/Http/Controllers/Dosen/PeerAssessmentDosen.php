@@ -100,51 +100,39 @@ class PeerAssessmentDosen extends Controller
     public function saveAnswerPeer(Request $request)
     {
         DB::beginTransaction();
-        try {
-            $validated = $request->validate([
-                'question_id' => 'required|uuid',
-                'answer' => 'required|string',
-                'score' => 'required|integer|between:1,5',
-                'status' => 'required|string',
-            ]);
-
-            $user = Auth::user();
-            $dosen = Dosen::where('user_id', $user->id)->first();
-            
-            if (!$dosen) {
-                throw new \Exception('dosen tidak ditemukan');
-            }
-
+    try {
+        $user = Auth::user();
+        $dosen = Dosen::where('user_id', $user->id)->first();
+        
+        $savedAnswers = [];
+        foreach ($request->input('answers') as $answerData) {
             $answer = AnswersPeer::updateOrCreate(
                 [
-                    'question_id' => $validated['question_id'],
+                    'question_id' => $answerData['question_id'],
                     'dosen_id' => $dosen->id
                 ],
                 [
-                    'answer' => $validated['answer'],
-                    'score' => $validated['score'],
-                    'status' => $validated['status']
+                    'answer' => $answerData['answer'],
+                    'score' => $answerData['score'],
+                    'status' => 'submitted'
                 ]
             );
-
-            DB::commit();
-
-            return response()->json([
-                'message' => 'Answer saved successfully',
-                'answer' => $answer
-            ]);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error in saveAnswer:', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'error' => 'Failed to save answer: ' . $e->getMessage()
-            ], 500);
+            $savedAnswers[] = $answer;
         }
+
+        DB::commit();
+        return response()->json([
+            'success' => true,
+            'answers' => $savedAnswers
+        ]);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage()
+        ], 500);
+    }
     }
 
     public function saveAllAnswersPeerDosen(Request $request)
