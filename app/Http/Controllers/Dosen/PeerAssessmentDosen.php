@@ -104,6 +104,14 @@ class PeerAssessmentDosen extends Controller
             $user = Auth::user();
             $dosen = Dosen::where('user_id', $user->id)->first();
             
+            $request->validate([
+                'answers' => 'required|array',
+                'answers.*.question_id' => 'required|uuid|exists:assessment,id',
+                'answers.*.answer' => 'required|string',
+                'answers.*.score' => 'required|integer',
+                'answers.*.status' => 'required|string'
+            ]);
+    
             $savedAnswers = [];
             foreach ($request->input('answers') as $answerData) {
                 $answer = AnswersPeer::updateOrCreate(
@@ -114,18 +122,24 @@ class PeerAssessmentDosen extends Controller
                     [
                         'answer' => $answerData['answer'],
                         'score' => $answerData['score'],
-                        'status' => 'submitted'
+                        'status' => $answerData['status']
                     ]
                 );
                 $savedAnswers[] = $answer;
             }
-
+    
             DB::commit();
             return response()->json([
                 'success' => true,
                 'answers' => $savedAnswers
             ]);
-
+    
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'error' => $e->errors()
+            ], 422);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
