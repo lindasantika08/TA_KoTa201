@@ -100,39 +100,39 @@ class PeerAssessmentDosen extends Controller
     public function saveAnswerPeer(Request $request)
     {
         DB::beginTransaction();
-    try {
-        $user = Auth::user();
-        $dosen = Dosen::where('user_id', $user->id)->first();
-        
-        $savedAnswers = [];
-        foreach ($request->input('answers') as $answerData) {
-            $answer = AnswersPeer::updateOrCreate(
-                [
-                    'question_id' => $answerData['question_id'],
-                    'dosen_id' => $dosen->id
-                ],
-                [
-                    'answer' => $answerData['answer'],
-                    'score' => $answerData['score'],
-                    'status' => 'submitted'
-                ]
-            );
-            $savedAnswers[] = $answer;
+        try {
+            $user = Auth::user();
+            $dosen = Dosen::where('user_id', $user->id)->first();
+            
+            $savedAnswers = [];
+            foreach ($request->input('answers') as $answerData) {
+                $answer = AnswersPeer::updateOrCreate(
+                    [
+                        'question_id' => $answerData['question_id'],
+                        'dosen_id' => $dosen->id
+                    ],
+                    [
+                        'answer' => $answerData['answer'],
+                        'score' => $answerData['score'],
+                        'status' => 'submitted'
+                    ]
+                );
+                $savedAnswers[] = $answer;
+            }
+
+            DB::commit();
+            return response()->json([
+                'success' => true,
+                'answers' => $savedAnswers
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        DB::commit();
-        return response()->json([
-            'success' => true,
-            'answers' => $savedAnswers
-        ]);
-
-    } catch (\Exception $e) {
-        DB::rollBack();
-        return response()->json([
-            'success' => false,
-            'error' => $e->getMessage()
-        ], 500);
-    }
     }
 
     public function saveAllAnswersPeerDosen(Request $request)
@@ -193,37 +193,37 @@ class PeerAssessmentDosen extends Controller
     }
 
     public function getAnswerPeer($questionId, Request $request)
-{
-    try {
-        $validated = $request->validate([
-            'dosen_id' => 'required|string|exists:dosen,id',
-        ]);
+    {
+        try {
+            $validated = $request->validate([
+                'dosen_id' => 'required|string|exists:dosen,id',
+            ]);
 
-        $answer = AnswersPeer::where([
-            'dosen_id' => $validated['dosen_id'],
-            'question_id' => $questionId
-        ])->first();
+            $answer = AnswersPeer::where([
+                'dosen_id' => $validated['dosen_id'],
+                'question_id' => $questionId
+            ])->first();
 
-        return response()->json($answer);
+            return response()->json($answer);
 
-    } catch (ValidationException $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Validasi gagal.',
-            'errors' => $e->errors()
-        ], 422);
-    } catch (\Exception $e) {
-        Log::error('Error in getAnswerPeer:', [
-            'message' => $e->getMessage(),
-            'file' => $e->getFile(),
-            'line' => $e->getLine()
-        ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal.',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Error in getAnswerPeer:', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
 
-        return response()->json([
-            'success' => false,
-            'message' => 'Terjadi kesalahan saat mengambil jawaban.',
-            'error' => $e->getMessage()
-        ], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat mengambil jawaban.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
-}
 }
