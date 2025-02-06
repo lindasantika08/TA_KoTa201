@@ -17,6 +17,7 @@ use App\Imports\DosenImport;
 use Inertia\Inertia;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 
 
 class UserManagementController extends Controller
@@ -28,10 +29,22 @@ class UserManagementController extends Controller
         return Inertia::render('Dosen/ManageMahasiswa');
     }
 
-    public function DetailMahasiswa()
+    public function DetailMahasiswa(Request $request)
     {
+        $userId = $request->input('user_id');
+        $user = User::find($userId);
 
-        return Inertia::render('Dosen/DetailMahasiswa');
+        if (!$user) {
+            Log::warning('User not found:', ['user_id' => $userId]);
+            return redirect()->back()->with('error', 'User tidak ditemukan');
+        }
+
+        Log::info('User found:', ['user_id' => $userId, 'name' => $user->name]);
+
+        return Inertia::render('Dosen/DetailMahasiswa', [
+            'user_id' => $userId,
+            'user_name' => $user->name,
+        ]);
     }
 
     public function getMahasiswa(Request $request)
@@ -120,15 +133,58 @@ class UserManagementController extends Controller
         return redirect()->route('ManageMahasiswa')->with('success', 'Data mahasiswa berhasil diimpor!');
     }
 
-    public function ManageDosen(Request $request)
+    public function ManageDosen()
     {
         return Inertia::render('Dosen/ManageDosen');
     }
 
-    public function DetailDosen()
+    public function DetailDosen(Request $request)
     {
-        return Inertia::render('Dosen/DetailDosen');
+        $userId = $request->input('user_id');
+        $user = User::find($userId);
+
+        if (!$user) {
+            Log::warning('User not found:', ['user_id' => $userId]);
+            return redirect()->back()->with('error', 'User tidak ditemukan');
+        }
+
+        Log::info('User found:', ['user_id' => $userId, 'name' => $user->name]);
+
+        return Inertia::render('Dosen/DetailDosen', [
+            'user_id' => $userId,
+            'user_name' => $user->name,
+        ]);
     }
+
+    public function getProfileDosen($user_id)
+    {
+
+        // Ambil data Dosen yang terkait dengan user
+        $dosen = Dosen::with([
+            'user',          // Relasi dengan tabel user
+            'major', // Relasi dengan major
+        ])
+            ->where('user_id', $user_id) // Pastikan hanya mengambil data Dosen yang sesuai dengan user yang sedang login
+            ->first(); // Ambil hanya satu data Dosen (karena user hanya punya satu Dosen)
+
+        if (!$dosen) {
+            return response()->json(['message' => 'Data Dosen tidak ditemukan.'], 404);
+        }
+
+        // Periksa apakah Dosen memiliki foto dan buat URL dengan asset()
+        $photoUrl = $dosen->user->photo ? asset('storage/' . $dosen->user->photo) : null;
+
+        // Kembalikan data Dosen dengan relasi terkait
+        return response()->json([
+            'nama' => $dosen->user->name,
+            'nip' => $dosen->nip,
+            'jurusan' => $dosen->major->major_name,
+            'email' => $dosen->user->email,
+            'telepon' => $dosen->phone, // Misalkan ada kolom telepon di tabel user
+            'photo' => $photoUrl, // Menambahkan URL foto
+        ]);
+    }
+
 
     public function getDosen(Request $request)
     {

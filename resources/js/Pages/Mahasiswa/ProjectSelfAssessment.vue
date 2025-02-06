@@ -35,21 +35,24 @@ export default {
   },
   methods: {
     handleAnswer(item) {
-      const batch_year = item.batch_year;
-      const project_name = item.project_name;
+    const batch_year = item.batch_year;
+    const project_name = item.project_name;
 
-      console.log('Batch Year:', batch_year);
-      console.log('Project Name:', project_name);
+    console.log('Batch Year:', batch_year);
+    console.log('Project Name:', project_name);
 
-      router.visit(`/mahasiswa/assessment/self-assessment`, {
+    router.visit(`/mahasiswa/assessment/self-assessment`, {
         method: 'get',
         data: {
-          batch_year: batch_year,
-          project_name: project_name
+            batch_year: batch_year,
+            project_name: project_name
         },
-        preserveState: true
-      });
-    },
+        preserveState: true,
+        onError: (error) => {
+            console.error('Navigation error:', error);
+        }
+    });
+  },
 
     handleDetail(item) {
       router.visit(`/mahasiswa/peer-assessment/self-detail`, {

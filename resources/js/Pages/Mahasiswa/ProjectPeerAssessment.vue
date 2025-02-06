@@ -35,19 +35,18 @@ export default {
   },
   methods: {
     handleAnswer(item) {
-      console.log('Tahun Ajaran:', item.batch_year);
-      console.log('project_name:', item.project_name);
+      const batch_year = item.batch_year;
+      const project_name = item.project_name;
 
-      router.get('/mahasiswa/assessment/peer-assessment', {
-        batch_year: item.batch_year,
-        project_name: item.project_name
-      }, {
-        preserveState: true,
-        onSuccess: (page) => {
-          console.log('Navigation successful', page);
+      router.visit(`/mahasiswa/assessment/peer-assessment`, {
+        method: 'get',
+        data: {
+          batch_year: batch_year,
+          project_name: project_name
         },
-        onError: (errors) => {
-          console.error('Navigation failed:', errors);
+        preserveState: true,
+        onError: (error) => {
+          console.error('Navigation error:', error);
         }
       });
     },

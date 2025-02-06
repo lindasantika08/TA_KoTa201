@@ -145,62 +145,75 @@ export default {
       this.error = null;
 
       try {
-        const userInfoResponse = await axios.get("/api/user-info-peer");
-        const userInfo = userInfoResponse.data;
+          const batch_year = this.$page.props.batch_year;
+          const project_name = this.$page.props.project_name;
 
-        console.log('User info received:', userInfo);
+          console.log('Batch Year:', batch_year);
+          console.log('Project Name:', project_name);
 
-        this.currentUserId = userInfo.id;
-        this.studentInfo = {
-          nim: userInfo.nim || "",
-          name: userInfo.name || "",
-          class: userInfo.kelas || "",
-          group: userInfo.group || "",
-          project_name: userInfo.project_name || "",
-          date: new Date().toLocaleDateString("id-ID"),
-        };
-
-        this.batch_year = userInfo.batch_year;
-
-        console.log('Student info set:', this.studentInfo);
-        console.log('Batch year set:', this.batch_year);
-
-        if (this.batch_year && this.studentInfo.project_name) {
-          const kelompokResponse = await axios.get("/api/groups", {
-            params: {
-              batch_year: this.batch_year,
-              project_name: this.studentInfo.project_name
-            }
+          const userInfoResponse = await axios.get("/api/user-info-peer", {
+              params: {
+                  batch_year: batch_year,
+                  project_name: project_name
+              }
           });
 
-          if (kelompokResponse.data) {
-            this.kelompok = kelompokResponse.data;
-            console.log('Kelompok data:', this.kelompok);
+          const userInfo = userInfoResponse.data;
+
+          console.log('User info received:', userInfo);
+
+          this.currentUserId = userInfo.id;
+          this.studentInfo = {
+              nim: userInfo.nim || "",
+              name: userInfo.name || "",
+              class: userInfo.kelas || "",
+              group: userInfo.group || "",
+              project_name: userInfo.project_name || "",
+              date: new Date().toLocaleDateString("id-ID"),
+          };
+
+          this.batch_year = userInfo.batch_year;
+
+          console.log('Student info set:', this.studentInfo);
+          console.log('Batch year set:', this.batch_year);
+
+          if (this.batch_year && this.studentInfo.project_name) {
+              const kelompokResponse = await axios.get("/api/groups", {
+                  params: {
+                      batch_year: this.batch_year,
+                      project_name: this.studentInfo.project_name
+                  }
+              });
+
+              if (kelompokResponse.data) {
+                  this.kelompok = kelompokResponse.data;
+                  console.log('Kelompok data:', this.kelompok);
+              }
+          } else {
+              console.error('Missing batch_year or project_name:', {
+                  batch_year: this.batch_year,
+                  project_name: this.studentInfo.project_name
+              });
           }
-        } else {
-          console.error('Missing batch_year or project_name:', {
-            batch_year: this.batch_year,
-            project_name: this.studentInfo.project_name
-          });
-        }
 
-        await this.loadQuestions();
-        await this.loadExistingAnswers();
-        await this.checkExistingAnswer();
-        this.loadSavedState();
+          await this.loadQuestions();
+          await this.loadExistingAnswers();
+          await this.checkExistingAnswer();
+          this.loadSavedState();
 
       } catch (error) {
-        this.error = `Error loading data: ${error.message}`;
-        console.error("Error details:", error);
-        if (error.response) {
-          console.error("Response data:", error.response.data);
-        }
+          this.error = `Error loading data: ${error.message}`;
+          console.error("Error details:", error);
+          if (error.response) {
+              console.error("Response data:", error.response.data);
+          }
       } finally {
-        this.loading = false;
+          this.loading = false;
       }
-    },
+  },
 
     async loadQuestions(retryCount = 3) {
+      
       for (let i = 0; i < retryCount; i++) {
         try {
           console.log('Loading questions with params:', {

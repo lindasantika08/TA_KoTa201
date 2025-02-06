@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full bg-white shadow-2xl rounded-lg overflow-hidden">
+  <div class="w-full bg-white shadow-2xl rounded-lg overflow-hidden border-t border-gray-150">
     <img :src="image" alt="Card Image" v-if="image" class="w-full h-full object-cover" />
     <div class="p-6">
       <h2 class="text-2xl font-semibold text-gray-800">{{ title }}</h2>
@@ -10,7 +10,7 @@
       <slot name="actions" />
     </div>
   </div>
-</template>
+ </template>
 
 
 

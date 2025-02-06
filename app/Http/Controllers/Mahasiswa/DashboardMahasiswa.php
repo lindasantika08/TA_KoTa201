@@ -185,6 +185,24 @@ class DashboardMahasiswa extends Controller
             ->get();
         
         $groupPeerIds = $groupPeers->pluck('mahasiswa_id');
+
+        $hasPeerAssessment = Assessment::where('type', 'peerAssessment')
+            ->where('project_id', $project->id)
+            ->exists();
+
+        if (!$hasPeerAssessment) {
+            return response()->json([
+                'group_size' => $groupPeers->count(),
+                'group_peers' => $groupPeers->map(function($peer) {
+                    return [
+                        'id' => $peer->mahasiswa_id,
+                        'name' => $peer->mahasiswa->user->name
+                    ];
+                }),
+                'completed_peer_assessments' => [],
+                'peer_completed_count' => 0
+            ]);
+        }
         
         $peerAssessmentQuestions = Assessment::where('type', 'peerAssessment')
             ->where('project_id', $project->id)

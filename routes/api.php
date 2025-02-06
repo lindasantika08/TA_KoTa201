@@ -87,6 +87,7 @@ Route::middleware('auth:sanctum')->group(function () {
     //Manage User Dosen dan Mahasiswa (Role Dosen)
     Route::get('/get-mahasiswa', [UserManagementController::class, 'getMahasiswa']);
     Route::get('/get-dosen', [UserManagementController::class, 'getDosen']);
+    Route::get('/get-dosen/detail/{user_id}', [UserManagementController::class, 'getProfileDosen']);
     Route::get('/get-jurusan', [UserManagementController::class, 'getJurusanList']);
     Route::get('/get-prodi/{majorId}', [UserManagementController::class, 'getProdiByMajor']);
     Route::get('/get-angkatan', [UserManagementController::class, 'getAngkatan']);
@@ -127,9 +128,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // assessment & project mhs
     Route::get('/bobot', [SelfAssessment::class, 'getFilteredBobot']);
-    Route::get('/self-assessment', [AssessmentMahasiswa::class, 'getDataSelf']);
     Route::get('/peer-assessment', [AssessmentMahasiswa::class, 'getDataPeer']);
-    Route::get('/questions', [SelfAssessment::class, 'getQuestionsByProject']);
     Route::get('/questions-peer', [PeerAssessment::class, 'getQuestionsByProject']);
     Route::get('/type-kriteria', [SelfAssessment::class, '']);
     Route::get('/proyek-self-assessment', [ProjectController::class, 'getDataSelf']);
