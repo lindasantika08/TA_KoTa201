@@ -8,6 +8,8 @@ import Breadcrumb from "@/Components/Breadcrumb.vue";
 import dayjs from 'dayjs';
 import { router } from '@inertiajs/vue3';
 
+
+
 export default {
   components: {
     DataTable,
@@ -54,12 +56,16 @@ export default {
     });
   },
 
-    handleDetail(item) {
-      router.visit(`/mahasiswa/peer-assessment/self-detail`, {
+  handleDetail(item) {
+    router.visit(`/mahasiswa/peer-assessment/self-detail`, {
         method: 'get',
+        data: {
+            batch_year: item.batch_year,
+            project_name: item.project_name
+        },
         preserveState: true
-      });
-    }
+    });
+},
 
   },
   mounted() {
@@ -112,7 +118,7 @@ export default {
             <template #column-status="{ item }">
               <span :class="[
                 'px-2 py-1 rounded-full text-xs font-medium',
-                item.status === 'aktif' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                item.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
               ]">
                 {{ item.status }}
               </span>

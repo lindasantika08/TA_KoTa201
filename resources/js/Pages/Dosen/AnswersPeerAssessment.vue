@@ -1,3 +1,5 @@
+vue
+
 <template>
     <div class="flex min-h-screen">
         <Sidebar role="dosen" />
@@ -264,6 +266,10 @@
                                 >
                                     {{ header.label }}
                                 </th>
+                                <!-- Hide the Kelompok column if a group is selected -->
+                                <th v-if="!selectedGroup" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Kelompok
+                                </th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
@@ -304,7 +310,7 @@
                                         {{ item.status }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td v-if="!selectedGroup" class="px-6 py-4 whitespace-nowrap">
                                     {{ item.kelompok }}
                                 </td>
                             </tr>
@@ -367,7 +373,6 @@ export default {
                 { key: "skor", label: "Skor" },
                 { key: "jawaban", label: "Jawaban" },
                 { key: "status", label: "Status" },
-                { key: "kelompok", label: "Kelompok" },
             ],
             loading: false,
             error: null

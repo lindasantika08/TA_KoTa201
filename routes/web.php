@@ -45,7 +45,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/assessment/data-with-bobot-self', [AssessmentController::class, 'getAssessmentsWithBobotSelf'])->name('dosen.assessment.data-with-bobot-self');
         Route::get('/assessment/data-with-bobot-peer', [PeerAssessmentDosen::class, 'getAssessmentsWithBobotpeer'])->name('dosen.assessment.data-with-bobot-peer');
         Route::get('/assessment/create', [AssessmentController::class, 'create'])->name('CreateAssessment');
-        
+
         Route::get('/export-self-assessment', [AssessmentController::class, 'exportExcel'])->name('dosen.export-self');
 
         Route::get('/assessment/projectsSelf', [ProjectController::class, 'getProjectsWithAssessmentsSelf']);
@@ -113,5 +113,8 @@ Route::middleware('auth')->group(function () {
 
         //-----------REPORT-------------//
         Route::get('/project-score-details', [ReportMahasiswa::class, 'getProjectScoreDetailsView']);
+
+        //Mahasiswa Feedback
+        Route::get('/feedback-details', [FeedbackMahasiswa::class, 'getFeedbackDetailView']);
     });
 });

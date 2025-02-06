@@ -20,6 +20,8 @@ use App\Http\Controllers\Mahasiswa\DashboardMahasiswa;
 use App\Http\Controllers\Mahasiswa\SelfAssessment;
 use App\Http\Controllers\Mahasiswa\PeerAssessment;
 use App\Http\Controllers\Mahasiswa\DetailSelfMahasiswa;
+use App\Http\Controllers\Mahasiswa\DetailPeerMahasiswa;
+use App\Http\Controllers\Mahasiswa\FeedbackMahasiswa;
 use App\Http\Controllers\Mahasiswa\ReportMahasiswa;
 use App\Http\Controllers\Mahasiswa\ProfileMahasiswa;
 use Illuminate\Support\Facades\Auth;
@@ -150,6 +152,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // detail assessment
     Route::get('/user-detail-answer', [DetailSelfMahasiswa::class, 'getUserInfo']);
     Route::get('/detail-answer-self', [DetailSelfMahasiswa::class, 'getAnswerSelf']);
+    Route::get('/peer-assessment-detail', [DetailPeerMahasiswa::class, 'getAnswerPeer']);
 
     //mahasiswa Report
     Route::get('/mahasiswa/projects', [ReportMahasiswa::class, 'getProjects']);
@@ -160,4 +163,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/mahasiswa/upload-profile-photo', [ProfileMahasiswa::class, 'uploadProfilePhoto']);
     Route::delete('/mahasiswa/delete-profile-photo', [ProfileMahasiswa::class, 'deleteProfilePhoto']);
     Route::put('/mahasiswa/update-profile', [ProfileMahasiswa::class, 'updateProfile']);
+
+    //Mahasiswa Feedback
+    Route::get('/mahasiswa/feedback', [FeedbackMahasiswa::class, 'getStudentAssessmentsStatus']);
+    Route::get('/project/{projectId}/group-members', [FeedbackMahasiswa::class, 'getGroupMembers']);
 });
