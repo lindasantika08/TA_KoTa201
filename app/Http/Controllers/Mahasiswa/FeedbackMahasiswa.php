@@ -11,7 +11,11 @@ use App\Models\Assessment;
 use App\Models\Project;
 use App\Models\Answers;
 use App\Models\AnswersPeer;
+use App\Models\Feedback;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
+
 
 class FeedbackMahasiswa extends Controller
 {
@@ -166,13 +170,11 @@ class FeedbackMahasiswa extends Controller
     {
         try {
             $user = auth()->user();
-
             if (!$user || !$user->isMahasiswa()) {
                 return response()->json(['message' => 'Access denied'], 403);
             }
 
             $mahasiswa = Mahasiswa::where('user_id', $user->id)->first();
-
             if (!$mahasiswa) {
                 return response()->json(['message' => 'Mahasiswa record not found'], 404);
             }
@@ -185,29 +187,142 @@ class FeedbackMahasiswa extends Controller
                 return response()->json(['message' => 'Group not found'], 404);
             }
 
+            // Log debugging
+            Log::info("Mahasiswa ditemukan: {$mahasiswa->id}, Group: {$currentUserGroup->id}");
+
+            // Ambil semua anggota dalam kelompok yang sama
             $groupMembers = Group::where('project_id', $projectId)
                 ->where('group', $currentUserGroup->group)
                 ->where('mahasiswa_id', '!=', $mahasiswa->id)
-                ->with(['mahasiswa.user'])
-                ->get()
-                ->map(function ($group) {
-                    return [
-                        'id' => $group->mahasiswa->id,
-                        'name' => $group->mahasiswa->user->name,
-                        'nim' => $group->mahasiswa->nim
-                    ];
-                });
+                ->with(['mahasiswa.user', 'project'])
+                ->get();
 
-            return response()->json($groupMembers);
+            // Log debugging
+            Log::info("Total anggota group ditemukan: " . count($groupMembers));
+
+            // Periksa apakah tabel feedback memiliki kolom group_id
+            $submittedFeedbacks = Feedback::where('group_id', $currentUserGroup->id)
+                ->pluck('peer_id')
+                ->toArray();
+
+
+            Log::info("Total feedback diberikan: " . count($submittedFeedbacks));
+
+            // Filter anggota yang belum diberi feedback
+            $filteredMembers = $groupMembers->map(function ($group) use ($submittedFeedbacks) {
+                return [
+                    'id' => $group->mahasiswa->id,
+                    'name' => $group->mahasiswa->user->name,
+                    'nim' => $group->mahasiswa->nim,
+                    'feedbackSubmitted' => in_array($group->mahasiswa->id, $submittedFeedbacks),
+                    'project_name' => $group->project->name ?? null,
+                    'batch_year' => $group->batch_year
+                ];
+            })->filter(function ($member) {
+                return !$member['feedbackSubmitted'];
+            })->values();
+
+            return response()->json($filteredMembers);
         } catch (\Exception $e) {
-            \Log::error('Error in getGroupMembers:', [
+            Log::error('Error in getGroupMembers:', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
+            return response()->json(['message' => 'Internal server error'], 500);
+        }
+    }
+
+
+
+
+    public function saveFeedbackMahasiswa(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'recipientId' => 'required|exists:mahasiswa,id',
+            'message' => 'required|string',
+            'batchYear' => 'required|string',
+            'projectName' => 'required|string',
+            'projectId' => 'required|exists:project,id'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $mahasiswa = Mahasiswa::where('user_id', Auth::id())->first();
+        if (!$mahasiswa) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Mahasiswa not found'
+            ], 404);
+        }
+
+        // Find the project
+        $project = Project::where('batch_year', $request->batchYear)
+            ->where('project_name', $request->projectName)
+            ->first();
+
+        if (!$project) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Project not found'
+            ], 404);
+        }
+
+        // Find the group for this user in the specified project
+        $group = Group::where('project_id', $project->id)
+            ->where('mahasiswa_id', $mahasiswa->id)
+            ->where('batch_year', $request->batchYear)
+            ->first();
+
+        if (!$group) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Group not found for this user in the specified project'
+            ], 404);
+        }
+
+        $recipient = Mahasiswa::find($request->recipientId);
+        if (!$recipient) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Recipient not found'
+            ], 404);
+        }
+
+        try {
+            $feedback = Feedback::create([
+                'mahasiswa_id' => $mahasiswa->id,
+                'peer_id' => $request->recipientId,
+                'group_id' => $group->id,
+                'feedback' => $request->message,
+            ]);
 
             return response()->json([
-                'message' => 'Internal server error'
+                'status' => 'success',
+                'message' => 'Feedback submitted successfully',
+                'data' => $feedback
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to submit feedback',
+                'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    public function getSubmittedFeedbacks(Request $request, $projectId)
+    {
+        $mahasiswa = Mahasiswa::where('user_id', Auth::id())->first();
+
+        return Feedback::where('mahasiswa_id', $mahasiswa->id)
+            ->where('group_id', $projectId)
+            ->select('peer_id', 'feedback', 'created_at')
+            ->get();
     }
 }

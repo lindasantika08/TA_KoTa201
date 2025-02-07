@@ -339,7 +339,7 @@ export default {
                     <Breadcrumb :items="breadcrumbs" />
                 </div>
 
-                <Card title="FORMULIR PENGISIAN SELF ASSESSMENT" class="w-full">
+                <Card title="FORMULIR PENGISIAN PEER ASSESSMENT" class="w-full">
                     <div class="grid grid-cols-2 gap-6 text-sx leading-6 mb-6">
                         <div>
                             <p class="mb-2"><strong>NIP:</strong> {{ studentInfo.nip }}</p>

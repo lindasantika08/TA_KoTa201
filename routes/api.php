@@ -167,4 +167,6 @@ Route::middleware('auth:sanctum')->group(function () {
     //Mahasiswa Feedback
     Route::get('/mahasiswa/feedback', [FeedbackMahasiswa::class, 'getStudentAssessmentsStatus']);
     Route::get('/project/{projectId}/group-members', [FeedbackMahasiswa::class, 'getGroupMembers']);
+    Route::post('/feedback/store', [FeedbackMahasiswa::class, 'saveFeedbackMahasiswa']);
+    Route::get('/project/{projectId}/submitted-feedbacks', [FeedbackMahasiswa::class, 'getSubmittedFeedbacks']);
 });

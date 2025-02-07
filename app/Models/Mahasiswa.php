@@ -56,4 +56,9 @@ class Mahasiswa extends Model
     {
         return $this->hasMany(Report::class, 'mahasiswa_id');
     }
+
+    public function feedback()
+    {
+        return $this->hasMany(Feedback::class, 'mahasiswa_id');
+    }
 }
