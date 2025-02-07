@@ -150,6 +150,28 @@ onMounted(fetchFeedbacks);
               </div>
             </div>
             
+             <!-- Daftar Anggota Kelompok -->
+             <div class="p-6 bg-white shadow-md rounded-lg mt-4">
+              <h2 class="text-lg font-semibold text-gray-800 mb-3">Anggota Kelompok</h2>
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="bg-gray-200">
+                    <th class="p-3">No</th>
+                    <th class="p-3">Nama</th>
+                    <th class="p-3">Email</th>
+                    <th class="p-3">NIM</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(member, index) in initialData.groupMembers" :key="member.id" class="border-t">
+                    <td class="p-3">{{ index + 1 }}</td>
+                    <td class="p-3">{{ member.mahasiswa?.user?.name || "Tidak Ada" }}</td>
+                    <td class="p-3">{{ member.mahasiswa?.user?.email || "Tidak Ada" }}</td>
+                    <td class="p-3">{{ member.mahasiswa?.nim || "Tidak Ada" }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
 
             <!-- Tab Navigation -->
             <div class="border-b border-gray-200 mt-6">
