@@ -15,6 +15,7 @@ use App\Models\Feedback;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 
 class FeedbackMahasiswa extends Controller
@@ -316,13 +317,27 @@ class FeedbackMahasiswa extends Controller
         }
     }
 
-    public function getSubmittedFeedbacks(Request $request, $projectId)
+    public function getUserGivenFeedbacks()
     {
         $mahasiswa = Mahasiswa::where('user_id', Auth::id())->first();
 
-        return Feedback::where('mahasiswa_id', $mahasiswa->id)
-            ->where('group_id', $projectId)
-            ->select('peer_id', 'feedback', 'created_at')
+        if (!$mahasiswa) {
+            return response()->json(['message' => 'Mahasiswa not found'], 404);
+        }
+
+        $feedbacks = DB::table('feedbacks')
+            ->join('mahasiswa as peers', 'feedbacks.peer_id', '=', 'peers.id')
+            ->join('users', 'peers.user_id', '=', 'users.id')
+            ->select(
+                'peers.id as peer_id',
+                'users.name as peer_name',
+                'feedbacks.feedback',
+                'feedbacks.created_at'
+            )
+            ->where('feedbacks.mahasiswa_id', $mahasiswa->id)
+            ->orderBy('feedbacks.created_at', 'desc')
             ->get();
+
+        return response()->json($feedbacks);
     }
 }

@@ -90,7 +90,7 @@ const handleDropdownChange = (event) => {
 
 const handleReportKelompokDetail = (kelompok) => {
   if (!selectedOption.value) return;
-  window.location.href = `/dosen/kelompok/report-detail?batch_year=${selectedOption.value.batch_year}&project_name=${selectedOption.value.project_name}&kelompok=${kelompok.nama_kelompok}`;
+  window.location.href = `/dosen/feedback-detail?batch_year=${selectedOption.value.batch_year}&project_name=${selectedOption.value.project_name}&kelompok=${kelompok.nama_kelompok}`;
 };
 
 const filteredKelompok = computed(() => {

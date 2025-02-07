@@ -14,6 +14,7 @@ use App\Http\Controllers\Dosen\UserManagementController;
 use App\Http\Controllers\Dosen\SelfAssessmentDosen;
 use App\Http\Controllers\Dosen\PeerAssessmentDosen;
 use App\Http\Controllers\Dosen\ProfileController;
+use App\Http\Controllers\Dosen\FeedbackController;
 
 use App\Http\Controllers\Mahasiswa\AssessmentMahasiswa;
 use App\Http\Controllers\Mahasiswa\DashboardMahasiswa;
@@ -112,6 +113,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/report/kelompok/answers', [ReportController::class, 'getKelompokAnswers']);
     Route::post('/report/storeReport', [ReportController::class, 'storeReport']);
 
+    //Dosen Feedback
+    Route::get('/feedbacks-get-answer', [FeedbackController::class, 'getFeedbackAnswer']);
+    Route::get('/feedback-summary', [FeedbackController::class, 'getSummaryFeedback']);
+
 
     //-------------------------------------mahasiswa------------------------------------------------//
     // dashboard mhs
@@ -168,5 +173,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/mahasiswa/feedback', [FeedbackMahasiswa::class, 'getStudentAssessmentsStatus']);
     Route::get('/project/{projectId}/group-members', [FeedbackMahasiswa::class, 'getGroupMembers']);
     Route::post('/feedback/store', [FeedbackMahasiswa::class, 'saveFeedbackMahasiswa']);
-    Route::get('/project/{projectId}/submitted-feedbacks', [FeedbackMahasiswa::class, 'getSubmittedFeedbacks']);
+    Route::get('/feedback/given', [FeedbackMahasiswa::class, 'getUserGivenFeedbacks']);
 });

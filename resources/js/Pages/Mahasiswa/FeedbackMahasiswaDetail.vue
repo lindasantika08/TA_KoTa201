@@ -27,36 +27,37 @@ const feedbackMessage = ref('');
 const submitting = ref(false);
 const submitSuccess = ref(false);
 const validationErrors = ref(null);
-const submittedFeedbacks = ref([]); // Untuk menyimpan daftar feedback yang sudah diberikan
+const submittedFeedbacks = ref([]); // Menyimpan daftar feedback yang telah diberikan
 
-// Fungsi untuk mendapatkan daftar feedback yang sudah diberikan
+// Fungsi untuk mengambil daftar feedback yang telah diberikan
 const fetchSubmittedFeedbacks = async () => {
   try {
-    const response = await axios.get(`/api/project/${props.projectId}/submitted-feedbacks`);
+    const response = await axios.get('/api/feedback/given');
     submittedFeedbacks.value = response.data;
   } catch (err) {
     console.error('Failed to fetch submitted feedbacks:', err);
   }
 };
 
+// Fungsi untuk mendapatkan anggota kelompok yang belum mendapat feedback
 const fetchGroupMembers = async () => {
   try {
     loading.value = true;
     error.value = null;
     
-    // Fetch both group members and submitted feedbacks
+    // Ambil daftar anggota kelompok dan feedback yang sudah diberikan
     const [membersResponse, feedbacksResponse] = await Promise.all([
       axios.get(`/api/project/${props.projectId}/group-members`),
-      axios.get(`/api/project/${props.projectId}/submitted-feedbacks`)
+      axios.get(`/api/feedback/given`)
     ]);
-    
+
     if (membersResponse.data && Array.isArray(membersResponse.data)) {
-      // Filter out members who have already received feedback
       const submittedFeedbackRecipients = feedbacksResponse.data.map(f => f.peer_id);
       
+      // Filter anggota yang belum mendapat feedback
       groupMembers.value = membersResponse.data.filter(member => 
-        member.name !== props.userName && // Exclude current user
-        !submittedFeedbackRecipients.includes(member.id) // Exclude members who already received feedback
+        member.name !== props.userName && 
+        !submittedFeedbackRecipients.includes(member.id)
       );
     } else {
       throw new Error('Invalid response format');
@@ -69,6 +70,7 @@ const fetchGroupMembers = async () => {
   }
 };
 
+// Fungsi untuk mengirim feedback
 const submitFeedback = async () => {
   if (!selectedMember.value || !feedbackMessage.value.trim()) {
     error.value = 'Please select a member and enter feedback message';
@@ -92,7 +94,7 @@ const submitFeedback = async () => {
       submitSuccess.value = true;
       feedbackMessage.value = '';
       
-      // Remove the member who just received feedback from the list
+      // Hapus anggota yang baru saja mendapat feedback dari daftar
       groupMembers.value = groupMembers.value.filter(
         member => member.id !== selectedMember.value.id
       );
@@ -101,6 +103,9 @@ const submitFeedback = async () => {
       setTimeout(() => {
         submitSuccess.value = false;
       }, 3000);
+
+      // Refresh daftar feedback yang telah diberikan
+      fetchSubmittedFeedbacks();
     }
 
   } catch (err) {
@@ -115,10 +120,10 @@ const submitFeedback = async () => {
   }
 };
 
+// Ambil data saat komponen dimuat
 onMounted(() => {
-  if (props.projectId) {
-    fetchGroupMembers();
-  }
+  fetchGroupMembers();
+  fetchSubmittedFeedbacks();
 });
 </script>
 
@@ -132,10 +137,8 @@ onMounted(() => {
           <Breadcrumb :items="breadcrumbs" />
           <h1 class="text-2xl font-bold text-gray-800 mt-4">Give Feedback</h1>
         </div>
-
         <div class="grid gap-6">
-          <!-- Project Info Card -->
-          <Card>
+        <Card>
             <div class="p-6">
               <div class="flex items-center justify-between mb-4">
                 <h2 class="text-lg font-semibold text-gray-900">Project Details</h2>
@@ -164,6 +167,7 @@ onMounted(() => {
             </div>
           </Card>
 
+        
           <!-- Feedback Form Card -->
           <Card>
             <div class="p-6">
@@ -177,25 +181,16 @@ onMounted(() => {
                 <p class="text-sm text-red-700 font-semibold">{{ error }}</p>
               </div>
 
-              <div v-if="validationErrors" class="rounded-md bg-red-50 p-4 mb-4">
-                <ul class="text-sm text-red-700 font-semibold">
-                  <li v-for="(errors, field) in validationErrors" :key="field">
-                    <span v-for="error in errors" :key="error">{{ error }}</span>
-                  </li>
-                </ul>
-              </div>
-
               <div v-if="!loading && groupMembers.length === 0" class="text-center py-4 text-gray-600">
-                <p class="text-lg font-semibold text-gray-700">🎉 You have provided feedback to all team members!</p>
+                <p class="text-lg font-semibold text-gray-700">You have provided feedback to all team members!</p>
               </div>
 
               <div v-if="!loading && groupMembers.length > 0" class="space-y-6">
-                <!-- Member Selection -->
                 <div>
                   <label class="block text-sm font-medium text-gray-700">Select Team Member</label>
                   <select 
                     v-model="selectedMember"
-                    class="mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    class="mt-2 block w-full rounded-md border-gray-300 shadow-sm"
                   >
                     <option value="">Choose a member</option>
                     <option v-for="member in groupMembers" :key="member.id" :value="member">
@@ -204,54 +199,51 @@ onMounted(() => {
                   </select>
                 </div>
 
-                <!-- Selected Member Info -->
-                <div v-if="selectedMember" class="p-4 bg-gray-50 rounded-lg border border-gray-200 flex items-center space-x-4">
-                  <div class="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center">
-                    <span class="text-indigo-600 font-medium text-lg">
-                      {{ selectedMember.name.charAt(0) }}
-                    </span>
-                  </div>
-                  <div>
-                    <h3 class="text-lg font-semibold text-gray-900">{{ selectedMember.name }}</h3>
-                    <p class="text-sm text-gray-500">{{ selectedMember.nim }}</p>
-                  </div>
-                </div>
-
-                <!-- Feedback Message -->
                 <div v-if="selectedMember">
                   <label class="block text-sm font-medium text-gray-700">Feedback Message</label>
-                  <textarea
-                    v-model="feedbackMessage"
-                    rows="4"
-                    class="mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    placeholder="Write your feedback here..."
-                  ></textarea>
+                  <textarea v-model="feedbackMessage" rows="4" 
+                    class="mt-2 block w-full rounded-md border-gray-300 shadow-sm"
+                    placeholder="Write your feedback here..."></textarea>
                 </div>
 
-                <!-- Submit Button -->
                 <div v-if="selectedMember" class="flex justify-end">
-                  <button
-                    @click="submitFeedback"
-                    :disabled="submitting || !feedbackMessage.trim()"
-                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <span v-if="submitting" class="mr-2">
-                      <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                    </span>
+                  <button @click="submitFeedback" :disabled="submitting || !feedbackMessage.trim()"
+                    class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50">
                     {{ submitting ? 'Submitting...' : 'Submit Feedback' }}
                   </button>
                 </div>
 
-                <!-- Success Message -->
-                <div v-if="submitSuccess" class="rounded-md bg-green-50 p-4 flex items-center">
-                  <span class="text-green-700 font-semibold text-sm">✅ Feedback submitted successfully!</span>
+                <div v-if="submitSuccess" class="bg-green-50 p-4 rounded-md text-green-700">
+                  ✅ Feedback submitted successfully!
                 </div>
               </div>
             </div>
           </Card>
+
+          <!-- List of Given Feedbacks -->
+          <Card>
+            <div class="p-6">
+              <h2 class="text-lg font-semibold text-gray-900 mb-6">Feedback Sent</h2>
+
+              <div v-if="submittedFeedbacks.length === 0" class="text-gray-600 text-center">
+                <p>You have not given any feedback yet.</p>
+              </div>
+
+              <ul v-else class="space-y-4">
+                <li v-for="feedback in submittedFeedbacks" :key="feedback.peer_id" 
+                    class="p-4 bg-white rounded-lg shadow border flex justify-between items-center">
+                  <div>
+                    <h3 class="text-sm font-medium text-gray-900">{{ feedback.peer_name }}</h3>
+                    <p class="text-gray-700">{{ feedback.feedback }}</p>
+                  </div>
+                  <span class="text-sm text-gray-500">
+                    {{ new Date(feedback.created_at).toLocaleDateString() }}
+                  </span>
+                </li>
+              </ul>
+            </div>
+          </Card>
+
         </div>
       </main>
     </div>

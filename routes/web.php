@@ -88,6 +88,9 @@ Route::middleware('auth')->group(function () {
         //REPORT
         Route::get('/report', [ReportController::class, 'report'])->name('report');
         Route::get('/kelompok/report-detail', [ReportController::class, 'getScoreKelompok']);
+
+        //Feedback
+        Route::get('/feedback-detail', [FeedbackController::class, 'feedbackDetailView']);
     });
 
     //Route untuk Mahasiswa

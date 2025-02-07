@@ -35,4 +35,9 @@ class Feedback extends Model
     {
         return $this->belongsTo(Dosen::class, 'dosen_id', 'id');
     }
+
+    public function peer()
+    {
+        return $this->belongsTo(Mahasiswa::class, 'peer_id', 'id');
+    }
 }
