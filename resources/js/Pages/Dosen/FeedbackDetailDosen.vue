@@ -11,7 +11,7 @@ const props = defineProps({
   initialData: Object,
 });
 
-const activeTab = ref('history');
+const activeTab = ref("history");
 const feedbacks = ref([]);
 const feedbackDosen = ref("");
 const loading = ref(true);
@@ -21,45 +21,75 @@ const summaryLoading = ref(false); // Loading state untuk summary
 const summaryError = ref(null); // Error state untuk summary
 
 const tabs = [
-  { id: 'history', name: 'Riwayat Feedback', icon: 'M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z' },
-  { id: 'input', name: 'Input Feedback', icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
-  { id: 'summary', name: 'Summary Feedback', icon: 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
+  {
+    id: "history",
+    name: "Riwayat Feedback",
+    icon: "M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z",
+  },
+  {
+    id: "input",
+    name: "Input Feedback",
+    icon: "M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
+  },
+  {
+    id: "summary",
+    name: "Summary Feedback",
+    icon: "M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
+  },
 ];
 
-// Fetch feedback summary dari API
-const fetchFeedbackSummary = async () => {
-    summaryLoading.value = true;
-    summaryError.value = null;
+const fetchFeedbackSummary = async (forceRegenerate = false) => {
+  summaryLoading.value = true;
+  summaryError.value = null;
 
-    try {
-        const queryParams = new URLSearchParams({
-            batch_year: props.batch_year,
-            project_name: props.project_name,
-            kelompok: props.kelompok,
-        });
+  try {
+    const queryParams = new URLSearchParams({
+      batch_year: props.batch_year,
+      project_name: props.project_name,
+      kelompok: props.kelompok,
+      force_regenerate: forceRegenerate ? "1" : "0",
+    });
 
-        const response = await fetch(`/api/feedback-summary?${queryParams}`);
+    const response = await fetch(`/api/feedback-summary?${queryParams}`, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
+    });
 
-        if (response.ok) {
-            const result = await response.json();
-            summaryData.value = result.summaries || []; // Sesuaikan dengan struktur respons API
-        } else {
-            const errorText = await response.text(); // Ambil teks error
-            throw new Error(`Gagal mengambil data summary: `);
-        }
-    } catch (err) {
-        summaryError.value = err.message;
-    } finally {
-        summaryLoading.value = false;
+    const result = await response.json();
+
+    if (response.ok) {
+      summaryData.value = result.summaries || [];
+    } else {
+      throw new Error(result.message || "Failed to fetch summary");
     }
+  } catch (err) {
+    summaryError.value = err.message;
+    console.error("Fetch Error:", err);
+    alert(err.message);
+  } finally {
+    summaryLoading.value = false;
+  }
 };
 
+const refreshSummary = async () => {
+  summaryLoading.value = true;
+  summaryError.value = null;
+  console.log("Refreshing summary with force regenerate");
+  try {
+    await fetchFeedbackSummary(true);
+    console.log("Summary refresh completed");
+  } catch (error) {
+    console.error("Summary refresh error:", error);
+  }
+};
 
 // Panggil fetchFeedbackSummary saat tab summary aktif
 const handleTabChange = (tabId) => {
   activeTab.value = tabId;
 
-  if (tabId === 'summary') {
+  if (tabId === "summary") {
     fetchFeedbackSummary();
   }
 };
@@ -79,7 +109,7 @@ const fetchFeedbacks = async () => {
       const result = await response.json();
       feedbacks.value = result.data || [];
     } else {
-      throw new Error('Gagal mengambil feedback');
+      throw new Error("Gagal mengambil feedback");
     }
   } catch (err) {
     error.value = err.message;
@@ -110,7 +140,7 @@ const submitFeedbackDosen = async () => {
       feedbackDosen.value = "";
       alert("Feedback berhasil dikirim!");
       fetchFeedbacks();
-      activeTab.value = 'history';
+      activeTab.value = "history";
     } else {
       throw new Error("Gagal mengirim feedback");
     }
@@ -136,23 +166,41 @@ onMounted(fetchFeedbacks);
 
             <!-- Informasi Proyek -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <h3 class="text-sm font-medium text-gray-500 mb-2">Tahun Ajaran</h3>
-                <p class="text-lg font-semibold text-gray-900">{{ batch_year }}</p>
+              <div
+                class="bg-white p-6 rounded-lg shadow-sm border border-gray-200"
+              >
+                <h3 class="text-sm font-medium text-gray-500 mb-2">
+                  Tahun Ajaran
+                </h3>
+                <p class="text-lg font-semibold text-gray-900">
+                  {{ batch_year }}
+                </p>
               </div>
-              <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <h3 class="text-sm font-medium text-gray-500 mb-2">Nama Proyek</h3>
-                <p class="text-lg font-semibold text-gray-900">{{ project_name }}</p>
+              <div
+                class="bg-white p-6 rounded-lg shadow-sm border border-gray-200"
+              >
+                <h3 class="text-sm font-medium text-gray-500 mb-2">
+                  Nama Proyek
+                </h3>
+                <p class="text-lg font-semibold text-gray-900">
+                  {{ project_name }}
+                </p>
               </div>
-              <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <div
+                class="bg-white p-6 rounded-lg shadow-sm border border-gray-200"
+              >
                 <h3 class="text-sm font-medium text-gray-500 mb-2">Kelompok</h3>
-                <p class="text-lg font-semibold text-gray-900">{{ kelompok }}</p>
+                <p class="text-lg font-semibold text-gray-900">
+                  {{ kelompok }}
+                </p>
               </div>
             </div>
-            
-             <!-- Daftar Anggota Kelompok -->
-             <div class="p-6 bg-white shadow-md rounded-lg mt-4">
-              <h2 class="text-lg font-semibold text-gray-800 mb-3">Anggota Kelompok</h2>
+
+            <!-- Daftar Anggota Kelompok -->
+            <div class="p-6 bg-white shadow-md rounded-lg mt-4">
+              <h2 class="text-lg font-semibold text-gray-800 mb-3">
+                Anggota Kelompok
+              </h2>
               <table class="w-full text-left border-collapse">
                 <thead>
                   <tr class="bg-gray-200">
@@ -163,11 +211,21 @@ onMounted(fetchFeedbacks);
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(member, index) in initialData.groupMembers" :key="member.id" class="border-t">
+                  <tr
+                    v-for="(member, index) in initialData.groupMembers"
+                    :key="member.id"
+                    class="border-t"
+                  >
                     <td class="p-3">{{ index + 1 }}</td>
-                    <td class="p-3">{{ member.mahasiswa?.user?.name || "Tidak Ada" }}</td>
-                    <td class="p-3">{{ member.mahasiswa?.user?.email || "Tidak Ada" }}</td>
-                    <td class="p-3">{{ member.mahasiswa?.nim || "Tidak Ada" }}</td>
+                    <td class="p-3">
+                      {{ member.mahasiswa?.user?.name || "Tidak Ada" }}
+                    </td>
+                    <td class="p-3">
+                      {{ member.mahasiswa?.user?.email || "Tidak Ada" }}
+                    </td>
+                    <td class="p-3">
+                      {{ member.mahasiswa?.nim || "Tidak Ada" }}
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -184,7 +242,7 @@ onMounted(fetchFeedbacks);
                     activeTab === tab.id
                       ? 'border-blue-500 text-blue-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                    'group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm'
+                    'group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm',
                   ]"
                 >
                   <svg
@@ -192,7 +250,7 @@ onMounted(fetchFeedbacks);
                     :class="[
                       activeTab === tab.id
                         ? 'text-blue-500'
-                        : 'text-gray-400 group-hover:text-gray-500'
+                        : 'text-gray-400 group-hover:text-gray-500',
                     ]"
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -200,7 +258,12 @@ onMounted(fetchFeedbacks);
                     stroke="currentColor"
                     aria-hidden="true"
                   >
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="tab.icon" />
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      :d="tab.icon"
+                    />
                   </svg>
                   {{ tab.name }}
                 </button>
@@ -209,59 +272,105 @@ onMounted(fetchFeedbacks);
 
             <div class="mt-6">
               <!-- Riwayat Feedback Panel -->
-              <div v-show="activeTab === 'history'" class="bg-white rounded-lg shadow-sm border border-gray-200">
+              <div
+                v-show="activeTab === 'history'"
+                class="bg-white rounded-lg shadow-sm border border-gray-200"
+              >
                 <div class="p-6">
                   <div v-if="loading" class="text-center py-8">
-                    <div class="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
+                    <div
+                      class="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"
+                    ></div>
                     <p class="mt-2 text-gray-500">Memuat feedback...</p>
                   </div>
                   <div v-else-if="error" class="text-center py-8">
                     <p class="text-red-500">{{ error }}</p>
-                    <button @click="fetchFeedbacks" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                    <button
+                      @click="fetchFeedbacks"
+                      class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    >
                       Coba Lagi
                     </button>
                   </div>
                   <div v-else-if="feedbacks.length" class="space-y-6">
-                    <div v-for="feedback in feedbacks" :key="`${feedback.mahasiswa_nim}-${feedback.created_at}`" class="space-y-4">
+                    <div
+                      v-for="feedback in feedbacks"
+                      :key="`${feedback.mahasiswa_nim}-${feedback.created_at}`"
+                      class="space-y-4"
+                    >
                       <div class="text-sm text-gray-500">
-                        {{ new Date(feedback.created_at).toLocaleString("id-ID", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" }) }}
+                        {{
+                          new Date(feedback.created_at).toLocaleString(
+                            "id-ID",
+                            {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }
+                          )
+                        }}
                       </div>
-                      
+
                       <!-- Feedback participants info -->
-                      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-4 rounded-lg border border-gray-200">
+                      <div
+                        class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-4 rounded-lg border border-gray-200"
+                      >
                         <div>
-                          <h4 class="text-sm font-medium text-gray-500 mb-1">Penerima Feedback</h4>
+                          <h4 class="text-sm font-medium text-gray-500 mb-1">
+                            Penerima Feedback
+                          </h4>
                           <div class="text-gray-900">
                             <p class="font-medium">{{ feedback.peer_name }}</p>
-                            <p class="text-sm text-gray-500">{{ `NIM: ${feedback.peer_nim}` }}</p>
+                            <p class="text-sm text-gray-500">
+                              {{ `NIM: ${feedback.peer_nim}` }}
+                            </p>
                           </div>
                         </div>
-                        
+
                         <div>
-                          <h4 class="text-sm font-medium text-gray-500 mb-1">Pengirim Feedback</h4>
+                          <h4 class="text-sm font-medium text-gray-500 mb-1">
+                            Pengirim Feedback
+                          </h4>
                           <div class="text-gray-900">
-                            <p class="font-medium">{{ feedback.mahasiswa_name }}</p>
-                            <p class="text-sm text-gray-500">NIM: {{ feedback.mahasiswa_nim }}</p>
+                            <p class="font-medium">
+                              {{ feedback.mahasiswa_name }}
+                            </p>
+                            <p class="text-sm text-gray-500">
+                              NIM: {{ feedback.mahasiswa_nim }}
+                            </p>
                           </div>
                         </div>
                       </div>
 
                       <!-- Feedback content -->
-                      <div class="bg-white p-4 rounded-lg border border-gray-200">
-                        <h4 class="text-sm font-medium text-gray-500 mb-2">Isi Feedback</h4>
+                      <div
+                        class="bg-white p-4 rounded-lg border border-gray-200"
+                      >
+                        <h4 class="text-sm font-medium text-gray-500 mb-2">
+                          Isi Feedback
+                        </h4>
                         <div class="prose prose-sm max-w-none">
-                          <p class="text-gray-700 whitespace-pre-wrap">{{ feedback.feedback }}</p>
+                          <p class="text-gray-700 whitespace-pre-wrap">
+                            {{ feedback.feedback }}
+                          </p>
                         </div>
                       </div>
                     </div>
                   </div>
                   <div v-else class="text-center py-8">
-                    <p class="text-gray-500">Belum ada feedback untuk kelompok ini.</p>
+                    <p class="text-gray-500">
+                      Belum ada feedback untuk kelompok ini.
+                    </p>
                   </div>
                 </div>
               </div>
               <!-- Input Panel -->
-              <div v-show="activeTab === 'input'" class="bg-white rounded-lg shadow-sm border border-gray-200">
+              <div
+                v-show="activeTab === 'input'"
+                class="bg-white rounded-lg shadow-sm border border-gray-200"
+              >
                 <div class="p-6">
                   <textarea
                     v-model="feedbackDosen"
@@ -278,32 +387,49 @@ onMounted(fetchFeedbacks);
                 </div>
               </div>
 
-              <!-- Summary Panel -->
               <div v-show="activeTab === 'summary'" class="bg-white rounded-lg shadow-sm border border-gray-200">
-                <div class="p-6">
-                  <div v-if="summaryLoading" class="text-center py-8">
-                    <div class="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
-                    <p class="mt-2 text-gray-500">Memuat summary...</p>
-                  </div>
-                  <div v-else-if="summaryError" class="text-center py-8 text-red-500">
-                    {{ summaryError }}
-                  </div>
-                  <div v-else-if="summaryData.length === 0" class="text-center py-8">
-                    <p class="text-gray-500">Belum ada data summary yang tersedia.</p>
-                  </div>
-                  <div v-else class="space-y-6">
-                    <div v-for="summary in summaryData" :key="summary.peer_id" class="border rounded-lg p-4">
-                      <div class="mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900">{{ summary.peer_name }}</h3>
-                        <p class="text-sm text-gray-500">NIM: {{ summary.peer_nim }}</p>
-                      </div>
-                      <div class="prose prose-sm max-w-none">
-                        <p class="text-gray-700 whitespace-pre-wrap">{{ summary.summary }}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+  <div class="p-6">
+    <div v-if="summaryLoading" class="text-center py-8">
+      <div class="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
+      <p class="mt-2 text-gray-500">Memuat summary...</p>
+    </div>
+    
+    <div v-else-if="summaryError" class="text-center py-8 text-red-500">
+      {{ summaryError }}
+      <button @click="refreshSummary" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded">
+        Coba Lagi
+      </button>
+    </div>
+    
+    <template v-else>
+      <div v-if="summaryData.length > 0" class="flex justify-end mb-4">
+        <button 
+          @click="refreshSummary"
+          :disabled="summaryLoading"
+          class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+        >
+          {{ summaryLoading ? 'Memuat...' : 'Refresh Summary' }}
+        </button>
+      </div>
+      
+      <div v-if="summaryData.length === 0" class="text-center py-8">
+        <p class="text-gray-500">Belum ada data summary yang tersedia.</p>
+      </div>
+      
+      <div v-else class="space-y-6">
+        <div v-for="summary in summaryData" :key="summary.peer_id" class="border rounded-lg p-4">
+          <div class="mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">{{ summary.peer_name }}</h3>
+            <p class="text-sm text-gray-500">NIM: {{ summary.peer_nim }}</p>
+          </div>
+          <div class="prose prose-sm max-w-none">
+            <p class="text-gray-700 whitespace-pre-wrap">{{ summary.summary }}</p>
+          </div>
+        </div>
+      </div>
+    </template>
+  </div>
+</div>
             </div>
           </Card>
         </div>

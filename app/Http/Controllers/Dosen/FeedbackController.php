@@ -5,13 +5,14 @@ namespace App\Http\Controllers\Dosen;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Http;
 use Inertia\Inertia;
 use App\Models\Group;
 use App\Models\Project;
 use App\Models\Feedback;
 use App\Models\Mahasiswa;
-use OpenAI;
+use App\Models\feedback_ai;
 use App\Services\GeminiService;
 
 
@@ -192,14 +193,14 @@ class FeedbackController extends Controller
 
     public function getSummaryFeedback(Request $request)
     {
-        // Validasi request
         $validated = $request->validate([
             'batch_year' => 'required|string',
             'project_name' => 'required|string',
+            'kelompok' => 'required|string',
+            'force_regenerate' => 'sometimes|boolean'
         ]);
 
         try {
-            // Cek apakah proyek ada
             $project = Project::where('project_name', $validated['project_name'])->first();
             if (!$project) {
                 return response()->json([
@@ -208,10 +209,10 @@ class FeedbackController extends Controller
                 ], 404);
             }
 
-            // Ambil semua grup berdasarkan batch_year dan project_id
             $groups = Group::where([
                 'batch_year' => $validated['batch_year'],
-                'project_id' => $project->id
+                'project_id' => $project->id,
+                'group' => $validated['kelompok']
             ])->get();
 
             if ($groups->isEmpty()) {
@@ -221,54 +222,93 @@ class FeedbackController extends Controller
                 ], 404);
             }
 
-            // Ambil semua mahasiswa yang ada di grup tersebut
-            $mahasiswaIds = $groups->pluck('mahasiswa_id');
-            $mahasiswaList = Mahasiswa::whereIn('id', $mahasiswaIds)->with('user')->get();
-
-            // Ambil semua feedback yang diberikan kepada mahasiswa dalam grup tersebut
-            $feedbacks = Feedback::whereIn('peer_id', $mahasiswaIds)
-                ->with(['peer.user', 'mahasiswa.user'])
-                ->get()
-                ->groupBy('peer_id');
-
-            if ($feedbacks->isEmpty()) {
-                return response()->json([
-                    'success' => true,
-                    'summaries' => [],
-                ]);
-            }
-
             $summaries = [];
 
-            foreach ($feedbacks as $peer_id => $peerFeedbacks) {
-                $peer = $peerFeedbacks->first()->peer;
-                $feedbackTexts = $peerFeedbacks->map(function ($feedback) {
-                    return "Feedback: {$feedback->feedback}";
-                })->join("\n\n");
+            foreach ($groups as $group) {
+                $existingFeedback = feedback_ai::where([
+                    'mahasiswa_id' => $group->mahasiswa_id,
+                    'group_id' => $group->id
+                ])->first();
 
-                try {
-                    $response = $this->geminiService->generateText(
-                        "Berikut adalah kumpulan feedback untuk {$peer->user->name} (NIM: {$peer->nim}):\n\n{$feedbackTexts}\n\nBuatkan ringkasan dari semua feedback ini dengan menyoroti poin-poin penting dan area yang perlu ditingkatkan tanpa menyebutkan siapa pemberi feedback."
-                    );
+                if (!$existingFeedback || ($validated['force_regenerate'] ?? false)) {
+                    $feedbacks = Feedback::where('peer_id', $group->mahasiswa_id)
+                        ->with(['peer.user', 'mahasiswa.user'])
+                        ->get();
 
-                    $summaryText = $response['candidates'][0]['content']['parts'][0]['text'] ?? "Gagal menghasilkan ringkasan.";
+                    if ($feedbacks->isEmpty()) {
+                        continue;
+                    }
 
-                    Log::info('Google Gemini Response:', ['response' => $summaryText]);
+                    $feedbackTexts = $feedbacks->map(function ($feedback) {
+                        return "Feedback: {$feedback->feedback}";
+                    })->join("\n\n");
 
+                    try {
+                        $response = $this->callGeminiWithErrorHandling(
+                            "Analisis Komprehensif Feedback Mahasiswa: {$group->mahasiswa->user->name} (NIM: {$group->mahasiswa->nim})
+
+Kumpulan Feedback:
+{$feedbackTexts}
+
+Instruksi untuk Pembuatan Ringkasan:
+1. Buat ringkasan deskriptif yang menjelaskan:
+   - Kekuatan utama mahasiswa
+   - Area pengembangan dan perbaikan
+   - Pola umum yang terlihat dari berbagai feedback
+   - buat jangan point per point tapi dalam bentuk deskriptif saja
+
+2. Fokus pada:
+   - Objektifitas
+   - Kejelasan
+   - Konstruktif
+
+3. Hindari:
+   - Menyebutkan nama pemberi feedback
+   - Kalimat yang bersifat personal atau menyinggung
+   - Detail spesifik yang dapat mengidentifikasi pemberi feedback
+
+Hasilkan ringkasan professional, mendalam, dan bermakna yang dapat membantu mahasiswa dalam pengembangan diri."
+                        );
+
+                        if ($existingFeedback) {
+                            $existingFeedback->delete();
+                        }
+
+                        $newFeedbackAi = feedback_ai::create([
+                            'mahasiswa_id' => $group->mahasiswa_id,
+                            'group_id' => $group->id,
+                            'summary' => Str::limit($response, 65535, '...')
+                        ]);
+
+                        $summaries[] = [
+                            'peer_id' => $group->mahasiswa_id,
+                            'peer_name' => $group->mahasiswa->user->name,
+                            'peer_nim' => $group->mahasiswa->nim,
+                            'summary' => $response,
+                            'source' => 'gemini'
+                        ];
+                    } catch (\Exception $e) {
+                        Log::error("Gemini API Error", [
+                            'message' => $e->getMessage(),
+                            'mahasiswa_name' => $group->mahasiswa->user->name,
+                            'mahasiswa_nim' => $group->mahasiswa->nim,
+                        ]);
+
+                        $summaries[] = [
+                            'peer_id' => $group->mahasiswa_id,
+                            'peer_name' => $group->mahasiswa->user->name,
+                            'peer_nim' => $group->mahasiswa->nim,
+                            'summary' => "Gagal menghasilkan ringkasan: " . $e->getMessage(),
+                            'source' => 'error'
+                        ];
+                    }
+                } else {
                     $summaries[] = [
-                        'peer_id' => $peer_id,
-                        'peer_name' => $peer->user->name,
-                        'peer_nim' => $peer->nim,
-                        'summary' => $summaryText,
-                    ];
-                } catch (\Exception $e) {
-                    Log::error("Error Google Gemini: " . $e->getMessage());
-
-                    $summaries[] = [
-                        'peer_id' => $peer_id,
-                        'peer_name' => $peer->user->name,
-                        'peer_nim' => $peer->nim,
-                        'summary' => "Gagal menghasilkan ringkasan: " . $e->getMessage(),
+                        'peer_id' => $group->mahasiswa_id,
+                        'peer_name' => $group->mahasiswa->user->name,
+                        'peer_nim' => $group->mahasiswa->nim,
+                        'summary' => $existingFeedback->summary,
+                        'source' => 'database'
                     ];
                 }
             }
@@ -278,7 +318,10 @@ class FeedbackController extends Controller
                 'summaries' => $summaries,
             ]);
         } catch (\Exception $e) {
-            Log::error("Error di getSummaryFeedback: " . $e->getMessage());
+            Log::error("Kesalahan Umum di getSummaryFeedback", [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
 
             return response()->json([
                 'success' => false,
@@ -286,5 +329,26 @@ class FeedbackController extends Controller
                 'error' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    // Metode tambahan untuk error handling Gemini
+    private function callGeminiWithErrorHandling($prompt)
+    {
+        $apiKey = config('services.gemini.api_key');
+
+        $response = Http::withHeaders([
+            'Content-Type' => 'application/json',
+        ])->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={$apiKey}", [
+            'contents' => [
+                ['role' => 'user', 'parts' => [['text' => $prompt]]]
+            ]
+        ]);
+
+        if (!$response->successful()) {
+            throw new \Exception("API request failed: " . $response->body());
+        }
+
+        $data = $response->json();
+        return $data['candidates'][0]['content']['parts'][0]['text'] ?? "Gagal menghasilkan ringkasan.";
     }
 }

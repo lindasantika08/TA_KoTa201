@@ -66,4 +66,9 @@ class Mahasiswa extends Model
     {
         return $this->hasMany(Feedback::class, 'peer_id');
     }
+
+    public function feedback_ai()
+    {
+        return $this->hasMany(feedback_ai::class, 'peer_id');
+    }
 }

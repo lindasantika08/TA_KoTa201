@@ -78,4 +78,9 @@ class Group extends Model
     {
         return $this->hasMany(Feedback::class, 'group_id');
     }
+
+    public function feedbackAI()
+    {
+        return $this->hasMany(feedback_ai::class, 'group_id');
+    }
 }
