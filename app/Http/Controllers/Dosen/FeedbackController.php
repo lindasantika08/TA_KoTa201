@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use App\Models\Group;
 use App\Models\Project;
@@ -350,5 +352,78 @@ Hasilkan ringkasan professional, mendalam, dan bermakna yang dapat membantu maha
 
         $data = $response->json();
         return $data['candidates'][0]['content']['parts'][0]['text'] ?? "Gagal menghasilkan ringkasan.";
+    }
+
+    public function storeFeedback(Request $request)
+    {
+        DB::beginTransaction(); // Start transaction at the beginning
+
+        try {
+            // Log untuk debugging
+            Log::info('Request received:', $request->all());
+
+            // Validasi
+            $validated = $request->validate([
+                'batch_year' => 'required|string',
+                'project_name' => 'required|string',
+                'kelompok' => 'required|string',
+                'student_id' => 'required|string',
+                'feedback' => 'required|string',
+            ]);
+
+            // Cek autentikasi
+            if (!Auth::check()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Unauthorized'
+                ], 401);
+            }
+
+            // Get dosen ID from authenticated user
+            $dosenId = Auth::user()->dosen->id;
+            Log::info('Dosen ID:', ['id' => $dosenId]);
+
+            // Cek query group
+            $group = Group::whereHas('project', function ($query) use ($validated) {
+                $query->where('batch_year', $validated['batch_year'])
+                    ->where('project_name', $validated['project_name']);
+            })
+                ->where('mahasiswa_id', $validated['student_id'])
+                ->first();
+
+            // Log group query result
+            Log::info('Found group:', ['group' => $group]);
+
+            if (!$group) {
+                throw new \Exception('Group not found for the given criteria');
+            }
+
+            // Create the feedback
+            $feedback = Feedback::create([
+                'dosen_id' => $dosenId,
+                'peer_id' => $validated['student_id'],
+                'group_id' => $group->id,
+                'feedback' => $validated['feedback'],
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Feedback berhasil disimpan',
+                'data' => $feedback
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Feedback storage error:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to store feedback: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

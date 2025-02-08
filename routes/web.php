@@ -91,6 +91,7 @@ Route::middleware('auth')->group(function () {
 
         //Feedback
         Route::get('/feedback-detail', [FeedbackController::class, 'feedbackDetailView']);
+        Route::post('/feedbacks-store-dosen', [FeedbackController::class, 'storeFeedback']);
     });
 
     //Route untuk Mahasiswa

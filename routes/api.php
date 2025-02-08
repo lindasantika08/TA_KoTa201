@@ -116,6 +116,7 @@ Route::middleware('auth:sanctum')->group(function () {
     //Dosen Feedback
     Route::get('/feedbacks-get-answer', [FeedbackController::class, 'getFeedbackAnswer']);
     Route::get('/feedback-summary', [FeedbackController::class, 'getSummaryFeedback']);
+    Route::post('/feedbacks-store-dosen', [FeedbackController::class, 'storeFeedback']);
 
 
     //-------------------------------------mahasiswa------------------------------------------------//

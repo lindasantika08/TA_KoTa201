@@ -11,14 +11,18 @@ const props = defineProps({
   initialData: Object,
 });
 
+// Existing state
 const activeTab = ref("history");
 const feedbacks = ref([]);
 const feedbackDosen = ref("");
 const loading = ref(true);
 const error = ref(null);
-const summaryData = ref([]); // Data untuk summary
-const summaryLoading = ref(false); // Loading state untuk summary
-const summaryError = ref(null); // Error state untuk summary
+const summaryData = ref([]);
+const summaryLoading = ref(false);
+const summaryError = ref(null);
+
+// New state for student selection
+const selectedStudent = ref(null);
 
 const tabs = [
   {
@@ -37,6 +41,65 @@ const tabs = [
     icon: "M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
   },
 ];
+
+// Frontend - Add CSRF token handling
+const submitFeedbackDosen = async () => {
+    // Validate all required fields
+    if (!feedbackDosen.value?.trim()) {
+      alert('Feedback tidak boleh kosong');
+      return;
+    }
+    
+    if (!selectedStudent.value?.mahasiswa?.id) {
+      alert('Silakan pilih mahasiswa');
+      return;
+    }
+
+    if (!props.batch_year || !props.project_name || !props.kelompok) {
+      alert('Data kelompok tidak lengkap');
+      return;
+    }
+
+    const payload = {
+      batch_year: props.batch_year,
+      project_name: props.project_name,
+      kelompok: props.kelompok,
+      feedback: feedbackDosen.value.trim(),
+      student_id: selectedStudent.value.mahasiswa.id,
+    };
+
+    console.log("Submitting feedback with payload:", payload);
+    try {
+      // Get CSRF token from meta tag
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+      
+      const response = await fetch("/dosen/feedbacks-store-dosen", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-TOKEN": csrfToken, // Add CSRF token
+          "Accept": "application/json" // Add Accept header
+        },
+        credentials: 'include', // Include cookies
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        feedbackDosen.value = "";
+        selectedStudent.value = null;
+        alert("Feedback berhasil dikirim!");
+        fetchFeedbacks();
+        activeTab.value = "history";
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Gagal mengirim feedback");
+      }
+    } catch (err) {
+      console.error("Error submitting feedback:", err);
+      alert(err.message);
+    }
+  };
 
 const fetchFeedbackSummary = async (forceRegenerate = false) => {
   summaryLoading.value = true;
@@ -85,7 +148,6 @@ const refreshSummary = async () => {
   }
 };
 
-// Panggil fetchFeedbackSummary saat tab summary aktif
 const handleTabChange = (tabId) => {
   activeTab.value = tabId;
 
@@ -94,7 +156,6 @@ const handleTabChange = (tabId) => {
   }
 };
 
-// Fetch feedback history (seperti sebelumnya)
 const fetchFeedbacks = async () => {
   try {
     const queryParams = new URLSearchParams({
@@ -118,36 +179,34 @@ const fetchFeedbacks = async () => {
   }
 };
 
-// Submit feedback dosen (seperti sebelumnya)
-const submitFeedbackDosen = async () => {
-  if (!feedbackDosen.value.trim()) return;
+const groupedFeedbacks = computed(() => {
+  const groups = {};
 
-  try {
-    const response = await fetch("/api/feedbacks-dosen", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        batch_year: props.batch_year,
-        project_name: props.project_name,
-        kelompok: props.kelompok,
-        feedback: feedbackDosen.value,
-      }),
-    });
-
-    if (response.ok) {
-      feedbackDosen.value = "";
-      alert("Feedback berhasil dikirim!");
-      fetchFeedbacks();
-      activeTab.value = "history";
-    } else {
-      throw new Error("Gagal mengirim feedback");
+  feedbacks.value.forEach((feedback) => {
+    if (!groups[feedback.peer_id]) {
+      groups[feedback.peer_id] = {
+        peer_id: feedback.peer_id,
+        peer_name: feedback.peer_name,
+        peer_nim: feedback.peer_nim,
+        feedbacks: [],
+      };
     }
-  } catch (err) {
-    alert(err.message);
-  }
-};
+    groups[feedback.peer_id].feedbacks.push(feedback);
+  });
+
+  Object.values(groups).forEach((group) => {
+    group.feedbacks.sort(
+      (a, b) => new Date(b.created_at) - new Date(a.created_at)
+    );
+  });
+
+  return Object.values(groups);
+});
+
+// New computed property for form validation
+const canSubmitFeedback = computed(() => {
+  return selectedStudent.value && feedbackDosen.value.trim().length > 0;
+});
 
 onMounted(fetchFeedbacks);
 </script>
@@ -283,6 +342,7 @@ onMounted(fetchFeedbacks);
                     ></div>
                     <p class="mt-2 text-gray-500">Memuat feedback...</p>
                   </div>
+
                   <div v-else-if="error" class="text-center py-8">
                     <p class="text-red-500">{{ error }}</p>
                     <button
@@ -292,73 +352,66 @@ onMounted(fetchFeedbacks);
                       Coba Lagi
                     </button>
                   </div>
-                  <div v-else-if="feedbacks.length" class="space-y-6">
+
+                  <div v-else-if="feedbacks.length" class="space-y-8">
+                    <!-- Group feedbacks by peer_id -->
                     <div
-                      v-for="feedback in feedbacks"
-                      :key="`${feedback.mahasiswa_nim}-${feedback.created_at}`"
-                      class="space-y-4"
+                      v-for="peer in groupedFeedbacks"
+                      :key="peer.peer_id"
+                      class="border rounded-lg p-6"
                     >
-                      <div class="text-sm text-gray-500">
-                        {{
-                          new Date(feedback.created_at).toLocaleString(
-                            "id-ID",
-                            {
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            }
-                          )
-                        }}
+                      <!-- Peer Information Header -->
+                      <div class="mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900">
+                          {{ peer.peer_name }}
+                        </h3>
+                        <p class="text-sm text-gray-500">
+                          NIM: {{ peer.peer_nim }}
+                        </p>
                       </div>
 
-                      <!-- Feedback participants info -->
-                      <div
-                        class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-4 rounded-lg border border-gray-200"
-                      >
-                        <div>
-                          <h4 class="text-sm font-medium text-gray-500 mb-1">
-                            Penerima Feedback
-                          </h4>
-                          <div class="text-gray-900">
-                            <p class="font-medium">{{ feedback.peer_name }}</p>
-                            <p class="text-sm text-gray-500">
-                              {{ `NIM: ${feedback.peer_nim}` }}
+                      <!-- Feedback Items -->
+                      <div class="space-y-6">
+                        <div
+                          v-for="feedback in peer.feedbacks"
+                          :key="feedback.created_at"
+                          class="border-t pt-4"
+                        >
+                          <div class="flex justify-between items-start mb-3">
+                            <div>
+                              <p class="text-sm font-medium text-gray-900">
+                                Dari: {{ feedback.mahasiswa_name }}
+                              </p>
+                              <p class="text-xs text-gray-500">
+                                NIM: {{ feedback.mahasiswa_nim }}
+                              </p>
+                            </div>
+                            <div class="text-sm text-gray-500">
+                              {{
+                                new Date(feedback.created_at).toLocaleString(
+                                  "id-ID",
+                                  {
+                                    year: "numeric",
+                                    month: "long",
+                                    day: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  }
+                                )
+                              }}
+                            </div>
+                          </div>
+
+                          <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-gray-700 whitespace-pre-wrap">
+                              {{ feedback.feedback }}
                             </p>
                           </div>
-                        </div>
-
-                        <div>
-                          <h4 class="text-sm font-medium text-gray-500 mb-1">
-                            Pengirim Feedback
-                          </h4>
-                          <div class="text-gray-900">
-                            <p class="font-medium">
-                              {{ feedback.mahasiswa_name }}
-                            </p>
-                            <p class="text-sm text-gray-500">
-                              NIM: {{ feedback.mahasiswa_nim }}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <!-- Feedback content -->
-                      <div
-                        class="bg-white p-4 rounded-lg border border-gray-200"
-                      >
-                        <h4 class="text-sm font-medium text-gray-500 mb-2">
-                          Isi Feedback
-                        </h4>
-                        <div class="prose prose-sm max-w-none">
-                          <p class="text-gray-700 whitespace-pre-wrap">
-                            {{ feedback.feedback }}
-                          </p>
                         </div>
                       </div>
                     </div>
                   </div>
+
                   <div v-else class="text-center py-8">
                     <p class="text-gray-500">
                       Belum ada feedback untuk kelompok ini.
@@ -366,70 +419,128 @@ onMounted(fetchFeedbacks);
                   </div>
                 </div>
               </div>
-              <!-- Input Panel -->
+            <!-- Modified Input Panel -->
+  <div v-show="activeTab === 'input'" class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div class="p-6 space-y-6">
+      <!-- Modified Student Selection Dropdown -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+          Pilih Mahasiswa
+        </label>
+        <select
+          v-model="selectedStudent"
+          class="w-full p-3 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        >
+          <option :value="null">Pilih mahasiswa...</option>
+          <option 
+            v-for="student in initialData.groupMembers" 
+            :key="student.mahasiswa?.id"
+            :value="student"
+            :disabled="!student.mahasiswa?.id"
+          >
+            {{ student.mahasiswa?.user?.name || 'Tidak Ada' }} - {{ student.mahasiswa?.nim || 'Tidak Ada' }}
+          </option>
+        </select>
+      </div>
+
+    <!-- Feedback Input -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-2">
+        Feedback
+      </label>
+      <textarea
+        v-model="feedbackDosen"
+        class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        rows="4"
+        placeholder="Masukkan feedback untuk mahasiswa ini..."
+        :disabled="!selectedStudent"
+      ></textarea>
+    </div>
+
+    <!-- Submit Button -->
+    <div class="flex justify-end">
+      <button
+        @click="submitFeedbackDosen"
+        class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        :disabled="!canSubmitFeedback"
+      >
+        Kirim Feedback
+      </button>
+    </div>
+  </div>
+</div>
               <div
-                v-show="activeTab === 'input'"
+                v-show="activeTab === 'summary'"
                 class="bg-white rounded-lg shadow-sm border border-gray-200"
               >
                 <div class="p-6">
-                  <textarea
-                    v-model="feedbackDosen"
-                    class="w-full p-3 border rounded-lg"
-                    rows="4"
-                    placeholder="Masukkan feedback untuk kelompok ini..."
-                  ></textarea>
-                  <button
-                    @click="submitFeedbackDosen"
-                    class="mt-4 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                  <div v-if="summaryLoading" class="text-center py-8">
+                    <div
+                      class="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"
+                    ></div>
+                    <p class="mt-2 text-gray-500">Memuat summary...</p>
+                  </div>
+
+                  <div
+                    v-else-if="summaryError"
+                    class="text-center py-8 text-red-500"
                   >
-                    Kirim Feedback
-                  </button>
+                    {{ summaryError }}
+                    <button
+                      @click="refreshSummary"
+                      class="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
+                    >
+                      Coba Lagi
+                    </button>
+                  </div>
+
+                  <template v-else>
+                    <div
+                      v-if="summaryData.length > 0"
+                      class="flex justify-end mb-4"
+                    >
+                      <button
+                        @click="refreshSummary"
+                        :disabled="summaryLoading"
+                        class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+                      >
+                        {{ summaryLoading ? "Memuat..." : "Refresh Summary" }}
+                      </button>
+                    </div>
+
+                    <div
+                      v-if="summaryData.length === 0"
+                      class="text-center py-8"
+                    >
+                      <p class="text-gray-500">
+                        Belum ada data summary yang tersedia.
+                      </p>
+                    </div>
+
+                    <div v-else class="space-y-6">
+                      <div
+                        v-for="summary in summaryData"
+                        :key="summary.peer_id"
+                        class="border rounded-lg p-4"
+                      >
+                        <div class="mb-4">
+                          <h3 class="text-lg font-semibold text-gray-900">
+                            {{ summary.peer_name }}
+                          </h3>
+                          <p class="text-sm text-gray-500">
+                            NIM: {{ summary.peer_nim }}
+                          </p>
+                        </div>
+                        <div class="prose prose-sm max-w-none">
+                          <p class="text-gray-700 whitespace-pre-wrap">
+                            {{ summary.summary }}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
                 </div>
               </div>
-
-              <div v-show="activeTab === 'summary'" class="bg-white rounded-lg shadow-sm border border-gray-200">
-  <div class="p-6">
-    <div v-if="summaryLoading" class="text-center py-8">
-      <div class="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
-      <p class="mt-2 text-gray-500">Memuat summary...</p>
-    </div>
-    
-    <div v-else-if="summaryError" class="text-center py-8 text-red-500">
-      {{ summaryError }}
-      <button @click="refreshSummary" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded">
-        Coba Lagi
-      </button>
-    </div>
-    
-    <template v-else>
-      <div v-if="summaryData.length > 0" class="flex justify-end mb-4">
-        <button 
-          @click="refreshSummary"
-          :disabled="summaryLoading"
-          class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
-        >
-          {{ summaryLoading ? 'Memuat...' : 'Refresh Summary' }}
-        </button>
-      </div>
-      
-      <div v-if="summaryData.length === 0" class="text-center py-8">
-        <p class="text-gray-500">Belum ada data summary yang tersedia.</p>
-      </div>
-      
-      <div v-else class="space-y-6">
-        <div v-for="summary in summaryData" :key="summary.peer_id" class="border rounded-lg p-4">
-          <div class="mb-4">
-            <h3 class="text-lg font-semibold text-gray-900">{{ summary.peer_name }}</h3>
-            <p class="text-sm text-gray-500">NIM: {{ summary.peer_nim }}</p>
-          </div>
-          <div class="prose prose-sm max-w-none">
-            <p class="text-gray-700 whitespace-pre-wrap">{{ summary.summary }}</p>
-          </div>
-        </div>
-      </div>
-    </template>
-  </div>
-</div>
             </div>
           </Card>
         </div>
