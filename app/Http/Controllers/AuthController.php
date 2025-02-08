@@ -16,13 +16,12 @@ class AuthController extends Controller
 {
 
     public function index() {
-        
-        return Inertia::render('Auth/Login');
 
+        return Inertia::render('Auth/Login');
     }
 
-    public function login(Request $request) {
-        
+    public function login(Request $request)
+    {
         $credentials = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required'],
@@ -38,7 +37,7 @@ class AuthController extends Controller
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
-                    'role' => $user->role 
+                    'role' => $user->role
                 ],
                 'message' => 'Login berhasil'
             ]);
@@ -49,9 +48,38 @@ class AuthController extends Controller
         ], 401);
     }
 
-    public function logout(Request $request){
-        // dd($request->user());
-        $request->user()->currentAccessToken()->delete();
+    public function validateToken(Request $request) {
+        try {
+            $user = $request->user();
+
+            if (!$user) {
+                return response()->json([
+                    'valid' => false,
+                    'message' => 'Token invalid'
+                ], 401);
+            }
+
+            return response()->json([
+                'valid' => true,
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->role
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'valid' => false,
+                'message' => 'Token validation error'
+            ], 500);
+        }
+    }
+
+    public function logout(Request $request) {
+
+        $user = $request->user();
+        $user->tokens()->delete();
         return response()->json(['message' => 'Logout Berhasil']);
     }
 }

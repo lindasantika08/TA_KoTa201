@@ -19,7 +19,7 @@ export default {
     Dropdown,
   },
   props: {
-    kelompok: Array, // Data kelompok yang sudah diolah di controller
+    kelompok: Array,
   },
   data() {
     return {
@@ -27,22 +27,38 @@ export default {
         { text: "Manage Group", href: "/dosen/kelola-kelompok" },
       ],
       headers: [
-        { label: "Tahun Ajaran", key: "tahun_ajaran" },
-        { label: "Nama Proyek", key: "nama_proyek" },
-        { label: "Kelompok", key: "kelompok" },
+        { label: "Tahun Ajaran", key: "batch_year" },
+        { label: "Nama Proyek", key: "project_name" },
+        { label: "Angkatan", key: "angkatan" },
+        { label: "Kelompok", key: "group" },
         { label: "Manager Dosen", key: "dosen" },
         { label: "Anggota Kelompok", key: "anggota" },
-        { label: "Aksi", key: "aksi" },
       ],
-      projects: [], // Data project dari /project-dropdown
-      selectedProject: "", // Pilihan dropdown
-      filteredKelompok: [], // Data kelompok yang sudah difilter
+      projects: [],
+      selectedProject: "",
+      filteredKelompok: [],
     };
   },
   mounted() {
     console.log("Data Kelompok:", this.kelompok);
     this.fetchProjects();
-    this.filteredKelompok = this.kelompok; // Default tampilkan semua data kelompok
+    // Check if angkatan exists in the raw data
+  this.kelompok.forEach(dosenGroup => {
+    dosenGroup.projects.forEach(project => {
+      console.log("Project Angkatan:", project.classroom?.angkatan);
+    });
+  });
+
+    // Flatten the nested structure
+    this.filteredKelompok = this.kelompok.flatMap(dosenGroup =>
+      dosenGroup.projects.map(project => ({
+        ...project,
+        dosen: dosenGroup.dosen_name,
+       // Ambil angkatan dari first group
+       angkatan: project.angkatan || "-",
+      }))
+    );
+     console.log("Filtered Kelompok:", this.filteredKelompok);
   },
   methods: {
     async fetchProjects() {
@@ -55,15 +71,28 @@ export default {
     },
     applyFilter() {
       if (!this.selectedProject) {
-        this.filteredKelompok = this.kelompok; // Reset ke data awal
+        this.filteredKelompok = this.kelompok.flatMap(dosenGroup =>
+          dosenGroup.projects.map(project => ({
+            ...project,
+            dosen: dosenGroup.dosen_name,
+            angkatan: project.angkatan || "-",
+          }))
+        );
         return;
       }
 
-      const [tahun_ajaran, nama_proyek] = this.selectedProject.split(" - ");
-      this.filteredKelompok = this.kelompok.filter(
-        (item) =>
-          item.tahun_ajaran === tahun_ajaran &&
-          item.nama_proyek === nama_proyek
+      const [batch_year, project_name] = this.selectedProject.split(" - ");
+      this.filteredKelompok = this.kelompok.flatMap(dosenGroup =>
+        dosenGroup.projects
+          .filter(project =>
+            project.batch_year === batch_year &&
+            project.project_name === project_name
+          )
+          .map(project => ({
+            ...project,
+            dosen: dosenGroup.dosen_name,
+            angkatan: project.angkatan || "-",
+          }))
       );
     },
     showDetail(kelompokId) {
@@ -71,8 +100,11 @@ export default {
       this.$inertia.get(route("DetailKelompok", { id: kelompokId }));
     },
     createKelompok(url) {
-      router.visit("/dosen/kelola-kelompok/create"); // Menggunakan Inertia.js untuk navigasi
+      router.visit("/dosen/kelola-kelompok/create");
     },
+    goToProfile(user_id) {
+      router.visit(`/dosen/kelola-kelompok/profile-mhs?user_id=${user_id}`);
+    }
   },
 };
 </script>
@@ -88,54 +120,46 @@ export default {
           <Breadcrumb :items="breadcrumbs" />
         </div>
         <Card title="Kelola Kelompok">
-          <!-- Container untuk Dropdown dan Button Create -->
-          <div class="flex justify-between mb-4 items-center"> <!-- 'items-center' untuk menyamakan tinggi elemen -->
-            <!-- Tombol Create Kelompok (Posisi Kanan) -->
+          <div class="flex justify-between mb-4 items-center">
             <div class="ml-4">
-              <button 
-                @click="createKelompok('/dosen/kelola-kelompok/create')"
-                class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
-                Create Kelompok
-              </button>
+              <span class="text-lg font-semibold text-black">Daftar Kelompok</span>
             </div>
-
-            <!-- Dropdown Filter (Posisi Kiri) -->
             <div class="flex-1 max-w-xs">
-              <select 
-                id="projectDropdown" 
-                v-model="selectedProject"
-                class="py-2 px-2 border border-gray-300 rounded w-full" 
-                @change="applyFilter">
+              <select id="projectDropdown" v-model="selectedProject"
+                class="py-2 px-2 border border-gray-300 rounded w-full" @change="applyFilter">
                 <option value="" disabled>Pilih Tahun Ajaran - Proyek</option>
-                <option 
-                  v-for="project in projects" 
-                  :key="`${project.tahun_ajaran}-${project.nama_proyek}`"
-                  :value="`${project.tahun_ajaran} - ${project.nama_proyek}`">
-                  {{ project.tahun_ajaran }} - {{ project.nama_proyek }}
+                <option v-for="project in projects" :key="`${project.batch_year}-${project.project_name}`"
+                  :value="`${project.batch_year} - ${project.project_name}`">
+                  {{ project.batch_year }} - {{ project.project_name }}
                 </option>
               </select>
             </div>
+
+
           </div>
 
-          <!-- Data Table -->
           <DataTable :headers="headers" :items="filteredKelompok">
-            <!-- Slot untuk Anggota Kelompok -->
+            <template v-slot:column-angkatan="{ item }">
+              <span>{{ item.angkatan }}</span>
+            </template>
+
             <template v-slot:column-anggota="{ item }">
               <ul>
-                <li v-for="(anggota, index) in item.anggota" :key="index">
-                  - {{ anggota }}
+                <li v-for="(anggota, index) in item.anggota" :key="index" class="flex items-center space-x-2">
+                  <span class="text-gray-400">•</span>
+                  <a href="#" @click.prevent="goToProfile(anggota.user_id)" class="text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200">
+                     {{ anggota.name }}
+                  </a>
                 </li>
               </ul>
             </template>
-
-            <!-- Slot untuk Kolom Aksi -->
-            <template v-slot:column-aksi="{ item }">
-              <button @click="showDetail(item.id)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                Detail
-              </button>
-            </template>
           </DataTable>
         </Card>
+
+        <button @click="createKelompok('/dosen/kelola-kelompok/create')"
+        class="fixed bottom-8 right-8 flex items-center justify-center w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105">
+          <font-awesome-icon :icon="['fas', 'plus']" />
+        </button>
       </main>
     </div>
   </div>

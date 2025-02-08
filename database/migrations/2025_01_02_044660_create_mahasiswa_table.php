@@ -11,13 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('competencies', function (Blueprint $table) {
+        Schema::create('mahasiswa', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->string('name');
-            $table->string('graph_data');
-            $table->string('score_result');
-            $table->timestamps();
+            $table->foreignUuid('user_id')->constrained('users');
+            $table->foreignUuid('class_id')->constrained('class_room');
+            $table->string('nim', 9)->unique();
+            $table->string('phone', 15)->nullable();
             $table->softDeletes();
+            $table->timestamps();
         });
     }
 
@@ -26,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('competencies');
+        Schema::dropIfExists('mahasiswa');
     }
 };

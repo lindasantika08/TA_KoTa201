@@ -11,9 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('notification', function (Blueprint $table) {
+        Schema::create('prodi', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->date('date_reminder');
+            $table->foreignUuid('major_id')->constrained('major');
+            $table->string('prodi_name');
             $table->timestamps();
             $table->softDeletes();
         });
@@ -24,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('notification');
+        Schema::dropIfExists('prodi');
     }
 };

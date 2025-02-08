@@ -1,154 +1,3 @@
-<template>
-    <div class="flex min-h-screen">
-        <!-- Sidebar -->
-        <Sidebar role="dosen" />
-
-        <!-- Main Content -->
-        <div class="flex-1">
-            <!-- Navbar -->
-            <Navbar userName="Dosen" />
-
-            <!-- Content -->
-            <main class="p-6">
-                <div class="mb-4">
-                    <Breadcrumb :items="breadcrumbs" />
-                </div>
-                <Card :title="`Self Assessment - ${namaProyek} (${tahunAjaran})`">
-                    <template #actions>
-                        <div class="flex justify-end">
-                            <button
-                                @click="handleAnswers()"
-                                class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                            >
-                                <font-awesome-icon icon="fa-solid fa-pencil" />
-                                Attempt
-                            </button>
-                        </div>
-                        <!-- Container untuk assessment yang dikelompokkan berdasarkan aspek -->
-                        <div class="mt-6 space-y-8">
-                            <div
-                                v-for="(group, aspek) in groupedAssessments"
-                                :key="aspek"
-                            >
-                                <!-- Card untuk setiap aspek -->
-                                <Card
-                                    :title="aspek"
-                                    :description="
-                                        'Total Pertanyaan: ' + group.length
-                                    "
-                                >
-                                    <template #actions>
-                                        <div>
-                                            <!-- Daftar Pertanyaan -->
-                                            <div
-                                                v-for="(
-                                                    assessment, index
-                                                ) in group"
-                                                :key="assessment.id"
-                                                class="mt-4"
-                                            >
-                                                <h3
-                                                    class="text-lg font-semibold mb-2"
-                                                >
-                                                    {{ index + 1 }}.
-                                                    {{ assessment.pertanyaan }}
-                                                </h3>
-                                                <h4
-                                                    class="text-sm text-gray-600"
-                                                >
-                                                    {{ assessment.kriteria }}
-                                                </h4>
-
-                                                <!-- Tabel Bobot -->
-                                                <div
-                                                    class="overflow-x-auto mt-2"
-                                                >
-                                                    <table
-                                                        class="w-full table-auto border-collapse bg-white"
-                                                    >
-                                                        <thead>
-                                                            <tr>
-                                                                <th
-                                                                    class="px-4 py-2 border"
-                                                                >
-                                                                    Bobot 1
-                                                                </th>
-                                                                <th
-                                                                    class="px-4 py-2 border"
-                                                                >
-                                                                    Bobot 2
-                                                                </th>
-                                                                <th
-                                                                    class="px-4 py-2 border"
-                                                                >
-                                                                    Bobot 3
-                                                                </th>
-                                                                <th
-                                                                    class="px-4 py-2 border"
-                                                                >
-                                                                    Bobot 4
-                                                                </th>
-                                                                <th
-                                                                    class="px-4 py-2 border"
-                                                                >
-                                                                    Bobot 5
-                                                                </th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            <tr>
-                                                                <td
-                                                                    class="px-4 py-2 border"
-                                                                >
-                                                                    {{
-                                                                        assessment.bobot_1
-                                                                    }}
-                                                                </td>
-                                                                <td
-                                                                    class="px-4 py-2 border"
-                                                                >
-                                                                    {{
-                                                                        assessment.bobot_2
-                                                                    }}
-                                                                </td>
-                                                                <td
-                                                                    class="px-4 py-2 border"
-                                                                >
-                                                                    {{
-                                                                        assessment.bobot_3
-                                                                    }}
-                                                                </td>
-                                                                <td
-                                                                    class="px-4 py-2 border"
-                                                                >
-                                                                    {{
-                                                                        assessment.bobot_4
-                                                                    }}
-                                                                </td>
-                                                                <td
-                                                                    class="px-4 py-2 border"
-                                                                >
-                                                                    {{
-                                                                        assessment.bobot_5
-                                                                    }}
-                                                                </td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </template>
-                                </Card>
-                            </div>
-                        </div>
-                    </template>
-                </Card>
-            </main>
-        </div>
-    </div>
-</template>
-
 <script>
 import { ref, computed } from "vue";
 import { router, usePage } from "@inertiajs/vue3";
@@ -168,17 +17,14 @@ export default {
     data() {
         return {
             breadcrumbs: [
-                {
-                    text: "Self Assessment",
-                    href: "/dosen/assessment/projectsSelf",
-                },
+                { text: "Self Assessment", href: "/dosen/assessment/projectsSelf" },
                 { text: "Detail", href: null },
             ],
         };
     },
     props: {
-        tahunAjaran: String,
-        namaProyek: String,
+        batchYear: String,
+        projectName: String,
         assessments: {
             type: Array,
             required: true,
@@ -192,14 +38,16 @@ export default {
             showDropdown.value = !showDropdown.value;
         };
 
-        // Group assessments berdasarkan aspek
         const groupedAssessments = computed(() => {
             const groups = {};
             props.assessments.forEach((assessment) => {
-                if (!groups[assessment.aspek]) {
-                    groups[assessment.aspek] = [];
+                if (assessment.type_criteria) {
+                    const aspect = assessment.type_criteria.aspect || 'Uncategorized';
+                    if (!groups[aspect]) {
+                        groups[aspect] = [];
+                    }
+                    groups[aspect].push(assessment);
                 }
-                groups[assessment.aspek].push(assessment);
             });
             return groups;
         });
@@ -208,50 +56,149 @@ export default {
             try {
                 const response = await axios.get("/api/get-question-id", {
                     params: {
-                        tahun_ajaran: props.tahunAjaran,
-                        nama_proyek: props.namaProyek,
+                        batch_year: props.batchYear,
+                        project_name: props.projectName,
                     },
                 });
-                return response.data.questionId;
+
+                if (response.data) {
+                    return response.data.questionId;
+                }
             } catch (error) {
                 console.error("Error fetching QuestionId:", error);
-                alert(
-                    "Gagal mendapatkan QuestionId. Periksa kembali data Anda."
-                );
+                alert("Failed to get QuestionId. Please check your data.");
                 return null;
             }
         };
 
         const handleAnswers = async () => {
-    // Ambil QuestionId dari backend
-    const questionId = await fetchQuestionId();
-    if (!questionId) return;
+            const questionId = await fetchQuestionId();
+            if (!questionId) return;
 
-    // Data yang ingin dikirim
-    const data = {
-        QuestionId: questionId,
-        tahunAjaran: props.tahunAjaran,
-        namaProyek: props.namaProyek,
-    };
+            const data = {
+                batch_year: props.batchYear,
+                project_name: props.projectName
+            };
 
-    // Log data ke konsol untuk debugging
-    console.log("Data yang akan dikirim:", data);
+            console.log("Data to be sent:", data);
 
-    // Navigasi ke halaman pengisian assessment
-    router.visit("/dosen/AnswerSelf", {
-        method: "get",
-        data: data,
-    });
-};
+            router.visit("/dosen/AnswerSelf", {
+                method: "get",
+                data: data,
+            });
+        };
 
         return {
             toggleDropdown,
             showDropdown,
             groupedAssessments,
-            tahunAjaran: props.tahunAjaran,
-            namaProyek: props.namaProyek,
             handleAnswers,
+            batchYear: props.batchYear,
+            projectName: props.projectName,
         };
     },
 };
 </script>
+
+<template>
+    <div class="flex min-h-screen bg-gray-50">
+        <Sidebar role="dosen" />
+
+        <div class="flex-1">
+            <Navbar userName="Dosen" />
+
+            <main class="p-6">
+                <!-- Header Section -->
+                <div class="mb-6">
+                    <Breadcrumb :items="breadcrumbs" />
+                    <div class="mt-4 flex justify-between items-center">
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-900">Self Assessment</h1>
+                            <div class="mt-2 text-sm text-gray-600">
+                                <span class="font-medium">Project:</span> {{ projectName }} | 
+                                <span class="font-medium">Batch Year:</span> {{ batchYear }}
+                            </div>
+                        </div>
+                        <button @click="handleAnswers()"
+                            class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
+                            <font-awesome-icon icon="fa-solid fa-pencil" class="mr-2" />
+                            Start Assessment
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Assessment Groups -->
+                <div class="space-y-6">
+                    <div v-for="(group, aspect) in groupedAssessments" :key="aspect" 
+                        class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                        <!-- Group Header -->
+                        <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                            <div class="flex justify-between items-center">
+                                <h2 class="text-lg font-semibold text-gray-900">{{ aspect || 'Uncategorized' }}</h2>
+                                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                                    {{ group.length }} Questions
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Questions List -->
+                        <div class="divide-y divide-gray-200">
+                            <div v-for="(assessment, index) in group" :key="assessment.id" 
+                                class="p-6 hover:bg-gray-50 transition-colors">
+                                <!-- Question Header -->
+                                <div class="flex items-start space-x-4">
+                                    <div class="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-semibold">
+                                        {{ index + 1 }}
+                                    </div>
+                                    <div class="flex-1">
+                                        <h3 class="text-lg font-medium text-gray-900 mb-2">
+                                            {{ assessment.question }}
+                                        </h3>
+                                        <div class="flex items-center text-sm text-gray-600 mb-4">
+                                            <font-awesome-icon icon="fa-solid fa-tag" class="mr-2" />
+                                            {{ assessment.type_criteria?.criteria }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Scoring Rubric -->
+                                <div class="mt-4 bg-gray-50 rounded-lg p-4">
+                                    <h4 class="text-sm font-medium text-gray-700 mb-3">Scoring Rubric</h4>
+                                    <div class="overflow-x-auto">
+                                        <table class="min-w-full divide-y divide-gray-200">
+                                            <thead>
+                                                <tr class="bg-gray-100">
+                                                    <th v-for="i in 5" :key="i" 
+                                                        class="px-4 py-3 text-sm font-medium text-gray-700 text-center">
+                                                        Score {{ i }}
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="bg-white divide-y divide-gray-200">
+                                                <tr>
+                                                    <td v-for="i in 5" :key="i" 
+                                                        class="px-4 py-3 text-sm text-gray-600 text-center">
+                                                        {{ assessment.type_criteria?.[`bobot_${i}`] || '-' }}
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- No Data State -->
+                <div v-if="Object.keys(groupedAssessments).length === 0" 
+                    class="text-center py-12 bg-white rounded-lg shadow-sm">
+                    <div class="text-gray-500">
+                        <font-awesome-icon icon="fa-solid fa-clipboard-list" class="text-4xl mb-4" />
+                        <p class="text-lg">No assessment criteria found</p>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+</template>

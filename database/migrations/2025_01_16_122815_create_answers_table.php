@@ -13,17 +13,16 @@ return new class extends Migration
     {
         Schema::create('answers', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->uuid('user_id');
-            $table->foreign('user_id')->references('id')->on('users');
-            $table->uuid('question_id');
-            $table->foreign('question_id')->references('id')->on('assessment');
+            $table->foreignUuid('mahasiswa_id')->nullable()->constrained('mahasiswa');
+            $table->foreignUuid('question_id')->constrained('assessment');
+            $table->foreignUuid('dosen_id')->nullable()->constrained('dosen');
             $table->string('answer');
             $table->integer('score');
             $table->string('status')->default('pending');
             $table->softDeletes();
             $table->timestamps();
 
-            $table->unique(['question_id', 'user_id'], 'unique_user_question');
+            $table->unique(['question_id', 'mahasiswa_id'], 'unique_user_question');
         });
     }
 

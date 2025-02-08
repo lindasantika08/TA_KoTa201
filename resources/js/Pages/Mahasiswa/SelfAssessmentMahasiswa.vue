@@ -20,20 +20,28 @@ export default {
         studentInfo: {
             type: Object,
             default: () => ({
-                'nim': '',
+                'nip': '',
                 'name': '',
                 'class': '',
                 'group': '',
                 'project': '',
                 'date': '',
             })
+        },
+        batch_year: {
+            type: String,
+            default: ''
+        },
+        project_name: {
+            type: String,
+            default: ''
         }
     },
 
     data() {
         return {
             breadcrumbs: [
-                { text: "Assessment", href: "/self" },
+                { text: "Assessment", href: "/mahasiswa/assessment/self" },
                 { text: "Self Assessment", href: null }
             ],
             headers: [
@@ -58,29 +66,27 @@ export default {
     },
     computed: {
         currentQuestion() {
-            console.log('Current question index:', this.currentQuestionIndex);
-            console.log('Current question:', this.questions[this.currentQuestionIndex]);
             return this.questions[this.currentQuestionIndex] || null;
         },
         canSubmitAll() {
-            return this.questions.every(question => {
-                const temp = this.temporaryAnswers[question.id];
-                return temp?.answer && temp?.score;
-            });
-        },
-        currentProgress() {
-            const answered = Object.keys(this.temporaryAnswers).length;
-            return {
-                answered,
-                total: this.questions.length,
-                isComplete: answered === this.questions.length
-            };
+            return this.questions.length > 0 &&
+                this.questions.every(question => {
+                    const savedAnswer = this.temporaryAnswers[question.id];
+                    return savedAnswer &&
+                        savedAnswer.answer &&
+                        savedAnswer.answer.trim() !== '' &&
+                        savedAnswer.score !== null;
+                });
         },
     },
     async created() {
-        console.log('Component created - starting fetch');
+        const savedTemp = localStorage.getItem('temporaryAnswers');
+        if (savedTemp) {
+            this.temporaryAnswers = JSON.parse(savedTemp);
+        }
         await this.fetchQuestions();
         await this.fetchStudentsInfo();
+        await this.loadExistingAnswer();
     },
     methods: {
 
@@ -90,13 +96,23 @@ export default {
             this.error = null;
 
             try {
-                const response = await axios.get('/api/questions');
+                console.log('Tahun Ajaran:', this.batch_year);
+                console.log('Nama Proyek:', this.project_name);
+
+                const response = await axios.get('/api/questions', {
+                    params: {
+                        batch_year: this.batch_year,
+                        project_name: this.project_name
+                    }
+                });
+
                 console.log('API Response:', response);
 
                 if (response.data && Array.isArray(response.data)) {
                     this.questions = response.data;
                     console.log('Questions loaded:', this.questions.length);
                     this.loading = false;
+                    await this.loadExistingAnswer();
                 } else {
                     throw new Error('Invalid response format');
                 }
@@ -104,15 +120,26 @@ export default {
                 console.error('Error details:', {
                     message: error.message,
                     response: error.response,
-                    status: error.response?.status
+                    status: error.response?.status,
+                    data: error.response?.data
                 });
-                this.error = `Error loading questions: ${error.message}`;
+
+                this.error = error.response?.data?.error || `Error loading questions: ${error.message}`;
                 this.loading = false;
             }
         },
         async fetchStudentsInfo() {
             try {
-                const response = await axios.get('/api/user-info');
+                const batch_year = this.$page.props.batch_year || this.$route.query.batch_year;
+                const project_name = this.$page.props.project_name || this.$route.query.project_name;
+
+                const response = await axios.get('/api/user-info', {
+                    params: {
+                        batch_year: batch_year,
+                        project_name: project_name
+                    }
+                });
+
                 if (response.data) {
                     this.studentInfo = response.data;
                 }
@@ -125,48 +152,46 @@ export default {
             console.log('Score set to:', value);
         },
 
-        submitAnswer() {
-            if (!this.currentQuestion) {
-                console.log('No current question available');
-                return;
-            }
+        async submitAnswer() {
+            if (!this.currentQuestion) return;
 
             if (!this.score) {
                 alert('Silakan pilih nilai terlebih dahulu');
                 return;
             }
 
-            console.log('Submitting answer for question:', this.currentQuestion.id);
-
-            const payload = {
-                question_id: this.currentQuestion.id,
-                answer: this.answer,
-                score: this.score,
-                status: 'submitted'
-            };
-
-            axios.post('/api/save-answer', payload)
-                .then((response) => {
-                    console.log('Answer saved:', response);
-                    alert(response.data.message);
-                    if (response.data.message === 'Answer saved successfully') {
-                        this.nextQuestion();
-                        this.score = null;
-                        this.answer = '';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error saving answer:', error);
-                    alert('Gagal menyimpan jawaban. Silakan coba lagi.');
+            try {
+                const response = await axios.post('/api/save-answer-mhs', {
+                    answers: [{
+                        question_id: this.currentQuestion.id,
+                        answer: this.answer,
+                        score: this.score,
+                        status: 'submitted'
+                    }]
                 });
+
+                if (response.data.message.includes('successfully')) {
+                    delete this.temporaryAnswers[this.currentQuestion.id];
+                    localStorage.setItem('temporaryAnswers', JSON.stringify(this.temporaryAnswers));
+
+                    alert(response.data.message);
+
+                    if (this.currentQuestionIndex < this.questions.length - 1) {
+                        this.currentQuestionIndex++;
+                        await this.loadExistingAnswer();
+                    }
+                }
+            } catch (error) {
+                console.error('Error saving answer:', error);
+                const errorMessage = error.response?.data?.message || 'Gagal menyimpan jawaban. Silakan coba lagi.';
+                alert(errorMessage);
+            }
         },
         async nextQuestion() {
-            this.saveTemporaryAnswer();
+            await this.saveTemporaryAnswer();
             if (this.currentQuestionIndex < this.questions.length - 1) {
                 this.currentQuestionIndex++;
                 await this.loadExistingAnswer();
-            } else {
-                this.checkAllAnswered();
             }
         },
         async prevQuestion() {
@@ -179,16 +204,17 @@ export default {
         async loadExistingAnswer() {
             if (!this.currentQuestion) return;
 
-            const tempAnswer = this.temporaryAnswers[this.currentQuestion.id];
-            if (tempAnswer) {
-                this.answer = tempAnswer.answer;
-                this.score = tempAnswer.score;
-                return;
-            }
-
             try {
-                const response = await axios.get(`/api/get-answer/${this.currentQuestion.id}`);
-                if (response.data) {
+                const response = await axios.get(`/api/get-answer-mhs/${this.currentQuestion.id}`);
+
+                const tempAnswer = this.temporaryAnswers[this.currentQuestion.id];
+                if (tempAnswer) {
+                    this.answer = tempAnswer.answer;
+                    this.score = tempAnswer.score;
+                    return;
+                }
+
+                if (response.data && response.data.answer) {
                     this.answer = response.data.answer;
                     this.score = response.data.score;
                 } else {
@@ -197,14 +223,20 @@ export default {
                 }
             } catch (error) {
                 console.error('Error loading existing answer:', error);
+                this.answer = '';
+                this.score = null;
             }
         },
         saveTemporaryAnswer() {
             if (this.currentQuestion) {
-                this.temporaryAnswers[this.currentQuestion.id] = {
-                    answer: this.answer,
-                    score: this.score
-                };
+                if (this.answer || this.score) {
+                    this.temporaryAnswers[this.currentQuestion.id] = {
+                        answer: this.answer,
+                        score: this.score
+                    };
+
+                    localStorage.setItem('temporaryAnswers', JSON.stringify(this.temporaryAnswers));
+                }
             }
         },
         checkAllAnswered() {
@@ -217,7 +249,7 @@ export default {
             this.saveTemporaryAnswer();
 
             if (!this.canSubmitAll) {
-                alert('Mohon jawab semua pertanyaan terlebih dahulu');
+                alert('Mohon lengkapi semua jawaban terlebih dahulu');
                 return;
             }
 
@@ -226,20 +258,18 @@ export default {
 
         async submitAllAnswers() {
             try {
-                this.isSubmitting = true;
-
-                const allAnswers = Object.entries(this.temporaryAnswers).map(([questionId, data]) => ({
-                    question_id: questionId,
-                    answer: data.answer,
-                    score: data.score,
+                const allAnswers = this.questions.map(question => ({
+                    question_id: question.id,
+                    answer: this.temporaryAnswers[question.id]?.answer || '',
+                    score: this.temporaryAnswers[question.id]?.score || null,
                     status: 'submitted'
                 }));
 
                 const response = await axios.post('/api/save-all-answers', { answers: allAnswers });
 
                 if (response.data.success) {
+                    this.clearFormFields();
                     alert('Semua jawaban berhasil disimpan!');
-                    this.temporaryAnswers = {};
                     this.$inertia.visit('/mahasiswa/assessment/self');
                 }
             } catch (error) {
@@ -249,6 +279,26 @@ export default {
                 this.isSubmitting = false;
                 this.showConfirmModal = false;
             }
+        },
+
+        clearFormFields() {
+            this.answer = '';
+            this.score = null;
+            this.temporaryAnswers = {};
+            localStorage.removeItem('temporaryAnswers');
+        },
+
+        mounted() {
+            window.addEventListener('beforeunload', (event) => {
+                if (Object.keys(this.temporaryAnswers).length > 0) {
+                    event.preventDefault();
+                    event.returnValue = '';
+                }
+            });
+        },
+
+        beforeDestroy() {
+            window.removeEventListener('beforeunload');
         }
 
     },
@@ -267,7 +317,6 @@ export default {
                 </div>
 
                 <Card title="FORMULIR PENGISIAN SELF ASSESSMENT" class="w-full">
-                    <!-- Student Information -->
                     <div class="grid grid-cols-2 gap-6 text-sm leading-6 mb-6">
                         <div>
                             <p><strong>NIM:</strong> {{ studentInfo.nim }}</p>
@@ -276,18 +325,16 @@ export default {
                         </div>
                         <div>
                             <p><strong>Kelompok:</strong> {{ studentInfo.group }}</p>
-                            <p><strong>Proyek:</strong> {{ studentInfo.project }}</p>
+                            <p><strong>Proyek:</strong> {{ studentInfo.project_name }}</p>
                             <p><strong>Tanggal Pengisian:</strong> {{ studentInfo.date }}</p>
                         </div>
                     </div>
 
                     <Card>
-                        <!-- Loading State -->
                         <div v-if="loading" class="text-center py-8">
                             <p>Load Questions...</p>
                         </div>
 
-                        <!-- Error State -->
                         <div v-else-if="error" class="text-center py-8 text-red-600">
                             <p>{{ error }}</p>
                             <button @click="fetchQuestions"
@@ -296,9 +343,7 @@ export default {
                             </button>
                         </div>
 
-                        <!-- Questions Display -->
                         <div v-else-if="currentQuestion" class="space-y-6">
-                            <!-- Question Information -->
                             <div class="bg-gray-50 p-4 rounded-lg">
                                 <h3 class="font-semibold text-lg mb-4">
                                     Question {{ currentQuestionIndex + 1 }} dari {{ questions.length }}
@@ -307,7 +352,6 @@ export default {
                                 <p><strong>Kriteria:</strong> {{ currentQuestion.kriteria }}</p>
                             </div>
 
-                            <!-- Bobot Table -->
                             <div class="overflow-x-auto">
                                 <table class="min-w-full border-collapse border border-gray-200">
                                     <thead>
@@ -329,9 +373,8 @@ export default {
                                 </table>
                             </div>
 
-                            <!-- Question Text -->
                             <div class="bg-white p-6 rounded-lg shadow-md">
-                                <p class="text-gray-700 mb-4">{{ currentQuestion.pertanyaan }}</p>
+                                <p class="text-gray-700 mb-4">{{ currentQuestion.question }}</p>
                                 <div class="score-container mt-4">
                                     <div class="slider-container">
                                         <div class="track"></div>
@@ -349,7 +392,6 @@ export default {
                                 </div>
                             </div>
 
-                            <!-- Answer Form -->
                             <form @submit.prevent="submitAnswer" class="space-y-4">
                                 <div>
                                     <textarea id="answer" v-model="answer" rows="4"
@@ -358,7 +400,6 @@ export default {
                                         required></textarea>
                                 </div>
 
-                                <!-- Replace the Navigation buttons section -->
                                 <div class="flex justify-between items-center pt-4">
                                     <button type="button" @click="prevQuestion" :disabled="currentQuestionIndex === 0"
                                         class="px-4 py-2 bg-yellow-400 text-white rounded hover:bg-blue-600">
@@ -371,9 +412,9 @@ export default {
                                     </button>
 
                                     <button v-if="currentQuestionIndex === questions.length - 1" type="button"
-                                        @click="handleSubmitAll" :disabled="!canSubmitAll || isSubmitting"
+                                        @click="handleSubmitAll" :disabled="isSubmitting"
                                         class="px-4 py-2 bg-green-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed">
-                                        {{ isSubmitting ? 'Mengirim...' : 'Kirim' }}
+                                        {{ isSubmitting ? 'Mengirim...' : 'Send' }}
                                     </button>
                                     <button v-else type="button" @click="nextQuestion"
                                         :disabled="currentQuestionIndex === questions.length - 1"
@@ -388,7 +429,6 @@ export default {
                             </form>
                         </div>
 
-                        <!-- No Questions State -->
                         <div v-else class="text-center py-8">
                             <p>Nothing Question.</p>
                         </div>

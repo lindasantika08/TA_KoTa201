@@ -11,13 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('score', function (Blueprint $table) {
+        Schema::create('major', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->uuid('criteria_id');
-            $table->foreign('criteria_id')->references('id')->on('criteria');
-            $table->integer('total_score');
-            $table->string('type_assessment');
-            // $table->foreign('type_assessment')->references('type')->on('assessment');
+            $table->string('major_name');
             $table->timestamps();
             $table->softDeletes();
         });
@@ -28,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('score');
+        Schema::dropIfExists('major');
     }
 };

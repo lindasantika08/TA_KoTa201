@@ -5,14 +5,18 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Answers extends Model
 {
-    use HasFactory, HasUuids;
+    use HasFactory, HasUuids, SoftDeletes;
+
+    protected $table = 'answers';
 
     protected $fillable = [
-        'user_id',
+        'mahasiswa_id',
         'question_id',
+        'dosen_id',
         'answer',
         'score',
         'status',
@@ -32,19 +36,18 @@ class Answers extends Model
      */
     protected $keyType = 'string';
 
-    /**
-     * Get the user who submitted the answer
-     */
-    public function user()
+    public function mahasiswa()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Mahasiswa::class, 'mahasiswa_id', 'id');
     }
 
-    /**
-     * Get the question this answer belongs to
-     */
     public function question()
     {
-        return $this->belongsTo(Assessment::class, 'question_id');
+        return $this->belongsTo(Assessment::class, 'question_id', 'id');
+    }
+
+    public function dosen()
+    {
+        return $this->belongsTo(Dosen::class, 'dosen_id', 'id');
     }
 }

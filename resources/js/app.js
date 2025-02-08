@@ -5,6 +5,7 @@ import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
+import VueApexCharts from 'vue3-apexcharts'
 
 library.add(fas);
 
@@ -22,6 +23,7 @@ createInertiaApp({
         app.use(ZiggyVue);
         app.component('font-awesome-icon', FontAwesomeIcon);
         app.mount(el);
+        app.use(VueApexCharts)
         return app;
     },
 });

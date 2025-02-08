@@ -8,9 +8,8 @@ import Breadcrumb from "@/Components/Breadcrumb.vue";
 import dayjs from 'dayjs';
 import { router } from '@inertiajs/vue3';
 
-
-export default{
-  components:{
+export default {
+  components: {
     DataTable,
     Navbar,
     Card,
@@ -22,53 +21,65 @@ export default{
       breadcrumbs: [
         { text: "Self Assessment", href: "/dosen/assessment/projectsSelf" }
       ],
-      headers : [
+      headers: [
         { key: 'no', label: 'No' },
-        { key: 'tahun_ajaran', label: 'Tahun Ajaran' },
-        { key: 'nama_proyek', label: 'Proyek' },
+        { key: 'batch_year', label: 'Batch Year' },
+        { key: 'project_name', label: 'Project Name' },
         { key: 'status', label: 'Status' },
-        { key: 'tanggal', label: 'Tanggal Pembuatan' },
+        { key: 'date', label: 'Created Date' },
         { key: 'actions', label: 'Actions' },
       ],
-      items : [],
-  }
-},
-//method
-methods: {
-  handleDetail(item){
-    router.get('/dosen/assessment/data-with-bobot-self', {
-      tahun_ajaran: item.tahun_ajaran,
-      nama_proyek: item.nama_proyek
-    }, {
-      preserveState: true
-    });
+      items: [],
+    }
   },
-  handleListAnswer(item) {
-    // Pindah halaman dengan mengirimkan tahun_ajaran dan nama_proyek sebagai query params
-    router.get('/dosen/answers-self-assessment', {
-      tahun_ajaran: item.tahun_ajaran,
-      nama_proyek: item.nama_proyek
-    }, {
-      preserveState: true
+  methods: {
+    handleDetail(item) {
+    // Log untuk memastikan parameter yang dikirimkan
+    console.log('Sending request to /dosen/assessment/data-with-bobot-self with parameters:', {
+        batch_year: item.batch_year,
+        project_name: item.project_name
     });
-  }
-},
 
-mounted() {
-    axios.get('/api/proyek-self-assessment')
+    // Mengirimkan request dengan router
+    router.get('/dosen/assessment/data-with-bobot-self', {
+        batch_year: item.batch_year,
+        project_name: item.project_name
+    }, {
+        preserveState: true
+    })
     .then(response => {
-        this.items = response.data.map((item, index) => ({
-            no: index + 1,
-            tahun_ajaran: item.tahun_ajaran,
-            nama_proyek: item.nama_proyek,
-            status: item.status,
-            tanggal: dayjs(item.created_at).format('DD MMMM YYYY HH:mm'),
-            // Tidak perlu mengatur actions di sini karena kita akan menggunakan slot
-        }));
+        // Jika request sukses, log responsenya
+        console.log('Response received:', response);
     })
     .catch(error => {
-        console.error('There something when reach data:', error);
+        // Jika terjadi error, log errornya
+        console.error('Error occurred while fetching data:', error);
     });
+},
+
+    handleListAnswer(item) {
+      router.get('/dosen/answers-self-assessment', {
+        batch_year: item.batch_year,
+        project_name: item.project_name
+      }, {
+        preserveState: true
+      });
+    }
+  },
+  mounted() {
+    axios.get('/api/proyek-self-assessment')
+      .then(response => {
+        this.items = response.data.map((item, index) => ({
+          no: index + 1,
+          batch_year: item.batch_year,
+          project_name: item.project_name,
+          status: item.status,
+          date: dayjs(item.created_at).format('DD MMMM YYYY HH:mm'),
+        }));
+      })
+      .catch(error => {
+        console.error('Error fetching data:', error);
+      });
   }
 }
 </script>
@@ -77,20 +88,15 @@ mounted() {
   <div class="flex min-h-screen">
     <Sidebar role="dosen" />
     <div class="flex-1">
-      <Navbar Username="dosen" />
+      <Navbar userName="dosen" />
       <main class="p-6">
         <div class="mb-4">
           <Breadcrumb :items="breadcrumbs" />
         </div>
 
-        <Card
-          title="DAFTAR PROYEK SELF ASSESSMENT"
-          description=""
-          class="w-full"
-        >
-          <!-- Cek apakah items kosong -->
+        <Card title="SELF ASSESSMENT PROJECT LIST" description="" class="w-full">
           <div v-if="items.length === 0" class="text-center text-gray-500 py-6">
-            Belum ada assessment
+            No assessment available
           </div>
           <div v-else>
             <DataTable :headers="headers" :items="items" class="mt-10">
@@ -113,10 +119,10 @@ mounted() {
 
               <template #column-status="{ item }">
                 <span
-                  :class="[ 
-                    'px-2 py-1 rounded-full text-xs font-medium', 
-                    item.status === 'aktif' 
-                      ? 'bg-green-100 text-green-800' 
+                  :class="[
+                    'px-2 py-1 rounded-full text-xs font-medium',
+                    item.status === 'Active'
+                      ? 'bg-green-100 text-green-800'
                       : 'bg-red-100 text-red-800'
                   ]"
                 >

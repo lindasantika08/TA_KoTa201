@@ -2,85 +2,164 @@
 
 namespace App\Imports;
 
-use App\Models\Kelompok;
+use App\Models\Group;
 use App\Models\User;
+use App\Models\Mahasiswa;
+use App\Models\Dosen;
+use App\Models\Project;
+use App\Models\Prodi;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Concerns\SkipsOnError;
+use Throwable;
 
-class KelompokImport implements ToModel, WithHeadingRow
+class KelompokImport implements ToModel, WithHeadingRow, SkipsOnError
 {
+    private $dataBaru = [];
+
     public function model(array $row)
     {
-        // Log data baris untuk debug
-        Log::info('Importing row:', $row);
+        try {
+            DB::beginTransaction();
 
-        // Mencari mahasiswa berdasarkan nim dan role 'mahasiswa'
-        $mahasiswa = User::where('nim', $row['nim'])
-            ->where('role', 'mahasiswa')
-            ->first();
+            Log::info('Importing row:', $row);
 
-        if (!$mahasiswa) {
-            Log::warning('Mahasiswa not found for NIM:', ['nim' => $row['nim']]);
-            return null; // Abaikan baris ini jika mahasiswa tidak ditemukan
+            $mahasiswa = Mahasiswa::with(['user', 'classRoom.prodi.major'])
+                ->where('nim', $row['nim'])
+                ->first();
+
+            if (!$mahasiswa) {
+                Log::warning('Mahasiswa not found for NIM:', ['nim' => $row['nim']]);
+                throw new \Exception("Mahasiswa dengan NIM {$row['nim']} tidak ditemukan");
+            }
+
+            // Validate angkatan
+            if ($mahasiswa->classRoom->angkatan != $row['angkatan']) {
+                Log::warning('Angkatan mismatch:', [
+                    'nim' => $row['nim'],
+                    'mahasiswa_angkatan' => $mahasiswa->classRoom->angkatan,
+                    'input_angkatan' => $row['angkatan']
+                ]);
+                throw new \Exception("Angkatan tidak sesuai untuk mahasiswa dengan NIM {$row['nim']}");
+            }
+
+            if (!$mahasiswa->classRoom) {
+                Log::warning('Class not found for mahasiswa:', ['nim' => $row['nim']]);
+                throw new \Exception("Kelas tidak ditemukan untuk mahasiswa dengan NIM {$row['nim']}");
+            }
+
+            if (!$mahasiswa->classRoom->prodi) {
+                Log::warning('Prodi not found for class:', ['class_id' => $mahasiswa->class_id]);
+                throw new \Exception("Program studi tidak ditemukan untuk kelas mahasiswa dengan NIM {$row['nim']}");
+            }
+
+            if (!$mahasiswa->classRoom->prodi->major) {
+                Log::warning('Major not found for prodi:', ['prodi_id' => $mahasiswa->classRoom->prodi_id]);
+                throw new \Exception("Jurusan tidak ditemukan untuk program studi mahasiswa dengan NIM {$row['nim']}");
+            }
+
+            $dosenManager = explode(' - ', $row['dosen_manajer']);
+            $kodeDosen = count($dosenManager) > 1 ? trim($dosenManager[1]) : null;
+
+            $dosen = null;
+            if ($kodeDosen) {
+                $dosen = Dosen::where('kode_dosen', $kodeDosen)->first();
+                if (!$dosen) {
+                    Log::warning('Dosen not found for kode_dosen:', ['kode_dosen' => $kodeDosen]);
+                    throw new \Exception("Dosen dengan kode {$kodeDosen} tidak ditemukan");
+                }
+            }
+
+            $project = Project::where('project_name', $row['proyek'])
+                ->where('major_id', $mahasiswa->classRoom->prodi->major->id)
+                ->first();
+
+            if (!$project) {
+                Log::warning('Project not found', [
+                    'project_name' => $row['proyek'],
+                    'major_id' => $mahasiswa->classRoom->prodi->major->id
+                ]);
+                throw new \Exception("Project tidak ditemukan untuk proyek {$row['proyek']}");
+            }
+
+            $groupBaru = [
+                'mahasiswa_id' => $mahasiswa->id,
+                'group' => $row['kelompok'],
+                'batch_year' => $project->batch_year,
+                'project_id' => $project->id,
+                'angkatan' => $row['angkatan']
+            ];
+
+            $this->dataBaru[] = $groupBaru;
+
+            $group = Group::updateOrCreate(
+                [
+                    'project_id' => $project->id,
+                    'mahasiswa_id' => $mahasiswa->id,
+                ],
+                [
+                    'id' => Str::uuid(),
+                    'group' => $row['kelompok'],
+                    'batch_year' => $project->batch_year,
+                    'dosen_id' => $dosen ? $dosen->id : null,
+                    'angkatan' => $row['angkatan']
+                ]
+            );
+
+            if (end($this->dataBaru) === $groupBaru) {
+                $this->cleanupOldData($project->id, $this->dataBaru);
+            }
+
+            DB::commit();
+            return null;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error in import:', [
+                'message' => $e->getMessage(),
+                'row' => $row,
+            ]);
+            throw $e;
         }
+    }
 
-        // Memecah kolom dosen_manager untuk mendapatkan kode_dosen
-        $dosenManager = explode(' - ', $row['dosen_manajer']); // Format: "Nama - Kode"
-        $kodeDosen = count($dosenManager) > 1 ? trim($dosenManager[1]) : null;
+    private function cleanupOldData($projectId, $dataBaru)
+    {
+        // Ambil angkatan yang sedang diimpor dari data terbaru
+        $angkatanTerbaru = collect($dataBaru)->pluck('angkatan')->unique();
 
-        // Mencari dosen berdasarkan kode_dosen dan role 'dosen'
-        $dosen = $kodeDosen
-            ? User::where('kode_dosen', $kodeDosen)
-                ->where('role', 'dosen')
-                ->first()
-            : null;
+        // Ambil semua data lama yang memiliki project_id yang sama
+        $dataLama = Group::where('project_id', $projectId)
+            ->whereIn('angkatan', $angkatanTerbaru) // Hanya ambil data lama dengan angkatan yang sama
+            ->get();
 
-        if (!$dosen) {
-            Log::warning('Dosen not found for kode_dosen:', ['kode_dosen' => $kodeDosen]);
+        foreach ($dataLama as $data) {
+            $isFound = collect($dataBaru)->contains(function ($item) use ($data) {
+                return $item['mahasiswa_id'] == $data->mahasiswa_id &&
+                    $item['group'] == $data->group &&
+                    $item['angkatan'] == $data->angkatan;
+            });
+
+            // Hanya hapus data jika tidak ditemukan dalam batch terbaru dengan angkatan yang sama
+            if (!$isFound) {
+                $data->delete();
+                Log::info('Deleted old group:', [
+                    'mahasiswa_id' => $data->mahasiswa_id,
+                    'group' => $data->group,
+                    'angkatan' => $data->angkatan,
+                ]);
+            }
         }
+    }
 
-        // // Mencari data kelompok yang ada berdasarkan tahun_ajaran dan nama_proyek
-        // $kelompok = Kelompok::where('tahun_ajaran', $row['tahun_ajaran'])
-        //     ->where('nama_proyek', $row['proyek'])
-        //     ->where('kelompok', $row['kelompok'])
-        //     ->first();
 
-        // // Membuat atau memperbarui data di tabel kelompok
-        // $kelompok = Kelompok::updateOrCreate(
-        //     [
-        //         'user_id' => $mahasiswa->id,
-        //         'kelompok' => $row['kelompok'],
-        //     ],
-        //     [
-        //         'id' => Str::uuid(),
-        //         'tahun_ajaran' => $row['tahun_ajaran'],
-        //         'nama_proyek' => $row['proyek'],
-        //         'dosen_id' => $dosen ? $dosen->id : null,
-        //     ]
-        // );
-
-        // Log::info('Kelompok processed:', ['kelompok_id' => $kelompok->id]);
-
-        // return $kelompok;
-         // Cek apakah sudah ada data dengan kombinasi tahun ajaran, nama proyek, dan kelompok yang sama
-        // Jika tidak ada, tambahkan data baru
-        $kelompok = Kelompok::updateOrCreate(
-            [
-                'tahun_ajaran' => $row['tahun_ajaran'],  // Menambahkan pencocokan berdasarkan tahun ajaran
-                'nama_proyek' => $row['proyek'],         // Menambahkan pencocokan berdasarkan nama proyek
-                'kelompok' => $row['kelompok'],          // Menambahkan pencocokan berdasarkan kelompok
-                'user_id' => $mahasiswa->id,             // Pencocokan berdasarkan user_id mahasiswa
-            ],
-            [
-                'id' => Str::uuid(),                     // Membuat UUID baru
-                'dosen_id' => $dosen ? $dosen->id : null,  // Mengambil dosen_id jika ada
-            ]
-        );
-
-        Log::info('Kelompok processed:', ['kelompok_id' => $kelompok->id]);
-
-        return $kelompok;
+    public function onError(Throwable $e)
+    {
+        Log::error('Row import error:', [
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
     }
 }

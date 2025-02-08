@@ -16,70 +16,67 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
 {
     protected $tahunAjaran;
     protected $namaProyek;
+    protected $semester;
+    protected $angkatan;
+    
 
-    public function __construct($tahunAjaran, $namaProyek)
+    public function __construct($tahunAjaran, $namaProyek, $semester, $angkatan)
     {
         $this->tahunAjaran = $tahunAjaran;
         $this->namaProyek = $namaProyek;
+        $this->semester = $semester;
+        $this->angkatan = $angkatan;
     }
 
     public function collection()
     {
-        // Query data kelompok
-        $kelompokData = DB::table('kelompok')
-            ->join('users as mahasiswa', 'kelompok.user_id', '=', 'mahasiswa.id')
-            ->join('users as dosen', 'kelompok.dosen_id', '=', 'dosen.id')
-            ->where('kelompok.tahun_ajaran', $this->tahunAjaran)
-            ->where('kelompok.nama_proyek', $this->namaProyek)
+        $projectMajor = DB::table('project')
+            ->where('batch_year', $this->tahunAjaran)
+            ->where('project_name', $this->namaProyek)
+            ->value('major_id');
+
+        $mahasiswaQuery = DB::table('mahasiswa')
+            ->join('users', 'mahasiswa.user_id', '=', 'users.id')
+            ->join('class_room', 'mahasiswa.class_id', '=', 'class_room.id')
+            ->join('prodi', 'class_room.prodi_id', '=', 'prodi.id')
+            ->leftJoin('groups', function($join) use ($projectMajor) {
+                $join->on('groups.mahasiswa_id', '=', 'mahasiswa.id')
+                    ->whereExists(function($query) use ($projectMajor) {
+                        $query->select(DB::raw(1))
+                            ->from('project')
+                            ->whereRaw('project.id = groups.project_id')
+                            ->where('project.major_id', $projectMajor)
+                            ->where('project.batch_year', $this->tahunAjaran)
+                            ->where('project.project_name', $this->namaProyek);
+                    });
+            })
+            ->leftJoin('dosen', function($join) use ($projectMajor) {
+                $join->on('groups.dosen_id', '=', 'dosen.id')
+                    ->where('dosen.major_id', $projectMajor);
+            })
+            ->leftJoin('users as dosen_user', 'dosen.user_id', '=', 'dosen_user.id')
+            ->where('prodi.major_id', $projectMajor)
+            ->where('class_room.angkatan', $this->angkatan)
             ->select(
-                'kelompok.tahun_ajaran',
-                'kelompok.nama_proyek',
-                'mahasiswa.name as mahasiswa_name',
+                DB::raw('(@row_number:=@row_number + 1) AS no'),
+                DB::raw("'{$this->tahunAjaran}' as batch_year"),
+                DB::raw("'{$this->namaProyek}' as project_name"),
+                DB::raw("'{$this->angkatan}' as angkatan"),
+                'users.name as mahasiswa_name',
                 'mahasiswa.nim',
-                DB::raw("CONCAT(dosen.name, ' - ', dosen.kode_dosen) as dosen_manajer"), // Menggabungkan nama dosen dan kode_dosen
-                'kelompok.kelompok'
+                DB::raw('COALESCE(CONCAT(dosen_user.name, \' - \', dosen.kode_dosen), \'\') as dosen_manajer'),
+                DB::raw('COALESCE(groups.`group`, \'\') as kelompok'),
+                
             )
-            // ->orderBy('mahasiswa.name', 'asc')
-            ->orderBy('kelompok.kelompok', 'asc') // Urutkan berdasarkan kelompok
+            ->from(DB::raw('(SELECT @row_number:=0) as r, mahasiswa'))
             ->get();
 
-        // Jika data kelompok ditemukan, tambahkan kolom No secara dinamis
-        if ($kelompokData->isNotEmpty()) {
-            $dataWithNo = $kelompokData->map(function ($item, $index) {
-                return (object) array_merge(['no' => $index + 1], (array) $item);
-            });
-
-            return $dataWithNo;
-        }
-
-        // Jika data kosong, log pesan dan buat template data kosong
-        Log::info("Tidak ada data kelompok untuk tahun ajaran {$this->tahunAjaran} dan proyek {$this->namaProyek}.");
-
-        $mahasiswa = DB::table('users')
-            ->where('role', 'mahasiswa')
-            ->select('name', 'nim')
-            ->orderBy('name', 'asc')
-            ->get();
-
-        $data = [];
-        foreach ($mahasiswa as $index => $mahasiswaItem) {
-            $data[] = [
-                'no' => $index + 1,
-                'tahun_ajaran' => $this->tahunAjaran,
-                'nama_proyek' => $this->namaProyek,
-                'name' => $mahasiswaItem->name,
-                'nim' => $mahasiswaItem->nim,
-                'kode_dosen' => '', // Kosong untuk dropdown
-                'kelompok' => '', // Kosong
-            ];
-        }
-
-        return collect($data);
+        return $mahasiswaQuery;
     }
 
     public function headings(): array
     {
-        return ['No', 'Tahun Ajaran', 'Proyek', 'Nama', 'NIM', 'Dosen Manajer', 'Kelompok'];
+        return ['No', 'Tahun Ajaran', 'Proyek', 'Angkatan', 'Nama', 'NIM', 'Dosen Manajer', 'Kelompok'];
     }
 
     public function registerEvents(): array
@@ -89,40 +86,37 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
                 $worksheet = $event->sheet->getDelegate();
                 $lastRow = $worksheet->getHighestRow();
 
-                // Membuat daftar dosen untuk dropdown
+                $projectMajor = DB::table('project')
+                    ->where('project_name', $this->namaProyek)
+                    ->where('batch_year', $this->tahunAjaran)
+                    ->value('major_id');
+                                      
                 $dosenList = DB::table('users')
-                    ->where('role', 'dosen')
-                    ->pluck('name', 'kode_dosen')
-                    ->map(function ($name, $kode_dosen) {
-                        return $name . ' - ' . $kode_dosen; // Format nama dosen dan kode_dosen
-                    })
+                    ->join('dosen', 'users.id', '=', 'dosen.user_id')
+                    ->where('users.role', 'dosen')
+                    ->where('dosen.major_id', $projectMajor)
+                    ->whereNull('users.deleted_at')
+                    ->select(DB::raw("CONCAT(users.name, ' - ', dosen.kode_dosen) as dosen_label"))
+                    ->distinct()
+                    ->pluck('dosen_label')
                     ->toArray();
 
-                // Membuat data validation untuk dropdown di kolom F
                 $validation = new DataValidation();
                 $validation->setType(DataValidation::TYPE_LIST)
                     ->setErrorStyle(DataValidation::STYLE_INFORMATION)
                     ->setAllowBlank(false)
                     ->setShowDropDown(true)
-                    ->setFormula1('"' . implode(',', $dosenList) . '"');
+                    ->setFormula1('"' . implode(',', array_unique($dosenList)) . '"');
 
-                // Menambahkan dropdown pada setiap sel di kolom F
                 for ($row = 2; $row <= $lastRow; $row++) {
-                    $worksheet->getCell('F' . $row)->setDataValidation(clone $validation);
+                    $worksheet->getCell('G' . $row)->setDataValidation(clone $validation);
                 }
 
-                // Tambahkan border untuk semua sel
-                $worksheet->getStyle('A1:G' . $lastRow)->getBorders()->getAllBorders()->setBorderStyle('thin');
-
-                // Membuat header menjadi tebal dan rata tengah
-                $worksheet->getStyle('A1:G1')->getFont()->setBold(true);
-                $worksheet->getStyle('A1:G1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-
-                // Meratakan kolom No ke tengah
+                $worksheet->getStyle('A1:H' . $lastRow)->getBorders()->getAllBorders()->setBorderStyle('thin');
+                $worksheet->getStyle('A1:H1')->getFont()->setBold(true);
+                $worksheet->getStyle('A1:H1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
                 $worksheet->getStyle('A2:A' . $lastRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-
-                // Meratakan kolom lainnya ke kiri
-                $worksheet->getStyle('B2:G' . $lastRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+                $worksheet->getStyle('B2:H' . $lastRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
             }
         ];
     }

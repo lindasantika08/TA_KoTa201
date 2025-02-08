@@ -2,29 +2,55 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Assessment;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
-
-class project extends Model
+class Project extends Model
 {
+    use HasFactory, SoftDeletes, HasUuids;
 
-    use HasFactory;
-
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
     protected $table = 'project';
-    protected $primaryKey = ['tahun_ajaran', 'nama_proyek'];
-    public $incrementing = false;
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
     protected $fillable = [
         'semester',
-        'tahun_ajaran',
-        'nama_proyek',
-        'jurusan',
+        'batch_year',
+        'project_name',
+        'major_id',
         'start_date',
         'end_date',
         'status',
     ];
+
+    /**
+     * The attributes that should be mutated to dates.
+     *
+     * @var array
+     */
+    protected $dates = [
+        'start_date',
+        'end_date',
+        'deleted_at',
+    ];
+
+    /**
+     * Get the major associated with the project.
+     */
+    public function major()
+    {
+        return $this->belongsTo(Major::class, 'major_id');
+    }
 
     public function setKeysForSaveQuery($query)
     {
@@ -38,5 +64,19 @@ class project extends Model
         }
 
         return $query;
+    }
+    public function assessments()
+    {
+        return $this->hasMany(Assessment::class, 'project_id');
+    }
+
+    public function groups()
+    {
+        return $this->hasMany(Group::class, 'project_id');
+    }
+
+    public function reports()
+    {
+        return $this->hasMany(report::class, 'project_id');
     }
 }
