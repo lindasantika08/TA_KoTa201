@@ -27,6 +27,11 @@ use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', 'login');
 Route::get('/login', [AuthController::class, 'index'])->name('login');
+Route::get('/forgot-password', [AuthController::class, 'showForgotForm'])->middleware('guest')->name('password.request');
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('guest')->name('password.email');
+Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->middleware('guest')->name('password.reset');
+Route::post('/reset-password', [AuthController::class, 'resetPassword'])->middleware('guest')->name('password.update');
+
 Route::middleware('auth')->group(function () {
 
     // Route untuk dosen

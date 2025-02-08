@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\Auth;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->get('/validate-token', [AuthController::class, 'validateToken']);
+Route::middleware('auth:sanctum')->post('/change-password', [AuthController::class, 'changePassword']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function () {
@@ -37,6 +38,7 @@ Route::middleware('auth:sanctum')->group(function () {
         $user = Auth::user();
         return response()->json(['role' => $user->role]);
     })->middleware('auth:sanctum');
+
 
     //---------------------------------------------dosen---------------------------------------------//
     Route::get('/export-self-assessment', [AssessmentController::class, 'exportExcel']);
