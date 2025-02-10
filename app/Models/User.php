@@ -74,4 +74,9 @@ class User extends Authenticatable
     {
         return $this->role === 'mahasiswa';
     }
+
+    public function mahasiswa()
+    {
+        return $this->hasOne(Mahasiswa::class, 'user_id');
+    }
 }

@@ -106,9 +106,8 @@ class FeedbackController extends Controller
                 'kelompok' => 'required|string',
             ]);
 
-            // First, get the project
+            // Get the project
             $project = Project::where('project_name', $validated['project_name'])->first();
-
             if (!$project) {
                 return response()->json([
                     'message' => 'Project not found',
@@ -116,60 +115,92 @@ class FeedbackController extends Controller
                 ], 404);
             }
 
-            // Get the groups for this project and batch year
-            $groups = Group::where('batch_year', $validated['batch_year'])
+            // Get the groups with dosen relationship
+            $groups = Group::with('dosen')
+                ->where('batch_year', $validated['batch_year'])
                 ->where('project_id', $project->id)
                 ->where('group', $validated['kelompok'])
                 ->get();
 
             if ($groups->isEmpty()) {
                 return response()->json([
-                    'message' => 'No groups found for this project and batch year',
+                    'message' => 'No groups found',
                     'data' => []
                 ], 404);
             }
 
-            // Get all mahasiswa IDs from these groups
+            // Get group IDs and related IDs
+            $groupIds = $groups->pluck('id');
             $mahasiswaIds = $groups->pluck('mahasiswa_id')->unique();
+            $dosenIds = $groups->pluck('dosen_id')->unique();
 
-            if ($mahasiswaIds->isEmpty()) {
-                return response()->json([
-                    'message' => 'No students found in groups',
-                    'data' => []
-                ], 404);
-            }
-
-            // Get all feedback for these students and groups
+            // Get all feedbacks with eager loading
             $feedbacks = Feedback::with([
                 'mahasiswa.user',
-                'dosen.user',  // Add relation to get dosen information
+                'dosen.user',
+                'peer.user'
             ])
-                ->whereIn('mahasiswa_id', $mahasiswaIds)
-                ->whereIn('group_id', $groups->pluck('id'))
+                ->where(function ($query) use ($groupIds, $mahasiswaIds, $dosenIds) {
+                    $query->whereIn('group_id', $groupIds)
+                        ->where(function ($q) use ($mahasiswaIds, $dosenIds) {
+                            $q->whereIn('mahasiswa_id', $mahasiswaIds)
+                                ->orWhereIn('dosen_id', $dosenIds);
+                        });
+                })
                 ->orderBy('created_at', 'desc')
                 ->get();
 
+            // Debug log untuk melihat feedbacks yang diambil
+            Log::info('Retrieved feedbacks:', [
+                'count' => $feedbacks->count(),
+                'feedbacks' => $feedbacks->map(function ($f) {
+                    return [
+                        'id' => $f->id,
+                        'dosen_id' => $f->dosen_id,
+                        'mahasiswa_id' => $f->mahasiswa_id,
+                        'peer_id' => $f->peer_id,
+                        'group_id' => $f->group_id
+                    ];
+                })
+            ]);
 
             $formattedFeedbacks = $feedbacks->map(function ($feedback) {
-                return [
-                    // Receiver (Mahasiswa) information
-                    'mahasiswa_id' => $feedback->mahasiswa_id,
-                    'mahasiswa_name' => $feedback->mahasiswa->user->name ?? 'Unknown',
-                    'mahasiswa_nim' => $feedback->mahasiswa->nim,
-
-                    // Sender information
+                // Log untuk setiap feedback yang diproses
+                Log::info('Processing feedback:', [
+                    'id' => $feedback->id,
                     'dosen_id' => $feedback->dosen_id,
-                    'dosen_name' => $feedback->dosen->user->name ?? null,
+                    'dosen' => $feedback->dosen ? [
+                        'id' => $feedback->dosen->id,
+                        'user' => $feedback->dosen->user ? [
+                            'id' => $feedback->dosen->user->id,
+                            'name' => $feedback->dosen->user->name
+                        ] : null
+                    ] : null
+                ]);
+
+                return [
+                    // Mahasiswa (receiver) information - only include if mahasiswa exists
+                    'mahasiswa_id' => $feedback->mahasiswa_id,
+                    'mahasiswa_name' => $feedback->mahasiswa ? ($feedback->mahasiswa->user->name ?? 'Unknown') : null,
+                    'mahasiswa_nim' => $feedback->mahasiswa ? $feedback->mahasiswa->nim : null,
+
+                    // Dosen information
+                    'dosen_id' => $feedback->dosen_id,
+                    'dosen_name' => $feedback->dosen ? ($feedback->dosen->user->name ?? null) : null,
+                    'dosen_nip' => $feedback->dosen ? $feedback->dosen->nip : null,
+
+                    // Peer information
                     'peer_id' => $feedback->peer_id,
-                    'peer_name' => $feedback->peer ? $feedback->peer->user->name : null,
+                    'peer_name' => $feedback->peer ? ($feedback->peer->user->name ?? null) : null,
                     'peer_nim' => $feedback->peer ? $feedback->peer->nim : null,
-                    // Other feedback details
+
+                    // Other details
                     'group_id' => $feedback->group_id,
                     'feedback' => $feedback->feedback,
                     'created_at' => $feedback->created_at->format('Y-m-d H:i:s'),
+                    'feedback_type' => $feedback->dosen_id ? 'dosen' : ($feedback->peer_id ? 'peer' : 'unknown')
                 ];
             });
-
 
             return response()->json([
                 'message' => 'Feedbacks retrieved successfully',
@@ -178,7 +209,6 @@ class FeedbackController extends Controller
         } catch (\Exception $e) {
             Log::error('Error in getFeedbackAnswer: ' . $e->getMessage());
             Log::error('Stack trace: ' . $e->getTraceAsString());
-
             return response()->json([
                 'message' => 'An error occurred while retrieving feedbacks',
                 'error' => $e->getMessage()

@@ -12,6 +12,7 @@ use App\Models\Project;
 use App\Models\Answers;
 use App\Models\AnswersPeer;
 use App\Models\Feedback;
+use App\Models\feedback_ai;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
@@ -339,5 +340,87 @@ class FeedbackMahasiswa extends Controller
             ->get();
 
         return response()->json($feedbacks);
+    }
+
+    public function getFeedback(Request $request)
+    {
+        try {
+            $user = Auth::user();
+
+            if (!$user) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'User not authenticated'
+                ], 401);
+            }
+
+            $mahasiswa = $user->mahasiswa()->first();
+
+            if (!$mahasiswa) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Mahasiswa record not found for user: ' . $user->id
+                ], 404);
+            }
+
+            if (!$request->batch_year || !$request->project_name) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Batch year and project name are required'
+                ], 400);
+            }
+
+            $project = Project::where('batch_year', $request->batch_year)
+                ->where('project_name', $request->project_name)
+                ->first();
+
+            if (!$project) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Project not found'
+                ], 404);
+            }
+
+            $group = Group::where('project_id', $project->id)
+                ->where('mahasiswa_id', $mahasiswa->id)
+                ->first();
+
+            if (!$group) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Group not found'
+                ], 404);
+            }
+
+            // Get AI feedback
+            $aiFeedback = feedback_ai::where('group_id', $group->id)
+                ->where('mahasiswa_id', $mahasiswa->id)
+                ->first();
+
+            // Get lecturer feedback
+            $lecturerFeedback = Feedback::where('group_id', $group->id)
+                ->whereNotNull('dosen_id')
+                ->with('dosen.user') // Include dosen's user data
+                ->get();
+
+            return response()->json([
+                'status' => 'success',
+                'data' => [
+                    'aiFeedback' => $aiFeedback ? $aiFeedback->summary : null,
+                    'lecturerFeedback' => $lecturerFeedback->map(function ($feedback) {
+                        return [
+                            'feedback' => $feedback->feedback,
+                            'dosenName' => $feedback->dosen->user->name,
+                            'createdAt' => $feedback->created_at
+                        ];
+                    })
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to fetch feedback: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

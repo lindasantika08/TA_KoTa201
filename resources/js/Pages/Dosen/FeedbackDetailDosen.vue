@@ -44,62 +44,64 @@ const tabs = [
 
 // Frontend - Add CSRF token handling
 const submitFeedbackDosen = async () => {
-    // Validate all required fields
-    if (!feedbackDosen.value?.trim()) {
-      alert('Feedback tidak boleh kosong');
-      return;
-    }
-    
-    if (!selectedStudent.value?.mahasiswa?.id) {
-      alert('Silakan pilih mahasiswa');
-      return;
-    }
+  // Validate all required fields
+  if (!feedbackDosen.value?.trim()) {
+    alert("Feedback tidak boleh kosong");
+    return;
+  }
 
-    if (!props.batch_year || !props.project_name || !props.kelompok) {
-      alert('Data kelompok tidak lengkap');
-      return;
-    }
+  if (!selectedStudent.value?.mahasiswa?.id) {
+    alert("Silakan pilih mahasiswa");
+    return;
+  }
 
-    const payload = {
-      batch_year: props.batch_year,
-      project_name: props.project_name,
-      kelompok: props.kelompok,
-      feedback: feedbackDosen.value.trim(),
-      student_id: selectedStudent.value.mahasiswa.id,
-    };
+  if (!props.batch_year || !props.project_name || !props.kelompok) {
+    alert("Data kelompok tidak lengkap");
+    return;
+  }
 
-    console.log("Submitting feedback with payload:", payload);
-    try {
-      // Get CSRF token from meta tag
-      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-      
-      const response = await fetch("/dosen/feedbacks-store-dosen", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-TOKEN": csrfToken, // Add CSRF token
-          "Accept": "application/json" // Add Accept header
-        },
-        credentials: 'include', // Include cookies
-        body: JSON.stringify(payload),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        feedbackDosen.value = "";
-        selectedStudent.value = null;
-        alert("Feedback berhasil dikirim!");
-        fetchFeedbacks();
-        activeTab.value = "history";
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Gagal mengirim feedback");
-      }
-    } catch (err) {
-      console.error("Error submitting feedback:", err);
-      alert(err.message);
-    }
+  const payload = {
+    batch_year: props.batch_year,
+    project_name: props.project_name,
+    kelompok: props.kelompok,
+    feedback: feedbackDosen.value.trim(),
+    student_id: selectedStudent.value.mahasiswa.id,
   };
+
+  console.log("Submitting feedback with payload:", payload);
+  try {
+    // Get CSRF token from meta tag
+    const csrfToken = document
+      .querySelector('meta[name="csrf-token"]')
+      ?.getAttribute("content");
+
+    const response = await fetch("/dosen/feedbacks-store-dosen", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-TOKEN": csrfToken, // Add CSRF token
+        Accept: "application/json", // Add Accept header
+      },
+      credentials: "include", // Include cookies
+      body: JSON.stringify(payload),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      feedbackDosen.value = "";
+      selectedStudent.value = null;
+      alert("Feedback berhasil dikirim!");
+      fetchFeedbacks();
+      activeTab.value = "history";
+    } else {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Gagal mengirim feedback");
+    }
+  } catch (err) {
+    console.error("Error submitting feedback:", err);
+    alert(err.message);
+  }
+};
 
 const fetchFeedbackSummary = async (forceRegenerate = false) => {
   summaryLoading.value = true;
@@ -168,11 +170,13 @@ const fetchFeedbacks = async () => {
 
     if (response.ok) {
       const result = await response.json();
+      console.log("Fetched feedbacks:", result.data); // Debug log
       feedbacks.value = result.data || [];
     } else {
       throw new Error("Gagal mengambil feedback");
     }
   } catch (err) {
+    console.error("Error fetching feedbacks:", err);
     error.value = err.message;
   } finally {
     loading.value = false;
@@ -208,6 +212,64 @@ const canSubmitFeedback = computed(() => {
   return selectedStudent.value && feedbackDosen.value.trim().length > 0;
 });
 
+const dosenFeedbacks = computed(() => {
+  console.log("Processing dosen feedbacks", feedbacks.value);
+  return feedbacks.value
+    .filter((feedback) => {
+      // Changed the condition to properly identify dosen feedback
+      const isDosenFeedback = feedback.dosen_id != null;
+      console.log(
+        `Feedback ${feedback.id}: isDosenFeedback=${isDosenFeedback}, dosen_id=${feedback.dosen_id}`
+      );
+      return isDosenFeedback;
+    })
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+});
+
+const peerFeedbacks = computed(() => {
+  console.log("Processing peer feedbacks", feedbacks.value); // Debug log
+  return feedbacks.value.filter((feedback) => {
+    // Only include feedback that has peer_id and NO dosen_id
+    const isPeerFeedback = feedback.peer_id && !feedback.dosen_id;
+    console.log(`Feedback ${feedback.id}: isPeerFeedback=${isPeerFeedback}`); // Debug log
+    return isPeerFeedback;
+  });
+});
+
+const groupedPeerFeedbacks = computed(() => {
+  const groups = {};
+
+  peerFeedbacks.value.forEach((feedback) => {
+    const peerId = feedback.peer_id;
+    if (!groups[peerId]) {
+      groups[peerId] = {
+        peer_id: peerId,
+        peer_name: feedback.peer_name || "Unnamed Peer",
+        peer_nim: feedback.peer_nim || "No NIM",
+        feedbacks: [],
+      };
+    }
+
+    // Add this feedback to the group
+    groups[peerId].feedbacks.push({
+      ...feedback,
+      // Make sure we have the correct mahasiswa (sender) information
+      mahasiswa_name: feedback.mahasiswa_name || "Unknown Student",
+      mahasiswa_nim: feedback.mahasiswa_nim || "No NIM",
+      created_at: feedback.created_at,
+      feedback: feedback.feedback,
+    });
+  });
+
+  // Sort feedbacks within each group by date
+  Object.values(groups).forEach((group) => {
+    group.feedbacks.sort(
+      (a, b) => new Date(b.created_at) - new Date(a.created_at)
+    );
+  });
+
+  return Object.values(groups);
+});
 onMounted(fetchFeedbacks);
 </script>
 
@@ -354,58 +416,107 @@ onMounted(fetchFeedbacks);
                   </div>
 
                   <div v-else-if="feedbacks.length" class="space-y-8">
-                    <!-- Group feedbacks by peer_id -->
-                    <div
-                      v-for="peer in groupedFeedbacks"
-                      :key="peer.peer_id"
-                      class="border rounded-lg p-6"
-                    >
-                      <!-- Peer Information Header -->
-                      <div class="mb-6">
-                        <h3 class="text-lg font-semibold text-gray-900">
-                          {{ peer.peer_name }}
-                        </h3>
-                        <p class="text-sm text-gray-500">
-                          NIM: {{ peer.peer_nim }}
-                        </p>
-                      </div>
-
-                      <!-- Feedback Items -->
-                      <div class="space-y-6">
-                        <div
-                          v-for="feedback in peer.feedbacks"
-                          :key="feedback.created_at"
-                          class="border-t pt-4"
-                        >
-                          <div class="flex justify-between items-start mb-3">
-                            <div>
-                              <p class="text-sm font-medium text-gray-900">
-                                Dari: {{ feedback.mahasiswa_name }}
-                              </p>
-                              <p class="text-xs text-gray-500">
-                                NIM: {{ feedback.mahasiswa_nim }}
-                              </p>
-                            </div>
-                            <div class="text-sm text-gray-500">
-                              {{
-                                new Date(feedback.created_at).toLocaleString(
-                                  "id-ID",
-                                  {
-                                    year: "numeric",
-                                    month: "long",
-                                    day: "numeric",
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  }
-                                )
-                              }}
-                            </div>
-                          </div>
-
-                          <div class="bg-gray-50 p-4 rounded-lg">
-                            <p class="text-gray-700 whitespace-pre-wrap">
-                              {{ feedback.feedback }}
+                    <!-- Modified Dosen Feedback Section -->
+                    <div v-if="dosenFeedbacks.length" class="mb-8">
+                      <h2 class="text-xl font-semibold text-gray-900 mb-4">
+                        Feedback Dosen
+                      </h2>
+                      <div
+                        v-for="feedback in dosenFeedbacks"
+                        :key="feedback.id"
+                        class="border rounded-lg p-6 mb-4"
+                      >
+                        <div class="flex justify-between items-start mb-3">
+                          <div>
+                            <p class="text-sm font-medium text-gray-900">
+                              Untuk: {{ feedback.peer_name || "Tidak Ada" }}
                             </p>
+                            <p class="text-xs text-gray-500">
+                              NIM: {{ feedback.peer_nim || "Tidak Ada" }}
+                            </p>
+                            <p class="text-xs text-gray-500 mt-1">
+                              Dari: {{ feedback.dosen_name || "Dosen" }}
+                            </p>
+                          </div>
+                          <div class="text-sm text-gray-500">
+                            {{
+                              new Date(feedback.created_at).toLocaleString(
+                                "id-ID",
+                                {
+                                  year: "numeric",
+                                  month: "long",
+                                  day: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                }
+                              )
+                            }}
+                          </div>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                          <p class="text-gray-700 whitespace-pre-wrap">
+                            {{ feedback.feedback }}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Peer Feedback Section -->
+                    <div v-if="groupedPeerFeedbacks.length">
+                      <h2 class="text-xl font-semibold text-gray-900 mb-4">
+                        Feedback Teman Sebaya
+                      </h2>
+                      <div
+                        v-for="peer in groupedPeerFeedbacks"
+                        :key="peer.peer_id"
+                        class="border rounded-lg p-6 mb-4"
+                      >
+                        <!-- Peer Information Header -->
+                        <div class="mb-4">
+                          <h3 class="text-lg font-semibold text-gray-900">
+                            Feedback untuk: {{ peer.peer_name }}
+                          </h3>
+                          <p class="text-sm text-gray-500">
+                            NIM: {{ peer.peer_nim }}
+                          </p>
+                        </div>
+
+                        <!-- Individual Feedback Items -->
+                        <div class="space-y-4">
+                          <div
+                            v-for="feedback in peer.feedbacks"
+                            :key="feedback.created_at"
+                            class="bg-gray-50 rounded-lg p-4"
+                          >
+                            <div class="flex justify-between items-start mb-2">
+                              <div>
+                                <p class="text-sm font-medium text-gray-900">
+                                  Dari: {{ feedback.mahasiswa_name }}
+                                </p>
+                                <p class="text-xs text-gray-500">
+                                  NIM: {{ feedback.mahasiswa_nim }}
+                                </p>
+                              </div>
+                              <div class="text-sm text-gray-500">
+                                {{
+                                  new Date(feedback.created_at).toLocaleString(
+                                    "id-ID",
+                                    {
+                                      year: "numeric",
+                                      month: "long",
+                                      day: "numeric",
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    }
+                                  )
+                                }}
+                              </div>
+                            </div>
+                            <div class="mt-2">
+                              <p class="text-gray-700 whitespace-pre-wrap">
+                                {{ feedback.feedback }}
+                              </p>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -419,56 +530,60 @@ onMounted(fetchFeedbacks);
                   </div>
                 </div>
               </div>
-            <!-- Modified Input Panel -->
-  <div v-show="activeTab === 'input'" class="bg-white rounded-lg shadow-sm border border-gray-200">
-    <div class="p-6 space-y-6">
-      <!-- Modified Student Selection Dropdown -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">
-          Pilih Mahasiswa
-        </label>
-        <select
-          v-model="selectedStudent"
-          class="w-full p-3 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        >
-          <option :value="null">Pilih mahasiswa...</option>
-          <option 
-            v-for="student in initialData.groupMembers" 
-            :key="student.mahasiswa?.id"
-            :value="student"
-            :disabled="!student.mahasiswa?.id"
-          >
-            {{ student.mahasiswa?.user?.name || 'Tidak Ada' }} - {{ student.mahasiswa?.nim || 'Tidak Ada' }}
-          </option>
-        </select>
-      </div>
+              <!-- Modified Input Panel -->
+              <div
+                v-show="activeTab === 'input'"
+                class="bg-white rounded-lg shadow-sm border border-gray-200"
+              >
+                <div class="p-6 space-y-6">
+                  <!-- Modified Student Selection Dropdown -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                      Pilih Mahasiswa
+                    </label>
+                    <select
+                      v-model="selectedStudent"
+                      class="w-full p-3 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option :value="null">Pilih mahasiswa...</option>
+                      <option
+                        v-for="student in initialData.groupMembers"
+                        :key="student.mahasiswa?.id"
+                        :value="student"
+                        :disabled="!student.mahasiswa?.id"
+                      >
+                        {{ student.mahasiswa?.user?.name || "Tidak Ada" }} -
+                        {{ student.mahasiswa?.nim || "Tidak Ada" }}
+                      </option>
+                    </select>
+                  </div>
 
-    <!-- Feedback Input -->
-    <div>
-      <label class="block text-sm font-medium text-gray-700 mb-2">
-        Feedback
-      </label>
-      <textarea
-        v-model="feedbackDosen"
-        class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        rows="4"
-        placeholder="Masukkan feedback untuk mahasiswa ini..."
-        :disabled="!selectedStudent"
-      ></textarea>
-    </div>
+                  <!-- Feedback Input -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                      Feedback
+                    </label>
+                    <textarea
+                      v-model="feedbackDosen"
+                      class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      rows="4"
+                      placeholder="Masukkan feedback untuk mahasiswa ini..."
+                      :disabled="!selectedStudent"
+                    ></textarea>
+                  </div>
 
-    <!-- Submit Button -->
-    <div class="flex justify-end">
-      <button
-        @click="submitFeedbackDosen"
-        class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-        :disabled="!canSubmitFeedback"
-      >
-        Kirim Feedback
-      </button>
-    </div>
-  </div>
-</div>
+                  <!-- Submit Button -->
+                  <div class="flex justify-end">
+                    <button
+                      @click="submitFeedbackDosen"
+                      class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      :disabled="!canSubmitFeedback"
+                    >
+                      Kirim Feedback
+                    </button>
+                  </div>
+                </div>
+              </div>
               <div
                 v-show="activeTab === 'summary'"
                 class="bg-white rounded-lg shadow-sm border border-gray-200"

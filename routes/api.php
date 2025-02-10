@@ -163,6 +163,7 @@ Route::middleware('auth:sanctum')->group(function () {
     //mahasiswa Report
     Route::get('/mahasiswa/projects', [ReportMahasiswa::class, 'getProjects']);
     Route::get('/project-score-details', [ReportMahasiswa::class, 'getProjectScoreDetails']);
+    Route::get('/project-feedback', [FeedbackMahasiswa::class, 'getFeedback']);
 
     //Mahasiswa Profile
     Route::get('/get-profile', [ProfileMahasiswa::class, 'getProfile']);
