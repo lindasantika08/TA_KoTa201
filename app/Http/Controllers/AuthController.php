@@ -142,88 +142,47 @@ class AuthController extends Controller
         }
     }
 
-    public function showResetForm(Request $request, $token)
-    {
-        return Inertia::render('Auth/ResetPassword', [
-            'token' => $token,
-            'email' => $request->input('email', '')
-        ]);
-    }
+    public function showResetForm($token)
+{
+    return Inertia::render('Auth/ResetPassword', [
+        'token' => $token
+    ]);
+}
 
     public function forgotPassword(Request $request)
-{
-    try {
-        // Tambahkan log tambahan
-        Log::info('SMTP Details', [
-            'host' => config('mail.mailers.smtp.host'),
-            'port' => config('mail.mailers.smtp.port'),
-            'username' => config('mail.mailers.smtp.username'),
-            'encryption' => config('mail.mailers.smtp.encryption')
-        ]);
-
+    {
         $request->validate(['email' => 'required|email']);
-
-        Log::info('Forgot Password Request', [
-            'email' => $request->email
-        ]);
 
         $status = Password::sendResetLink(
             $request->only('email')
         );
 
-        Log::info('Password Reset Link Status', [
-            'status' => $status
-        ]);
-
         return $status === Password::RESET_LINK_SENT
-            ? response()->json(['message' => 'Link reset password berhasil dikirim'])
-            : response()->json(['message' => 'Gagal mengirim link reset'], 422);
-    } catch (\Exception $e) {
-        Log::error('Forgot Password Error', [
-            'message' => $e->getMessage(),
-            'trace' => $e->getTraceAsString()
+            ? response()->json(['message' => __($status)], 200)
+            : response()->json(['message' => __($status)], 400);
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'token' => 'required',
+            'email' => 'required|email',
+            'password' => 'required|min:8|confirmed',
         ]);
 
-        return response()->json(['message' => 'Terjadi kesalahan'], 500);
+        $status = Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function ($user, $password) {
+                $user->forceFill([
+                    'password' => Hash::make($password)
+                ])->save();
+
+                event(new PasswordReset($user));
+            }
+        );
+
+        return $status === Password::PASSWORD_RESET
+            ? response()->json(['message' => __($status)], 200)
+            : response()->json(['message' => __($status)], 400);
     }
-}    
-
-public function resetPassword(Request $request)
-{
-    $request->validate([
-        'token' => 'required',
-        'email' => 'required|email',
-        'password' => 'required|min:8|confirmed',
-    ]);
-
-    $status = Password::reset(
-        $request->only('email', 'password', 'password_confirmation', 'token'),
-        function ($user) use ($request) {
-            $user->forceFill([
-                'password' => Hash::make($request->password),
-                'remember_token' => Str::random(60)
-            ])->save();
-
-            event(new PasswordReset($user));
-        }
-    );
-
-    if ($status === Password::PASSWORD_RESET) {
-        if ($request->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Password reset successfully'
-            ]);
-        }
-        
-        return redirect()
-            ->route('login')
-            ->with('success', 'Your password has been successfully reset! You can now log in with your new password.');
-    }
-
-    return response()->json([
-        'success' => false,
-        'message' => 'Unable to reset password'
-    ], 422);
-}
 }

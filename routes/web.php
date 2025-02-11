@@ -25,12 +25,10 @@ use App\Http\Controllers\Mahasiswa\ProfileMahasiswa;
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
+
 Route::redirect('/', 'login');
 Route::get('/login', [AuthController::class, 'index'])->name('login');
-Route::get('/forgot-password', [AuthController::class, 'showForgotForm'])->middleware('guest')->name('password.request');
-Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('guest')->name('password.email');
-Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->middleware('guest')->name('password.reset');
-Route::post('/reset-password', [AuthController::class, 'resetPassword'])->middleware('guest')->name('password.update');
+Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
 
 Route::middleware('auth')->group(function () {
 
@@ -50,7 +48,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/assessment/data-with-bobot-self', [AssessmentController::class, 'getAssessmentsWithBobotSelf'])->name('dosen.assessment.data-with-bobot-self');
         Route::get('/assessment/data-with-bobot-peer', [PeerAssessmentDosen::class, 'getAssessmentsWithBobotpeer'])->name('dosen.assessment.data-with-bobot-peer');
         Route::get('/assessment/create', [AssessmentController::class, 'create'])->name('CreateAssessment');
-        
+
         Route::get('/export-self-assessment', [AssessmentController::class, 'exportExcel'])->name('dosen.export-self');
 
         Route::get('/assessment/projectsSelf', [ProjectController::class, 'getProjectsWithAssessmentsSelf']);
@@ -93,6 +91,10 @@ Route::middleware('auth')->group(function () {
         //REPORT
         Route::get('/report', [ReportController::class, 'report'])->name('report');
         Route::get('/kelompok/report-detail', [ReportController::class, 'getScoreKelompok']);
+
+        //Feedback
+        Route::get('/feedback-detail', [FeedbackController::class, 'feedbackDetailView']);
+        Route::post('/feedbacks-store-dosen', [FeedbackController::class, 'storeFeedback']);
     });
 
     //Route untuk Mahasiswa
@@ -118,5 +120,8 @@ Route::middleware('auth')->group(function () {
 
         //-----------REPORT-------------//
         Route::get('/project-score-details', [ReportMahasiswa::class, 'getProjectScoreDetailsView']);
+
+        //Mahasiswa Feedback
+        Route::get('/feedback-details', [FeedbackMahasiswa::class, 'getFeedbackDetailView']);
     });
 });

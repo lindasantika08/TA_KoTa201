@@ -9,10 +9,9 @@ use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Spatie\Permission\Traits\HasRoles;
-use Illuminate\Contracts\Auth\CanResetPassword;
-use Illuminate\Auth\Passwords\CanResetPassword as CanResetPasswordTrait;
+use App\Notifications\ResetPasswordNotification;
 
-class User extends Authenticatable implements CanResetPassword
+class User extends Authenticatable 
 {
     use HasApiTokens;
     use HasFactory;
@@ -20,7 +19,6 @@ class User extends Authenticatable implements CanResetPassword
     use SoftDeletes;
     use HasUuids;
     use HasRoles;
-    use CanResetPasswordTrait;
 
     protected $guard_name = 'sanctum';
     public $incrementing = false;
@@ -62,6 +60,10 @@ class User extends Authenticatable implements CanResetPassword
         ];
     }
 
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new ResetPasswordNotification($token));
+    }
 
     public function dosen()
     {

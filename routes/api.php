@@ -14,12 +14,15 @@ use App\Http\Controllers\Dosen\UserManagementController;
 use App\Http\Controllers\Dosen\SelfAssessmentDosen;
 use App\Http\Controllers\Dosen\PeerAssessmentDosen;
 use App\Http\Controllers\Dosen\ProfileController;
+use App\Http\Controllers\Dosen\FeedbackController;
 
 use App\Http\Controllers\Mahasiswa\AssessmentMahasiswa;
 use App\Http\Controllers\Mahasiswa\DashboardMahasiswa;
 use App\Http\Controllers\Mahasiswa\SelfAssessment;
 use App\Http\Controllers\Mahasiswa\PeerAssessment;
 use App\Http\Controllers\Mahasiswa\DetailSelfMahasiswa;
+use App\Http\Controllers\Mahasiswa\DetailPeerMahasiswa;
+use App\Http\Controllers\Mahasiswa\FeedbackMahasiswa;
 use App\Http\Controllers\Mahasiswa\ReportMahasiswa;
 use App\Http\Controllers\Mahasiswa\ProfileMahasiswa;
 use Illuminate\Support\Facades\Auth;
@@ -28,6 +31,8 @@ use Illuminate\Support\Facades\Auth;
 Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->get('/validate-token', [AuthController::class, 'validateToken']);
 Route::middleware('auth:sanctum')->post('/change-password', [AuthController::class, 'changePassword']);
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function () {
@@ -112,6 +117,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/report/kelompok/answers', [ReportController::class, 'getKelompokAnswers']);
     Route::post('/report/storeReport', [ReportController::class, 'storeReport']);
 
+    //Dosen Feedback
+    Route::get('/feedbacks-get-answer', [FeedbackController::class, 'getFeedbackAnswer']);
+    Route::get('/feedback-summary', [FeedbackController::class, 'getSummaryFeedback']);
+    Route::post('/feedbacks-store-dosen', [FeedbackController::class, 'storeFeedback']);
+
 
     //-------------------------------------mahasiswa------------------------------------------------//
     // dashboard mhs
@@ -152,6 +162,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // detail assessment
     Route::get('/user-detail-answer', [DetailSelfMahasiswa::class, 'getUserInfo']);
     Route::get('/detail-answer-self', [DetailSelfMahasiswa::class, 'getAnswerSelf']);
+    Route::get('/peer-assessment-detail', [DetailPeerMahasiswa::class, 'getAnswerPeer']);
 
     //mahasiswa Report
     Route::get('/mahasiswa/projects', [ReportMahasiswa::class, 'getProjects']);
@@ -162,4 +173,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/mahasiswa/upload-profile-photo', [ProfileMahasiswa::class, 'uploadProfilePhoto']);
     Route::delete('/mahasiswa/delete-profile-photo', [ProfileMahasiswa::class, 'deleteProfilePhoto']);
     Route::put('/mahasiswa/update-profile', [ProfileMahasiswa::class, 'updateProfile']);
+
+    //Mahasiswa Feedback
+    Route::get('/mahasiswa/feedback', [FeedbackMahasiswa::class, 'getStudentAssessmentsStatus']);
+    Route::get('/project/{projectId}/group-members', [FeedbackMahasiswa::class, 'getGroupMembers']);
+    Route::post('/feedback/store', [FeedbackMahasiswa::class, 'saveFeedbackMahasiswa']);
+    Route::get('/feedback/given', [FeedbackMahasiswa::class, 'getUserGivenFeedbacks']);
 });

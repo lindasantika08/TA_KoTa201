@@ -53,9 +53,13 @@ export default {
     handleDetail(item) {
       router.visit(`/mahasiswa/peer-assessment/peer-detail`, {
         method: 'get',
+        data: {
+            batch_year: item.batch_year,
+            project_name: item.project_name
+        },
         preserveState: true
-      });
-    }
+    });
+},
   },
   mounted() {
     axios.get('/api/peer-assessment')
@@ -113,7 +117,7 @@ export default {
             <template #column-status="{ item }">
               <span :class="[
                 'px-2 py-1 rounded-full text-xs font-medium',
-                item.status === 'aktif' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                item.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
               ]">
                 {{ item.status }}
               </span>

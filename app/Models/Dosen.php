@@ -39,4 +39,9 @@ class Dosen extends Model
     {
         return $this->hasMany(Group::class, 'dosen_id');
     }
+
+    public function feedback()
+    {
+        return $this->hasMany(Feedback::class, 'dosen_id');
+    }
 }

@@ -101,48 +101,50 @@ class PeerAssessmentDosen extends Controller
     {
         DB::beginTransaction();
         try {
-            $validated = $request->validate([
-                'question_id' => 'required|uuid',
-                'answer' => 'required|string',
-                'score' => 'required|integer|between:1,5',
-                'status' => 'required|string',
-            ]);
-
             $user = Auth::user();
             $dosen = Dosen::where('user_id', $user->id)->first();
             
-            if (!$dosen) {
-                throw new \Exception('dosen tidak ditemukan');
-            }
-
-            $answer = AnswersPeer::updateOrCreate(
-                [
-                    'question_id' => $validated['question_id'],
-                    'dosen_id' => $dosen->id
-                ],
-                [
-                    'answer' => $validated['answer'],
-                    'score' => $validated['score'],
-                    'status' => $validated['status']
-                ]
-            );
-
-            DB::commit();
-
-            return response()->json([
-                'message' => 'Answer saved successfully',
-                'answer' => $answer
+            $request->validate([
+                'answers' => 'required|array',
+                'answers.*.question_id' => 'required|uuid|exists:assessment,id',
+                'answers.*.answer' => 'required|string',
+                'answers.*.score' => 'required|integer',
+                'answers.*.status' => 'required|string'
             ]);
-
+    
+            $savedAnswers = [];
+            foreach ($request->input('answers') as $answerData) {
+                $answer = AnswersPeer::updateOrCreate(
+                    [
+                        'question_id' => $answerData['question_id'],
+                        'dosen_id' => $dosen->id
+                    ],
+                    [
+                        'answer' => $answerData['answer'],
+                        'score' => $answerData['score'],
+                        'status' => $answerData['status']
+                    ]
+                );
+                $savedAnswers[] = $answer;
+            }
+    
+            DB::commit();
+            return response()->json([
+                'success' => true,
+                'answers' => $savedAnswers
+            ]);
+    
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'error' => $e->errors()
+            ], 422);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error in saveAnswer:', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
             return response()->json([
-                'error' => 'Failed to save answer: ' . $e->getMessage()
+                'success' => false,
+                'error' => $e->getMessage()
             ], 500);
         }
     }
@@ -205,37 +207,37 @@ class PeerAssessmentDosen extends Controller
     }
 
     public function getAnswerPeer($questionId, Request $request)
-{
-    try {
-        $validated = $request->validate([
-            'dosen_id' => 'required|string|exists:dosen,id',
-        ]);
+    {
+        try {
+            $validated = $request->validate([
+                'dosen_id' => 'required|string|exists:dosen,id',
+            ]);
 
-        $answer = AnswersPeer::where([
-            'dosen_id' => $validated['dosen_id'],
-            'question_id' => $questionId
-        ])->first();
+            $answer = AnswersPeer::where([
+                'dosen_id' => $validated['dosen_id'],
+                'question_id' => $questionId
+            ])->first();
 
-        return response()->json($answer);
+            return response()->json($answer);
 
-    } catch (ValidationException $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Validasi gagal.',
-            'errors' => $e->errors()
-        ], 422);
-    } catch (\Exception $e) {
-        Log::error('Error in getAnswerPeer:', [
-            'message' => $e->getMessage(),
-            'file' => $e->getFile(),
-            'line' => $e->getLine()
-        ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal.',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Error in getAnswerPeer:', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
 
-        return response()->json([
-            'success' => false,
-            'message' => 'Terjadi kesalahan saat mengambil jawaban.',
-            'error' => $e->getMessage()
-        ], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat mengambil jawaban.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
-}
 }
