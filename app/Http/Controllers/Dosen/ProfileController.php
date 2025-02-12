@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Dosen;
 
 use App\Models\Dosen;
+use App\Models\User;
 use Inertia\Inertia;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class ProfileController extends Controller
 {
@@ -36,6 +38,7 @@ class ProfileController extends Controller
         return response()->json([
             'nama' => $dosen->user->name,
             'nip' => $dosen->nip,
+            'kode_dosen' => $dosen->kode_dosen,
             'jurusan' => $dosen->major->major_name,
             'email' => $dosen->user->email,
             'telepon' => $dosen->phone, // Misalkan ada kolom telepon di tabel user
@@ -110,6 +113,7 @@ class ProfileController extends Controller
         $validated = $request->validate([
             'nama' => 'required|string|max:255',
             'nip' => 'required|string|max:21',
+            'kode_dosen' => 'required|string|max:255',
             'jurusan' => 'required|string|max:255',
             'email' => 'required|email',
             'telepon' => 'nullable|string|max:15', // Pastikan Anda memvalidasi telepon
@@ -118,6 +122,7 @@ class ProfileController extends Controller
         // Update data dosen dengan data yang valid
         $dosen->user->name = $validated['nama'];
         $dosen->nip = $validated['nip'];
+        $dosen->kode_dosen = $validated['kode_dosen'];
         $dosen->major->major_name = $validated['jurusan'];
         $dosen->user->email = $validated['email'];
         $dosen->phone = $validated['telepon'];
@@ -126,4 +131,5 @@ class ProfileController extends Controller
 
         return response()->json(['message' => 'Profile updated successfully.']);
     }
+
 }

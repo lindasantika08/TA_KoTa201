@@ -25,8 +25,11 @@ use App\Http\Controllers\Mahasiswa\ProfileMahasiswa;
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
+
 Route::redirect('/', 'login');
 Route::get('/login', [AuthController::class, 'index'])->name('login');
+Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
+
 Route::middleware('auth')->group(function () {
 
     // Route untuk dosen

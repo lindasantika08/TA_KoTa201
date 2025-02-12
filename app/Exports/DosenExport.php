@@ -140,7 +140,7 @@ class DosenExport implements FromCollection, WithHeadings, WithTitle, WithStyles
             'B' => 20,  // Jurusan
             'C' => 20,  // Name
             'D' => 15,  // Kode_dosen
-            'E' => 20,  // NIP
+            'E' => 25,  // NIP
             'F' => 25,  // email
         ];
         foreach ($columnWidths as $column => $width) {

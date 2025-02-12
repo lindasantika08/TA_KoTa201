@@ -16,6 +16,7 @@
         "openai-php/client": "^0.10.3",
         "phpoffice/phpspreadsheet": "^1.29",
         "spatie/laravel-permission": "^6.10",
+        "symfony/mailer": "^7.2",
         "tightenco/ziggy": "^2.4"
     },
     "require-dev": {
