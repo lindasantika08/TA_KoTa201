@@ -83,8 +83,8 @@ const analysisScores = computed(() => {
 const radarChartOptions = computed(() => ({
   chart: {
     type: "radar",
-    height: "100%",  // Changed from fixed height to 100%
-    width: "100%",
+    height: "100%",  // Reduced from 100% to make it smaller
+    width: "100%",   // Reduced from 100% to make it smaller
     dropShadow: {
       enabled: true,
       blur: 1,
@@ -108,17 +108,17 @@ const radarChartOptions = computed(() => ({
     },
   ],
   labels: analysisScores.value.map((score) => score.aspek),
-  colors: ["#4F46E5", "#10B981"],
+  colors: ["#2563EB", "#F97316"], // Changed to blue and orange
   stroke: {
-    width: 3,  // Increased from 2
+    width: 2,  // Reduced from 3 to match smaller size
   },
   fill: {
     opacity: 0.4,
   },
   markers: {
-    size: 8,  // Increased from 6
+    size: 6,
     hover: {
-      size: 10,  // Increased from 8
+      size: 8,
     },
   },
   tooltip: {
@@ -134,27 +134,27 @@ const radarChartOptions = computed(() => ({
     labels: {
       formatter: (val) => val.toFixed(1),
       style: {
-        fontSize: "16px",  // Increased from 14px
+        fontSize: "14px",  // Reduced from 16px
       },
     },
   },
   xaxis: {
     labels: {
       style: {
-        fontSize: "16px",  // Increased from 14px
+        fontSize: "14px",  // Reduced from 16px
       },
     },
   },
   legend: {
     position: "bottom",
     horizontalAlign: "center",
-    fontSize: "16px",  // Increased from 14px
+    fontSize: "14px",  // Reduced from 16px
     markers: {
-      width: 20,  // Increased from 18
-      height: 20,  // Increased from 18
+      width: 16,  // Reduced from 20
+      height: 16,  // Reduced from 20
     },
     itemMargin: {
-      horizontal: 20,  // Increased from 15
+      horizontal: 15,  // Reduced from 20
     },
   },
 }));
@@ -242,11 +242,6 @@ const fetchFeedback = async () => {
     feedbackLoading.value = false;
   }
 };
-
-onMounted(() => {
-  fetchProjectScoreDetails();
-  fetchFeedback();
-});
 
 // Lifecycle hooks
 onMounted(() => {
