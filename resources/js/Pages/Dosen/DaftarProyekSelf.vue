@@ -27,6 +27,7 @@ export default {
         { key: 'project_name', label: 'Project Name' },
         { key: 'status', label: 'Status' },
         { key: 'date', label: 'Created Date' },
+        { key: 'publish', label: 'Publish' },
         { key: 'actions', label: 'Actions' },
       ],
       items: [],
@@ -34,28 +35,24 @@ export default {
   },
   methods: {
     handleDetail(item) {
-    // Log untuk memastikan parameter yang dikirimkan
-    console.log('Sending request to /dosen/assessment/data-with-bobot-self with parameters:', {
+      console.log('/dosen/assessment/data-with-bobot-self with parameters:', {
         batch_year: item.batch_year,
         project_name: item.project_name
-    });
+      });
 
-    // Mengirimkan request dengan router
-    router.get('/dosen/assessment/data-with-bobot-self', {
+      router.get('/dosen/assessment/data-with-bobot-self', {
         batch_year: item.batch_year,
         project_name: item.project_name
-    }, {
+      }, {
         preserveState: true
-    })
-    .then(response => {
-        // Jika request sukses, log responsenya
-        console.log('Response received:', response);
-    })
-    .catch(error => {
-        // Jika terjadi error, log errornya
-        console.error('Error occurred while fetching data:', error);
-    });
-},
+      })
+        .then(response => {
+          console.log('Response received:', response);
+        })
+        .catch(error => {
+          console.error('Error occurred while fetching data:', error);
+        });
+    },
 
     handleListAnswer(item) {
       router.get('/dosen/answers-self-assessment', {
@@ -64,6 +61,30 @@ export default {
       }, {
         preserveState: true
       });
+    },
+
+    handleTogglePublish(item) {
+      axios.post('/api/toggle-publish-assessment', {
+        batch_year: item.batch_year,
+        project_name: item.project_name,
+        is_published: !item.is_published
+      })
+        .then(response => {
+          axios.get('/api/proyek-self-assessment')
+            .then(response => {
+              this.items = response.data.map((item, index) => ({
+                no: index + 1,
+                batch_year: item.batch_year,
+                project_name: item.project_name,
+                status: item.status,
+                is_published: item.is_published === 1,
+                date: dayjs(item.created_at).format('DD MMMM YYYY HH:mm'),
+              }));
+            });
+        })
+        .catch(error => {
+          console.error('Error toggling publish status:', error);
+        });
     }
   },
   mounted() {
@@ -74,6 +95,7 @@ export default {
           batch_year: item.batch_year,
           project_name: item.project_name,
           status: item.status,
+          is_published: item.is_published || false,
           date: dayjs(item.created_at).format('DD MMMM YYYY HH:mm'),
         }));
       })
@@ -100,32 +122,36 @@ export default {
           </div>
           <div v-else>
             <DataTable :headers="headers" :items="items" class="mt-10">
+              <template #column-publish="{ item }">
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" :checked="item.is_published" @change="handleTogglePublish(item)"
+                    class="sr-only peer">
+                  <div
+                    class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
+                  </div>
+                </label>
+              </template>
+
               <template #column-actions="{ item }">
-                <button
-                  @click="handleDetail(item)"
-                  class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                >
+                <button @click="handleDetail(item)"
+                  class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                   <font-awesome-icon icon="fa-solid fa-eye" class="mr-2" />
                   Detail
                 </button>
-                <button
-                  @click="handleListAnswer(item)"
-                  class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ml-2"
-                >
+                <button @click="handleListAnswer(item)"
+                  class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ml-2">
                   <font-awesome-icon icon="fa-solid fa-file" class="mr-2" />
                   List Answer
                 </button>
               </template>
 
               <template #column-status="{ item }">
-                <span
-                  :class="[
-                    'px-2 py-1 rounded-full text-xs font-medium',
-                    item.status === 'Active'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-red-100 text-red-800'
-                  ]"
-                >
+                <span :class="[
+                  'px-2 py-1 rounded-full text-xs font-medium',
+                  item.status === 'Active'
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-red-100 text-red-800'
+                ]">
                   {{ item.status }}
                 </span>
               </template>
