@@ -103,13 +103,15 @@ class AssessmentMahasiswa extends Controller
 
             $groups = Group::with(['project' => function($query) {
                     $query->withCount(['assessments' => function($query) {
-                        $query->where('type', 'peerAssessment');
+                        $query->where('type', 'peerAssessment')
+                              ->where('is_published', 1);
                     }]);
                 }])
                 ->where('mahasiswa_id', $mahasiswa->id)
                 ->whereHas('project', function($query) {
                     $query->whereHas('assessments', function($query) {
-                        $query->where('type', 'peerAssessment');
+                        $query->where('type', 'peerAssessment')
+                              ->where('is_published', 1);
                     });
                 })
                 ->get();
@@ -123,6 +125,8 @@ class AssessmentMahasiswa extends Controller
                     'created_at' => $group->created_at,
                     'total_questions' => $group->project->assessments_count,
                 ];
+            })->filter(function ($assessment) {
+                return $assessment['total_questions'] > 0;
             });
 
             return response()->json([

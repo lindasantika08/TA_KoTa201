@@ -27,6 +27,7 @@ export default {
         { key: 'project_name', label: 'Project Name' },
         { key: 'status', label: 'Status' },
         { key: 'date', label: 'Created Date' },
+        { key: 'publish', label: 'Publish' },
         { key: 'actions', label: 'Actions' },
       ],
       items: [],
@@ -55,6 +56,30 @@ export default {
       }, {
         preserveState: true
       });
+    },
+
+    handleTogglePublish(item) {
+      axios.post('/api/toggle-publish-assessment', {
+        batch_year: item.batch_year,
+        project_name: item.project_name,
+        is_published: !item.is_published
+      })
+        .then(response => {
+          axios.get('/api/proyek-Peer-assessment')
+            .then(response => {
+              this.items = response.data.map((item, index) => ({
+                no: index + 1,
+                batch_year: item.batch_year,
+                project_name: item.project_name,
+                status: item.status,
+                is_published: item.is_published === 1,
+                date: dayjs(item.created_at).format('DD MMMM YYYY HH:mm'),
+              }));
+            });
+        })
+        .catch(error => {
+          console.error('Error toggling publish status:', error);
+        });
     }
   },
   mounted() {
@@ -64,6 +89,7 @@ export default {
           no: index + 1,
           batch_year: item.batch_year,
           project_name: item.project_name,
+          is_published: item.is_published || false,
           status: item.status,
           date: dayjs(item.created_at).format('DD MMMM YYYY HH:mm'),
         }));
@@ -91,6 +117,15 @@ export default {
           </div>
           <div v-else>
             <DataTable :headers="headers" :items="items" class="mt-10">
+              <template #column-publish="{ item }">
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" :checked="item.is_published" @change="handleTogglePublish(item)"
+                    class="sr-only peer">
+                  <div
+                    class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
+                  </div>
+                </label>
+              </template>
               <template #column-actions="{ item }">
                 <button @click="handleDetail(item)"
                   class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">

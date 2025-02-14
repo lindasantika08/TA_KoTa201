@@ -93,6 +93,7 @@ class ProjectController extends Controller
                 'status',
                 'created_at'
             ])
+            ->selectRaw('(SELECT is_published FROM assessment WHERE project_id = project.id AND type = "peerAssessment" LIMIT 1) as is_published')
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -100,47 +101,47 @@ class ProjectController extends Controller
     }
 
     public function togglePublishAssessment(Request $request)
-{
-    try {
-        \DB::enableQueryLog(); // Untuk debug
+    {
+        try {
+            \DB::enableQueryLog(); // Untuk debug
 
-        $project = Project::where('batch_year', $request->batch_year)
-                         ->where('project_name', $request->project_name)
-                         ->first();
+            $project = Project::where('batch_year', $request->batch_year)
+                            ->where('project_name', $request->project_name)
+                            ->first();
 
-        if (!$project) {
+            if (!$project) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Project not found'
+                ], 404);
+            }
+
+            $updated = Assessment::where([
+                'project_id' => $project->id,
+                'type' => 'selfAssessment'
+            ])->update([
+                'is_published' => $request->is_published ? 1 : 0
+            ]);
+
+            \Log::info('SQL Query:', \DB::getQueryLog()); // Untuk debug
+            \Log::info('Update result:', ['updated' => $updated]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Assessment publish status updated successfully',
+                'data' => [
+                    'is_published' => $request->is_published,
+                    'updated_count' => $updated
+                ]
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Toggle publish error:', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
-                'message' => 'Project not found'
-            ], 404);
+                'message' => 'Failed to update publish status: ' . $e->getMessage()
+            ], 500);
         }
-
-        $updated = Assessment::where([
-            'project_id' => $project->id,
-            'type' => 'selfAssessment'
-        ])->update([
-            'is_published' => $request->is_published ? 1 : 0
-        ]);
-
-        \Log::info('SQL Query:', \DB::getQueryLog()); // Untuk debug
-        \Log::info('Update result:', ['updated' => $updated]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Assessment publish status updated successfully',
-            'data' => [
-                'is_published' => $request->is_published,
-                'updated_count' => $updated
-            ]
-        ]);
-    } catch (\Exception $e) {
-        \Log::error('Toggle publish error:', ['error' => $e->getMessage()]);
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to update publish status: ' . $e->getMessage()
-        ], 500);
     }
-}
 
     public function changeStatus(Request $request)
     {
