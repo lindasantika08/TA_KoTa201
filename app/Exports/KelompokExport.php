@@ -11,6 +11,7 @@ use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 
 class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, WithEvents
 {
@@ -18,7 +19,6 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
     protected $namaProyek;
     protected $semester;
     protected $angkatan;
-    
 
     public function __construct($tahunAjaran, $namaProyek, $semester, $angkatan)
     {
@@ -39,9 +39,9 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
             ->join('users', 'mahasiswa.user_id', '=', 'users.id')
             ->join('class_room', 'mahasiswa.class_id', '=', 'class_room.id')
             ->join('prodi', 'class_room.prodi_id', '=', 'prodi.id')
-            ->leftJoin('groups', function($join) use ($projectMajor) {
+            ->leftJoin('groups', function ($join) use ($projectMajor) {
                 $join->on('groups.mahasiswa_id', '=', 'mahasiswa.id')
-                    ->whereExists(function($query) use ($projectMajor) {
+                    ->whereExists(function ($query) use ($projectMajor) {
                         $query->select(DB::raw(1))
                             ->from('project')
                             ->whereRaw('project.id = groups.project_id')
@@ -50,7 +50,7 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
                             ->where('project.project_name', $this->namaProyek);
                     });
             })
-            ->leftJoin('dosen', function($join) use ($projectMajor) {
+            ->leftJoin('dosen', function ($join) use ($projectMajor) {
                 $join->on('groups.dosen_id', '=', 'dosen.id')
                     ->where('dosen.major_id', $projectMajor);
             })
@@ -64,9 +64,8 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
                 DB::raw("'{$this->angkatan}' as angkatan"),
                 'users.name as mahasiswa_name',
                 'mahasiswa.nim',
-                DB::raw('COALESCE(CONCAT(dosen_user.name, \' - \', dosen.kode_dosen), \'\') as dosen_manajer'),
+                'dosen_user.name as dosen_manajer',
                 DB::raw('COALESCE(groups.`group`, \'\') as kelompok'),
-                
             )
             ->from(DB::raw('(SELECT @row_number:=0) as r, mahasiswa'))
             ->get();
@@ -90,28 +89,55 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
                     ->where('project_name', $this->namaProyek)
                     ->where('batch_year', $this->tahunAjaran)
                     ->value('major_id');
-                                      
+
+                // Get dosen list
                 $dosenList = DB::table('users')
                     ->join('dosen', 'users.id', '=', 'dosen.user_id')
                     ->where('users.role', 'dosen')
                     ->where('dosen.major_id', $projectMajor)
                     ->whereNull('users.deleted_at')
-                    ->select(DB::raw("CONCAT(users.name, ' - ', dosen.kode_dosen) as dosen_label"))
+                    ->select('users.name')
                     ->distinct()
-                    ->pluck('dosen_label')
+                    ->pluck('name')
                     ->toArray();
 
+                // Create hidden sheet for dosen list
+                $spreadsheet = $worksheet->getParent();
+                $listSheet = $spreadsheet->createSheet();
+                $listSheet->setTitle('DosenList');
+
+                // Add dosen names to hidden sheet
+                foreach ($dosenList as $index => $name) {
+                    $listSheet->setCellValue('A' . ($index + 1), $name);
+                }
+
+                // Name the range for dosen list
+                $lastDosenRow = count($dosenList);
+                $spreadsheet->addNamedRange(
+                    new \PhpOffice\PhpSpreadsheet\NamedRange(
+                        'DosenList',
+                        $listSheet,
+                        '$A$1:$A$' . $lastDosenRow
+                    )
+                );
+
+                // Hide the list sheet
+                $listSheet->setSheetState(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet::SHEETSTATE_HIDDEN);
+
+                // Add data validation to main sheet
                 $validation = new DataValidation();
                 $validation->setType(DataValidation::TYPE_LIST)
                     ->setErrorStyle(DataValidation::STYLE_INFORMATION)
                     ->setAllowBlank(false)
                     ->setShowDropDown(true)
-                    ->setFormula1('"' . implode(',', array_unique($dosenList)) . '"');
+                    ->setFormula1('=DosenList');
 
+                // Apply validation to all rows
                 for ($row = 2; $row <= $lastRow; $row++) {
                     $worksheet->getCell('G' . $row)->setDataValidation(clone $validation);
                 }
 
+                // Apply styles
                 $worksheet->getStyle('A1:H' . $lastRow)->getBorders()->getAllBorders()->setBorderStyle('thin');
                 $worksheet->getStyle('A1:H1')->getFont()->setBold(true);
                 $worksheet->getStyle('A1:H1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);

@@ -5,7 +5,9 @@ namespace App\Imports;
 use App\Models\User;
 use App\Models\Dosen;
 use App\Models\Major;
+use App\Mail\CredentialMail;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Mail;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Illuminate\Support\Facades\Log;
@@ -19,19 +21,18 @@ class DosenImport implements ToModel, WithHeadingRow, WithBatchInserts, OnEachRo
 {
     private $processedNips = [];
     private $majors = [];
+    private $currentMajorId = null;
 
     public function __construct()
     {
         $this->majors = Major::pluck('id', 'major_name')->toArray();
-        // Simpan data NIP yang ada sebelum import
-        // $this->oldNipMapping = Dosen::pluck('nip', 'id')->toArray();
     }
 
     public function model(array $row)
     {
         try {
             Log::info('Memproses baris import: ', $row);
-
+            
             // Periksa kolom yang diperlukan
             $requiredColumns = ['nip', 'email', 'name', 'kode_dosen', 'jurusan'];
             foreach ($requiredColumns as $column) {
@@ -48,11 +49,15 @@ class DosenImport implements ToModel, WithHeadingRow, WithBatchInserts, OnEachRo
                 return null;
             }
 
+            $this->currentMajorId = $majorId;
+
             DB::beginTransaction();
             try {
+                // Generate password
+                $password = Str::random(8);
                 // Cari dosen berdasarkan kode_dosen (sebagai identifier unik)
                 $existingDosen = Dosen::where('kode_dosen', $row['kode_dosen'])->first();
-                
+
                 // Jika tidak ditemukan dengan kode_dosen, cari berdasarkan NIP
                 if (!$existingDosen) {
                     $existingDosen = Dosen::where('nip', $row['nip'])->first();
@@ -75,7 +80,7 @@ class DosenImport implements ToModel, WithHeadingRow, WithBatchInserts, OnEachRo
                             'id' => Str::uuid(),
                             'name' => $row['name'],
                             'email' => $row['email'],
-                            'password' => bcrypt('qwert1234'),
+                            'password' => bcrypt($password),
                             'role' => 'dosen'
                         ]);
                     }
@@ -89,7 +94,7 @@ class DosenImport implements ToModel, WithHeadingRow, WithBatchInserts, OnEachRo
                     ]);
 
                     // Tambahkan NIP baru ke daftar yang telah diproses
-                    $this->processedNips[] = $row['nip'];
+                    $this->processedNips[$row['nip']] = $majorId;
                 } else {
                     // Buat data baru jika tidak ditemukan
                     if (!$existingUser) {
@@ -97,8 +102,39 @@ class DosenImport implements ToModel, WithHeadingRow, WithBatchInserts, OnEachRo
                             'id' => Str::uuid(),
                             'name' => $row['name'],
                             'email' => $row['email'],
-                            'password' => bcrypt('qwert1234'),
+                            'password' => bcrypt($password),
                             'role' => 'dosen'
+                        ]);
+                    }
+
+                    // Kirim email kredensial
+                    try {
+                        // Log kredensial sebelum dikirim
+                        Log::info('Mencoba mengirim kredensial ke email:', [
+                            'nama' => $row['name'],
+                            'email' => $row['email'],
+                            'password' => $password
+                        ]);
+
+                        Mail::to($row['email'])
+                            ->send(new CredentialMail($row['email'], $password, $row['name']));
+
+                        // Log sukses dengan detail
+                        Log::info('Email kredensial berhasil dikirim', [
+                            'nama' => $row['name'],
+                            'email' => $row['email'],
+                            'password' => $password,
+                            'status' => 'success',
+                            'waktu_kirim' => now()->format('Y-m-d H:i:s')
+                        ]);
+                    } catch (\Exception $e) {
+                        Log::error('Gagal mengirim email kredensial', [
+                            'nama' => $row['name'],
+                            'email' => $row['email'],
+                            'password' => $password,
+                            'error' => $e->getMessage(),
+                            'status' => 'failed',
+                            'waktu_error' => now()->format('Y-m-d H:i:s')
                         ]);
                     }
 
@@ -146,21 +182,21 @@ class DosenImport implements ToModel, WithHeadingRow, WithBatchInserts, OnEachRo
 
             Log::info('NIPs yang diproses:', ['nips' => $this->processedNips]);
 
-            // Hanya hapus data yang benar-benar tidak ada di file import
-            // dan bukan milik user yang sedang login
-            if ($currentUser && $currentUser->dosen) {
-                $this->processedNips[] = $currentUser->dosen->nip;
-            }
-
-            // PENTING: Jangan hapus data jika tidak ada NIP yang diproses
-            if (empty($this->processedNips)) {
-                Log::warning('Tidak ada NIP yang diproses, membatalkan penghapusan');
+            // Jika tidak ada data yang diproses atau tidak ada current major, batalkan
+            if (empty($this->processedNips) || !$this->currentMajorId) {
+                Log::warning('Tidak ada data valid untuk diproses, membatalkan penghapusan');
                 return;
             }
 
-            // Dapatkan dosen yang akan dihapus
-            $dosensToDelete = Dosen::whereNotIn('nip', $this->processedNips)
-                                 ->get();
+            // Tambahkan NIP user yang sedang login ke daftar pengecualian
+            if ($currentUser && $currentUser->dosen) {
+                $this->processedNips[$currentUser->dosen->nip] = $currentUser->dosen->major_id;
+            }
+
+            // Dapatkan dosen yang akan dihapus (hanya dari jurusan yang sama)
+            $dosensToDelete = Dosen::where('major_id', $this->currentMajorId)
+                ->whereNotIn('nip', array_keys($this->processedNips))
+                ->get();
 
             DB::transaction(function () use ($dosensToDelete) {
                 foreach ($dosensToDelete as $dosen) {
@@ -171,7 +207,8 @@ class DosenImport implements ToModel, WithHeadingRow, WithBatchInserts, OnEachRo
                         Log::info('Menghapus dosen:', [
                             'dosen_id' => $dosen->id,
                             'nip' => $dosen->nip,
-                            'kode_dosen' => $dosen->kode_dosen
+                            'kode_dosen' => $dosen->kode_dosen,
+                            'major_id' => $dosen->major_id
                         ]);
 
                         $dosen->delete(); // Gunakan soft delete

@@ -237,18 +237,22 @@ class KelolaKelompokController extends Controller
         $request->validate([
             'file' => 'required|mimes:xlsx,xls',
         ]);
-
+    
         $file = $request->file('file');
-
+    
         try {
             Log::info('File uploaded', ['file_name' => $file->getClientOriginalName()]);
-
+    
+            // Log the file contents or data being imported
+            Log::info('File contents', ['contents' => file_get_contents($file->getRealPath())]);
+    
             Excel::import(new KelompokImport, $file);
-
+    
             return response()->json(['message' => 'Data kelompok berhasil diimpor'], 200);
         } catch (\Exception $e) {
-            Log::error('Import error: ' . $e->getMessage());
+            Log::error('Import error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             return response()->json(['error' => 'Terjadi kesalahan saat mengimpor data', 'details' => $e->getMessage()], 500);
         }
     }
+    
 }

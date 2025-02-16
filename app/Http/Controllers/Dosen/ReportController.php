@@ -179,26 +179,36 @@ class ReportController extends Controller
         $kelompok = $request->input('kelompok');
 
         try {
-            // Get project ID first
+            // Get project
             $project = Project::where('batch_year', $tahunAjaran)
                 ->where('project_name', $namaProyek)
                 ->first();
 
             if (!$project) {
-                return response()->json([], 200);
+                return response()->json(['message' => 'Project not found'], 404);
             }
 
-            // Retrieve mahasiswa_ids for the specific group
+            // Get group
+            $group = Group::where('batch_year', $tahunAjaran)
+                ->where('project_id', $project->id)
+                ->where('group', $kelompok)
+                ->first();
+
+            if (!$group) {
+                return response()->json(['message' => 'Group not found'], 404);
+            }
+
+            // Retrieve mahasiswa IDs for the group
             $mahasiswaIds = Group::where('batch_year', $tahunAjaran)
                 ->where('project_id', $project->id)
                 ->where('group', $kelompok)
                 ->pluck('mahasiswa_id');
 
             if ($mahasiswaIds->isEmpty()) {
-                return response()->json([], 200);
+                return response()->json(['message' => 'No students found'], 404);
             }
 
-            // Get mahasiswa names and their associated user IDs
+            // Get mahasiswa names and user IDs
             $mahasiswaDetails = Mahasiswa::whereIn('id', $mahasiswaIds)
                 ->with('user')
                 ->get()
@@ -209,8 +219,11 @@ class ReportController extends Controller
                     ]];
                 });
 
+            // Collect all selisih values for range calculation
+            $allSelisih = collect();
+
             // Process each mahasiswa's assessments
-            $mahasiswaResults = $mahasiswaIds->mapWithKeys(function ($mahasiswaId) use ($tahunAjaran, $project, $mahasiswaDetails) {
+            $mahasiswaResults = $mahasiswaIds->mapWithKeys(function ($mahasiswaId) use ($tahunAjaran, $project, $group, $mahasiswaDetails, &$allSelisih) {
                 // Self Assessments
                 $selfAssessments = Assessment::where('batch_year', $tahunAjaran)
                     ->where('project_id', $project->id)
@@ -235,7 +248,8 @@ class ReportController extends Controller
                     'assessment.id as assessment_id',
                     'assessment.question',
                     'type_criteria.aspect',
-                    'type_criteria.criteria'
+                    'type_criteria.criteria',
+                    'type_criteria.id as typeCriteria_id'
                 )
                     ->join('assessment', 'answers_peer.question_id', '=', 'assessment.id')
                     ->join('type_criteria', 'assessment.criteria_id', '=', 'type_criteria.id')
@@ -244,16 +258,61 @@ class ReportController extends Controller
                     ->where('answers_peer.peer_id', $mahasiswaId)
                     ->get();
 
-                // Group peer evaluations by aspect and criteria
+                // Group peer evaluations and save to Report
                 $groupedPeerEvaluations = $peerEvaluations->groupBy(function ($item) {
                     return $item->aspect . '_' . $item->criteria;
-                })->map(function ($groupAnswers) use ($mahasiswaDetails) {
+                })->map(function ($groupAnswers) use ($mahasiswaDetails, $project, $group, $mahasiswaId, $selfAspekKriteriaAnalysis, $peerAspekKriteriaAnalysis, &$allSelisih) {
                     $aspek = $groupAnswers->first()->aspect;
                     $kriteria = $groupAnswers->first()->criteria;
+                    $typeCriteriaId = $groupAnswers->first()->typeCriteria_id;
 
-                    // Group answers by evaluator (mahasiswa_id)
+                    // Calculate average scores
+                    $skorSelf = $selfAspekKriteriaAnalysis->where('kriteria', $kriteria)->avg('total_score') ?? 0;
+                    $skorPeer = $groupAnswers->avg('score');
+                    $selisih = abs($skorSelf - $skorPeer);
+
+                    // Add selisih to collection for range calculation
+                    $allSelisih->push($selisih);
+
+                    // Calculate ranges and nilai_total
+                    $minSelisih = $allSelisih->min();
+                    $maxSelisih = $allSelisih->max();
+                    $range = $maxSelisih > $minSelisih ? ($maxSelisih - $minSelisih) / 4 : 0;
+
+                    $nilaiTotal = 60; // Default value
+                    $ranges = [
+                        ['min' => $minSelisih, 'max' => $minSelisih + $range, 'score' => 100],
+                        ['min' => $minSelisih + $range, 'max' => $minSelisih + (2 * $range), 'score' => 90],
+                        ['min' => $minSelisih + (2 * $range), 'max' => $minSelisih + (3 * $range), 'score' => 80],
+                        ['min' => $minSelisih + (3 * $range), 'max' => $minSelisih + (4 * $range), 'score' => 70],
+                        ['min' => $maxSelisih, 'max' => $maxSelisih, 'score' => 60]
+                    ];
+
+                    foreach ($ranges as $range) {
+                        if ($selisih >= $range['min'] && $selisih <= $range['max']) {
+                            $nilaiTotal = $range['score'];
+                            break;
+                        }
+                    }
+
+                    // Save to Report model
+                    Report::updateOrCreate(
+                        [
+                            'project_id' => $project->id,
+                            'group_id' => $group->id,
+                            'mahasiswa_id' => $mahasiswaId,
+                            'typeCriteria_id' => $typeCriteriaId
+                        ],
+                        [
+                            'skor_self' => $skorSelf,
+                            'skor_peer' => $skorPeer,
+                            'selisih' => $selisih,
+                            'nilai_total' => $nilaiTotal,
+                        ]
+                    );
+
+                    // Continue with the original response structure
                     $evaluatorGroups = $groupAnswers->groupBy('mahasiswa_id');
-
                     $evaluatedBy = $evaluatorGroups->map(function ($answers, $evaluatorId) use ($mahasiswaDetails) {
                         return [
                             'name' => $mahasiswaDetails[$evaluatorId]['name'] ?? 'Unknown',
@@ -261,7 +320,7 @@ class ReportController extends Controller
                             'answers' => $answers->map(function ($answer) {
                                 return [
                                     'question_id' => $answer->assessment_id,
-                                    'pertanyaan' => $answer->question, // Include the question text
+                                    'pertanyaan' => $answer->question,
                                     'score' => $answer->score,
                                     'answer' => $answer->answer
                                 ];
@@ -272,7 +331,7 @@ class ReportController extends Controller
                     return [
                         'aspek' => $aspek,
                         'kriteria' => $kriteria,
-                        'total_score' => $groupAnswers->avg('score'),
+                        'total_score' => $skorPeer,
                         'evaluated_by' => $evaluatedBy
                     ];
                 })->values();
@@ -298,6 +357,7 @@ class ReportController extends Controller
             ], 500);
         }
     }
+
 
     private function analyzeAssessments($assessments, $mahasiswaId, $assessmentType, $projectId)
     {
@@ -334,34 +394,5 @@ class ReportController extends Controller
                 })
             ];
         });
-    }
-
-    public function storeReport(Request $request)
-    {
-        try {
-            DB::beginTransaction();
-
-            // Validate the incoming request
-            $validatedData = $request->validate([
-                'project_id' => 'required|exists:projects,id',
-                'group_id' => 'required|exists:groups,id',
-                'mahasiswa_id' => 'required|exists:mahasiswas,id',
-                'typeCriteria_id' => 'required|exists:type_criterias,id',
-                'skor_self' => 'required|numeric|between:0,5',
-                'skor_peer' => 'required|numeric|between:0,5',
-                'selisih' => 'required|numeric|between:-5,5',
-                'nilai_total' => 'nullable|numeric|between:0,5',
-            ]);
-
-            // Create the report
-            Report::create($validatedData);
-
-            DB::commit();
-
-            return response()->json(['message' => 'Report berhasil disimpan'], 201);
-        } catch (\Exception $e) {
-            DB::rollback();
-            return response()->json(['message' => 'Gagal menyimpan report', 'error' => $e->getMessage()], 500);
-        }
     }
 }

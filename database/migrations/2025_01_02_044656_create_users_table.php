@@ -11,7 +11,7 @@ class CreateUsersTable extends Migration
      */
     public function up(): void
     {
-        
+
         Schema::create('users', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('name');
@@ -19,7 +19,7 @@ class CreateUsersTable extends Migration
             $table->string('password');
             $table->rememberToken();
             $table->string('photo', 2048)->nullable();
-            $table->enum('role', ['mahasiswa', 'dosen'])->default('mahasiswa');
+            $table->enum('role', ['mahasiswa', 'dosen', 'admin'])->default('mahasiswa');
             $table->timestamps();
             $table->softDeletes();
         });

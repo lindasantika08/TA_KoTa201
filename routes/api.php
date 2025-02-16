@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\MajorAdminController;
+use App\Http\Controllers\Admin\UserAdminController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -14,12 +16,15 @@ use App\Http\Controllers\Dosen\UserManagementController;
 use App\Http\Controllers\Dosen\SelfAssessmentDosen;
 use App\Http\Controllers\Dosen\PeerAssessmentDosen;
 use App\Http\Controllers\Dosen\ProfileController;
+use App\Http\Controllers\Dosen\FeedbackController;
 
 use App\Http\Controllers\Mahasiswa\AssessmentMahasiswa;
 use App\Http\Controllers\Mahasiswa\DashboardMahasiswa;
 use App\Http\Controllers\Mahasiswa\SelfAssessment;
 use App\Http\Controllers\Mahasiswa\PeerAssessment;
 use App\Http\Controllers\Mahasiswa\DetailSelfMahasiswa;
+use App\Http\Controllers\Mahasiswa\DetailPeerMahasiswa;
+use App\Http\Controllers\Mahasiswa\FeedbackMahasiswa;
 use App\Http\Controllers\Mahasiswa\ReportMahasiswa;
 use App\Http\Controllers\Mahasiswa\ProfileMahasiswa;
 use App\Http\Controllers\Mahasiswa\NotificationMahasiswa;
@@ -28,6 +33,9 @@ use Illuminate\Support\Facades\Auth;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->get('/validate-token', [AuthController::class, 'validateToken']);
+Route::middleware('auth:sanctum')->post('/change-password', [AuthController::class, 'changePassword']);
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function () {
@@ -38,6 +46,7 @@ Route::middleware('auth:sanctum')->group(function () {
         $user = Auth::user();
         return response()->json(['role' => $user->role]);
     })->middleware('auth:sanctum');
+
 
     //---------------------------------------------dosen---------------------------------------------//
     Route::get('/export-self-assessment', [AssessmentController::class, 'exportExcel']);
@@ -113,6 +122,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/report/kelompok/answers', [ReportController::class, 'getKelompokAnswers']);
     Route::post('/report/storeReport', [ReportController::class, 'storeReport']);
 
+    //Dosen Feedback
+    Route::get('/feedbacks-get-answer', [FeedbackController::class, 'getFeedbackAnswer']);
+    Route::get('/feedback-summary', [FeedbackController::class, 'getSummaryFeedback']);
+    Route::post('/feedbacks-store-dosen', [FeedbackController::class, 'storeFeedback']);
+
 
     //-------------------------------------mahasiswa------------------------------------------------//
     // dashboard mhs
@@ -153,10 +167,12 @@ Route::middleware('auth:sanctum')->group(function () {
     // detail assessment
     Route::get('/user-detail-answer', [DetailSelfMahasiswa::class, 'getUserInfo']);
     Route::get('/detail-answer-self', [DetailSelfMahasiswa::class, 'getAnswerSelf']);
+    Route::get('/peer-assessment-detail', [DetailPeerMahasiswa::class, 'getAnswerPeer']);
 
     //mahasiswa Report
     Route::get('/mahasiswa/projects', [ReportMahasiswa::class, 'getProjects']);
     Route::get('/project-score-details', [ReportMahasiswa::class, 'getProjectScoreDetails']);
+    Route::get('/project-feedback', [FeedbackMahasiswa::class, 'getFeedback']);
 
     //Mahasiswa Profile
     Route::get('/get-profile', [ProfileMahasiswa::class, 'getProfile']);
@@ -177,4 +193,30 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/read-all', [NotificationMahasiswa::class, 'markAllAsRead']);
         Route::post('/count', [NotificationMahasiswa::class, 'getCountNotif']);
     });
+
+    //Mahasiswa Feedback
+    Route::get('/mahasiswa/feedback', [FeedbackMahasiswa::class, 'getStudentAssessmentsStatus']);
+    Route::get('/project/{projectId}/group-members', [FeedbackMahasiswa::class, 'getGroupMembers']);
+    Route::post('/feedback/store', [FeedbackMahasiswa::class, 'saveFeedbackMahasiswa']);
+    Route::get('/feedback/given', [FeedbackMahasiswa::class, 'getUserGivenFeedbacks']);
+
+    //================ADMIN====================//
+
+    //admin manage Major
+    Route::get('/get-major', [MajorAdminController::class, 'showMajor']);
+    Route::post('/add-major', [MajorAdminController::class, 'addMajor']);
+    Route::post('/delete-major', [MajorAdminController::class, 'deleteMajor']);
+    Route::post('/edit-major', [MajorAdminController::class, 'editMajor']);
+    Route::get('/get-prodi', [MajorAdminController::class, 'showProdi']);
+    Route::get('/get-major-forDropDown', [MajorAdminController::class, 'showMajorDropDown']);
+    Route::post('/add-prodi', [MajorAdminController::class, 'addProdi']);
+    Route::post('/delete-prodi', [MajorAdminController::class, 'deleteProdi']);
+    Route::post('/update-prodi', [MajorAdminController::class, 'updateProdi']);
+
+    //admin manage user
+    Route::get('/get-dosen-admin', [UserAdminController::class, 'getDosen']);
+    Route::post('/delete-dosen', [UserAdminController::class, 'deleteDosen']);
+    Route::post('/update-dosen', [UserAdminController::class, 'editDosen']);
+    Route::post('/delete-mahasiswa', [UserAdminController::class, 'deleteMahasiswa']);
+    Route::post('/update-mahasiswa', [UserAdminController::class, 'editMahasiswa']);
 });

@@ -186,61 +186,88 @@ class AnswerController extends Controller
             $batchYear = $request->query('batch_year');
             $projectName = $request->query('project_name');
 
-            // Find the project
+            // Validate required parameters
+            if (!$batchYear || !$projectName) {
+                return response()->json([
+                    'message' => 'Batch year and project name are required'
+                ], 400);
+            }
+
+            // Find the specific project with exact batch year and project name
             $project = Project::where('batch_year', $batchYear)
                 ->where('project_name', $projectName)
                 ->first();
 
             if (!$project) {
                 return response()->json([
-                    'message' => 'Project not found'
+                    'message' => 'Project not found for the specified batch year and project name'
                 ], 404);
             }
 
-            // Get all groups for this specific project
+            // Get all groups ONLY for this specific project
             $allGroups = Group::where('project_id', $project->id)
-                ->select('id', 'group')
+                ->select('id', 'group', 'project_id')
                 ->get();
 
-            // Group the groups by their names but only within this project
-            $uniqueGroups = $allGroups->groupBy('group')->map(function ($groups) {
-                return [
-                    'group_id' => $groups->first()->id,
-                    'group_name' => $groups->first()->group
-                ];
-            })->values();
+            // Log for debugging
+            Log::info('Found groups for project', [
+                'project_id' => $project->id,
+                'batch_year' => $batchYear,
+                'project_name' => $projectName,
+                'group_count' => $allGroups->count()
+            ]);
+
+            // Group the groups by their names but strictly within this project
+            $uniqueGroups = $allGroups->groupBy('group')
+                ->map(function ($groups) {
+                    return [
+                        'group_id' => $groups->first()->id,
+                        'group_name' => $groups->first()->group,
+                        'project_id' => $groups->first()->project_id
+                    ];
+                })->values();
 
             $groupStatistics = $uniqueGroups->map(function ($uniqueGroup) use ($project) {
-                // Find all group IDs that share this group name WITHIN THIS PROJECT
-                $groupIds = Group::where('group', $uniqueGroup['group_name'])
-                    ->where('project_id', $project->id)
-                    ->pluck('id');
-
-                // Find mahasiswa in all instances of this group within this project
-                $groupMembers = Mahasiswa::whereHas('group', function ($query) use ($groupIds) {
-                    $query->whereIn('id', $groupIds);
+                // Find all members specifically for this group in this project
+                $groupMembers = Mahasiswa::whereHas('group', function ($query) use ($uniqueGroup, $project) {
+                    $query->where('project_id', $project->id)
+                        ->where('group', $uniqueGroup['group_name']);
                 })->get();
 
-                // If no members, mark as not completed
+                // Log group members for debugging
+                Log::info('Group members', [
+                    'group_name' => $uniqueGroup['group_name'],
+                    'project_id' => $project->id,
+                    'member_count' => $groupMembers->count()
+                ]);
+
+                // If no members, return not completed status
                 if ($groupMembers->isEmpty()) {
                     return [
                         'group_id' => $uniqueGroup['group_id'],
                         'group_name' => $uniqueGroup['group_name'],
                         'is_completed' => false,
-                        'total_members' => 0
+                        'total_members' => 0,
+                        'batch_year' => $project->batch_year
                     ];
                 }
 
                 // Check if every member has completed peer assessments for every other member
-                $isGroupCompleted = $groupMembers->every(function ($member) use ($groupMembers) {
+                $isGroupCompleted = $groupMembers->every(function ($member) use ($groupMembers, $project) {
                     // Get IDs of other members in the group
-                    $otherMemberIds = $groupMembers->pluck('id')->filter(fn($peerId) => $peerId != $member->id);
+                    $otherMemberIds = $groupMembers->pluck('id')
+                        ->filter(fn($peerId) => $peerId != $member->id);
 
                     // Check if this member has assessed every other member
-                    return $otherMemberIds->every(function ($peerId) use ($member) {
-                        return AnswersPeer::where('mahasiswa_id', $member->id)
+                    return $otherMemberIds->every(function ($peerId) use ($member, $project) {
+                        $assessmentCount = AnswersPeer::where('mahasiswa_id', $member->id)
                             ->where('peer_id', $peerId)
-                            ->exists();
+                            ->whereHas('question', function ($query) use ($project) {
+                                $query->where('project_id', $project->id);
+                            })
+                            ->count();
+
+                        return $assessmentCount > 0;
                     });
                 });
 
@@ -248,11 +275,12 @@ class AnswerController extends Controller
                     'group_id' => $uniqueGroup['group_id'],
                     'group_name' => $uniqueGroup['group_name'],
                     'is_completed' => $isGroupCompleted,
-                    'total_members' => $groupMembers->count()
+                    'total_members' => $groupMembers->count(),
+                    'batch_year' => $project->batch_year
                 ];
             });
 
-            // Count total groups and completed groups
+            // Calculate statistics
             $totalGroups = $uniqueGroups->count();
             $completedGroups = $groupStatistics->where('is_completed', true)->count();
 
@@ -260,13 +288,20 @@ class AnswerController extends Controller
                 'totalGroup' => $totalGroups,
                 'groupSudahLengkap' => $completedGroups,
                 'groupBelumLengkap' => $totalGroups - $completedGroups,
-                'groupStatistics' => $groupStatistics
+                'groupStatistics' => $groupStatistics,
+                'projectInfo' => [
+                    'batch_year' => $project->batch_year,
+                    'project_name' => $project->project_name
+                ]
             ]);
         } catch (\Exception $e) {
             Log::error('Error in getStatisticsPeer', [
                 'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
+                'batch_year' => $request->query('batch_year'),
+                'project_name' => $request->query('project_name')
             ]);
+
             return response()->json([
                 'message' => 'An unexpected error occurred',
                 'error' => $e->getMessage()

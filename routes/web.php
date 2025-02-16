@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Controllers\Admin\DashboardAdminController;
+use App\Http\Controllers\Admin\MajorAdminController;
+use App\Http\Controllers\Admin\UserAdminController;
+
 use App\Http\Controllers\Dosen\DashboardDosen;
 use App\Http\Controllers\Dosen\AssessmentController;
 use App\Http\Controllers\Dosen\ProjectController;
@@ -23,11 +27,15 @@ use App\Http\Controllers\Mahasiswa\DetailPeerMahasiswa;
 use App\Http\Controllers\Mahasiswa\ProfileMahasiswa;
 use App\Http\Controllers\Mahasiswa\NotificationMahasiswa;
 
+
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
+
 Route::redirect('/', 'login');
 Route::get('/login', [AuthController::class, 'index'])->name('login');
+Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
+
 Route::middleware('auth')->group(function () {
 
     // Route untuk dosen
@@ -46,7 +54,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/assessment/data-with-bobot-self', [AssessmentController::class, 'getAssessmentsWithBobotSelf'])->name('dosen.assessment.data-with-bobot-self');
         Route::get('/assessment/data-with-bobot-peer', [PeerAssessmentDosen::class, 'getAssessmentsWithBobotpeer'])->name('dosen.assessment.data-with-bobot-peer');
         Route::get('/assessment/create', [AssessmentController::class, 'create'])->name('CreateAssessment');
-        
+
         Route::get('/export-self-assessment', [AssessmentController::class, 'exportExcel'])->name('dosen.export-self');
 
         Route::get('/assessment/projectsSelf', [ProjectController::class, 'getProjectsWithAssessmentsSelf']);
@@ -89,6 +97,10 @@ Route::middleware('auth')->group(function () {
         //REPORT
         Route::get('/report', [ReportController::class, 'report'])->name('report');
         Route::get('/kelompok/report-detail', [ReportController::class, 'getScoreKelompok']);
+
+        //Feedback
+        Route::get('/feedback-detail', [FeedbackController::class, 'feedbackDetailView']);
+        Route::post('/feedbacks-store-dosen', [FeedbackController::class, 'storeFeedback']);
     });
 
     //Route untuk Mahasiswa
@@ -143,5 +155,26 @@ Route::middleware('auth')->group(function () {
                 return "Error: " . $e->getMessage();
             }
         });
+        //Mahasiswa Feedback
+        Route::get('/feedback-details', [FeedbackMahasiswa::class, 'getFeedbackDetailView']);
+    });
+
+    //Route untuk admin
+    Route::middleware('role:admin')->prefix('admin')->group(function () {
+        Route::get('/dashboard', [DashboardAdminController::class, 'dashboard'])->name('dashboard');
+
+        //admin manage major
+        Route::get('/ManageMajor', [MajorAdminController::class, 'createMajor']);
+        Route::get('/ManageProdi', [MajorAdminController::class, 'showManageProdi']);
+
+        //admin manage user
+        Route::get('/ManageDosen', [UserAdminController::class, 'showManageDosen']);
+        Route::get('/ManageMahasiswa', [UserAdminController::class, 'showManageMahasiswa'])->name('ManageMahasiswa');
+        Route::get('/manage-dosen/input', [UserAdminController::class, 'InputDosen'])->name('InputDosen');
+        Route::get('/manage-dosen/export', [UserAdminController::class, 'ExportDosen']);
+        Route::post('/manage-dosen/import', [UserAdminController::class, 'ImportDosen']);
+        Route::get('/manage-mahasiswa/input', [UserAdminController::class, 'InputMahasiswa'])->name('InputMahasiswa');
+        Route::get('/manage-mahasiswa/export', [UserAdminController::class, 'ExportMahasiswa']);
+        Route::post('/manage-mahasiswa/import', [UserAdminController::class, 'ImportMahasiswa']);
     });
 });
