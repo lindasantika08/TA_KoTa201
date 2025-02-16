@@ -10,18 +10,14 @@ class AssessmentObserver
 {
     public function updated(Assessment $assessment)
     {
-        // Cek apakah is_published berubah dari false ke true
         if ($assessment->isDirty('is_published') && $assessment->is_published) {
             try {
-                // Ambil semua mahasiswa
                 $mahasiswa = Mahasiswa::all();
                 
-                // Load relasi project jika belum
                 if (!$assessment->relationLoaded('project')) {
                     $assessment->load('project');
                 }
                 
-                // Siapkan data notifikasi
                 $notificationData = [
                     'assessment_id' => $assessment->id,
                     'project_name' => $assessment->project->project_name,
@@ -35,7 +31,6 @@ class AssessmentObserver
                     'mahasiswa_count' => $mahasiswa->count()
                 ]);
                 
-                // Kirim notifikasi ke setiap mahasiswa
                 foreach ($mahasiswa as $mhs) {
                     $mhs->notify(new AssessmentNotifications($notificationData));
                 }

@@ -24,14 +24,12 @@ class AssessmentNotifications extends Notification
     {
         $endDate = Carbon::parse($this->assessmentData['end_date'])->format('d F Y H:i');
         
-        // Menentukan route berdasarkan type assessment
         $route = match (strtolower($this->assessmentData['type'])) {
             'self assessment' => route('mahasiswa.assessment.self'),
             'peer assessment' => route('mahasiswa.assessment.peer'),
             default => route('mahasiswa.dashboard')
         };
 
-        // Menyesuaikan tipe assessment untuk tampilan
         $assessmentType = match (strtolower($this->assessmentData['type'])) {
             'self assessment' => 'Self Assessment',
             'peer assessment' => 'Peer Assessment',

@@ -39,63 +39,63 @@ class NotificationMahasiswa extends Controller
     }
 
     public function getNotifications()
-{
-    try {
-        $user = Auth::user();
-        $assessments = Assessment::with(['project'])
-            ->select(
-                'project_id',
-                'type',
-                DB::raw('MAX(id) as id'), 
-                DB::raw('MAX(end_date) as end_date'), 
-                DB::raw('MIN(created_at) as created_at')
-            )
-            ->where('is_published', true)
-            ->groupBy('project_id', 'type')
-            ->get();
+    {
+        try {
+            $user = Auth::user();
+            $assessments = Assessment::with(['project'])
+                ->select(
+                    'project_id',
+                    'type',
+                    DB::raw('MAX(id) as id'), 
+                    DB::raw('MAX(end_date) as end_date'), 
+                    DB::raw('MIN(created_at) as created_at')
+                )
+                ->where('is_published', true)
+                ->groupBy('project_id', 'type')
+                ->get();
 
-        foreach ($assessments as $assessment) {
-            $notificationData = [
-                'assessment_id' => $assessment->id,
-                'project_name' => $assessment->project->project_name ?? 'Unknown Project',
-                'type' => $assessment->type,
-                'end_date' => $assessment->end_date,
-            ];
+            foreach ($assessments as $assessment) {
+                $notificationData = [
+                    'assessment_id' => $assessment->id,
+                    'project_name' => $assessment->project->project_name ?? 'Unknown Project',
+                    'type' => $assessment->type,
+                    'end_date' => $assessment->end_date,
+                ];
 
-            \Log::info('Project data:', [
-                'project' => $assessment->project,
-                'notification_data' => $notificationData
-            ]);
-            
-            $exists = $user->notifications()
-                ->where('type', AssessmentNotifications::class)
-                ->whereJsonContains('data->assessment_id', $assessment->id)
-                ->exists();
-            
-            if (!$exists) {
-                $user->notify(new AssessmentNotifications($notificationData));
+                \Log::info('Project data:', [
+                    'project' => $assessment->project,
+                    'notification_data' => $notificationData
+                ]);
+                
+                $exists = $user->notifications()
+                    ->where('type', AssessmentNotifications::class)
+                    ->whereJsonContains('data->assessment_id', $assessment->id)
+                    ->exists();
+                
+                if (!$exists) {
+                    $user->notify(new AssessmentNotifications($notificationData));
+                }
             }
+
+            $notifications = $user->notifications()
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'notifications' => $notifications,
+                    'unread_count' => $user->unreadNotifications->count()
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching notifications: ' . $e->getMessage()
+            ], 500);
         }
-
-        $notifications = $user->notifications()
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'notifications' => $notifications,
-                'unread_count' => $user->unreadNotifications->count()
-            ]
-        ], 200);
-
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Error fetching notifications: ' . $e->getMessage()
-        ], 500);
     }
-}
 
     public function markAsRead($id)
     {
@@ -107,7 +107,6 @@ class NotificationMahasiswa extends Controller
         if ($notification) {
             $notification->markAsRead();
             
-            // Data sudah dalam bentuk array, tidak perlu json_decode
             $type = $notification->data['type'];
             
             return response()->json([
