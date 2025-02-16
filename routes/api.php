@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\MajorAdminController;
+use App\Http\Controllers\Admin\UserAdminController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -180,4 +182,21 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/project/{projectId}/group-members', [FeedbackMahasiswa::class, 'getGroupMembers']);
     Route::post('/feedback/store', [FeedbackMahasiswa::class, 'saveFeedbackMahasiswa']);
     Route::get('/feedback/given', [FeedbackMahasiswa::class, 'getUserGivenFeedbacks']);
+
+    //================ADMIN====================//
+
+    //admin manage Major
+    Route::get('/get-major', [MajorAdminController::class, 'showMajor']);
+    Route::post('/add-major', [MajorAdminController::class, 'addMajor']);
+    Route::post('/delete-major', [MajorAdminController::class, 'deleteMajor']);
+    Route::post('/edit-major', [MajorAdminController::class, 'editMajor']);
+    Route::get('/get-prodi', [MajorAdminController::class, 'showProdi']);
+    Route::get('/get-major-forDropDown', [MajorAdminController::class, 'showMajorDropDown']);
+    Route::post('/add-prodi', [MajorAdminController::class, 'addProdi']);
+    Route::post('/delete-prodi', [MajorAdminController::class, 'deleteProdi']);
+    Route::post('/update-prodi', [MajorAdminController::class, 'updateProdi']);
+
+    //admin manage user
+    Route::get('/get-dosen-admin', [UserAdminController::class, 'getDosen']);
+    Route::post('/delete-dosen', [UserAdminController::class, 'deleteDosen']);
 });

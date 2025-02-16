@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Controllers\Admin\DashboardAdminController;
+use App\Http\Controllers\Admin\MajorAdminController;
+use App\Http\Controllers\Admin\UserAdminController;
+
 use App\Http\Controllers\Dosen\DashboardDosen;
 use App\Http\Controllers\Dosen\AssessmentController;
 use App\Http\Controllers\Dosen\ProjectController;
@@ -21,6 +25,7 @@ use App\Http\Controllers\Mahasiswa\ReportMahasiswa;
 use App\Http\Controllers\Mahasiswa\DetailSelfMahasiswa;
 use App\Http\Controllers\Mahasiswa\DetailPeerMahasiswa;
 use App\Http\Controllers\Mahasiswa\ProfileMahasiswa;
+
 
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
@@ -123,5 +128,24 @@ Route::middleware('auth')->group(function () {
 
         //Mahasiswa Feedback
         Route::get('/feedback-details', [FeedbackMahasiswa::class, 'getFeedbackDetailView']);
+    });
+
+    //Route untuk admin
+    Route::middleware('role:admin')->prefix('admin')->group(function () {
+        Route::get('/dashboard', [DashboardAdminController::class, 'dashboard'])->name('dashboard');
+
+        //admin manage major
+        Route::get('/ManageMajor', [MajorAdminController::class, 'createMajor']);
+        Route::get('/ManageProdi', [MajorAdminController::class, 'showManageProdi']);
+
+        //admin manage user
+        Route::get('/ManageDosen', [UserAdminController::class, 'showManageDosen']);
+        Route::get('/ManageMahasiswa', [UserAdminController::class, 'showManageMahasiswa'])->name('ManageMahasiswa');
+        Route::get('/manage-dosen/input', [UserAdminController::class, 'InputDosen'])->name('InputDosen');
+        Route::get('/manage-dosen/export', [UserAdminController::class, 'ExportDosen']);
+        Route::post('/manage-dosen/import', [UserAdminController::class, 'ImportDosen']);
+        Route::get('/manage-mahasiswa/input', [UserAdminController::class, 'InputMahasiswa'])->name('InputMahasiswa');
+        Route::get('/manage-mahasiswa/export', [UserAdminController::class, 'ExportMahasiswa']);
+        Route::post('/manage-mahasiswa/import', [UserAdminController::class, 'ImportMahasiswa']);
     });
 });

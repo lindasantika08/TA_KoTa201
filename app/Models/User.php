@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Spatie\Permission\Traits\HasRoles;
 use App\Notifications\ResetPasswordNotification;
 
-class User extends Authenticatable 
+class User extends Authenticatable
 {
     use HasApiTokens;
     use HasFactory;
@@ -73,6 +73,11 @@ class User extends Authenticatable
     public function isDosen()
     {
         return $this->role === 'dosen';
+    }
+
+    public function isAdmin()
+    {
+        return $this->role === 'admin';
     }
 
     public function isMahasiswa()
