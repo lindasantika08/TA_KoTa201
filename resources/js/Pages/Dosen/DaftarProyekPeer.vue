@@ -59,7 +59,7 @@ export default {
     },
 
     handleTogglePublish(item) {
-      axios.post('/api/toggle-publish-assessment', {
+      axios.post('/api/toggle-publish-assessment-peer', {
         batch_year: item.batch_year,
         project_name: item.project_name,
         is_published: !item.is_published

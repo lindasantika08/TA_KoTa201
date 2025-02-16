@@ -24,6 +24,7 @@
         "@inertiajs/vue3": "^2.0.0",
         "@types/ziggy-js": "^1.8.0",
         "apexcharts": "^4.4.0",
+        "date-fns": "^4.1.0",
         "dayjs": "^1.11.13",
         "devextreme": "^24.2.3",
         "devextreme-vue": "^24.2.3",

@@ -76,6 +76,7 @@ class AssessmentController extends Controller
     {
         $request->validate([
             'file' => 'required|mimes:xlsx,xls',
+            'end_date' => 'required|date',
         ]);
 
         try {
@@ -83,11 +84,9 @@ class AssessmentController extends Controller
 
             $spreadsheet = IOFactory::load($request->file('file'));
 
-            // Import Type Criteria dari sheet kedua
             $sheet2 = $spreadsheet->getSheetByName('Type Criteria');
             $highestRow2 = $sheet2->getHighestRow();
 
-            // Mulai dari baris 3 karena ada 2 baris header
             for ($row = 5; $row <= $highestRow2; $row++) {
                 $aspect = $sheet2->getCellByColumnAndRow(2, $row)->getValue();
                 $criteria = $sheet2->getCellByColumnAndRow(3, $row)->getValue();
@@ -109,11 +108,9 @@ class AssessmentController extends Controller
                 }
             }
 
-            // Import Assessment dari sheet pertama
             $sheet1 = $spreadsheet->getSheet(0);
             $highestRow1 = $sheet1->getHighestRow();
 
-            // Mulai dari baris 2 karena ada 1 baris header
             for ($row = 2; $row <= $highestRow1; $row++) {
                 $batchYear = trim($sheet1->getCellByColumnAndRow(2, $row)->getValue());
                 $projectName = trim($sheet1->getCellByColumnAndRow(3, $row)->getValue());
@@ -123,7 +120,6 @@ class AssessmentController extends Controller
                 $criteria = trim($sheet1->getCellByColumnAndRow(7, $row)->getValue());
 
                 if (!empty($batchYear) && !empty($projectName)) {
-                    // Cari atau buat Project
                     $project = Project::firstOrCreate(
                         [
                             'batch_year' => $batchYear,
@@ -131,13 +127,11 @@ class AssessmentController extends Controller
                         ]
                     );
 
-                    // Cari TypeCriteria berdasarkan aspect dan criteria
                     $typeCriteria = TypeCriteria::where('aspect', $aspect)
                         ->where('criteria', $criteria)
                         ->first();
 
                     if ($typeCriteria) {
-                        // Check if the combination of batch_year and project_name exists in the Assessment table
                         $assessment = Assessment::where('batch_year', $batchYear)
                             ->where('project_id', $project->id)
                             ->where('question', $question)
@@ -145,18 +139,18 @@ class AssessmentController extends Controller
                             ->first();
 
                         if ($assessment) {
-                            // If exists, update the record
                             $assessment->update([
-                                'type' => $type
+                                'type' => $type,
+                                'end_date' => $request->end_date,
                             ]);
                         } else {
-                            // If not exists, create a new record
                             Assessment::create([
                                 'batch_year' => $batchYear,
                                 'project_id' => $project->id,
                                 'type' => $type,
                                 'question' => $question,
-                                'criteria_id' => $typeCriteria->id
+                                'criteria_id' => $typeCriteria->id,
+                                'end_date' => $request->end_date
                             ]);
                         }
                     }

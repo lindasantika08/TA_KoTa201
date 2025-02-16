@@ -18,6 +18,7 @@ class User extends Authenticatable
     use SoftDeletes;
     use HasUuids;
     use HasRoles;
+    use Notifiable;
 
     protected $guard_name = 'sanctum';
     public $incrementing = false;
@@ -74,4 +75,9 @@ class User extends Authenticatable
     {
         return $this->role === 'mahasiswa';
     }
+
+    // public function routeNotificationForMail()
+    // {
+    //     return $this->email;
+    // }
 }
