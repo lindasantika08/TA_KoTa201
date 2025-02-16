@@ -7,7 +7,9 @@ use App\Models\Mahasiswa;
 use App\Models\ClassRoom;
 use App\Models\Prodi;
 use App\Models\Major;
+use App\Mail\CredentialMail;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Mail;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Illuminate\Support\Facades\Log;
@@ -39,8 +41,12 @@ class MahasiswaImport implements ToModel, WithHeadingRow, WithBatchInserts
                 $this->currentAngkatan = 'mixed';
             }
 
+            // Generate password
+            $password = Str::random(8);
+
             // Cek atau buat Major berdasarkan nama jurusan
             $major = Major::firstOrCreate(
+                ['major_name' => $row['jurusan']],
                 ['major_name' => $row['jurusan']]
             );
 
@@ -50,6 +56,10 @@ class MahasiswaImport implements ToModel, WithHeadingRow, WithBatchInserts
                     'major_id' => $major->id,
                     'prodi_name' => $row['prodi']
                 ],
+                [
+                    'major_id' => $major->id,
+                    'prodi_name' => $row['prodi']
+                ]
             );
 
             // Cek atau buat ClassRoom dengan mempertimbangkan semua kriteria
@@ -59,6 +69,11 @@ class MahasiswaImport implements ToModel, WithHeadingRow, WithBatchInserts
                     'prodi_id' => $prodi->id,
                     'angkatan' => $row['angkatan']
                 ],
+                [
+                    'class_name' => $row['kelas'],
+                    'prodi_id' => $prodi->id,
+                    'angkatan' => $row['angkatan']
+                ]
             );
 
             // Cek apakah user sudah ada
@@ -80,10 +95,42 @@ class MahasiswaImport implements ToModel, WithHeadingRow, WithBatchInserts
                     'id' => Str::uuid(),
                     'name' => $row['nama_mahasiswa'],
                     'email' => $row['email'],
-                    'password' => bcrypt('qwert1234'),
+                    'password' => bcrypt($password),
                     'role' => 'mahasiswa'
                 ]);
             }
+
+            // Kirim email kredensial
+            try {
+                // Log kredensial sebelum dikirim
+                Log::info('Mencoba mengirim kredensial ke email:', [
+                    'nama' => $row['nama_mahasiswa'],
+                    'email' => $row['email'],
+                    'password' => $password
+                ]);
+
+                Mail::to($row['email'])
+                    ->send(new CredentialMail($row['email'], $password, $row['nama_mahasiswa']));
+
+                // Log sukses dengan detail
+                Log::info('Email kredensial berhasil dikirim', [
+                    'nama' => $row['nama_mahasiswa'],
+                    'email' => $row['email'],
+                    'password' => $password,
+                    'status' => 'success',
+                    'waktu_kirim' => now()->format('Y-m-d H:i:s')
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Gagal mengirim email kredensial', [
+                    'nama' => $row['nama_mahasiswa'],
+                    'email' => $row['email'],
+                    'password' => $password,
+                    'error' => $e->getMessage(),
+                    'status' => 'failed',
+                    'waktu_error' => now()->format('Y-m-d H:i:s')
+                ]);
+            }
+
 
             // Cek atau buat Mahasiswa
             Mahasiswa::updateOrCreate(

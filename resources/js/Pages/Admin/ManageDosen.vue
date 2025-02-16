@@ -89,8 +89,22 @@ export default {
         inputDosen() {
             router.visit("/admin/manage-dosen/input");
         },
-        detailUser(user_id) {
-            router.visit(`/dosen/manage-dosen/detail?user_id=${user_id}`);
+
+        async deleteDosen(NIP) {
+            if (!confirm(`Apakah Anda yakin ingin menghapus ${NIP}?`)) {
+                return;
+            }
+            try {
+                const response = await axios.post("/api/delete-dosen", {
+                    nip: NIP,
+                });
+                if (response.status === 201) {
+                    alert("Dosen delete successfully!");
+                    await this.fetchUsers();
+                }
+            } catch (error) {
+                alert("failed to delete");
+            }
         },
     },
 };
@@ -208,16 +222,26 @@ export default {
                             </template>
 
                             <template #column-actions="{ item }">
-                                <button
-                                    @click="detailUser(item.user_id)"
-                                    class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 flex items-center"
-                                >
-                                    <font-awesome-icon
-                                        icon="fa-solid fa-eye"
-                                        class="mr-2"
-                                    />
-                                    Detail
-                                </button>
+                                <div class="flex justify-center space-x-2">
+                                    <button
+                                        @click="EditMajor(item.major_name)"
+                                        class="p-2 text-yellow-600 hover:text-yellow-800 hover:bg-yellow-100 rounded-full transition-colors"
+                                        title="Edit Major"
+                                    >
+                                        <font-awesome-icon
+                                            :icon="['fas', 'edit']"
+                                        />
+                                    </button>
+                                    <button
+                                        @click="deleteDosen(item.nip)"
+                                        class="p-2 text-red-600 hover:text-red-800 hover:bg-red-100 rounded-full transition-colors"
+                                        title="Delete Major"
+                                    >
+                                        <font-awesome-icon
+                                            :icon="['fas', 'trash']"
+                                        />
+                                    </button>
+                                </div>
                             </template>
                         </DataTable>
                     </template>

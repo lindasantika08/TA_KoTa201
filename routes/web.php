@@ -140,7 +140,12 @@ Route::middleware('auth')->group(function () {
 
         //admin manage user
         Route::get('/ManageDosen', [UserAdminController::class, 'showManageDosen']);
-        Route::get('/ManageMahasiswa', [UserAdminController::class, 'showManageMahasiswa']);
+        Route::get('/ManageMahasiswa', [UserAdminController::class, 'showManageMahasiswa'])->name('ManageMahasiswa');
         Route::get('/manage-dosen/input', [UserAdminController::class, 'InputDosen'])->name('InputDosen');
+        Route::get('/manage-dosen/export', [UserAdminController::class, 'ExportDosen']);
+        Route::post('/manage-dosen/import', [UserAdminController::class, 'ImportDosen']);
+        Route::get('/manage-mahasiswa/input', [UserAdminController::class, 'InputMahasiswa'])->name('InputMahasiswa');
+        Route::get('/manage-mahasiswa/export', [UserAdminController::class, 'ExportMahasiswa']);
+        Route::post('/manage-mahasiswa/import', [UserAdminController::class, 'ImportMahasiswa']);
     });
 });

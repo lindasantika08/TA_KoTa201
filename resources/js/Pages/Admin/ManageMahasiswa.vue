@@ -82,7 +82,7 @@ export default {
             }
         },
         inputMahasiswa() {
-            router.visit("/dosen/manage-mahasiswa/input");
+            router.visit("/admin/manage-mahasiswa/input");
         },
         detailUser(user_id) {
             router.visit(`/dosen/manage-mahasiswa/detail?user_id=${user_id}`);

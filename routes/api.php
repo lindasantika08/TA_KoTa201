@@ -198,4 +198,5 @@ Route::middleware('auth:sanctum')->group(function () {
 
     //admin manage user
     Route::get('/get-dosen-admin', [UserAdminController::class, 'getDosen']);
+    Route::post('/delete-dosen', [UserAdminController::class, 'deleteDosen']);
 });

@@ -87,12 +87,12 @@
               <div class="flex justify-between items-center mb-4">
                 <h2 class="text-lg font-semibold">Identitas Diri</h2>
                 <button @click="handleEditSave" class="px-4 py-2 rounded-lg" :class="isEditMode
-                    ? 'bg-green-500 hover:bg-green-600'
-                    : 'bg-blue-500 hover:bg-blue-600'
+                  ? 'bg-green-500 hover:bg-green-600'
+                  : 'bg-blue-500 hover:bg-blue-600'
                   ">
                   <span class="text-white">{{
                     isEditMode ? "Simpan" : "Edit"
-                    }}</span>
+                  }}</span>
                 </button>
               </div>
 
@@ -136,36 +136,46 @@
     </div>
   </div>
 
-  <!-- Modal with validation -->
+  <!-- Modal Change Password -->
   <div v-if="showModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
     <div class="bg-white p-6 rounded-lg w-full max-w-md">
       <h2 class="text-2xl font-semibold mb-4">Change Password</h2>
       <form @submit.prevent="changePassword">
         <div class="mb-4">
           <label class="block text-sm font-medium text-gray-700">Old Password</label>
-          <input v-model="passwordForm.oldPassword" type="password" class="w-full px-3 py-2 border rounded-md bg-white"
-            :class="errors.oldPassword ? 'border-red-500' : 'border-gray-300'" required />
+          <input v-model="passwordForm.oldPassword" type="password" 
+            class="w-full px-3 py-2 border rounded-md bg-white"
+            :class="errors.oldPassword ? 'border-red-500' : 'border-gray-300'" 
+            required />
           <p v-if="errors.oldPassword" class="mt-1 text-sm text-red-500">{{ errors.oldPassword }}</p>
         </div>
+
         <div class="mb-4">
           <label class="block text-sm font-medium text-gray-700">New Password</label>
-          <input v-model="passwordForm.newPassword" type="password" class="w-full px-3 py-2 border rounded-md bg-white"
-            :class="errors.newPassword ? 'border-red-500' : 'border-gray-300'" required />
+          <input v-model="passwordForm.newPassword" type="password" 
+            class="w-full px-3 py-2 border rounded-md bg-white"
+            :class="errors.newPassword ? 'border-red-500' : 'border-gray-300'" 
+            required />
           <p v-if="errors.newPassword" class="mt-1 text-sm text-red-500">{{ errors.newPassword }}</p>
           <p class="mt-1 text-sm text-gray-500">Password minimal 8 karakter</p>
         </div>
+
         <div class="mb-4">
           <label class="block text-sm font-medium text-gray-700">Confirm New Password</label>
           <input v-model="passwordForm.confirmPassword" type="password"
             class="w-full px-3 py-2 border rounded-md bg-white"
-            :class="errors.confirmPassword ? 'border-red-500' : 'border-gray-300'" required />
+            :class="errors.confirmPassword ? 'border-red-500' : 'border-gray-300'" 
+            required />
           <p v-if="errors.confirmPassword" class="mt-1 text-sm text-red-500">{{ errors.confirmPassword }}</p>
         </div>
+
         <div class="flex justify-end">
-          <button type="button" @click="closeModal" class="px-4 py-2 bg-gray-500 text-white rounded-lg mr-2">
+          <button type="button" @click="closeModal" 
+            class="px-4 py-2 bg-gray-500 text-white rounded-lg mr-2">
             Cancel
           </button>
-          <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg">
+          <button type="submit" 
+            class="px-4 py-2 bg-blue-500 text-white rounded-lg">
             Change Password
           </button>
         </div>
@@ -375,6 +385,11 @@ export default {
       }
 
       return isValid;
+    },
+
+    goToForgotPassword() {
+      this.closeModal(); // Tutup modal sebelum navigasi
+      this.$router.push('/forgot-password'); // Navigasi ke halaman Forgot Password
     },
 
     changePassword() {

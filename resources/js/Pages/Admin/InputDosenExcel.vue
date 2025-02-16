@@ -65,7 +65,7 @@ export default {
 
             try {
                 const token = localStorage.getItem("auth_token");
-                const response = await axios.get("/dosen/manage-dosen/export", {
+                const response = await axios.get("/admin/manage-dosen/export", {
                     params: { jurusan: selectedJurusan.value },
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -98,7 +98,7 @@ export default {
 
             try {
                 const token = localStorage.getItem("auth_token");
-                await axios.post("/dosen/manage-dosen/import", formData, {
+                await axios.post("/admin/manage-dosen/import", formData, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                         "Content-Type": "multipart/form-data",
