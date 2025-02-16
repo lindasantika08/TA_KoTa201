@@ -9,26 +9,37 @@ import Breadcrumb from "@/Components/Breadcrumb.vue";
 
 export default {
     name: "ManageMahasiswa",
-    components: { Sidebar, Navbar, Card, DataTable, Breadcrumb },
+    components: {
+        Sidebar,
+        Navbar,
+        Card,
+        DataTable,
+        Breadcrumb,
+    },
     data() {
         return {
             breadcrumbs: [
-                { text: "Manage Mahasiswa", href: "/dosen/manage-mahasiswa" },
+                { text: "Manage Mahasiswa", href: "/admin/manage-mahasiswa" },
             ],
             users: [],
+            filteredUsers: [],
+            searchQuery: "",
+            selectedAngkatan: "",
+            selectedClass: "",
+            selectedMajor: "",
+            angkatanList: [],
+            classList: [],
+            majorList: [],
             headers: [
                 { key: "no", label: "No" },
-                { key: "angkatan", label: "Angkatan" },
-                { key: "class", label: "Kelas" },
                 { key: "name", label: "Nama" },
                 { key: "nim", label: "NIM" },
                 { key: "email", label: "Email" },
-                { key: "actions", label: "Actions" },
+                { key: "angkatan", label: "Angkatan" },
+                { key: "class", label: "Kelas" },
+                { key: "major", label: "Jurusan" },
+                { key: "actions", label: "Aksi" },
             ],
-            selectedAngkatan: "",
-            selectedClass: "",
-            angkatanList: [],
-            classList: [],
             showEditModal: false,
             editedMahasiswa: {
                 nim: "",
@@ -36,6 +47,7 @@ export default {
                 email: "",
                 angkatan: "",
                 class: "",
+                major: "",
                 user_id: null,
             },
         };
@@ -43,21 +55,32 @@ export default {
     mounted() {
         this.fetchAngkatan();
         this.fetchClassList();
+        this.fetchMajorList();
         this.fetchUsers();
+    },
+    watch: {
+        searchQuery() {
+            this.filterUsers();
+        },
+        selectedAngkatan() {
+            this.filterUsers();
+        },
+        selectedClass() {
+            this.filterUsers();
+        },
+        selectedMajor() { // Add watch for selected major
+            this.filterUsers();
+        },
     },
     methods: {
         async fetchUsers() {
             try {
-                const response = await axios.get("/api/get-mahasiswa", {
-                    params: {
-                        angkatan: this.selectedAngkatan,
-                        class_name: this.selectedClass,
-                    },
-                });
+                const response = await axios.get("/api/get-mahasiswa");
                 this.users = response.data.map((user, index) => ({
                     ...user,
                     no: index + 1,
                 }));
+                this.filteredUsers = [...this.users];
             } catch (error) {
                 console.error("Error fetching users:", error);
             }
@@ -78,6 +101,34 @@ export default {
                 console.error("Error fetching class list:", error);
             }
         },
+        async fetchMajorList() { // Add method to fetch major list
+            try {
+                const response = await axios.get("/api/get-majors");
+                this.majorList = response.data;
+            } catch (error) {
+                console.error("Error fetching major list:", error);
+            }
+        },
+        filterUsers() {
+            this.filteredUsers = this.users.filter((user) => {
+                const nameMatch = user.user.name
+                    .toLowerCase()
+                    .includes(this.searchQuery.toLowerCase());
+                const angkatanMatch =
+                    !this.selectedAngkatan ||
+                    user.class_room.angkatan === this.selectedAngkatan;
+                const classMatch =
+                    !this.selectedClass ||
+                    user.class_room.class_name === this.selectedClass;
+                const majorMatch = // Add major match
+                    !this.selectedMajor ||
+                    user.major_name === this.selectedMajor;
+                return nameMatch && angkatanMatch && classMatch && majorMatch;
+            });
+        },
+        inputMahasiswa() {
+            router.visit("/admin/manage-mahasiswa/input");
+        },
         editMahasiswa(mahasiswa) {
             this.editedMahasiswa = {
                 nim: mahasiswa.nim,
@@ -89,35 +140,21 @@ export default {
             };
             this.showEditModal = true;
         },
-        closeEditModal() {
-            this.showEditModal = false;
-            this.editedMahasiswa = {
-                nim: "",
-                name: "",
-                email: "",
-                angkatan: "",
-                class: "",
-                user_id: null,
-            };
-        },
         async updateMahasiswa() {
             try {
                 await axios.post(`/api/update-mahasiswa`, this.editedMahasiswa);
+                alert("Mahasiswa berhasil diperbarui!");
                 this.showEditModal = false;
                 await this.fetchUsers();
-                alert("Data mahasiswa berhasil diperbarui!");
             } catch (error) {
-                console.error("Error updating mahasiswa:", error);
-                alert("Gagal memperbarui data mahasiswa");
+                alert("Gagal memperbarui mahasiswa");
+                console.error(error);
             }
         },
         async deleteMahasiswa(NIM) {
-            if (
-                !confirm(
-                    `Apakah Anda yakin ingin menghapus mahasiswa dengan NIM ${NIM}?`
-                )
-            )
+            if (!confirm(`Apakah Anda yakin ingin menghapus mahasiswa dengan NIM ${NIM}?`)) {
                 return;
+            }
             try {
                 const response = await axios.post("/api/delete-mahasiswa", {
                     nim: NIM,
@@ -131,9 +168,6 @@ export default {
                 console.error(error);
             }
         },
-        inputMahasiswa() {
-            router.visit("/admin/manage-mahasiswa/input");
-        },
     },
 };
 </script>
@@ -145,254 +179,208 @@ export default {
         <div class="flex-1">
             <Navbar userName="Admin" />
             <main class="p-6">
-                <div class="mb-4">
+                <div class="mb-6">
                     <Breadcrumb :items="breadcrumbs" />
                 </div>
-                <Card title="Kelola Mahasiswa">
-                    <template #actions>
-                        <!-- Filter Section -->
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                            <!-- Dropdown Angkatan -->
-                            <div>
-                                <label
-                                    for="angkatan-select"
-                                    class="block text-sm font-medium text-gray-700 mb-2"
-                                >
-                                    Filter Angkatan
-                                </label>
-                                <select
-                                    id="angkatan-select"
-                                    v-model="selectedAngkatan"
-                                    @change="fetchUsers"
-                                    class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                >
-                                    <option value="">Semua Angkatan</option>
-                                    <option
-                                        v-for="angkatan in angkatanList"
-                                        :key="angkatan"
-                                        :value="angkatan"
-                                    >
-                                        {{ angkatan }}
-                                    </option>
-                                </select>
-                            </div>
 
-                            <!-- Dropdown Kelas -->
-                            <div>
-                                <label
-                                    for="class-select"
-                                    class="block text-sm font-medium text-gray-700 mb-2"
-                                >
-                                    Filter Kelas
-                                </label>
-                                <select
-                                    id="class-select"
-                                    v-model="selectedClass"
-                                    @change="fetchUsers"
-                                    class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                >
-                                    <option value="">Semua Kelas</option>
-                                    <option
-                                        v-for="classItem in classList"
-                                        :key="classItem"
-                                        :value="classItem"
-                                    >
-                                        {{ classItem }}
-                                    </option>
-                                </select>
+                <!-- Mahasiswa Management Card -->
+                <Card>
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <!-- Search Input -->
+                        <div class="flex-1">
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center">
+                                    <font-awesome-icon :icon="['fas', 'search']" class="text-gray-400" />
+                                </span>
+                                <input
+                                    type="text"
+                                    v-model="searchQuery"
+                                    placeholder="Cari nama mahasiswa..."
+                                    class="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
                             </div>
                         </div>
 
-                        <!-- Data Table -->
-                        <DataTable
-                            :headers="headers"
-                            :items="users"
-                            class="mt-4"
-                        >
-                            <template #column-actions="{ item }">
-                                <div class="flex justify-center space-x-2">
-                                    <button
-                                        @click="editMahasiswa(item)"
-                                        class="p-2 text-yellow-600 hover:text-yellow-800 hover:bg-yellow-100 rounded-full transition-colors"
-                                        title="Edit Mahasiswa"
-                                    >
-                                        <font-awesome-icon
-                                            :icon="['fas', 'edit']"
-                                        />
-                                    </button>
-                                    <button
-                                        @click="deleteMahasiswa(item.nim)"
-                                        class="p-2 text-red-600 hover:text-red-800 hover:bg-red-100 rounded-full transition-colors"
-                                        title="Hapus Mahasiswa"
-                                    >
-                                        <font-awesome-icon
-                                            :icon="['fas', 'trash']"
-                                        />
-                                    </button>
-                                </div>
-                            </template>
-
-                            <template #column-angkatan="{ item }">
-                                <div
-                                    class="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm text-center"
+                        <!-- Filter Dropdowns -->
+                        <div class="w-full md:w-64">
+                            <select
+                                v-model="selectedAngkatan"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            >
+                                <option value="">Semua Angkatan</option>
+                                <option
+                                    v-for="angkatan in angkatanList"
+                                    :key="angkatan"
+                                    :value="angkatan"
                                 >
-                                    {{ item.class_room.angkatan }}
-                                </div>
-                            </template>
+                                    {{ angkatan }}
+                                </option>
+                            </select>
+                        </div>
 
-                            <template #column-class="{ item }">
-                                <div
-                                    class="px-3 py-1 bg-gray-100 rounded-full text-center"
+                        <div class="w-full md:w-64">
+                            <select
+                                v-model="selectedClass"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            >
+                                <option value="">Semua Kelas</option>
+                                <option
+                                    v-for="classItem in classList"
+                                    :key="classItem"
+                                    :value="classItem"
                                 >
-                                    {{ item.class_room.class_name }}
-                                </div>
-                            </template>
+                                    {{ classItem }}
+                                </option>
+                            </select>
+                        </div>
+                    <!-- Add Major Dropdown -->
+                    <div class="w-full md:w-64">
+                            <select
+                                v-model="selectedMajor"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            >
+                                <option value="">Semua Jurusan</option>
+                                <option
+                                    v-for="major in majorList"
+                                    :key="major"
+                                    :value="major"
+                                >
+                                    {{ major }}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
 
-                            <template #column-name="{ item }">
-                                <div class="flex items-center">
-                                    <div class="font-medium">
-                                        {{ item.user.name }}
-                                    </div>
-                                </div>
-                            </template>
+                    <div class="p-4 space-y-4">
+                        <h2 class="text-xl font-bold text-gray-800">Daftar Mahasiswa</h2>
+                    </div>
 
-                            <template #column-nim="{ item }">
-                                <div class="font-mono">{{ item.nim }}</div>
-                            </template>
+                    <DataTable :headers="headers" :items="filteredUsers" class="mt-4">
+                        <template #column-name="{ item }">
+                            <span class="font-medium">{{ item.user.name }}</span>
+                        </template>
 
-                            <template #column-email="{ item }">
-                                <div class="flex items-center">
-                                    <font-awesome-icon
-                                        :icon="['fas', 'envelope']"
-                                        class="mr-2 text-gray-400"
-                                    />
-                                    {{ item.user.email }}
-                                </div>
-                            </template>
-                        </DataTable>
-                    </template>
+                        <template #column-email="{ item }">
+                            <div class="flex items-center">
+                                <font-awesome-icon :icon="['fas', 'envelope']" class="mr-2 text-gray-400" />
+                                {{ item.user.email }}
+                            </div>
+                        </template>
+
+                        <template #column-angkatan="{ item }">
+                            <div class="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm text-center">
+                                {{ item.class_room.angkatan }}
+                            </div>
+                        </template>
+
+                        <template #column-class="{ item }">
+                            <div class="px-3 py-1 bg-gray-100 rounded-full text-center">
+                                {{ item.class_room.class_name }}
+                            </div>
+                        </template>
+
+                        <template #column-major="{ item }">
+                            <div class="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm text-center">
+                                {{ item.major_name }}
+                            </div>
+                        </template>
+
+                        <template #column-actions="{ item }">
+                            <div class="flex justify-center space-x-2">
+                                <button
+                                    @click="editMahasiswa(item)"
+                                    class="p-2 text-yellow-600 hover:text-yellow-800 hover:bg-yellow-100 rounded-full transition-colors"
+                                    title="Edit Mahasiswa"
+                                >
+                                    <font-awesome-icon :icon="['fas', 'edit']" />
+                                </button>
+                                <button
+                                    @click="deleteMahasiswa(item.nim)"
+                                    class="p-2 text-red-600 hover:text-red-800 hover:bg-red-100 rounded-full transition-colors"
+                                    title="Delete Mahasiswa"
+                                >
+                                    <font-awesome-icon :icon="['fas', 'trash']" />
+                                </button>
+                            </div>
+                        </template>
+                    </DataTable>
                 </Card>
 
-                <!-- Add Button -->
                 <button
                     @click="inputMahasiswa"
-                    class="fixed bottom-8 right-8 flex items-center justify-center w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105"
+                    class="fixed bottom-8 right-8 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-all"
                 >
                     <font-awesome-icon :icon="['fas', 'plus']" />
                 </button>
 
-                <!-- Edit Modal -->
+                <!-- Modal Edit Mahasiswa -->
                 <div
                     v-if="showEditModal"
-                    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+                    class="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 z-50"
                 >
-                    <div
-                        class="bg-white rounded-lg shadow-xl w-full max-w-md p-6"
-                    >
-                        <div class="flex justify-between items-center mb-4">
-                            <h2 class="text-xl font-semibold text-gray-800">
-                                Edit Data Mahasiswa
-                            </h2>
-                            <button
-                                @click="closeEditModal"
-                                class="text-gray-500 hover:text-gray-700"
+                    <div class="bg-white p-6 rounded-lg w-96">
+                        <h2 class="text-xl font-bold mb-4">Edit Mahasiswa</h2>
+
+                        <label class="block mb-2">NIM</label>
+                        <input
+                            v-model="editedMahasiswa.nim"
+                            type="text"
+                            disabled
+                            class="w-full px-3 py-2 border rounded-lg mb-4 bg-gray-100"
+                        />
+
+                        <label class="block mb-2">Nama Mahasiswa</label>
+                        <input
+                            v-model="editedMahasiswa.name"
+                            type="text"
+                            class="w-full px-3 py-2 border rounded-lg mb-4"
+                        />
+
+                        <label class="block mb-2">Email</label>
+                        <input
+                            v-model="editedMahasiswa.email"
+                            type="email"
+                            class="w-full px-3 py-2 border rounded-lg mb-4"
+                        />
+
+                        <label class="block mb-2">Angkatan</label>
+                        <select
+                            v-model="editedMahasiswa.angkatan"
+                            class="w-full px-3 py-2 border rounded-lg mb-4"
+                        >
+                            <option
+                                v-for="angkatan in angkatanList"
+                                :key="angkatan"
+                                :value="angkatan"
                             >
-                                <font-awesome-icon :icon="['fas', 'times']" />
-                            </button>
-                        </div>
+                                {{ angkatan }}
+                            </option>
+                        </select>
 
-                        <div class="space-y-4">
-                            <div>
-                                <label
-                                    class="block text-sm font-medium text-gray-700 mb-1"
-                                >
-                                    NIM
-                                </label>
-                                <input
-                                    v-model="editedMahasiswa.nim"
-                                    type="text"
-                                    disabled
-                                    class="w-full p-2 bg-gray-100 border border-gray-300 rounded-lg"
-                                />
-                            </div>
+                        <label class="block mb-2">Kelas</label>
+                        <select
+                            v-model="editedMahasiswa.class"
+                            class="w-full px-3 py-2 border rounded-lg mb-4"
+                        >
+                            <option
+                                v-for="classItem in classList"
+                                :key="classItem"
+                                :value="classItem"
+                            >
+                                {{ classItem }}
+                            </option>
+                        </select>
 
-                            <div>
-                                <label
-                                    class="block text-sm font-medium text-gray-700 mb-1"
-                                >
-                                    Nama Lengkap
-                                </label>
-                                <input
-                                    v-model="editedMahasiswa.name"
-                                    type="text"
-                                    class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                />
-                            </div>
-
-                            <div>
-                                <label
-                                    class="block text-sm font-medium text-gray-700 mb-1"
-                                >
-                                    Email
-                                </label>
-                                <input
-                                    v-model="editedMahasiswa.email"
-                                    type="email"
-                                    class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                />
-                            </div>
-
-                            <div>
-                                <label
-                                    class="block text-sm font-medium text-gray-700 mb-1"
-                                >
-                                    Angkatan
-                                </label>
-                                <select
-                                    v-model="editedMahasiswa.angkatan"
-                                    class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                >
-                                    <option
-                                        v-for="angkatan in angkatanList"
-                                        :key="angkatan"
-                                        :value="angkatan"
-                                    >
-                                        {{ angkatan }}
-                                    </option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label
-                                    class="block text-sm font-medium text-gray-700 mb-1"
-                                >
-                                    Kelas
-                                </label>
-                                <select
-                                    v-model="editedMahasiswa.class"
-                                    class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                >
-                                    <option
-                                        v-for="classItem in classList"
-                                        :key="classItem"
-                                        :value="classItem"
-                                    >
-                                        {{ classItem }}
-                                    </option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="flex justify-end space-x-3 mt-6">
+                        <div class="mt-4 flex justify-end">
                             <button
-                                @click="closeEditModal"
-                                class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400"
+                                @click="showEditModal = false"
+                                class="px-4 py-2 mr-2 bg-gray-300 rounded-lg"
                             >
                                 Batal
                             </button>
                             <button
                                 @click="updateMahasiswa"
-                                class="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                class="px-4 py-2 bg-blue-600 text-white rounded-lg"
                             >
                                 Simpan
                             </button>

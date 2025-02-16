@@ -19,6 +19,7 @@ class MahasiswaImport implements ToModel, WithHeadingRow, WithBatchInserts
 {
     private $processedNims = [];
     private $currentAngkatan = null;
+    private $currentJurusan = null;
 
     public function model(array $row)
     {
@@ -32,14 +33,18 @@ class MahasiswaImport implements ToModel, WithHeadingRow, WithBatchInserts
                 }
             }
 
-            // Track NIM dan angkatan untuk proses cleanup
+            // Track NIM, angkatan, dan jurusan untuk proses cleanup
             $this->processedNims[] = $row['nim'];
             if (!$this->currentAngkatan) {
                 $this->currentAngkatan = $row['angkatan'];
+                $this->currentJurusan = $row['jurusan']; // Simpan jurusan dari data pertama
             } elseif ($this->currentAngkatan != $row['angkatan']) {
-                // Jika ada multiple angkatan dalam file, matikan fitur cleanup
                 $this->currentAngkatan = 'mixed';
+            } elseif ($this->currentJurusan != $row['jurusan']) {
+                // Jika ada multiple jurusan, matikan fitur cleanup
+                $this->currentJurusan = 'mixed';
             }
+
 
             // Generate password
             $password = Str::random(8);
@@ -160,12 +165,18 @@ class MahasiswaImport implements ToModel, WithHeadingRow, WithBatchInserts
     public function __destruct()
     {
         try {
-            // Hanya hapus jika kita memproses single angkatan
-            if ($this->currentAngkatan && $this->currentAngkatan !== 'mixed') {
-                // Ambil semua mahasiswa dari angkatan yang sama yang tidak ada dalam file import
+            // Hanya hapus jika kita memproses single angkatan dan single jurusan
+            if ($this->currentAngkatan && $this->currentAngkatan !== 'mixed' 
+                && $this->currentJurusan && $this->currentJurusan !== 'mixed') {
+                
                 $mahasiswaToDelete = Mahasiswa::whereNotIn('nim', $this->processedNims)
                     ->whereHas('classRoom', function ($query) {
-                        $query->where('angkatan', $this->currentAngkatan);
+                        $query->where('angkatan', $this->currentAngkatan)
+                              ->whereHas('prodi', function($q) {
+                                  $q->whereHas('major', function($q2) {
+                                      $q2->where('major_name', $this->currentJurusan);
+                                  });
+                              });
                     })
                     ->get();
 
@@ -173,15 +184,20 @@ class MahasiswaImport implements ToModel, WithHeadingRow, WithBatchInserts
                     Log::info('Menghapus mahasiswa', [
                         'id' => $mhs->id,
                         'nim' => $mhs->nim,
-                        'angkatan' => $this->currentAngkatan
+                        'angkatan' => $this->currentAngkatan,
+                        'jurusan' => $this->currentJurusan
                     ]);
-                    $mhs->delete(); // Ini akan melakukan soft delete karena model menggunakan SoftDeletes
+                    $mhs->delete();
                 }
             } else {
-                Log::info('Melewati proses penghapusan karena multiple angkatan terdeteksi');
+                Log::info('Melewati proses penghapusan karena multiple angkatan atau jurusan terdeteksi');
             }
         } catch (\Exception $e) {
-            Log::error('Kesalahan saat menghapus mahasiswa', ['error' => $e->getMessage()]);
+            Log::error('Kesalahan saat menghapus mahasiswa', [
+                'error' => $e->getMessage(),
+                'jurusan' => $this->currentJurusan,
+                'angkatan' => $this->currentAngkatan
+            ]);
         }
     }
 }

@@ -20,7 +20,6 @@ export default {
     data() {
         return {
             breadcrumbs: [
-                { text: "Dashboard", href: "/admin/dashboard" },
                 { text: "Manage Dosen", href: "/admin/manage-dosen" },
             ],
             users: [],

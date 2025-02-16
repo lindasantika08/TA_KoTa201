@@ -101,6 +101,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/get-prodi/{majorId}', [UserManagementController::class, 'getProdiByMajor']);
     Route::get('/get-angkatan', [UserManagementController::class, 'getAngkatan']);
     Route::get('/get-class', [UserManagementController::class, 'getClass']);
+    Route::get('/get-majors', [UserManagementController::class, 'getMajor']);
 
     Route::get('/assessment/projects', [ProjectController::class, 'getProjectsWithAssessments']);
     Route::get('/proyek-self-assessment', [ProjectController::class, 'getDataSelf']);
