@@ -10,8 +10,8 @@
         </div>
         <Card title="Kelola Mahasiswa">
           <template #actions>
-            <!-- Dropdown filters in a row -->
-            <div class="grid grid-cols-4 gap-4 mb-6">
+            <!-- Filter and Search in a row -->
+            <div class="grid grid-cols-5 gap-4 mb-6">
               <!-- Dropdown Angkatan -->
               <div>
                 <label for="angkatan-select" class="block text-sm font-medium text-gray-700">
@@ -39,10 +39,25 @@
                   </option>
                 </select>
               </div>
+
+              <!-- Search Input -->
+              <div class="col-span-2">
+                <label for="search" class="block text-sm font-medium text-gray-700">
+                  Cari (Nama/NIM)
+                </label>
+                <input
+                  type="text"
+                  id="search"
+                  v-model="searchQuery"
+                  @input="handleSearch"
+                  placeholder="Cari berdasarkan nama atau NIM..."
+                  class="mt-2 p-2 border border-gray-300 rounded w-full"
+                />
+              </div>
             </div>
 
             <!-- Data Table -->
-            <DataTable :headers="headers" :items="users" class="mt-10">
+            <DataTable :headers="headers" :items="filteredUsers" class="mt-10">
               <template #column-actions="{ item }">
                 <button @click="detailUser(item.user_id)"
                   class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
@@ -51,37 +66,31 @@
                 </button>
               </template>
 
-              <!-- Menampilkan Angkatan (angkatan) -->
               <template #column-angkatan="{ item }">
                 {{ item.class_room.angkatan }}
               </template>
 
-              <!-- Menampilkan Kelas (class_name) -->
               <template #column-class="{ item }">
                 {{ item.class_room.class_name }}
               </template>
 
-              <!-- Menampilkan Nama (name) -->
               <template #column-name="{ item }">
                 {{ item.user.name }}
               </template>
 
-              <!-- Menampilkan NIM (nim) -->
               <template #column-nim="{ item }">
                 {{ item.nim }}
               </template>
 
-              <!-- Menampilkan Email (email) -->
               <template #column-email="{ item }">
                 {{ item.user.email }}
               </template>
-
             </DataTable>
           </template>
         </Card>
 
         <button @click="inputMahasiswa"
-        class="fixed bottom-8 right-8 flex items-center justify-center w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105">
+          class="fixed bottom-8 right-8 flex items-center justify-center w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105">
           <font-awesome-icon :icon="['fas', 'plus']" />
         </button>
       </main>
@@ -97,6 +106,7 @@ import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
 import DataTable from "@/Components/DataTable.vue";
 import Breadcrumb from "@/Components/Breadcrumb.vue";
+import { debounce } from 'lodash';
 
 export default {
   name: "ManageMahasiswa",
@@ -124,9 +134,24 @@ export default {
       ],
       selectedAngkatan: null,
       selectedClass: null,
-      angkatanList: [], // akan diisi dari database/axios
-      classList: [], // akan diisi dari database/axios
+      searchQuery: "",
+      angkatanList: [],
+      classList: [],
     };
+  },
+  computed: {
+    filteredUsers() {
+      if (!this.searchQuery) {
+        return this.users;
+      }
+
+      const query = this.searchQuery.toLowerCase();
+      return this.users.filter((user) => {
+        const userName = user.user.name.toLowerCase();
+        const userNim = user.nim.toLowerCase();
+        return userName.includes(query) || userNim.includes(query);
+      });
+    },
   },
   mounted() {
     this.fetchAngkatan();
@@ -134,21 +159,24 @@ export default {
     this.fetchUsers();
   },
   methods: {
+    handleSearch: debounce(function() {
+      this.fetchUsers();
+    }, 300),
+
     async fetchUsers() {
       try {
         const response = await axios.get("/api/get-mahasiswa", {
           params: {
             angkatan: this.selectedAngkatan,
             class_name: this.selectedClass,
+            search: this.searchQuery,
           },
         });
 
-        // Log response data untuk melihat apa yang diterima dari server
         console.log("Data Mahasiswa:", response.data);
-        // Add numbering to each user object
         this.users = response.data.map((user, index) => ({
           ...user,
-          no: index + 1, // Add number starting from 1
+          no: index + 1,
         }));
       } catch (error) {
         console.error("Error fetching users:", error);

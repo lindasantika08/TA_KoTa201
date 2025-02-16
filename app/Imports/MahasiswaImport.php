@@ -7,7 +7,9 @@ use App\Models\Mahasiswa;
 use App\Models\ClassRoom;
 use App\Models\Prodi;
 use App\Models\Major;
+use App\Mail\CredentialMail;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Mail;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Illuminate\Support\Facades\Log;
@@ -16,6 +18,7 @@ use Maatwebsite\Excel\Concerns\WithBatchInserts;
 class MahasiswaImport implements ToModel, WithHeadingRow, WithBatchInserts
 {
     private $processedNims = [];
+    private $currentAngkatan = null;
 
     public function model(array $row)
     {
@@ -29,23 +32,49 @@ class MahasiswaImport implements ToModel, WithHeadingRow, WithBatchInserts
                 }
             }
 
+            // Track NIM dan angkatan untuk proses cleanup
             $this->processedNims[] = $row['nim'];
+            if (!$this->currentAngkatan) {
+                $this->currentAngkatan = $row['angkatan'];
+            } elseif ($this->currentAngkatan != $row['angkatan']) {
+                // Jika ada multiple angkatan dalam file, matikan fitur cleanup
+                $this->currentAngkatan = 'mixed';
+            }
 
-            // Cek atau buat Major
-            $major = Major::firstOrCreate(['major_name' => $row['jurusan']]);
+            // Generate password
+            $password = Str::random(8);
 
-            // Cek atau buat Prodi
-            $prodi = Prodi::firstOrCreate([
-                'major_id' => $major->id,
-                'prodi_name' => $row['prodi']
-            ]);
+            // Cek atau buat Major berdasarkan nama jurusan
+            $major = Major::firstOrCreate(
+                ['major_name' => $row['jurusan']],
+                ['major_name' => $row['jurusan']]
+            );
 
-            // Cek atau buat ClassRoom
-            $classRoom = ClassRoom::firstOrCreate([
-                'class_name' => $row['kelas'],
-                'prodi_id' => $prodi->id,
-                'angkatan' => $row['angkatan']
-            ]);
+            // Cek atau buat Prodi dengan kondisi major_id dan nama prodi
+            $prodi = Prodi::firstOrCreate(
+                [
+                    'major_id' => $major->id,
+                    'prodi_name' => $row['prodi']
+                ],
+                [
+                    'major_id' => $major->id,
+                    'prodi_name' => $row['prodi']
+                ]
+            );
+
+            // Cek atau buat ClassRoom dengan mempertimbangkan semua kriteria
+            $classRoom = ClassRoom::firstOrCreate(
+                [
+                    'class_name' => $row['kelas'],
+                    'prodi_id' => $prodi->id,
+                    'angkatan' => $row['angkatan']
+                ],
+                [
+                    'class_name' => $row['kelas'],
+                    'prodi_id' => $prodi->id,
+                    'angkatan' => $row['angkatan']
+                ]
+            );
 
             // Cek apakah user sudah ada
             $user = User::where('email', $row['email'])->first();
@@ -66,19 +95,52 @@ class MahasiswaImport implements ToModel, WithHeadingRow, WithBatchInserts
                     'id' => Str::uuid(),
                     'name' => $row['nama_mahasiswa'],
                     'email' => $row['email'],
-                    'password' => bcrypt('qwert1234'),
+                    'password' => bcrypt($password),
                     'role' => 'mahasiswa'
                 ]);
             }
 
+            // Kirim email kredensial
+            try {
+                // Log kredensial sebelum dikirim
+                Log::info('Mencoba mengirim kredensial ke email:', [
+                    'nama' => $row['nama_mahasiswa'],
+                    'email' => $row['email'],
+                    'password' => $password
+                ]);
+
+                Mail::to($row['email'])
+                    ->send(new CredentialMail($row['email'], $password, $row['nama_mahasiswa']));
+
+                // Log sukses dengan detail
+                Log::info('Email kredensial berhasil dikirim', [
+                    'nama' => $row['nama_mahasiswa'],
+                    'email' => $row['email'],
+                    'password' => $password,
+                    'status' => 'success',
+                    'waktu_kirim' => now()->format('Y-m-d H:i:s')
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Gagal mengirim email kredensial', [
+                    'nama' => $row['nama_mahasiswa'],
+                    'email' => $row['email'],
+                    'password' => $password,
+                    'error' => $e->getMessage(),
+                    'status' => 'failed',
+                    'waktu_error' => now()->format('Y-m-d H:i:s')
+                ]);
+            }
+
+
             // Cek atau buat Mahasiswa
-            Mahasiswa::updateOrCreate([
-                'nim' => $row['nim']
-            ], [
-                'user_id' => $user->id,
-                'class_id' => $classRoom->id,
-                'nim' => $row['nim']
-            ]);
+            Mahasiswa::updateOrCreate(
+                ['nim' => $row['nim']],
+                [
+                    'user_id' => $user->id,
+                    'class_id' => $classRoom->id,
+                    'nim' => $row['nim']
+                ]
+            );
 
             Log::info('Mahasiswa diperbarui atau dibuat', ['nim' => $row['nim']]);
         } catch (\Exception $e) {
@@ -98,11 +160,25 @@ class MahasiswaImport implements ToModel, WithHeadingRow, WithBatchInserts
     public function __destruct()
     {
         try {
-            // Hapus mahasiswa yang tidak ada dalam file import
-            $deletedMahasiswa = Mahasiswa::whereNotIn('nim', $this->processedNims)->get();
-            foreach ($deletedMahasiswa as $mhs) {
-                Log::info('Menghapus mahasiswa', ['id' => $mhs->id, 'nim' => $mhs->nim]);
-                $mhs->delete();
+            // Hanya hapus jika kita memproses single angkatan
+            if ($this->currentAngkatan && $this->currentAngkatan !== 'mixed') {
+                // Ambil semua mahasiswa dari angkatan yang sama yang tidak ada dalam file import
+                $mahasiswaToDelete = Mahasiswa::whereNotIn('nim', $this->processedNims)
+                    ->whereHas('classRoom', function ($query) {
+                        $query->where('angkatan', $this->currentAngkatan);
+                    })
+                    ->get();
+
+                foreach ($mahasiswaToDelete as $mhs) {
+                    Log::info('Menghapus mahasiswa', [
+                        'id' => $mhs->id,
+                        'nim' => $mhs->nim,
+                        'angkatan' => $this->currentAngkatan
+                    ]);
+                    $mhs->delete(); // Ini akan melakukan soft delete karena model menggunakan SoftDeletes
+                }
+            } else {
+                Log::info('Melewati proses penghapusan karena multiple angkatan terdeteksi');
             }
         } catch (\Exception $e) {
             Log::error('Kesalahan saat menghapus mahasiswa', ['error' => $e->getMessage()]);

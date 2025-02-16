@@ -58,7 +58,14 @@ class UserManagementController extends Controller
             ->orderBy('class_room.class_name', 'asc')
             ->select('mahasiswa.*');
 
-        if ($angkatan) {
+            if ($request->has('search')) {
+                $search = $request->search;
+                $query->whereHas('user', function($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%");
+                })->orWhere('nim', 'like', "%{$search}%");
+            }
+        
+            if ($angkatan) {
             $query->where('class_room.angkatan', $angkatan);
         }
 
@@ -201,46 +208,7 @@ class UserManagementController extends Controller
         return response()->json($dosen);
     }
 
-    //     public function getDosen(Request $request)
-    // {
-    //     try {
-    //         // Dapatkan user yang sedang login
-    //         $user = auth()->user();
-
-    //         // Dapatkan major_id dari user yang login
-    //         // Asumsikan user memiliki relasi ke dosen dan dosen memiliki major_id
-    //         $majorId = $user->dosen->major_id;
-
-    //         // Query untuk mengambil data dosen
-    //         $query = Dosen::with(['user'])
-    //             ->where('major_id', $majorId)
-    //             ->orderBy('created_at', 'desc');
-
-    //         // Ambil data dosen
-    //         $dosen = $query->get();
-
-    //         // Format data dengan menambahkan nomor urut
-    //         $dosen = $dosen->map(function ($item, $index) {
-    //             $item->no = $index + 1;
-    //             return $item;
-    //         });
-
-    //         return response()->json([
-    //             'status' => 'success',
-    //             'data' => $dosen
-    //         ]);
-
-    //     } catch (\Exception $e) {
-    //         return response()->json([
-    //             'status' => 'error',
-    //             'message' => 'Gagal mengambil data dosen: ' . $e->getMessage()
-    //         ], 500);
-    //     }
-    // }
-
-
-
-    public function InputDosen()
+       public function InputDosen()
     {
 
         return Inertia::render('Dosen/InputDosen');
