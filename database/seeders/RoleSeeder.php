@@ -20,12 +20,17 @@ class RoleSeeder extends Seeder
             [
                 'id' => '07e6ad5a-a8e7-4654-aa65-1a3301a394cl',
                 'role' => 'Mahasiswa',
-                'guard_name' =>'sanctum',
+                'guard_name' => 'sanctum',
             ],
             [
                 'id' => 'ea483968-7f8c-4c02-af8a-936823bf6bc0',
                 'role' => 'Dosen',
-                'guard_name' =>'sanctum',
+                'guard_name' => 'sanctum',
+            ],
+            [
+                'id' => 'ea483968-7f8c-4c02-af8a-936823bf6bc1',
+                'role' => 'Admin',
+                'guard_name' => 'sanctum',
             ],
         ]);
     }

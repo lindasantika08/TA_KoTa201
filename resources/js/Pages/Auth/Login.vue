@@ -39,6 +39,8 @@ export default {
             router.visit("/dosen/dashboard");
           } else if (role === "mahasiswa") {
             router.visit("/mahasiswa/dashboard");
+          } else if (role ==="admin"){
+            router.visit("/admin/dashboard");
           }
         }
       } catch (err) {
