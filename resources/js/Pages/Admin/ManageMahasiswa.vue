@@ -9,13 +9,7 @@ import Breadcrumb from "@/Components/Breadcrumb.vue";
 
 export default {
     name: "ManageMahasiswa",
-    components: {
-        Sidebar,
-        Navbar,
-        Card,
-        DataTable,
-        Breadcrumb,
-    },
+    components: { Sidebar, Navbar, Card, DataTable, Breadcrumb },
     data() {
         return {
             breadcrumbs: [
@@ -31,10 +25,19 @@ export default {
                 { key: "email", label: "Email" },
                 { key: "actions", label: "Actions" },
             ],
-            selectedAngkatan: null,
-            selectedClass: null,
-            angkatanList: [], // akan diisi dari database/axios
-            classList: [], // akan diisi dari database/axios
+            selectedAngkatan: "",
+            selectedClass: "",
+            angkatanList: [],
+            classList: [],
+            showEditModal: false,
+            editedMahasiswa: {
+                nim: "",
+                name: "",
+                email: "",
+                angkatan: "",
+                class: "",
+                user_id: null,
+            },
         };
     },
     mounted() {
@@ -51,13 +54,9 @@ export default {
                         class_name: this.selectedClass,
                     },
                 });
-
-                // Log response data untuk melihat apa yang diterima dari server
-                console.log("Data Mahasiswa:", response.data);
-                // Add numbering to each user object
                 this.users = response.data.map((user, index) => ({
                     ...user,
-                    no: index + 1, // Add number starting from 1
+                    no: index + 1,
                 }));
             } catch (error) {
                 console.error("Error fetching users:", error);
@@ -66,7 +65,6 @@ export default {
         async fetchAngkatan() {
             try {
                 const response = await axios.get("/api/get-angkatan");
-                console.log("Data Angkatan:", response.data);
                 this.angkatanList = response.data;
             } catch (error) {
                 console.error("Error fetching angkatan:", error);
@@ -75,24 +73,73 @@ export default {
         async fetchClassList() {
             try {
                 const response = await axios.get("/api/get-class");
-                console.log("Data Kelas:", response.data);
                 this.classList = response.data;
             } catch (error) {
                 console.error("Error fetching class list:", error);
             }
         },
+        editMahasiswa(mahasiswa) {
+            this.editedMahasiswa = {
+                nim: mahasiswa.nim,
+                name: mahasiswa.user.name,
+                email: mahasiswa.user.email,
+                angkatan: mahasiswa.class_room.angkatan,
+                class: mahasiswa.class_room.class_name,
+                user_id: mahasiswa.user_id,
+            };
+            this.showEditModal = true;
+        },
+        closeEditModal() {
+            this.showEditModal = false;
+            this.editedMahasiswa = {
+                nim: "",
+                name: "",
+                email: "",
+                angkatan: "",
+                class: "",
+                user_id: null,
+            };
+        },
+        async updateMahasiswa() {
+            try {
+                await axios.post(`/api/update-mahasiswa`, this.editedMahasiswa);
+                this.showEditModal = false;
+                await this.fetchUsers();
+                alert("Data mahasiswa berhasil diperbarui!");
+            } catch (error) {
+                console.error("Error updating mahasiswa:", error);
+                alert("Gagal memperbarui data mahasiswa");
+            }
+        },
+        async deleteMahasiswa(NIM) {
+            if (
+                !confirm(
+                    `Apakah Anda yakin ingin menghapus mahasiswa dengan NIM ${NIM}?`
+                )
+            )
+                return;
+            try {
+                const response = await axios.post("/api/delete-mahasiswa", {
+                    nim: NIM,
+                });
+                if (response.status === 201) {
+                    alert("Mahasiswa berhasil dihapus!");
+                    await this.fetchUsers();
+                }
+            } catch (error) {
+                alert("Gagal menghapus mahasiswa");
+                console.error(error);
+            }
+        },
         inputMahasiswa() {
             router.visit("/admin/manage-mahasiswa/input");
-        },
-        detailUser(user_id) {
-            router.visit(`/dosen/manage-mahasiswa/detail?user_id=${user_id}`);
         },
     },
 };
 </script>
 
 <template>
-    <div class="flex min-h-screen">
+    <div class="flex min-h-screen bg-gray-50">
         <Sidebar role="admin" />
 
         <div class="flex-1">
@@ -103,13 +150,13 @@ export default {
                 </div>
                 <Card title="Kelola Mahasiswa">
                     <template #actions>
-                        <!-- Dropdown filters in a row -->
-                        <div class="grid grid-cols-4 gap-4 mb-6">
+                        <!-- Filter Section -->
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                             <!-- Dropdown Angkatan -->
                             <div>
                                 <label
                                     for="angkatan-select"
-                                    class="block text-sm font-medium text-gray-700"
+                                    class="block text-sm font-medium text-gray-700 mb-2"
                                 >
                                     Filter Angkatan
                                 </label>
@@ -117,11 +164,9 @@ export default {
                                     id="angkatan-select"
                                     v-model="selectedAngkatan"
                                     @change="fetchUsers"
-                                    class="mt-2 p-2 border border-gray-300 rounded w-full"
+                                    class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 >
-                                    <option value="" disabled>
-                                        Pilih Angkatan
-                                    </option>
+                                    <option value="">Semua Angkatan</option>
                                     <option
                                         v-for="angkatan in angkatanList"
                                         :key="angkatan"
@@ -136,7 +181,7 @@ export default {
                             <div>
                                 <label
                                     for="class-select"
-                                    class="block text-sm font-medium text-gray-700"
+                                    class="block text-sm font-medium text-gray-700 mb-2"
                                 >
                                     Filter Kelas
                                 </label>
@@ -144,11 +189,9 @@ export default {
                                     id="class-select"
                                     v-model="selectedClass"
                                     @change="fetchUsers"
-                                    class="mt-2 p-2 border border-gray-300 rounded w-full"
+                                    class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 >
-                                    <option value="" disabled selected>
-                                        Pilih Kelas
-                                    </option>
+                                    <option value="">Semua Kelas</option>
                                     <option
                                         v-for="classItem in classList"
                                         :key="classItem"
@@ -164,56 +207,201 @@ export default {
                         <DataTable
                             :headers="headers"
                             :items="users"
-                            class="mt-10"
+                            class="mt-4"
                         >
                             <template #column-actions="{ item }">
-                                <button
-                                    @click="detailUser(item.user_id)"
-                                    class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                                >
-                                    <font-awesome-icon
-                                        icon="fa-solid fa-eye"
-                                        class="mr-2"
-                                    />
-                                    Detail
-                                </button>
+                                <div class="flex justify-center space-x-2">
+                                    <button
+                                        @click="editMahasiswa(item)"
+                                        class="p-2 text-yellow-600 hover:text-yellow-800 hover:bg-yellow-100 rounded-full transition-colors"
+                                        title="Edit Mahasiswa"
+                                    >
+                                        <font-awesome-icon
+                                            :icon="['fas', 'edit']"
+                                        />
+                                    </button>
+                                    <button
+                                        @click="deleteMahasiswa(item.nim)"
+                                        class="p-2 text-red-600 hover:text-red-800 hover:bg-red-100 rounded-full transition-colors"
+                                        title="Hapus Mahasiswa"
+                                    >
+                                        <font-awesome-icon
+                                            :icon="['fas', 'trash']"
+                                        />
+                                    </button>
+                                </div>
                             </template>
 
-                            <!-- Menampilkan Angkatan (angkatan) -->
                             <template #column-angkatan="{ item }">
-                                {{ item.class_room.angkatan }}
+                                <div
+                                    class="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm text-center"
+                                >
+                                    {{ item.class_room.angkatan }}
+                                </div>
                             </template>
 
-                            <!-- Menampilkan Kelas (class_name) -->
                             <template #column-class="{ item }">
-                                {{ item.class_room.class_name }}
+                                <div
+                                    class="px-3 py-1 bg-gray-100 rounded-full text-center"
+                                >
+                                    {{ item.class_room.class_name }}
+                                </div>
                             </template>
 
-                            <!-- Menampilkan Nama (name) -->
                             <template #column-name="{ item }">
-                                {{ item.user.name }}
+                                <div class="flex items-center">
+                                    <div class="font-medium">
+                                        {{ item.user.name }}
+                                    </div>
+                                </div>
                             </template>
 
-                            <!-- Menampilkan NIM (nim) -->
                             <template #column-nim="{ item }">
-                                {{ item.nim }}
+                                <div class="font-mono">{{ item.nim }}</div>
                             </template>
 
-                            <!-- Menampilkan Email (email) -->
                             <template #column-email="{ item }">
-                                {{ item.user.email }}
+                                <div class="flex items-center">
+                                    <font-awesome-icon
+                                        :icon="['fas', 'envelope']"
+                                        class="mr-2 text-gray-400"
+                                    />
+                                    {{ item.user.email }}
+                                </div>
                             </template>
                         </DataTable>
                     </template>
                 </Card>
 
+                <!-- Add Button -->
                 <button
                     @click="inputMahasiswa"
                     class="fixed bottom-8 right-8 flex items-center justify-center w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105"
                 >
                     <font-awesome-icon :icon="['fas', 'plus']" />
                 </button>
+
+                <!-- Edit Modal -->
+                <div
+                    v-if="showEditModal"
+                    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+                >
+                    <div
+                        class="bg-white rounded-lg shadow-xl w-full max-w-md p-6"
+                    >
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-semibold text-gray-800">
+                                Edit Data Mahasiswa
+                            </h2>
+                            <button
+                                @click="closeEditModal"
+                                class="text-gray-500 hover:text-gray-700"
+                            >
+                                <font-awesome-icon :icon="['fas', 'times']" />
+                            </button>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div>
+                                <label
+                                    class="block text-sm font-medium text-gray-700 mb-1"
+                                >
+                                    NIM
+                                </label>
+                                <input
+                                    v-model="editedMahasiswa.nim"
+                                    type="text"
+                                    disabled
+                                    class="w-full p-2 bg-gray-100 border border-gray-300 rounded-lg"
+                                />
+                            </div>
+
+                            <div>
+                                <label
+                                    class="block text-sm font-medium text-gray-700 mb-1"
+                                >
+                                    Nama Lengkap
+                                </label>
+                                <input
+                                    v-model="editedMahasiswa.name"
+                                    type="text"
+                                    class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label
+                                    class="block text-sm font-medium text-gray-700 mb-1"
+                                >
+                                    Email
+                                </label>
+                                <input
+                                    v-model="editedMahasiswa.email"
+                                    type="email"
+                                    class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label
+                                    class="block text-sm font-medium text-gray-700 mb-1"
+                                >
+                                    Angkatan
+                                </label>
+                                <select
+                                    v-model="editedMahasiswa.angkatan"
+                                    class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                >
+                                    <option
+                                        v-for="angkatan in angkatanList"
+                                        :key="angkatan"
+                                        :value="angkatan"
+                                    >
+                                        {{ angkatan }}
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label
+                                    class="block text-sm font-medium text-gray-700 mb-1"
+                                >
+                                    Kelas
+                                </label>
+                                <select
+                                    v-model="editedMahasiswa.class"
+                                    class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                >
+                                    <option
+                                        v-for="classItem in classList"
+                                        :key="classItem"
+                                        :value="classItem"
+                                    >
+                                        {{ classItem }}
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end space-x-3 mt-6">
+                            <button
+                                @click="closeEditModal"
+                                class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                @click="updateMahasiswa"
+                                class="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                                Simpan
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </main>
         </div>
     </div>
 </template>
+
+<style scoped></style>

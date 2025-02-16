@@ -37,21 +37,25 @@ export default {
                 { key: "major_name", label: "Jurusan" },
                 { key: "actions", label: "Aksi" },
             ],
+            showEditModal: false,
+            editedDosen: {
+                nip: "",
+                name: "",
+                email: "",
+                kode_dosen: "",
+                major_name: "",
+            },
         };
     },
     mounted() {
         this.fetchUsers();
     },
     watch: {
-        searchQuery: {
-            handler() {
-                this.filterUsers();
-            },
+        searchQuery() {
+            this.filterUsers();
         },
-        selectedMajor: {
-            handler() {
-                this.filterUsers();
-            },
+        selectedMajor() {
+            this.filterUsers();
         },
     },
     methods: {
@@ -71,25 +75,46 @@ export default {
             }
         },
         filterUsers() {
-            this.filteredUsers = this.users
-                .filter((user) => {
-                    const nameMatch = user.user.name
-                        .toLowerCase()
-                        .includes(this.searchQuery.toLowerCase());
-                    const majorMatch =
-                        !this.selectedMajor ||
-                        user.major_name === this.selectedMajor;
-                    return nameMatch && majorMatch;
-                })
-                .map((user, index) => ({
-                    ...user,
-                    no: index + 1,
-                }));
+            this.filteredUsers = this.users.filter((user) => {
+                const nameMatch = user.user.name
+                    .toLowerCase()
+                    .includes(this.searchQuery.toLowerCase());
+                const majorMatch =
+                    !this.selectedMajor ||
+                    user.major_name === this.selectedMajor;
+                return nameMatch && majorMatch;
+            });
         },
         inputDosen() {
             router.visit("/admin/manage-dosen/input");
         },
+        editDosen(dosen) {
+            this.editedDosen = {
+                nip: dosen.nip,
+                name: dosen.user.name,
+                email: dosen.user.email,
+                kode_dosen: dosen.kode_dosen,
+                major_name: dosen.major_name, // Tidak bisa diedit
+            };
+            this.showEditModal = true;
+        },
+        async updateDosen() {
+            try {
+                await axios.post(`/api/update-dosen`, {
+                    nip: this.editedDosen.nip,
+                    name: this.editedDosen.name,
+                    email: this.editedDosen.email,
+                    kode_dosen: this.editedDosen.kode_dosen,
+                });
 
+                alert("Dosen updated successfully!");
+                this.showEditModal = false;
+                await this.fetchUsers();
+            } catch (error) {
+                alert("Failed to update dosen");
+                console.error(error);
+            }
+        },
         async deleteDosen(NIP) {
             if (!confirm(`Apakah Anda yakin ingin menghapus ${NIP}?`)) {
                 return;
@@ -99,11 +124,11 @@ export default {
                     nip: NIP,
                 });
                 if (response.status === 201) {
-                    alert("Dosen delete successfully!");
+                    alert("Dosen deleted successfully!");
                     await this.fetchUsers();
                 }
             } catch (error) {
-                alert("failed to delete");
+                alert("Failed to delete dosen");
             }
         },
     },
@@ -112,17 +137,11 @@ export default {
 
 <template>
     <div class="flex min-h-screen bg-gray-50">
-        <!-- Sidebar Navigation -->
         <Sidebar role="admin" />
 
-        <!-- Main Content Area -->
         <div class="flex-1">
-            <!-- Top Navigation Bar -->
             <Navbar userName="Admin" />
-
-            <!-- Main Content -->
             <main class="p-6">
-                <!-- Breadcrumb Navigation -->
                 <div class="mb-6">
                     <Breadcrumb :items="breadcrumbs" />
                 </div>
@@ -175,85 +194,117 @@ export default {
                         </h2>
                     </div>
 
-                    <!-- Table Content -->
-                    <template #actions>
-                        <DataTable
-                            :headers="headers"
-                            :items="filteredUsers"
-                            class="mt-4"
-                        >
-                            <!-- Table Columns -->
-                            <template #column-name="{ item }">
-                                <div class="flex items-center">
-                                    <span class="font-medium">{{
-                                        item.user.name
-                                    }}</span>
-                                </div>
-                            </template>
+                    <DataTable
+                        :headers="headers"
+                        :items="filteredUsers"
+                        class="mt-4"
+                    >
+                        <template #column-name="{ item }">
+                            <span class="font-medium">{{
+                                item.user.name
+                            }}</span>
+                        </template>
 
-                            <template #column-kode_dosen="{ item }">
-                                <div
-                                    class="px-3 py-1 bg-gray-100 rounded-full text-center"
+                        <template #column-email="{ item }">
+                            <div class="flex items-center">
+                                <font-awesome-icon
+                                    :icon="['fas', 'envelope']"
+                                    class="mr-2 text-gray-400"
+                                />
+                                {{ item.user.email }}
+                            </div>
+                        </template>
+
+                        <template #column-major_name="{ item }">
+                            <div
+                                class="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm"
+                            >
+                                {{ item.major_name }}
+                            </div>
+                        </template>
+
+                        <template #column-actions="{ item }">
+                            <div class="flex justify-center space-x-2">
+                                <button
+                                    @click="editDosen(item)"
+                                    class="p-2 text-yellow-600 hover:text-yellow-800 hover:bg-yellow-100 rounded-full transition-colors"
+                                    title="Edit Dosen"
                                 >
-                                    {{ item.kode_dosen }}
-                                </div>
-                            </template>
-
-                            <template #column-nip="{ item }">
-                                <div class="font-mono">{{ item.nip }}</div>
-                            </template>
-
-                            <template #column-email="{ item }">
-                                <div class="flex items-center">
                                     <font-awesome-icon
-                                        :icon="['fas', 'envelope']"
-                                        class="mr-2 text-gray-400"
+                                        :icon="['fas', 'edit']"
                                     />
-                                    {{ item.user.email }}
-                                </div>
-                            </template>
-
-                            <template #column-major_name="{ item }">
-                                <div
-                                    class="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm"
+                                </button>
+                                <button
+                                    @click="deleteDosen(item.nip)"
+                                    class="p-2 text-red-600 hover:text-red-800 hover:bg-red-100 rounded-full transition-colors"
+                                    title="Delete Dosen"
                                 >
-                                    {{ item.major_name }}
-                                </div>
-                            </template>
-
-                            <template #column-actions="{ item }">
-                                <div class="flex justify-center space-x-2">
-                                    <button
-                                        @click="EditMajor(item.major_name)"
-                                        class="p-2 text-yellow-600 hover:text-yellow-800 hover:bg-yellow-100 rounded-full transition-colors"
-                                        title="Edit Major"
-                                    >
-                                        <font-awesome-icon
-                                            :icon="['fas', 'edit']"
-                                        />
-                                    </button>
-                                    <button
-                                        @click="deleteDosen(item.nip)"
-                                        class="p-2 text-red-600 hover:text-red-800 hover:bg-red-100 rounded-full transition-colors"
-                                        title="Delete Major"
-                                    >
-                                        <font-awesome-icon
-                                            :icon="['fas', 'trash']"
-                                        />
-                                    </button>
-                                </div>
-                            </template>
-                        </DataTable>
-                    </template>
+                                    <font-awesome-icon
+                                        :icon="['fas', 'trash']"
+                                    />
+                                </button>
+                            </div>
+                        </template>
+                    </DataTable>
                 </Card>
 
-                <!-- Floating Action Button -->
                 <button
                     @click="inputDosen"
-                    class="fixed bottom-8 right-8 flex items-center justify-center w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105"
+                    class="fixed bottom-8 right-8 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-all"
                 >
                     <font-awesome-icon :icon="['fas', 'plus']" />
                 </button>
+
+                <!-- Modal Edit Dosen -->
+                <div
+                    v-if="showEditModal"
+                    class="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 z-50"
+                >
+                    <div class="bg-white p-6 rounded-lg w-96">
+                        <h2 class="text-xl font-bold mb-4">Edit Dosen</h2>
+
+                        <label class="block mb-2">Nama Dosen</label>
+                        <input
+                            v-model="editedDosen.name"
+                            type="text"
+                            class="w-full px-3 py-2 border rounded-lg mb-4"
+                        />
+
+                        <label class="block mb-2">Email</label>
+                        <input
+                            v-model="editedDosen.email"
+                            type="email"
+                            class="w-full px-3 py-2 border rounded-lg mb-4"
+                        />
+
+                        <label class="block mb-2">Kode Dosen</label>
+                        <input
+                            v-model="editedDosen.kode_dosen"
+                            type="text"
+                            class="w-full px-3 py-2 border rounded-lg mb-4"
+                        />
+
+                        <label class="block mb-2">Jurusan</label>
+                        <p class="px-3 py-2 border rounded-lg bg-gray-100">
+                            {{ editedDosen.major_name }}
+                        </p>
+
+                        <div class="mt-4 flex justify-end">
+                            <button
+                                @click="showEditModal = false"
+                                class="px-4 py-2 mr-2 bg-gray-300 rounded-lg"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                @click="updateDosen"
+                                class="px-4 py-2 bg-blue-600 text-white rounded-lg"
+                            >
+                                Simpan
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </main>
         </div>
     </div>

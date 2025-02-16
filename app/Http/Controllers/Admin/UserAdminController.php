@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 use App\Models\Dosen;
+use App\Models\Mahasiswa;
 use App\Models\User;
 
 class UserAdminController extends Controller
@@ -166,5 +167,92 @@ class UserAdminController extends Controller
         }
 
         return response()->json(['message' => 'Delete successfully'], 201);
+    }
+
+    public function editDosen(Request $request)
+    {
+        $request->validate([
+            'nip' => 'required|string|max:21',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email',
+            'kode_dosen' => 'required|string|max:255',
+        ]);
+
+        $data = Dosen::where('nip', $request->nip)->first();
+
+        if (!$data) {
+            return response()->json(['message' => 'NIP not found!'], 404);
+        }
+
+        $user = User::where('id', $data->user_id)->first();
+
+        if ($user) {
+            $user->update([
+                'name' => $request->name,
+            ]);
+        }
+
+        $data->update([
+            'nip' => $request->nip,
+            'email' => $request->email,
+            'kode_dosen' => $request->kode_dosen,
+        ]);
+    }
+
+    public function deleteMahasiswa(Request $request)
+    {
+        Log::info("Semua request:", $request->all());
+
+        $request->validate([
+            'nim' => 'required|string|max:21'
+        ]);
+
+        $mahasiswa = Mahasiswa::where('nim', $request->nim)->first();
+
+        if (!$mahasiswa) {
+            return response()->json(['message' => 'NIM not found!'], 404);
+        }
+
+        $user = User::where('id', $mahasiswa->user_id)->first();
+
+        $mahasiswa->delete(); // Soft delete dosen
+
+        if ($user) {
+            $user->delete(); // Soft delete user
+        }
+
+        return response()->json(['message' => 'Delete successfully'], 201);
+    }
+
+    public function editMahasiswa(Request $request)
+    {
+        $request->validate([
+            'nim' => 'required|string|max:21',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email',
+            'angkatan' => 'required|integer|min:2000|max:' . (date('Y') + 1),
+            'class' => 'required|string|max:2',
+        ]);
+
+        $data = Mahasiswa::where('nim', $request->nim)->first();
+
+        if (!$data) {
+            return response()->json(['message' => 'NIM not found!'], 404);
+        }
+
+        $user = User::where('id', $data->user_id)->first();
+
+        if ($user) {
+            $user->update([
+                'name' => $request->name,
+            ]);
+        }
+
+        $data->update([
+            'nim' => $request->nim,
+            'email' => $request->email,
+            'angkatan' => $request->angkatan,
+            'class' => $request->class,
+        ]);
     }
 }
