@@ -27,7 +27,7 @@ class KelompokImport implements ToModel, WithHeadingRow, SkipsOnError
 
             Log::info('Importing row:', $row);
 
-            $mahasiswa = Mahasiswa::with(['user', 'classRoom.prodi.major'])
+            $mahasiswa = Mahasiswa::with(['user', 'classRoom.prodi'])
                 ->where('nim', $row['nim'])
                 ->first();
 
@@ -56,30 +56,34 @@ class KelompokImport implements ToModel, WithHeadingRow, SkipsOnError
                 throw new \Exception("Program studi tidak ditemukan untuk kelas mahasiswa dengan nim {$row['nim']}");
             }
 
-            if (!$mahasiswa->classRoom->prodi->major) {
-                Log::warning('Major not found for prodi:', ['prodi_id' => $mahasiswa->classRoom->prodi_id]);
-                throw new \Exception("Jurusan tidak ditemukan untuk program studi mahasiswa dengan nim {$row['nim']}");
-            }
-
+            // Find project by name and prodi_id
             $project = Project::where('project_name', $row['proyek'])
-                ->where('major_id', $mahasiswa->classRoom->prodi->major->id)
+                ->where('prodi_id', $mahasiswa->classRoom->prodi_id)
                 ->first();
 
             if (!$project) {
                 Log::warning('Project not found', [
                     'project_name' => $row['proyek'],
-                    'major_id' => $mahasiswa->classRoom->prodi->major->id
+                    'prodi_id' => $mahasiswa->classRoom->prodi_id
                 ]);
                 throw new \Exception("Project tidak ditemukan untuk proyek {$row['proyek']}");
             }
 
-            // Find dosen by name
-            $dosen = Dosen::whereHas('user', function($query) use ($row) {
+            // Get major_id through prodi for dosen lookup
+            $majorId = $mahasiswa->classRoom->prodi->major_id;
+
+            // Find dosen by name and major_id
+            $dosen = Dosen::whereHas('user', function ($query) use ($row) {
                 $query->where('name', trim($row['dosen_manajer']));
-            })->first();
+            })
+                ->where('major_id', $majorId)
+                ->first();
 
             if (!$dosen) {
-                Log::warning('Dosen not found for name:', ['name' => $row['dosen_manajer']]);
+                Log::warning('Dosen not found for name:', [
+                    'name' => $row['dosen_manajer'],
+                    'major_id' => $majorId
+                ]);
                 throw new \Exception("Dosen dengan nama {$row['dosen_manajer']} tidak ditemukan");
             }
 

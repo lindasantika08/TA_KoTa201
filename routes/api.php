@@ -53,6 +53,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/logout', [AuthController::class, 'logout']);
     Route::post('/project', [KelolaProyekController::class, 'AddProyek']);
     Route::get('/majors', [KelolaProyekController::class, 'getMajors']);
+    Route::get('/prodis-by-major', [KelolaProyekController::class, 'getProdisByMajor']);
+
     Route::get('/projects', [KelolaProyekController::class, 'getProjects']);
     Route::get('/project-dropdown', [ProjectController::class, 'index']);
     Route::get('/get-question-id', [AnswerController::class, 'getQuestionId']);
