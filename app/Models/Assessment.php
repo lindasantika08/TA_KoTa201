@@ -21,6 +21,11 @@ class Assessment extends Model
         'type',
         'question',
         'criteria_id',
+        'end_date'
+    ];
+
+    protected $casts = [
+        'is_published' => 'boolean'
     ];
 
     public function typeCriteria()

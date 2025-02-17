@@ -15,7 +15,7 @@ class UserSeeder extends Seeder
         DB::table('users')->insert([
             [
                 'id' => 'ea483968-7f8c-4c02-af8a-936823bf6bcu',
-                'name' => 'Linda',
+                'name' => 'Dosen_1',
                 'email' => 'dosen@proyek.com',
                 'password' => bcrypt("qwerty123"),
                 'role' => 'dosen',
@@ -24,8 +24,8 @@ class UserSeeder extends Seeder
             ],
             [
                 'id' => 'ea483968-7f8c-4c02-af8a-936823bf6bcx',
-                'name' => 'Reval',
-                'email' => 'reval@proyek.com',
+                'name' => 'Dosen_2',
+                'email' => 'dosen2@proyek.com',
                 'password' => bcrypt("qwerty123"),
                 'role' => 'dosen',
                 'remember_token' => null,
@@ -33,8 +33,26 @@ class UserSeeder extends Seeder
             ],
             [
                 'id' => 'ra483968-7f8c-4c02-af8a-936823bf6bcd',
-                'name' => 'Thoriq',
+                'name' => 'Adhiya Rahma Anzani',
                 'email' => 'mahasiswa@proyek.com',
+                'password' => bcrypt("qwerty123"),
+                'role' => 'mahasiswa',
+                'remember_token' => null,
+
+            ],
+            [
+                'id' => 'ra483968-7f8c-4c03-af8a-936823bf6bcd',
+                'name' => 'Danendra Gafrila',
+                'email' => 'mahasiswa1@proyek.com',
+                'password' => bcrypt("qwerty123"),
+                'role' => 'mahasiswa',
+                'remember_token' => null,
+
+            ],
+            [
+                'id' => 'ra483968-7f8c-4c04-af8a-936823bf6bcd',
+                'name' => 'Linda Santika',
+                'email' => 'mahasiswa2@proyek.com',
                 'password' => bcrypt("qwerty123"),
                 'role' => 'mahasiswa',
                 'remember_token' => null,

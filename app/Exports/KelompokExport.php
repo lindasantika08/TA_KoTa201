@@ -95,7 +95,6 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
                     ->join('dosen', 'users.id', '=', 'dosen.user_id')
                     ->where('users.role', 'dosen')
                     ->where('dosen.major_id', $projectMajor)
-                    ->whereNull('users.deleted_at')
                     ->select('users.name')
                     ->distinct()
                     ->pluck('name')

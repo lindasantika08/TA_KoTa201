@@ -15,6 +15,7 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Notifications\AssessmentNotifications;
 
 
 class AssessmentMahasiswa extends Controller
@@ -50,7 +51,8 @@ class AssessmentMahasiswa extends Controller
 
             $groups = Group::with(['project' => function($query) {
                     $query->withCount(['assessments' => function($query) {
-                        $query->where('type', 'selfAssessment'); 
+                        $query->where('type', 'selfAssessment')
+                              ->where('is_published', 1);
                     }]);
                 }])
                 ->where('mahasiswa_id', $mahasiswa->id)
@@ -65,6 +67,8 @@ class AssessmentMahasiswa extends Controller
                     'created_at' => $group->created_at,
                     'total_questions' => $group->project->assessments_count,
                 ];
+            })->filter(function ($assessment){
+                return $assessment['total_questions'] > 0;
             });
 
             return response()->json([
@@ -100,13 +104,15 @@ class AssessmentMahasiswa extends Controller
 
             $groups = Group::with(['project' => function($query) {
                     $query->withCount(['assessments' => function($query) {
-                        $query->where('type', 'peerAssessment');
+                        $query->where('type', 'peerAssessment')
+                              ->where('is_published', 1);
                     }]);
                 }])
                 ->where('mahasiswa_id', $mahasiswa->id)
                 ->whereHas('project', function($query) {
                     $query->whereHas('assessments', function($query) {
-                        $query->where('type', 'peerAssessment');
+                        $query->where('type', 'peerAssessment')
+                              ->where('is_published', 1);
                     });
                 })
                 ->get();
@@ -120,6 +126,8 @@ class AssessmentMahasiswa extends Controller
                     'created_at' => $group->created_at,
                     'total_questions' => $group->project->assessments_count,
                 ];
+            })->filter(function ($assessment) {
+                return $assessment['total_questions'] > 0;
             });
 
             return response()->json([

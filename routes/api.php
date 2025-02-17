@@ -27,6 +27,7 @@ use App\Http\Controllers\Mahasiswa\DetailPeerMahasiswa;
 use App\Http\Controllers\Mahasiswa\FeedbackMahasiswa;
 use App\Http\Controllers\Mahasiswa\ReportMahasiswa;
 use App\Http\Controllers\Mahasiswa\ProfileMahasiswa;
+use App\Http\Controllers\Mahasiswa\NotificationMahasiswa;
 use Illuminate\Support\Facades\Auth;
 // use SebastianBergmann\CodeCoverage\Report\Html\Dashboard;
 
@@ -61,6 +62,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/assessment/projects', [ProjectController::class, 'getProjectsWithAssessments']);
     Route::get('/proyek-self-assessment', [ProjectController::class, 'getDataSelf']);
     Route::get('/proyek-Peer-assessment', [ProjectController::class, 'getDataPeer']);
+    Route::post('/toggle-publish-assessment', [ProjectController::class, 'togglePublishAssessment']);
+    Route::post('/toggle-publish-assessment-peer', [ProjectController::class, 'togglePublishAssessmentPeer']);
     Route::get('/projects/active', [DashboardDosen::class, 'getActiveProjects']);
 
     // self assessment dosen
@@ -177,6 +180,20 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/mahasiswa/upload-profile-photo', [ProfileMahasiswa::class, 'uploadProfilePhoto']);
     Route::delete('/mahasiswa/delete-profile-photo', [ProfileMahasiswa::class, 'deleteProfilePhoto']);
     Route::put('/mahasiswa/update-profile', [ProfileMahasiswa::class, 'updateProfile']);
+
+
+    Route::get('/assessments', [NotificationMahasiswa::class, 'getAssessments']);
+    Route::get('/notifications', [NotificationMahasiswa::class, 'getNotifications']);
+    Route::post('/notifications/{id}/mark-as-read', [NotificationMahasiswa::class, 'markAsRead']);
+    Route::post('/assessment/{assessment}/notify', [NotificationMahasiswa::class, 'createAssessmentNotification']);
+
+    Route::prefix('notifications')->group(function () {
+        Route::get('/', [NotificationMahasiswa::class, 'index']);
+        Route::get('/get', [NotificationMahasiswa::class, 'getNotifications']);
+        Route::post('/{id}/read', [NotificationMahasiswa::class, 'markAsRead']);
+        Route::post('/read-all', [NotificationMahasiswa::class, 'markAllAsRead']);
+        Route::post('/count', [NotificationMahasiswa::class, 'getCountNotif']);
+    });
 
     //Mahasiswa Feedback
     Route::get('/mahasiswa/feedback', [FeedbackMahasiswa::class, 'getStudentAssessmentsStatus']);

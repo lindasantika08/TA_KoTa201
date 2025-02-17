@@ -25,6 +25,7 @@ use App\Http\Controllers\Mahasiswa\ReportMahasiswa;
 use App\Http\Controllers\Mahasiswa\DetailSelfMahasiswa;
 use App\Http\Controllers\Mahasiswa\DetailPeerMahasiswa;
 use App\Http\Controllers\Mahasiswa\ProfileMahasiswa;
+use App\Http\Controllers\Mahasiswa\NotificationMahasiswa;
 
 
 use App\Http\Controllers\AuthController;
@@ -116,6 +117,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/peer-assessment/answers/{userId}', [AssessmentMahasiswa::class, 'getUserPeerAnswers']);
         Route::get('/peer-assessment/peer-detail', [DetailPeerMahasiswa::class, 'showDetail']);
         Route::get('/peer-assessment/self-detail', [DetailSelfMahasiswa::class, 'showDetail']);
+        // Route::get('/notifications-mhs', [NotificationMahasiswa::class, 'index'])->name('index');
 
         Route::get('/profile', [ProfileMahasiswa::class, 'profile'])->name('profile');
 
@@ -126,6 +128,33 @@ Route::middleware('auth')->group(function () {
         //-----------REPORT-------------//
         Route::get('/project-score-details', [ReportMahasiswa::class, 'getProjectScoreDetailsView']);
 
+        // notif
+        Route::get('/notifications-mhs', [NotificationMahasiswa::class, 'index'])->name('notifications.index');
+        Route::post('/notifications/{id}/mark-as-read', [NotificationMahasiswa::class, 'markAsRead'])->name('notifications.markAsRead');
+        Route::post('/notifications/mark-all-read', [NotificationMahasiswa::class, 'markAllAsRead'])->name('notifications.markAllAsRead');
+
+        Route::get('/test-email', function() {
+            $user = Auth::user();
+            
+            if (!$user) {
+                return "Please login first!";
+            }
+            
+            try {
+                $notificationController = new NotificationMahasiswa();
+                $result = $notificationController->getNotifications();
+                
+                $responseData = json_decode($result->getContent());
+                
+                if ($responseData->success) {
+                    return "Notifications processed successfully! Check your email inbox (and spam folder).";
+                } else {
+                    return "Error processing notifications: " . ($responseData->message ?? 'Unknown error');
+                }
+            } catch (\Exception $e) {
+                return "Error: " . $e->getMessage();
+            }
+        });
         //Mahasiswa Feedback
         Route::get('/feedback-details', [FeedbackMahasiswa::class, 'getFeedbackDetailView']);
     });

@@ -19,7 +19,7 @@ export default {
       projects: [],
       selectedProject: {
         project_name: null,
-        batch_year: null
+        batch_year: null,
       },
       selfAssessmentStatus: null,
       peerGroupSize: 0,
@@ -344,36 +344,55 @@ export default {
                 <Card title="Feedback Peer" class="text-xs h-full mb-4"> </Card>
                 <Card title="Feedback Dosen" class="text-xs h-full"> </Card>
               </div>
-            </Card>
+            </div>
 
             <!-- Lecturer Feedback -->
             <Card title="Lecturer Feedback" class="bg-white">
               <div class="p-4 h-40 overflow-y-auto">
-                <div v-if="feedbackLoading" class="flex items-center justify-center h-full">
-                  <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                <div
+                  v-if="feedbackLoading"
+                  class="flex items-center justify-center h-full"
+                >
+                  <div
+                    class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"
+                  ></div>
                 </div>
-                <div v-else-if="feedbackError" class="text-red-500 p-4 bg-red-50 rounded">
+                <div
+                  v-else-if="feedbackError"
+                  class="text-red-500 p-4 bg-red-50 rounded"
+                >
                   {{ feedbackError }}
                 </div>
-                <div v-else-if="feedback?.lecturerFeedback?.length" class="space-y-4">
-                  <div v-for="(item, index) in feedback.lecturerFeedback" 
-                       :key="index" 
-                       class="p-3 bg-gray-50 rounded-lg">
+                <div
+                  v-else-if="feedback?.lecturerFeedback?.length"
+                  class="space-y-4"
+                >
+                  <div
+                    v-for="(item, index) in feedback.lecturerFeedback"
+                    :key="index"
+                    class="p-3 bg-gray-50 rounded-lg"
+                  >
                     <p class="text-sm text-gray-700">{{ item.feedback }}</p>
-                    <div class="mt-2 flex items-center justify-between text-xs text-gray-500">
+                    <div
+                      class="mt-2 flex items-center justify-between text-xs text-gray-500"
+                    >
                       <span class="font-medium">{{ item.dosenName }}</span>
-                      <span>{{ new Date(item.createdAt).toLocaleDateString() }}</span>
+                      <span>{{
+                        new Date(item.createdAt).toLocaleDateString()
+                      }}</span>
                     </div>
                   </div>
                 </div>
-                <div v-else class="flex items-center justify-center h-full text-gray-500">
+                <div
+                  v-else
+                  class="flex items-center justify-center h-full text-gray-500"
+                >
                   No lecturer feedback available
                 </div>
               </div>
             </Card>
           </div>
-        </div>
-      </card>
+        </Card>
       </main>
     </div>
   </div>
