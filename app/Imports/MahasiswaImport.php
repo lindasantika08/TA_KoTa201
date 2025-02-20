@@ -46,14 +46,11 @@ class MahasiswaImport implements ToModel, WithHeadingRow, WithBatchInserts
             // Track current angkatan
             if (!$this->currentAngkatan) {
                 $this->currentAngkatan = $row['angkatan'];
+                $this->currentProdi = $row['prodi']; // Simpan jurusan dari data pertama
             } elseif ($this->currentAngkatan != $row['angkatan']) {
                 $this->currentAngkatan = 'mixed';
-            }
-
-            // Track current prodi
-            if (!$this->currentProdi) {
-                $this->currentProdi = $row['prodi'];
-            } elseif ($this->currentProdi != $row['prodi']) {
+            } elseif ($this->currentProdi != $row['Prodi']) {
+                // Jika ada multiple jurusan, matikan fitur cleanup
                 $this->currentProdi = 'mixed';
             }
 
@@ -173,47 +170,32 @@ class MahasiswaImport implements ToModel, WithHeadingRow, WithBatchInserts
     public function __destruct()
     {
         try {
-            // Hanya hapus jika kita memproses single angkatan dan single prodi
-            if (
-                $this->currentAngkatan && $this->currentProdi &&
-                $this->currentAngkatan !== 'mixed' && $this->currentProdi !== 'mixed'
-            ) {
+            // Hanya hapus jika kita memproses single angkatan
+            if ($this->currentAngkatan && $this->currentAngkatan !== 'mixed') {
+                // Ambil semua mahasiswa dari angkatan yang sama yang tidak ada dalam file import
+                $mahasiswaToDelete = Mahasiswa::whereNotIn('nim', $this->processedNims)
+                    ->whereHas('classRoom', function ($query) {
+                        $query->where('angkatan', $this->currentAngkatan);
+                    })
+                    ->get();
 
-                // Get unique combinations of angkatan and prodi from processed data
-                $uniqueCombinations = collect($this->processedData)->unique()->values()->all();
-
-                foreach ($uniqueCombinations as $combination) {
-                    // Ambil ID prodi berdasarkan nama
-                    $prodiId = Prodi::where('prodi_name', $combination['prodi'])->value('id');
-
-                    if (!$prodiId) {
-                        Log::warning('Prodi tidak ditemukan', ['prodi_name' => $combination['prodi']]);
-                        continue;
-                    }
-
-                    // Ambil mahasiswa yang perlu dihapus berdasarkan angkatan dan prodi
-                    $mahasiswaToDelete = Mahasiswa::whereNotIn('nim', $this->processedNims)
-                        ->whereHas('classRoom', function ($query) use ($combination, $prodiId) {
-                            $query->where('angkatan', $combination['angkatan'])
-                                ->where('prodi_id', $prodiId);
-                        })
-                        ->get();
-
-                    foreach ($mahasiswaToDelete as $mhs) {
-                        Log::info('Menghapus mahasiswa', [
-                            'id' => $mhs->id,
-                            'nim' => $mhs->nim,
-                            'angkatan' => $combination['angkatan'],
-                            'prodi' => $combination['prodi']
-                        ]);
-                        $mhs->delete(); // Soft delete karena model menggunakan SoftDeletes
-                    }
+                foreach ($mahasiswaToDelete as $mhs) {
+                    Log::info('Menghapus mahasiswa', [
+                        'id' => $mhs->id,
+                        'nim' => $mhs->nim,
+                        'angkatan' => $this->currentAngkatan
+                    ]);
+                    $mhs->delete(); // Ini akan melakukan soft delete karena model menggunakan SoftDeletes
                 }
             } else {
-                Log::info('Melewati proses penghapusan karena multiple angkatan atau prodi terdeteksi');
+                Log::info('Melewati proses penghapusan karena multiple angkatan terdeteksi');
             }
         } catch (\Exception $e) {
-            Log::error('Kesalahan saat menghapus mahasiswa', ['error' => $e->getMessage()]);
+            Log::error('Kesalahan saat menghapus mahasiswa', [
+                'error' => $e->getMessage(),
+                'jurusan' => $this->currentProdi,
+                'angkatan' => $this->currentAngkatan
+            ]);
         }
     }
 }

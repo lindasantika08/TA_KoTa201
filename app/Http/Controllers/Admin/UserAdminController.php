@@ -37,7 +37,6 @@ class UserAdminController extends Controller
         // Ambil data dosen
         $dosen = $query->get();
 
-        // Format data agar sesuai dengan yang dibutuhkan (misalnya menambahkan nomor urut)
         $dosen = $dosen->map(function ($item, $index) {
             $item->no = $index + 1;
             $item->major_name = $item->major ? $item->major->major_name : null; // Pastikan major tidak null
@@ -90,7 +89,8 @@ class UserAdminController extends Controller
 
         Excel::import(new DosenImport, $request->file('file'));
 
-        return redirect()->route('/admin/ManageDosen')->with('success', 'Data dosen berhasil diimpor!');
+        // return redirect()->route('/admin/ManageDosen')->with('success', 'Data dosen berhasil diimpor!');
+        return redirect('/admin/ManageDosen')->with('success', 'Data dosen berhasil diimpor!');
     }
 
     public function InputMahasiswa()

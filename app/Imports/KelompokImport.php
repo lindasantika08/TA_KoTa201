@@ -19,15 +19,33 @@ use Throwable;
 class KelompokImport implements ToModel, WithHeadingRow, SkipsOnError
 {
     private $dataBaru = [];
+    private $requiredColumns = [
+        'nim',
+        'angkatan',
+        'proyek',
+        'kode_dosen',
+        'kelompok'
+    ];
 
     public function model(array $row)
     {
         try {
+            // Validate required columns
+            foreach ($this->requiredColumns as $column) {
+                if (!isset($row[$column]) || empty($row[$column])) {
+                    Log::warning('Missing required column:', [
+                        'column' => $column,
+                        'row' => $row
+                    ]);
+                    return null; // Skip this row
+                }
+            }
+
             DB::beginTransaction();
 
             Log::info('Importing row:', $row);
 
-            $mahasiswa = Mahasiswa::with(['user', 'classRoom.prodi'])
+            $mahasiswa = Mahasiswa::with(['user', 'classRoom.prodi.major'])
                 ->where('nim', $row['nim'])
                 ->first();
 
@@ -56,7 +74,11 @@ class KelompokImport implements ToModel, WithHeadingRow, SkipsOnError
                 throw new \Exception("Program studi tidak ditemukan untuk kelas mahasiswa dengan nim {$row['nim']}");
             }
 
-            // Find project by name and prodi_id
+            if (!$mahasiswa->classRoom->prodi->major) {
+                Log::warning('Major not found for prodi:', ['prodi_id' => $mahasiswa->classRoom->prodi_id]);
+                throw new \Exception("Jurusan tidak ditemukan untuk program studi mahasiswa dengan nim {$row['nim']}");
+            }
+
             $project = Project::where('project_name', $row['proyek'])
                 ->where('prodi_id', $mahasiswa->classRoom->prodi_id)
                 ->first();
@@ -69,22 +91,14 @@ class KelompokImport implements ToModel, WithHeadingRow, SkipsOnError
                 throw new \Exception("Project tidak ditemukan untuk proyek {$row['proyek']}");
             }
 
-            // Get major_id through prodi for dosen lookup
-            $majorId = $mahasiswa->classRoom->prodi->major_id;
-
-            // Find dosen by name and major_id
-            $dosen = Dosen::whereHas('user', function ($query) use ($row) {
-                $query->where('name', trim($row['dosen_manajer']));
-            })
-                ->where('major_id', $majorId)
+            // Find dosen by kode_dosen
+            $dosen = Dosen::where('kode_dosen', trim($row['kode_dosen']))
+                ->where('major_id', $mahasiswa->classRoom->prodi->major_id)
                 ->first();
 
             if (!$dosen) {
-                Log::warning('Dosen not found for name:', [
-                    'name' => $row['dosen_manajer'],
-                    'major_id' => $majorId
-                ]);
-                throw new \Exception("Dosen dengan nama {$row['dosen_manajer']} tidak ditemukan");
+                Log::warning('Dosen not found for code:', ['kode_dosen' => $row['kode_dosen']]);
+                throw new \Exception("Dosen dengan kode {$row['kode_dosen']} tidak ditemukan");
             }
 
             $groupBaru = [

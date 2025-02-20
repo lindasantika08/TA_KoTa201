@@ -1,3 +1,186 @@
+<template>
+    <div class="flex min-h-screen">
+        <Sidebar role="admin" />
+
+        <div class="flex-1">
+            <Navbar userName="Admin" />
+            <main class="p-6">
+                <div class="mb-4">
+                    <Breadcrumb :items="breadcrumbs" />
+                </div>
+                <Card title="Input Data Dosen">
+                    <template #actions>
+                        <!-- Mode Selection -->
+                        <div class="flex w-full mb-6">
+                            <label
+                                class="w-1/2 text-center py-2 border cursor-pointer transition-all duration-200"
+                                :class="{
+                                    'bg-blue-500 text-white border-blue-500': inputMode === 'export',
+                                    'bg-white text-gray-700 border-gray-300 hover:bg-gray-50': inputMode !== 'export',
+                                }"
+                            >
+                                <input
+                                    type="radio"
+                                    v-model="inputMode"
+                                    value="export"
+                                    class="hidden"
+                                />
+                                Export
+                            </label>
+                            <label
+                                class="w-1/2 text-center py-2 border cursor-pointer transition-all duration-200"
+                                :class="{
+                                    'bg-blue-500 text-white border-blue-500': inputMode === 'import',
+                                    'bg-white text-gray-700 border-gray-300 hover:bg-gray-50': inputMode !== 'import',
+                                }"
+                            >
+                                <input
+                                    type="radio"
+                                    v-model="inputMode"
+                                    value="import"
+                                    class="hidden"
+                                />
+                                Import
+                            </label>
+                        </div>
+
+                        <!-- Export Section -->
+                        <div v-if="inputMode === 'export'" class="space-y-4">
+                            <!-- Export content remains the same -->
+                            <div>
+                                <label
+                                    for="jurusan-select"
+                                    class="block text-sm font-medium text-gray-700 mb-2"
+                                >
+                                    Pilih Jurusan
+                                </label>
+                                <div v-if="isLoading" class="text-gray-600">
+                                    Memuat data jurusan...
+                                </div>
+                                <div v-else-if="errorMessage" class="text-red-600">
+                                    {{ errorMessage }}
+                                </div>
+                                <select
+                                    v-else
+                                    id="jurusan-select"
+                                    v-model="selectedJurusan"
+                                    class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                >
+                                    <option value="" disabled>Pilih Jurusan</option>
+                                    <option
+                                        v-for="jurusan in jurusanList"
+                                        :key="jurusan.id"
+                                        :value="jurusan.id"
+                                    >
+                                        {{ jurusan.major_name }}
+                                    </option>
+                                </select>
+                            </div>
+                            <button
+                                @click="downloadTemplate"
+                                class="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                                :disabled="!selectedJurusan || isLoading"
+                            >
+                                <font-awesome-icon :icon="['fas', 'download']" class="mr-2" />
+                                Download Template
+                            </button>
+                        </div>
+
+                        <!-- Import Section -->
+                        <div v-if="inputMode === 'import'" class="space-y-4">
+                            <!-- Drag & Drop Area -->
+                            <div
+                                @dragover="handleDragOver"
+                                @dragleave="handleDragLeave"
+                                @drop="handleDrop"
+                                class="relative border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200"
+                                :class="{
+                                    'border-blue-500 bg-blue-50': isDragging,
+                                    'border-gray-300 hover:border-gray-400': !isDragging
+                                }"
+                            >
+                                <!-- File input is only visible when no file is selected -->
+                                <input
+                                    v-if="!selectedFile"
+                                    ref="fileInput"
+                                    type="file"
+                                    accept=".xlsx,.xls"
+                                    @change="handleFileSelect"
+                                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                />
+                                
+                                <div v-if="!selectedFile" class="space-y-2">
+                                    <font-awesome-icon 
+                                        :icon="['fas', 'file-excel']" 
+                                        class="text-4xl text-gray-400"
+                                    />
+                                    <div class="text-gray-600">
+                                        <p class="font-medium">
+                                            Drag & drop file Excel di sini
+                                        </p>
+                                        <p class="text-sm">
+                                            atau klik untuk memilih file
+                                        </p>
+                                    </div>
+                                    <p class="text-xs text-gray-500">
+                                        Format yang didukung: .xlsx, .xls
+                                    </p>
+                                </div>
+
+                                <div v-else class="space-y-4">
+                                    <div class="flex items-center justify-center space-x-2">
+                                        <font-awesome-icon 
+                                            :icon="['fas', 'file-excel']" 
+                                            class="text-2xl text-green-500"
+                                        />
+                                        <span class="font-medium text-gray-700">
+                                            {{ selectedFile.name }}
+                                        </span>
+                                    </div>
+                                    
+                                    <!-- Progress Bar -->
+                                    <div v-if="uploadProgress > 0" class="w-full bg-gray-200 rounded-full h-2.5">
+                                        <div 
+                                            class="bg-blue-500 h-2.5 rounded-full transition-all duration-300"
+                                            :style="{ width: `${uploadProgress}%` }"
+                                        ></div>
+                                    </div>
+
+                                    <!-- Action Buttons -->
+                                    <div class="flex justify-center space-x-2">
+                                        <button
+                                            @click="uploadFile"
+                                            :disabled="isUploading"
+                                            class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                                        >
+                                            <font-awesome-icon 
+                                                :icon="['fas', 'upload']" 
+                                                class="mr-2"
+                                            />
+                                            {{ isUploading ? 'Mengunggah...' : 'Upload' }}
+                                        </button>
+                                        <button
+                                            @click="cancelUpload"
+                                            :disabled="isUploading"
+                                            class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                                        >
+                                            <font-awesome-icon 
+                                                :icon="['fas', 'times']" 
+                                                class="mr-2"
+                                            />
+                                            Batal
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </Card>
+            </main>
+        </div>
+    </div>
+</template>
+
 <script>
 import { ref, onMounted } from "vue";
 import axios from "axios";
@@ -27,8 +210,13 @@ export default {
         const selectedJurusan = ref("");
         const isLoading = ref(false);
         const errorMessage = ref("");
+        const isDragging = ref(false);
+        const selectedFile = ref(null);
+        const uploadProgress = ref(0);
+        const isUploading = ref(false);
+        const fileInput = ref(null);
 
-        // Fungsi untuk mengambil data jurusan dari API
+        // Rest of the setup logic remains the same
         const getJurusanList = async () => {
             try {
                 isLoading.value = true;
@@ -39,24 +227,19 @@ export default {
                         Accept: "application/json",
                     },
                 });
-                // Langsung assign response.data karena sudah berupa array
                 jurusanList.value = response.data;
-                console.log("Jurusan list:", jurusanList.value);
             } catch (error) {
                 console.error("Error mengambil data jurusan:", error);
-                errorMessage.value =
-                    "Gagal memuat data jurusan. Silakan coba lagi.";
+                errorMessage.value = "Gagal memuat data jurusan. Silakan coba lagi.";
             } finally {
                 isLoading.value = false;
             }
         };
 
-        // Panggil fungsi getJurusanList saat komponen dimount
         onMounted(() => {
             getJurusanList();
         });
 
-        // Fungsi untuk mengunduh template berdasarkan jurusan
         const downloadTemplate = async () => {
             if (!selectedJurusan.value) {
                 alert("Harap pilih jurusan terlebih dahulu.");
@@ -91,26 +274,75 @@ export default {
             }
         };
 
-        // Fungsi untuk mengunggah file Excel
-        const handleFileUpload = async (event) => {
+        const handleDragOver = (event) => {
+            event.preventDefault();
+            isDragging.value = true;
+        };
+
+        const handleDragLeave = (event) => {
+            event.preventDefault();
+            isDragging.value = false;
+        };
+
+        const handleDrop = (event) => {
+            event.preventDefault();
+            isDragging.value = false;
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                handleFiles(files[0]);
+            }
+        };
+
+        const handleFileSelect = (event) => {
+            const files = event.target.files;
+            if (files.length > 0) {
+                handleFiles(files[0]);
+            }
+        };
+
+        const handleFiles = (file) => {
+            if (!file.name.match(/\.(xlsx|xls)$/)) {
+                alert('Hanya file Excel (.xlsx atau .xls) yang diperbolehkan');
+                return;
+            }
+            selectedFile.value = file;
+            uploadProgress.value = 0;
+        };
+
+        const uploadFile = async () => {
+            if (!selectedFile.value) return;
+
             const formData = new FormData();
-            formData.append("file", event.target.files[0]);
+            formData.append("file", selectedFile.value);
 
             try {
+                isUploading.value = true;
                 const token = localStorage.getItem("auth_token");
                 await axios.post("/admin/manage-dosen/import", formData, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                         "Content-Type": "multipart/form-data",
                     },
+                    onUploadProgress: (progressEvent) => {
+                        uploadProgress.value = Math.round(
+                            (progressEvent.loaded * 100) / progressEvent.total
+                        );
+                    },
                 });
                 alert("Data dosen berhasil diimpor.");
+                selectedFile.value = null;
+                uploadProgress.value = 0;
             } catch (error) {
                 console.error("Error import:", error.response?.data);
-                alert(
-                    "Gagal mengimpor data. Silakan periksa format file Anda."
-                );
+                alert("Gagal mengimpor data. Silakan periksa format file Anda.");
+            } finally {
+                isUploading.value = false;
             }
+        };
+
+        const cancelUpload = () => {
+            selectedFile.value = null;
+            uploadProgress.value = 0;
         };
 
         return {
@@ -119,132 +351,19 @@ export default {
             selectedJurusan,
             isLoading,
             errorMessage,
+            isDragging,
+            selectedFile,
+            uploadProgress,
+            isUploading,
+            fileInput,
             downloadTemplate,
-            handleFileUpload,
+            handleDragOver,
+            handleDragLeave,
+            handleDrop,
+            handleFileSelect,
+            uploadFile,
+            cancelUpload,
         };
     },
 };
 </script>
-
-<template>
-    <div class="flex min-h-screen">
-        <Sidebar role="admin" />
-
-        <div class="flex-1">
-            <Navbar userName="Admin" />
-            <main class="p-6">
-                <div class="mb-4">
-                    <Breadcrumb :items="breadcrumbs" />
-                </div>
-                <Card title="Input Data Dosen">
-                    <template #actions>
-                        <!-- Pilihan Mode -->
-                        <div class="flex w-full mb-4">
-                            <label
-                                class="w-1/2 text-center py-2 border cursor-pointer"
-                                :class="{
-                                    'bg-blue-500 text-white':
-                                        inputMode === 'export',
-                                    'bg-white text-gray-700 border-gray-300':
-                                        inputMode !== 'export',
-                                }"
-                            >
-                                <input
-                                    type="radio"
-                                    v-model="inputMode"
-                                    value="export"
-                                    class="hidden"
-                                />
-                                Export
-                            </label>
-                            <label
-                                class="w-1/2 text-center py-2 border cursor-pointer"
-                                :class="{
-                                    'bg-blue-500 text-white':
-                                        inputMode === 'import',
-                                    'bg-white text-gray-700 border-gray-300':
-                                        inputMode !== 'import',
-                                }"
-                            >
-                                <input
-                                    type="radio"
-                                    v-model="inputMode"
-                                    value="import"
-                                    class="hidden"
-                                />
-                                Import
-                            </label>
-                        </div>
-
-                        <!-- Bagian Export -->
-                        <div v-if="inputMode === 'export'">
-                            <div class="mt-4">
-                                <label
-                                    for="jurusan-select"
-                                    class="block text-sm font-medium text-gray-700"
-                                >
-                                    Pilih Jurusan
-                                </label>
-                                <div
-                                    v-if="isLoading"
-                                    class="mt-2 text-gray-600"
-                                >
-                                    Memuat data jurusan...
-                                </div>
-                                <div
-                                    v-else-if="errorMessage"
-                                    class="mt-2 text-red-600"
-                                >
-                                    {{ errorMessage }}
-                                </div>
-                                <select
-                                    v-else
-                                    id="jurusan-select"
-                                    v-model="selectedJurusan"
-                                    class="mt-2 p-2 border border-gray-300 rounded w-full"
-                                >
-                                    <option value="" disabled>
-                                        Pilih Jurusan
-                                    </option>
-                                    <option
-                                        v-for="jurusan in jurusanList"
-                                        :key="jurusan.id"
-                                        :value="jurusan.id"
-                                    >
-                                        {{ jurusan.major_name }}
-                                    </option>
-                                </select>
-                            </div>
-                            <div class="mt-4">
-                                <button
-                                    @click="downloadTemplate"
-                                    class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400"
-                                    :disabled="!selectedJurusan || isLoading"
-                                >
-                                    Download Template
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Bagian Import -->
-                        <div v-if="inputMode === 'import'" class="mt-4">
-                            <label
-                                for="file-upload"
-                                class="block text-sm font-medium text-gray-700"
-                            >
-                                Import Data Excel
-                            </label>
-                            <input
-                                type="file"
-                                id="file-upload"
-                                accept=".xlsx, .xls"
-                                @change="handleFileUpload"
-                                class="mt-2 p-2 border border-gray-300 rounded w-full"
-                            />
-                        </div>
-                    </template>
-                </Card>
-            </main>
-        </div>
-    </div>
-</template>

@@ -52,26 +52,38 @@ class UserManagementController extends Controller
         $angkatan = $request->get('angkatan');
         $class = $request->get('class_name');
         $prodi = $request->get('prodi');
+        $major = $request->get('major');
 
-        $query = Mahasiswa::with(['classRoom.prodi', 'user'])
+        $query = Mahasiswa::with(['classRoom.prodi.major', 'user'])
             ->join('class_room', 'mahasiswa.class_id', '=', 'class_room.id')
+            ->join('prodi', 'class_room.prodi_id', '=', 'prodi.id')
+            ->join('major', 'prodi.major_id', '=', 'major.id')
             ->orderBy('class_room.class_name', 'asc')
-            ->select('mahasiswa.*');
+            ->select('mahasiswa.*', 'major.major_name');
 
-            if ($request->has('search')) {
-                $search = $request->search;
-                $query->whereHas('user', function($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%");
-                })->orWhere('nim', 'like', "%{$search}%");
-            }
-        
-            if ($angkatan) {
+        // Search by name or NIM
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('user', function ($subQ) use ($search) {
+                    $subQ->where('name', 'like', "%{$search}%");
+                })->orWhere('mahasiswa.nim', 'like', "%{$search}%");
+            });
+        }
+
+        if ($angkatan) {
             $query->where('class_room.angkatan', $angkatan);
         }
 
         if ($prodi) {
             $query->whereHas('classRoom.prodi', function ($q) use ($prodi) {
                 $q->where('prodi_name', $prodi);
+            });
+        }
+
+        if ($major) {
+            $query->whereHas('classRoom.prodi.major', function ($q) use ($major) {
+                $q->where('major_name', $major);
             });
         }
 
@@ -208,7 +220,7 @@ class UserManagementController extends Controller
         return response()->json($dosen);
     }
 
-       public function InputDosen()
+    public function InputDosen()
     {
 
         return Inertia::render('Dosen/InputDosen');
@@ -266,6 +278,21 @@ class UserManagementController extends Controller
 
         return response()->json($angkatan);
     }
+
+    public function getMajor()
+{
+    // Ambil major yang unik berdasarkan mahasiswa dengan role 'mahasiswa'
+    $major = Mahasiswa::join('users', 'users.id', '=', 'mahasiswa.user_id')
+        ->join('class_room', 'class_room.id', '=', 'mahasiswa.class_id')
+        ->join('prodi', 'prodi.id', '=', 'class_room.prodi_id')
+        ->join('major', 'major.id', '=', 'prodi.major_id')
+        ->where('users.role', 'mahasiswa')
+        ->distinct()
+        ->orderBy('major.major_name', 'asc')
+        ->pluck('major.major_name');
+
+    return response()->json($major);
+}
 
     public function getClass()
     {

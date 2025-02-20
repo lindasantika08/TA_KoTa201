@@ -67,7 +67,6 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
                     $join->on('groups.dosen_id', '=', 'dosen.id')
                         ->where('dosen.major_id', $majorId);
                 })
-                ->leftJoin('users as dosen_user', 'dosen.user_id', '=', 'dosen_user.id')
                 ->where('prodi.id', $project->prodi_id)
                 ->where('class_room.angkatan', $this->angkatan)
                 ->select(
@@ -77,7 +76,7 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
                     DB::raw("'{$this->angkatan}' as angkatan"),
                     'users.name as mahasiswa_name',
                     'mahasiswa.nim',
-                    'dosen_user.name as dosen_manajer',
+                    'dosen.kode_dosen as dosen_manajer',
                     DB::raw('COALESCE(groups.`group`, \'\') as kelompok'),
                 )
                 ->from(DB::raw('(SELECT @row_number:=0) as r, mahasiswa'))
@@ -95,7 +94,7 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
 
     public function headings(): array
     {
-        return ['No', 'Tahun Ajaran', 'Proyek', 'Angkatan', 'Nama', 'NIM', 'Dosen Manajer', 'Kelompok'];
+        return ['No', 'Tahun Ajaran', 'Proyek', 'Angkatan', 'Nama', 'NIM', 'Kode Dosen', 'Kelompok'];
     }
 
     public function registerEvents(): array
@@ -115,15 +114,11 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
                     ->where('id', $project->prodi_id)
                     ->value('major_id');
 
-                // Get dosen list
-                $dosenList = DB::table('users')
-                    ->join('dosen', 'users.id', '=', 'dosen.user_id')
-                    ->where('users.role', 'dosen')
-                    ->where('dosen.major_id', $majorId)
-                    ->whereNull('users.deleted_at')
-                    ->select('users.name')
-                    ->distinct()
-                    ->pluck('name')
+                // Get dosen codes list instead of names
+                $dosenList = DB::table('dosen')
+                    ->where('major_id', $majorId)
+                    ->whereNotNull('kode_dosen')
+                    ->pluck('kode_dosen')
                     ->toArray();
 
                 // Create hidden sheet for dosen list
@@ -131,9 +126,9 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
                 $listSheet = $spreadsheet->createSheet();
                 $listSheet->setTitle('DosenList');
 
-                // Add dosen names to hidden sheet
-                foreach ($dosenList as $index => $name) {
-                    $listSheet->setCellValue('A' . ($index + 1), $name);
+                // Add dosen codes to hidden sheet
+                foreach ($dosenList as $index => $code) {
+                    $listSheet->setCellValue('A' . ($index + 1), $code);
                 }
 
                 // Name the range for dosen list
@@ -179,7 +174,7 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
                 $worksheet->getColumnDimension('D')->setWidth(10);  // Angkatan
                 $worksheet->getColumnDimension('E')->setWidth(30);  // Nama
                 $worksheet->getColumnDimension('F')->setWidth(15);  // NIM
-                $worksheet->getColumnDimension('G')->setWidth(30);  // Dosen Manajer
+                $worksheet->getColumnDimension('G')->setWidth(15);  // Kode Dosen
                 $worksheet->getColumnDimension('H')->setWidth(10);  // Kelompok
 
                 // Apply styles

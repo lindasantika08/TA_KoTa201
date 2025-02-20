@@ -32,7 +32,7 @@ class DosenImport implements ToModel, WithHeadingRow, WithBatchInserts, OnEachRo
     {
         try {
             Log::info('Memproses baris import: ', $row);
-            
+
             // Periksa kolom yang diperlukan
             $requiredColumns = ['nip', 'email', 'name', 'kode_dosen', 'jurusan'];
             foreach ($requiredColumns as $column) {
@@ -180,11 +180,13 @@ class DosenImport implements ToModel, WithHeadingRow, WithBatchInserts, OnEachRo
         try {
             $currentUser = Auth::user();
 
-            Log::info('NIPs yang diproses:', ['nips' => $this->processedNips]);
+            // Tambahkan logging untuk debug
+            Log::info('Processed NIPs:', $this->processedNips);
+            Log::info('Current Major ID:', [$this->currentMajorId]);
 
-            // Jika tidak ada data yang diproses atau tidak ada current major, batalkan
+            // Validasi data sebelum proses
             if (empty($this->processedNips) || !$this->currentMajorId) {
-                Log::warning('Tidak ada data valid untuk diproses, membatalkan penghapusan');
+                Log::warning('Tidak ada data valid untuk diproses atau major_id tidak valid');
                 return;
             }
 
@@ -198,20 +200,33 @@ class DosenImport implements ToModel, WithHeadingRow, WithBatchInserts, OnEachRo
                 ->whereNotIn('nip', array_keys($this->processedNips))
                 ->get();
 
-            DB::transaction(function () use ($dosensToDelete) {
+            // Debug log
+            Log::info('Dosen yang akan dihapus:', $dosensToDelete->pluck('nip')->toArray());
+
+            // Tambahkan pengecekan waktu
+            $recentlyCreated = now()->subMinutes(5);
+
+            DB::transaction(function () use ($dosensToDelete, $recentlyCreated) {
                 foreach ($dosensToDelete as $dosen) {
+                    // Jangan hapus dosen yang baru dibuat
+                    if ($dosen->created_at >= $recentlyCreated) {
+                        Log::info('Melewati penghapusan dosen baru:', [
+                            'nip' => $dosen->nip,
+                            'created_at' => $dosen->created_at
+                        ]);
+                        continue;
+                    }
+
                     try {
                         $userId = $dosen->user_id;
 
-                        // Log sebelum penghapusan
                         Log::info('Menghapus dosen:', [
                             'dosen_id' => $dosen->id,
                             'nip' => $dosen->nip,
-                            'kode_dosen' => $dosen->kode_dosen,
-                            'major_id' => $dosen->major_id
+                            'created_at' => $dosen->created_at
                         ]);
 
-                        $dosen->delete(); // Gunakan soft delete
+                        $dosen->delete();
 
                         // Cek apakah user memiliki dosen lain
                         $userHasOtherDosen = Dosen::where('user_id', $userId)
@@ -221,7 +236,7 @@ class DosenImport implements ToModel, WithHeadingRow, WithBatchInserts, OnEachRo
                         if (!$userHasOtherDosen) {
                             $user = User::find($userId);
                             if ($user) {
-                                $user->delete(); // Gunakan soft delete
+                                $user->delete();
                             }
                         }
                     } catch (\Exception $e) {
@@ -234,12 +249,10 @@ class DosenImport implements ToModel, WithHeadingRow, WithBatchInserts, OnEachRo
                 }
             });
         } catch (\Exception $e) {
-            Log::error('Kesalahan saat menghapus dosen:', [
-                'error' => $e->getMessage(),
+            Log::error('Error in destructor:', [
+                'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            // Tidak throw exception di destructor
-            Log::error('Error in destructor: ' . $e->getMessage());
         }
     }
 }

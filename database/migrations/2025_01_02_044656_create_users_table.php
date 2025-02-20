@@ -21,7 +21,7 @@ class CreateUsersTable extends Migration
             $table->string('photo', 2048)->nullable();
             $table->enum('role', ['mahasiswa', 'dosen', 'admin'])->default('mahasiswa');
             $table->timestamps();
-            $table->softDeletes();
+            // $table->softDeletes();
         });
     }
 
