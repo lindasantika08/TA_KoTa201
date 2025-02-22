@@ -124,6 +124,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/kelompok/report-detail', [ReportController::class, 'getScoreKelompok']);
     Route::get('/report/kelompok/answers', [ReportController::class, 'getKelompokAnswers']);
     Route::post('/report/storeReport', [ReportController::class, 'storeReport']);
+    Route::get('/student-peer-data', [ReportController::class, 'getStudentPeerData']);
 
     //Dosen Feedback
     Route::get('/feedbacks-get-answer', [FeedbackController::class, 'getFeedbackAnswer']);
