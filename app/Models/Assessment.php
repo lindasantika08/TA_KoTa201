@@ -21,6 +21,7 @@ class Assessment extends Model
         'type',
         'question',
         'criteria_id',
+        'skill_type',
         'end_date'
     ];
 

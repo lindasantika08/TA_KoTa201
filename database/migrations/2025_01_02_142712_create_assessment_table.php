@@ -18,6 +18,7 @@ return new class extends Migration
             $table->char('type', 255);
             $table->string('question', 255);
             $table->foreignUuid('criteria_id')->constrained('type_criteria');
+            $table->enum('skill_type', ['softskill', 'hardskill'])->default('softskill');
             $table->boolean('is_published')->default(0);
             $table->date('end_date')->nullable();
             $table->timestamps();

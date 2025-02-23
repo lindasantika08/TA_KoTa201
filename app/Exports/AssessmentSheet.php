@@ -29,7 +29,6 @@ class AssessmentSheet implements FromCollection, WithHeadings, WithEvents, Shoul
     public function collection()
     {
         if (!$this->assessments || $this->assessments->isEmpty()) {
-            // Template kosong dengan 10 baris
             $data = [];
             for ($i = 1; $i <= 10; $i++) {
                 $data[] = [
@@ -38,14 +37,14 @@ class AssessmentSheet implements FromCollection, WithHeadings, WithEvents, Shoul
                     'project_name' => $this->projectName,
                     'type' => '',
                     'question' => '',
-                    'aspect' => '',    // Menambahkan kolom aspect
-                    'criteria' => '',   // Menambahkan kolom criteria
+                    'skill_type'=> '',
+                    'aspect' => '',   
+                    'criteria' => ''
                 ];
             }
             return collect($data);
         }
 
-        // Map data yang ada dengan mengambil aspek dan kriteria dari relasi
         return $this->assessments->map(function ($item, $key) {
             return [
                 'no' => $key + 1,
@@ -53,6 +52,7 @@ class AssessmentSheet implements FromCollection, WithHeadings, WithEvents, Shoul
                 'project_name' => $this->projectName,
                 'type' => $item->type,
                 'question' => $item->question,
+                'skill_type' => $item->skill_type,
                 'aspect' => $item->typeCriteria ? $item->typeCriteria->aspect : '',
                 'criteria' => $item->typeCriteria ? $item->typeCriteria->criteria : '',
             ];
@@ -67,6 +67,7 @@ class AssessmentSheet implements FromCollection, WithHeadings, WithEvents, Shoul
             'Project Name',
             'Type',
             'Question',
+            'Skill Type',
             'Aspect',
             'Criteria'
         ];
@@ -79,39 +80,32 @@ class AssessmentSheet implements FromCollection, WithHeadings, WithEvents, Shoul
                 $worksheet = $event->sheet->getDelegate();
                 $lastRow = $worksheet->getHighestRow();
 
-                // Border untuk semua sel
-                $worksheet->getStyle('A1:G' . $lastRow)
+                $worksheet->getStyle('A1:H' . $lastRow)
                     ->getBorders()
                     ->getAllBorders()
                     ->setBorderStyle('thin');
 
-                // Header bold
-                $worksheet->getStyle('A1:G1')
+                $worksheet->getStyle('A1:H1')
                     ->getFont()
                     ->setBold(true);
 
-                // Header center
-                $worksheet->getStyle('A1:G1')
+                $worksheet->getStyle('A1:H1')
                     ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-                // Nomor center
                 $worksheet->getStyle('A2:A' . $lastRow)
                     ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-                // Kolom lain left align
-                $worksheet->getStyle('B2:G' . $lastRow)
+                $worksheet->getStyle('B2:H' . $lastRow)
                     ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_LEFT);
 
-                // Auto-size columns
-                foreach (range('A', 'G') as $col) {
+                foreach (range('A', 'H') as $col) {
                     $worksheet->getColumnDimension($col)
                         ->setAutoSize(true);
                 }
 
-                // Dropdown untuk Type
                 for ($i = 2; $i <= $lastRow; $i++) {
                     $validation = $worksheet->getCell("D$i")->getDataValidation();
                     $validation->setType(DataValidation::TYPE_LIST);
@@ -119,6 +113,15 @@ class AssessmentSheet implements FromCollection, WithHeadings, WithEvents, Shoul
                     $validation->setAllowBlank(false);
                     $validation->setShowDropDown(true);
                     $validation->setFormula1('"selfAssessment,peerAssessment"');
+                }
+
+                for ($i = 2; $i <= $lastRow; $i++) {
+                    $validation = $worksheet->getCell("F$i")->getDataValidation();
+                    $validation->setType(DataValidation::TYPE_LIST);
+                    $validation->setErrorStyle(DataValidation::STYLE_INFORMATION);
+                    $validation->setAllowBlank(false);
+                    $validation->setShowDropDown(true);
+                    $validation->setFormula1('"softskill,hardskill"');
                 }
             }
         ];

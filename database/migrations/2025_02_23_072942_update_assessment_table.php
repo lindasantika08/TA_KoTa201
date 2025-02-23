@@ -11,15 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('assessment', function (Blueprint $table) {
-            $table->date('end_date')->nullable()->after('is_published');
+        Schema::table('assessment', function (Blueprint $table){
+            $table->enum('skill_type', ['softskill', 'hardskill'])->default('softskill');
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
         Schema::table('assessment', function (Blueprint $table) {
-            $table->dropColumn('end_date');
+            $table->dropColumn('skill_type');
         });
     }
 };

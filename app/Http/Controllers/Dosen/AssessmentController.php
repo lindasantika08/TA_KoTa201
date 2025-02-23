@@ -116,8 +116,9 @@ class AssessmentController extends Controller
                 $projectName = trim($sheet1->getCellByColumnAndRow(3, $row)->getValue());
                 $type = trim($sheet1->getCellByColumnAndRow(4, $row)->getValue());
                 $question = trim($sheet1->getCellByColumnAndRow(5, $row)->getValue());
-                $aspect = trim($sheet1->getCellByColumnAndRow(6, $row)->getValue());
-                $criteria = trim($sheet1->getCellByColumnAndRow(7, $row)->getValue());
+                $skilltype = trim($sheet1->getCellByColumnAndRow(6, $row)->getValue());
+                $aspect = trim($sheet1->getCellByColumnAndRow(7, $row)->getValue());
+                $criteria = trim($sheet1->getCellByColumnAndRow(8, $row)->getValue());
 
                 if (!empty($batchYear) && !empty($projectName)) {
                     $project = Project::firstOrCreate(

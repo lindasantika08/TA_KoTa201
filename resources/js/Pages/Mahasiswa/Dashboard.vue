@@ -210,6 +210,7 @@ export default {
 
 <template>
   <div class="flex min-h-screen">
+    <!-- Password Change Toast -->
     <div
       v-if="showChangePasswordToast"
       class="fixed top-4 right-4 bg-white shadow-lg rounded-lg p-4 max-w-md animate-fade-in-up z-50"
@@ -317,7 +318,6 @@ export default {
                 class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 v-model="selectedProject"
               >
-                <!-- <option v-for="project in projects" :value="project.project_name">{{ project.project_name }}</option> -->
                 <option
                   v-for="project in projects"
                   :key="project.id"
@@ -329,6 +329,7 @@ export default {
             </div>
           </Card>
         </div>
+
         <Card title="Assessment Activity Chart" class="w-full mt-8">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -340,40 +341,36 @@ export default {
               ></apexchart>
             </div>
             <div>
-              <div class="text-xs font-semibold mb-3">
-                <Card title="Feedback Peer" class="text-xs h-full mb-4"> </Card>
-                <Card title="Feedback Dosen" class="text-xs h-full"> </Card>
-              </div>
-            </Card>
-
-            <!-- Lecturer Feedback -->
-            <Card title="Lecturer Feedback" class="bg-white">
-              <div class="p-4 h-40 overflow-y-auto">
-                <div v-if="feedbackLoading" class="flex items-center justify-center h-full">
-                  <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                </div>
-                <div v-else-if="feedbackError" class="text-red-500 p-4 bg-red-50 rounded">
-                  {{ feedbackError }}
-                </div>
-                <div v-else-if="feedback?.lecturerFeedback?.length" class="space-y-4">
-                  <div v-for="(item, index) in feedback.lecturerFeedback" 
-                       :key="index" 
-                       class="p-3 bg-gray-50 rounded-lg">
-                    <p class="text-sm text-gray-700">{{ item.feedback }}</p>
-                    <div class="mt-2 flex items-center justify-between text-xs text-gray-500">
-                      <span class="font-medium">{{ item.dosenName }}</span>
-                      <span>{{ new Date(item.createdAt).toLocaleDateString() }}</span>
-                    </div>
-                  </div>
-                </div>
-                <div v-else class="flex items-center justify-center h-full text-gray-500">
-                  No lecturer feedback available
-                </div>
-              </div>
-            </Card>
+              <Card title="Feedback Peer" class="text-xs h-full mb-4"></Card>
+              <Card title="Feedback Dosen" class="text-xs h-full"></Card>
+            </div>
           </div>
-        </div>
-      </card>
+        </Card>
+
+        <Card title="Lecturer Feedback" class="bg-white">
+          <div class="p-4 h-40 overflow-y-auto">
+            <div v-if="feedbackLoading" class="flex items-center justify-center h-full">
+              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+            <div v-else-if="feedbackError" class="text-red-500 p-4 bg-red-50 rounded">
+              {{ feedbackError }}
+            </div>
+            <div v-else-if="feedback?.lecturerFeedback?.length" class="space-y-4">
+              <div v-for="(item, index) in feedback.lecturerFeedback" 
+                   :key="index" 
+                   class="p-3 bg-gray-50 rounded-lg">
+                <p class="text-sm text-gray-700">{{ item.feedback }}</p>
+                <div class="mt-2 flex items-center justify-between text-xs text-gray-500">
+                  <span class="font-medium">{{ item.dosenName }}</span>
+                  <span>{{ new Date(item.createdAt).toLocaleDateString() }}</span>
+                </div>
+              </div>
+            </div>
+            <div v-else class="flex items-center justify-center h-full text-gray-500">
+              No lecturer feedback available
+            </div>
+          </div>
+        </Card>
       </main>
     </div>
   </div>

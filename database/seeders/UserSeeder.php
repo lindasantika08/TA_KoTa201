@@ -33,7 +33,7 @@ class UserSeeder extends Seeder
             ],
             [
                 'id' => 'ra483968-7f8c-4c02-af8a-936823bf6bcd',
-                'name' => 'Thoriq',
+                'name' => 'Santika',
                 'email' => 'mahasiswa@proyek.com',
                 'password' => bcrypt("qwerty123"),
                 'role' => 'mahasiswa',
