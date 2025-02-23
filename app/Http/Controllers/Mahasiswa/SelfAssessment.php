@@ -106,6 +106,7 @@ class SelfAssessment extends Controller
                     'id' => $assessment->id,
                     'type' => $assessment->type,
                     'question' => $assessment->question,
+                    'skill_type' => $assessment->skill_type,
                     'aspek' => $criteria->aspect,
                     'kriteria' => $criteria->criteria,
                     'bobot_1' => $criteria->bobot_1,
