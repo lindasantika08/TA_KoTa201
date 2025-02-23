@@ -77,6 +77,7 @@ class PeerAssessmentDosen extends Controller
                 'assessment.id',
                 'assessment.type',
                 'assessment.question',
+                'assessment.skill_type',
                 'type_criteria.aspect',
                 'type_criteria.criteria',
                 'type_criteria.bobot_1',

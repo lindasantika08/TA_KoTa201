@@ -108,6 +108,7 @@ export default {
                         aspect: question.aspek || '',
                         criteria: question.kriteria || '',
                         question: question.question || '',
+                        skill_type: question.skill_type || '',
                         bobot_1: question.bobot_1 || '',
                         bobot_2: question.bobot_2 || '',
                         bobot_3: question.bobot_3 || '',
@@ -345,8 +346,18 @@ export default {
 
                         <div v-else-if="currentQuestion" class="space-y-6">
                             <div class="bg-gray-50 p-4 rounded-lg">
-                                <h3 class="font-semibold text-lg mb-4">
-                                    Question {{ currentQuestionIndex + 1 }} dari {{ questions.length }}
+                                <h3 class="font-semibold text-lg mb-4 relative flex justify-between items-center">
+                                    <span>
+                                        Question {{ currentQuestionIndex + 1 }} from {{ questions.length }}
+                                    </span>
+
+                                    <span class="px-3 py-1 rounded-full text-white text-sm absolute right-0 top-0"
+                                        :class="{
+                                            'bg-blue-500': currentQuestion.skill_type === 'hardskill',
+                                            'bg-green-500': currentQuestion.skill_type === 'softskill'
+                                        }">
+                                        {{ currentQuestion.skill_type === 'softskill' ? 'Soft Skill' : 'Hard Skill' }}
+                                    </span>
                                 </h3>
                                 <p class="mb-2"><strong>Aspek:</strong> {{ currentQuestion.aspect }}</p>
                                 <p><strong>Kriteria:</strong> {{ currentQuestion.criteria }}</p>

@@ -145,75 +145,75 @@ export default {
       this.error = null;
 
       try {
-          const batch_year = this.$page.props.batch_year;
-          const project_name = this.$page.props.project_name;
+        const batch_year = this.$page.props.batch_year;
+        const project_name = this.$page.props.project_name;
 
-          console.log('Batch Year:', batch_year);
-          console.log('Project Name:', project_name);
+        console.log('Batch Year:', batch_year);
+        console.log('Project Name:', project_name);
 
-          const userInfoResponse = await axios.get("/api/user-info-peer", {
-              params: {
-                  batch_year: batch_year,
-                  project_name: project_name
-              }
+        const userInfoResponse = await axios.get("/api/user-info-peer", {
+          params: {
+            batch_year: batch_year,
+            project_name: project_name
+          }
+        });
+
+        const userInfo = userInfoResponse.data;
+
+        console.log('User info received:', userInfo);
+
+        this.currentUserId = userInfo.id;
+        this.studentInfo = {
+          nim: userInfo.nim || "",
+          name: userInfo.name || "",
+          class: userInfo.kelas || "",
+          group: userInfo.group || "",
+          project_name: userInfo.project_name || "",
+          date: new Date().toLocaleDateString("id-ID"),
+        };
+
+        this.batch_year = userInfo.batch_year;
+
+        console.log('Student info set:', this.studentInfo);
+        console.log('Batch year set:', this.batch_year);
+
+        if (this.batch_year && this.studentInfo.project_name) {
+          const kelompokResponse = await axios.get("/api/groups", {
+            params: {
+              batch_year: this.batch_year,
+              project_name: this.studentInfo.project_name
+            }
           });
 
-          const userInfo = userInfoResponse.data;
-
-          console.log('User info received:', userInfo);
-
-          this.currentUserId = userInfo.id;
-          this.studentInfo = {
-              nim: userInfo.nim || "",
-              name: userInfo.name || "",
-              class: userInfo.kelas || "",
-              group: userInfo.group || "",
-              project_name: userInfo.project_name || "",
-              date: new Date().toLocaleDateString("id-ID"),
-          };
-
-          this.batch_year = userInfo.batch_year;
-
-          console.log('Student info set:', this.studentInfo);
-          console.log('Batch year set:', this.batch_year);
-
-          if (this.batch_year && this.studentInfo.project_name) {
-              const kelompokResponse = await axios.get("/api/groups", {
-                  params: {
-                      batch_year: this.batch_year,
-                      project_name: this.studentInfo.project_name
-                  }
-              });
-
-              if (kelompokResponse.data) {
-                  this.kelompok = kelompokResponse.data;
-                  console.log('Kelompok data:', this.kelompok);
-              }
-          } else {
-              console.error('Missing batch_year or project_name:', {
-                  batch_year: this.batch_year,
-                  project_name: this.studentInfo.project_name
-              });
+          if (kelompokResponse.data) {
+            this.kelompok = kelompokResponse.data;
+            console.log('Kelompok data:', this.kelompok);
           }
+        } else {
+          console.error('Missing batch_year or project_name:', {
+            batch_year: this.batch_year,
+            project_name: this.studentInfo.project_name
+          });
+        }
 
-          await this.loadQuestions();
-          await this.loadExistingAnswers();
-          await this.checkExistingAnswer();
-          this.loadSavedState();
+        await this.loadQuestions();
+        await this.loadExistingAnswers();
+        await this.checkExistingAnswer();
+        this.loadSavedState();
 
       } catch (error) {
-          this.error = `Error loading data: ${error.message}`;
-          console.error("Error details:", error);
-          if (error.response) {
-              console.error("Response data:", error.response.data);
-          }
+        this.error = `Error loading data: ${error.message}`;
+        console.error("Error details:", error);
+        if (error.response) {
+          console.error("Response data:", error.response.data);
+        }
       } finally {
-          this.loading = false;
+        this.loading = false;
       }
-  },
+    },
 
     async loadQuestions(retryCount = 3) {
-      
+
       for (let i = 0; i < retryCount; i++) {
         try {
           console.log('Loading questions with params:', {
@@ -248,6 +248,7 @@ export default {
             question: q.question,
             aspect: q.aspect,
             criteria: q.criteria,
+            skill_type: q.skill_type,
             bobot_1: q.bobot_1,
             bobot_2: q.bobot_2,
             bobot_3: q.bobot_3,
@@ -602,7 +603,7 @@ export default {
       try {
         const response = await axios.get('/api/answered-peers', {
           params: {
-            project_id: this.namaProyek 
+            project_id: this.namaProyek
           }
         });
         this.answeredPeers = response.data.answered_peers;
@@ -621,6 +622,8 @@ export default {
     },
   },
 };
+
+// console.log(currentQuestion.skill_type)
 </script>
 
 <template>
@@ -682,9 +685,20 @@ export default {
             <!-- Only show questions if a member is selected -->
             <div v-if="selectedMember && currentQuestion" class="space-y-6">
               <div class="bg-gray-50 p-4 rounded-lg">
-                <h3 class="font-semibold text-lg mb-4">
-                  Question {{ currentQuestionIndex + 1 }} dari {{ questions.length }}
+                <h3 class="font-semibold text-lg mb-4 flex items-center justify-between">
+                  <span>
+                    Question {{ currentQuestionIndex + 1 }} dari {{ questions.length }}
+                  </span>
+
+                  <!-- Badge Skill Type -->
+                  <span class="px-3 py-1 rounded-full text-white text-sm ml-auto" :class="{
+                    'bg-blue-500': currentQuestion.skill_type === 'hardskill',
+                    'bg-green-500': currentQuestion.skill_type === 'softskill'
+                  }">
+                    {{ currentQuestion.skill_type === 'softskill' ? 'Soft Skill' : 'Hard Skill' }}
+                  </span>
                 </h3>
+
                 <p class="mb-2">
                   <strong>Aspek:</strong> {{ currentQuestion.aspect }}
                 </p>

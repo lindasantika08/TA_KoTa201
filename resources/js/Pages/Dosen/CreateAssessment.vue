@@ -25,7 +25,11 @@ export default {
     const inputMode = ref("export");
     const selectedActiveProject = ref(null);
     const selectedInactiveProject = ref(null);
-    const endDate = ref(""); // New ref for end date
+    // const endDate = ref("");
+
+    const defaultEndDate = new Date();
+    defaultEndDate.setDate(defaultEndDate.getDate() + 7);
+    const endDate = ref(defaultEndDate.toISOString().split('T')[0]);
 
     const activeProjects = computed(() => {
       return projects.value.filter(project => project.status === 'Active');
@@ -89,15 +93,11 @@ export default {
       const file = event.target.files[0];
       if (!file) return;
 
-      if (!endDate.value) {
-        alert("Please set the assessment end date before importing.");
-        event.target.value = '';
-        return;
-      }
+      const selectedEndDate = endDate.value || defaultEndDate.toISOString().split('T')[0];
 
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("end_date", endDate.value);
+      formData.append("end_date", selectedEndDate);
 
       try {
         const token = localStorage.getItem("auth_token");
@@ -110,7 +110,7 @@ export default {
 
         alert(response.data.message || "Data imported successfully.");
         event.target.value = '';
-        endDate.value = ''; // Reset the date after successful import
+        // Don't reset the end_date after import since it's a default value now
       } catch (error) {
         console.error("Import error:", error);
         alert("There was an error importing the data.");

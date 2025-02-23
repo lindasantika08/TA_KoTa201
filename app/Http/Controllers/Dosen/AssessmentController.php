@@ -143,6 +143,7 @@ class AssessmentController extends Controller
                             $assessment->update([
                                 'type' => $type,
                                 'end_date' => $request->end_date,
+                                'skill_type' => $skilltype
                             ]);
                         } else {
                             Assessment::create([
@@ -151,7 +152,8 @@ class AssessmentController extends Controller
                                 'type' => $type,
                                 'question' => $question,
                                 'criteria_id' => $typeCriteria->id,
-                                'end_date' => $request->end_date
+                                'end_date' => $request->end_date,
+                                'skill_type' => $skilltype
                             ]);
                         }
                     }
