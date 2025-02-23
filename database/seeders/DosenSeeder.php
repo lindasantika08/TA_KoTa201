@@ -18,14 +18,14 @@ class DosenSeeder extends Seeder
                 'id' => 'd7e6ad5a-a8e7-4654-aa65-1a3301a394ce',
                 'user_id' => 'ea483968-7f8c-4c02-af8a-936823bf6bcu',
                 'nip' =>'12345678 901234 5 066',
-                'kode_dosen' => 'TS',
+                'kode_dosen' => 'DSN1',
                 'major_id' => '73597463-6c5f-4357-8733-e5f3edb26b44',
             ],
             [
                 'id' => 'k7e6ad5a-a8e7-4654-aa65-1a3301a394cg',
                 'user_id' => 'ea483968-7f8c-4c02-af8a-936823bf6bcx',
                 'nip' =>'12345678 901234 5 060',
-                'kode_dosen' => 'PL',
+                'kode_dosen' => 'DSN2',
                 'major_id' => '19b2c063-715a-421e-84f9-8b27257a101c',
             ],
         ]);

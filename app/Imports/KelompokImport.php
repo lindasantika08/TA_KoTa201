@@ -19,10 +19,28 @@ use Throwable;
 class KelompokImport implements ToModel, WithHeadingRow, SkipsOnError
 {
     private $dataBaru = [];
+    private $requiredColumns = [
+        'nim',
+        'angkatan',
+        'proyek',
+        'kode_dosen',
+        'kelompok'
+    ];
 
     public function model(array $row)
     {
         try {
+            // Validate required columns
+            foreach ($this->requiredColumns as $column) {
+                if (!isset($row[$column]) || empty($row[$column])) {
+                    Log::warning('Missing required column:', [
+                        'column' => $column,
+                        'row' => $row
+                    ]);
+                    return null; // Skip this row
+                }
+            }
+
             DB::beginTransaction();
 
             Log::info('Importing row:', $row);
@@ -62,25 +80,25 @@ class KelompokImport implements ToModel, WithHeadingRow, SkipsOnError
             }
 
             $project = Project::where('project_name', $row['proyek'])
-                ->where('major_id', $mahasiswa->classRoom->prodi->major->id)
+                ->where('prodi_id', $mahasiswa->classRoom->prodi_id)
                 ->first();
 
             if (!$project) {
                 Log::warning('Project not found', [
                     'project_name' => $row['proyek'],
-                    'major_id' => $mahasiswa->classRoom->prodi->major->id
+                    'prodi_id' => $mahasiswa->classRoom->prodi_id
                 ]);
                 throw new \Exception("Project tidak ditemukan untuk proyek {$row['proyek']}");
             }
 
-            // Find dosen by name
-            $dosen = Dosen::whereHas('user', function($query) use ($row) {
-                $query->where('name', trim($row['dosen_manajer']));
-            })->first();
+            // Find dosen by kode_dosen
+            $dosen = Dosen::where('kode_dosen', trim($row['kode_dosen']))
+                ->where('major_id', $mahasiswa->classRoom->prodi->major_id)
+                ->first();
 
             if (!$dosen) {
-                Log::warning('Dosen not found for name:', ['name' => $row['dosen_manajer']]);
-                throw new \Exception("Dosen dengan nama {$row['dosen_manajer']} tidak ditemukan");
+                Log::warning('Dosen not found for code:', ['kode_dosen' => $row['kode_dosen']]);
+                throw new \Exception("Dosen dengan kode {$row['kode_dosen']} tidak ditemukan");
             }
 
             $groupBaru = [

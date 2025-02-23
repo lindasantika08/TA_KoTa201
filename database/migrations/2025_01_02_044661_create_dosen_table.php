@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('kode_dosen')->unique();
             $table->string('phone', 15)->nullable();
             $table->foreignUuid('major_id')->constrained('major');
-            $table->softDeletes();
+            // $table->softDeletes();
             $table->timestamps();
         });
     }

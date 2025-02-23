@@ -27,7 +27,7 @@ class Project extends Model
         'semester',
         'batch_year',
         'project_name',
-        'major_id',
+        'prodi_id',
         'start_date',
         'end_date',
         'status',
@@ -50,6 +50,11 @@ class Project extends Model
     public function major()
     {
         return $this->belongsTo(Major::class, 'major_id');
+    }
+
+    public function prodi()
+    {
+        return $this->belongsTo(Prodi::class, 'prodi_id');
     }
 
     public function setKeysForSaveQuery($query)

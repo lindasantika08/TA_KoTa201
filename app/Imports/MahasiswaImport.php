@@ -18,7 +18,9 @@ use Maatwebsite\Excel\Concerns\WithBatchInserts;
 class MahasiswaImport implements ToModel, WithHeadingRow, WithBatchInserts
 {
     private $processedNims = [];
+    private $processedData = [];
     private $currentAngkatan = null;
+    private $currentProdi = null;
 
     public function model(array $row)
     {
@@ -32,13 +34,24 @@ class MahasiswaImport implements ToModel, WithHeadingRow, WithBatchInserts
                 }
             }
 
-            // Track NIM dan angkatan untuk proses cleanup
+            // Track NIM, angkatan, dan prodi untuk proses cleanup
             $this->processedNims[] = $row['nim'];
+
+            // Track combination of angkatan and prodi
+            $this->processedData[] = [
+                'angkatan' => $row['angkatan'],
+                'prodi' => $row['prodi']
+            ];
+
+            // Track current angkatan
             if (!$this->currentAngkatan) {
                 $this->currentAngkatan = $row['angkatan'];
+                $this->currentProdi = $row['prodi']; // Simpan jurusan dari data pertama
             } elseif ($this->currentAngkatan != $row['angkatan']) {
-                // Jika ada multiple angkatan dalam file, matikan fitur cleanup
                 $this->currentAngkatan = 'mixed';
+            } elseif ($this->currentProdi != $row['Prodi']) {
+                // Jika ada multiple jurusan, matikan fitur cleanup
+                $this->currentProdi = 'mixed';
             }
 
             // Generate password
@@ -102,7 +115,6 @@ class MahasiswaImport implements ToModel, WithHeadingRow, WithBatchInserts
 
             // Kirim email kredensial
             try {
-                // Log kredensial sebelum dikirim
                 Log::info('Mencoba mengirim kredensial ke email:', [
                     'nama' => $row['nama_mahasiswa'],
                     'email' => $row['email'],
@@ -112,7 +124,6 @@ class MahasiswaImport implements ToModel, WithHeadingRow, WithBatchInserts
                 Mail::to($row['email'])
                     ->send(new CredentialMail($row['email'], $password, $row['nama_mahasiswa']));
 
-                // Log sukses dengan detail
                 Log::info('Email kredensial berhasil dikirim', [
                     'nama' => $row['nama_mahasiswa'],
                     'email' => $row['email'],
@@ -130,7 +141,6 @@ class MahasiswaImport implements ToModel, WithHeadingRow, WithBatchInserts
                     'waktu_error' => now()->format('Y-m-d H:i:s')
                 ]);
             }
-
 
             // Cek atau buat Mahasiswa
             Mahasiswa::updateOrCreate(
@@ -181,7 +191,11 @@ class MahasiswaImport implements ToModel, WithHeadingRow, WithBatchInserts
                 Log::info('Melewati proses penghapusan karena multiple angkatan terdeteksi');
             }
         } catch (\Exception $e) {
-            Log::error('Kesalahan saat menghapus mahasiswa', ['error' => $e->getMessage()]);
+            Log::error('Kesalahan saat menghapus mahasiswa', [
+                'error' => $e->getMessage(),
+                'jurusan' => $this->currentProdi,
+                'angkatan' => $this->currentAngkatan
+            ]);
         }
     }
 }

@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignUuid('class_id')->constrained('class_room');
             $table->string('nim', 9)->unique();
             $table->string('phone', 15)->nullable();
-            $table->softDeletes();
+            // $table->softDeletes();
             $table->timestamps();
         });
     }

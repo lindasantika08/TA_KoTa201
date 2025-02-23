@@ -22,4 +22,9 @@ class Prodi extends Model
     {
         return $this->belongsTo(Major::class, 'major_id');
     }
+
+    public function projects()
+    {
+        return $this->hasMany(Project::class, 'prodi_id');
+    }
 }

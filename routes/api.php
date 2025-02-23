@@ -53,6 +53,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/logout', [AuthController::class, 'logout']);
     Route::post('/project', [KelolaProyekController::class, 'AddProyek']);
     Route::get('/majors', [KelolaProyekController::class, 'getMajors']);
+    Route::get('/prodis-by-major', [KelolaProyekController::class, 'getProdisByMajor']);
+
     Route::get('/projects', [KelolaProyekController::class, 'getProjects']);
     Route::get('/project-dropdown', [ProjectController::class, 'index']);
     Route::get('/get-question-id', [AnswerController::class, 'getQuestionId']);
@@ -104,6 +106,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/get-prodi/{majorId}', [UserManagementController::class, 'getProdiByMajor']);
     Route::get('/get-angkatan', [UserManagementController::class, 'getAngkatan']);
     Route::get('/get-class', [UserManagementController::class, 'getClass']);
+    Route::get('/get-majors', [UserManagementController::class, 'getMajor']);
 
     Route::get('/assessment/projects', [ProjectController::class, 'getProjectsWithAssessments']);
     Route::get('/proyek-self-assessment', [ProjectController::class, 'getDataSelf']);
@@ -121,6 +124,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/kelompok/report-detail', [ReportController::class, 'getScoreKelompok']);
     Route::get('/report/kelompok/answers', [ReportController::class, 'getKelompokAnswers']);
     Route::post('/report/storeReport', [ReportController::class, 'storeReport']);
+    Route::get('/student-peer-data', [ReportController::class, 'getStudentPeerData']);
 
     //Dosen Feedback
     Route::get('/feedbacks-get-answer', [FeedbackController::class, 'getFeedbackAnswer']);

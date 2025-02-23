@@ -22,24 +22,24 @@ export default {
             ],
             isModalOpen: false,
             newProject: {
-            semester: "",
-            batch_year: "",
-            project_name: "",
-            major_id: "",
-            start_date: "",
-            end_date: "",
-            status: "Active", // Default
-        },
+                semester: "",
+                batch_year: "",
+                project_name: "",
+                prodi_id: "", // Changed from major_id
+                start_date: "",
+                end_date: "",
+                status: "Active",
+            },
             projects: [],
             filteredProjects: [],
             years: [],
             selectedYear: "",
-            majors: [],
+            prodis: [], // Replaced majors with prodis
         };
     },
     mounted() {
-            this.getProjects();
-            this.getMajors();
+        this.getProjects();
+        this.getProdis();
     },
     methods: {
         openModal() {
@@ -47,6 +47,16 @@ export default {
         },
         closeModal() {
             this.isModalOpen = false;
+            // Reset form
+            this.newProject = {
+                semester: "",
+                batch_year: "",
+                project_name: "",
+                prodi_id: "",
+                start_date: "",
+                end_date: "",
+                status: "Active",
+            };
         },
         async addProject() {
             try {
@@ -80,8 +90,9 @@ export default {
                 });
                 this.projects = response.data;
                 this.filteredProjects = this.projects;
-
-                this.years = [...new Set(this.projects.map((p) => p.batch_year))];
+                this.years = [
+                    ...new Set(this.projects.map((p) => p.batch_year)),
+                ];
             } catch (error) {
                 console.error("Error fetching projects:", error);
                 alert("Terjadi kesalahan saat mengambil data proyek.");
@@ -96,12 +107,12 @@ export default {
                 this.filteredProjects = this.projects;
             }
         },
-
         async changeProjectStatus(project) {
             try {
-                const newStatus = project.status === 'Active' ? 'NonActive' : 'Active';
+                const newStatus =
+                    project.status === "Active" ? "NonActive" : "Active";
                 const response = await axios.post(
-                    '/api/changeStatus',
+                    "/api/changeStatus",
                     {
                         tahun_ajaran: project.batch_year,
                         nama_proyek: project.project_name,
@@ -109,21 +120,25 @@ export default {
                     },
                     {
                         headers: {
-                            Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+                            Authorization: `Bearer ${localStorage.getItem(
+                                "auth_token"
+                            )}`,
                         },
                     }
                 );
-                project.status = newStatus; 
+                project.status = newStatus;
                 alert("Status proyek berhasil diperbarui!");
             } catch (error) {
                 console.error("Error changing project status:", error);
                 alert("Terjadi kesalahan saat mengubah status proyek.");
             }
         },
-
         confirmStatusChange(project) {
             const confirmChange = window.confirm(
-                `Apakah Anda yakin ingin mengubah status proyek "${project.project_name}" menjadi ${project.status === 'Active' ? 'NonActive' : 'Active'
+                `Apakah Anda yakin ingin mengubah status proyek "${
+                    project.project_name
+                }" menjadi ${
+                    project.status === "Active" ? "NonActive" : "Active"
                 }?`
             );
 
@@ -131,22 +146,21 @@ export default {
                 this.changeProjectStatus(project);
             }
         },
-        async getMajors() {
-    try {
-        const response = await axios.get("/api/majors", {
-            headers: {
-                Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-            },
-        });
-
-        console.log("Majors API Response:", response.data); // Debugging
-
-        this.majors = response.data; // Pastikan ini adalah array dengan 'major_name'
-    } catch (error) {
-        console.error("Error fetching majors:", error);
-        alert("Terjadi kesalahan saat mengambil data jurusan.");
-    }
-},
+        async getProdis() {
+            try {
+                const response = await axios.get("/api/prodis-by-major", {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem(
+                            "auth_token"
+                        )}`,
+                    },
+                });
+                this.prodis = response.data;
+            } catch (error) {
+                console.error("Error fetching prodis:", error);
+                alert("Terjadi kesalahan saat mengambil data prodi.");
+            }
+        },
     },
 };
 </script>
@@ -162,37 +176,82 @@ export default {
                 </div>
                 <Card title="Kelola Proyek">
                     <template #actions>
-                        <Dropdown title="Daftar Proyek" 
-                            :options="years.map((year) => ({ label: year, value: year }))"
-                            v-model="selectedYear" 
+                        <Dropdown
+                            title="Daftar Proyek"
+                            :options="
+                                years.map((year) => ({
+                                    label: year,
+                                    value: year,
+                                }))
+                            "
+                            v-model="selectedYear"
                             @update:modelValue="filterProjects"
-                            :defaultOption="{ label: 'Semua Tahun Ajaran', value: '' }"
-                            class="flex justify-between items-center mb-4" 
+                            :defaultOption="{
+                                label: 'Semua Tahun Ajaran',
+                                value: '',
+                            }"
+                            class="flex justify-between items-center mb-4"
                         />
                         <div>
-                            <table class="min-w-full border-collapse table-auto">
+                            <table
+                                class="min-w-full border-collapse table-auto"
+                            >
                                 <thead>
                                     <tr class="bg-gray-100">
-                                        <th class="px-4 py-2 border">Nama Proyek</th>
-                                        <th class="px-4 py-2 border">Semester</th>
-                                        <th class="px-4 py-2 border">Tahun Ajaran</th>
-                                        <th class="px-4 py-2 border">Jurusan</th>
+                                        <th class="px-4 py-2 border">
+                                            Nama Proyek
+                                        </th>
+                                        <th class="px-4 py-2 border">
+                                            Semester
+                                        </th>
+                                        <th class="px-4 py-2 border">
+                                            Tahun Ajaran
+                                        </th>
+                                        <th class="px-4 py-2 border">
+                                            Program Studi
+                                        </th>
                                         <th class="px-4 py-2 border">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr v-for="(project, index) in filteredProjects" :key="index">
-                                        <td class="px-4 py-2 border">{{ project.project_name }}</td>
-                                        <td class="px-4 py-2 border">{{ project.semester }}</td>
-                                        <td class="px-4 py-2 border">{{ project.batch_year }}</td>
-                                        <td class="px-4 py-2 border">{{ project.major.major_name }}</td>
+                                    <tr
+                                        v-for="(
+                                            project, index
+                                        ) in filteredProjects"
+                                        :key="index"
+                                    >
                                         <td class="px-4 py-2 border">
-                                            <button @click="confirmStatusChange(project)" class="text-sm font-medium"
+                                            {{ project.project_name }}
+                                        </td>
+                                        <td class="px-4 py-2 border">
+                                            {{ project.semester }}
+                                        </td>
+                                        <td class="px-4 py-2 border">
+                                            {{ project.batch_year }}
+                                        </td>
+                                        <td class="px-4 py-2 border">
+                                            {{ project.prodi.prodi_name }}
+                                        </td>
+                                        <td class="px-4 py-2 border">
+                                            <button
+                                                @click="
+                                                    confirmStatusChange(project)
+                                                "
+                                                class="text-sm font-medium"
                                                 :class="{
-                                                    'text-blue-500 hover:text-blue-700': project.status === 'Active',
-                                                    'text-red-500 hover:text-red-700': project.status === 'NonActive'
-                                                }">
-                                                {{ project.status === 'Active' ? 'Active' : 'NonActive' }}
+                                                    'text-blue-500 hover:text-blue-700':
+                                                        project.status ===
+                                                        'Active',
+                                                    'text-red-500 hover:text-red-700':
+                                                        project.status ===
+                                                        'NonActive',
+                                                }"
+                                            >
+                                                {{
+                                                    project.status === "Active"
+                                                        ? "Active"
+                                                        : "NonActive"
+                                                }}
                                             </button>
                                         </td>
                                     </tr>
@@ -203,55 +262,102 @@ export default {
                 </Card>
 
                 <!-- Modal Tambah Proyek -->
-                <div v-if="isModalOpen"
-                    class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                <div
+                    v-if="isModalOpen"
+                    class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+                >
                     <div class="bg-white p-6 rounded-lg w-1/2">
                         <h2 class="text-lg font-semibold mb-4">
                             Tambah Proyek
                         </h2>
                         <form @submit.prevent="addProject">
                             <div class="mb-4">
-                                <label class="block text-sm font-medium">Semester</label>
-                                <select v-model="newProject.semester" class="w-full border border-gray-300 rounded p-2"
-                                    required>
+                                <label class="block text-sm font-medium"
+                                    >Semester</label
+                                >
+                                <select
+                                    v-model="newProject.semester"
+                                    class="w-full border border-gray-300 rounded p-2"
+                                    required
+                                >
                                     <option value="Ganjil">Ganjil</option>
                                     <option value="Genap">Genap</option>
                                 </select>
                             </div>
                             <div class="mb-4">
-                                <label class="block text-sm font-medium">Tahun Ajaran</label>
-                                <input type="text" v-model="newProject.batch_year"
-                                    class="w-full border border-gray-300 rounded p-2" required />
+                                <label class="block text-sm font-medium"
+                                    >Tahun Ajaran</label
+                                >
+                                <input
+                                    type="text"
+                                    v-model="newProject.batch_year"
+                                    class="w-full border border-gray-300 rounded p-2"
+                                    required
+                                />
                             </div>
                             <div class="mb-4">
-                                <label class="block text-sm font-medium">Nama Proyek</label>
-                                <input type="text" v-model="newProject.project_name"
-                                    class="w-full border border-gray-300 rounded p-2" required />
+                                <label class="block text-sm font-medium"
+                                    >Nama Proyek</label
+                                >
+                                <input
+                                    type="text"
+                                    v-model="newProject.project_name"
+                                    class="w-full border border-gray-300 rounded p-2"
+                                    required
+                                />
                             </div>
                             <div class="mb-4">
-                                <label class="block text-sm font-medium">Jurusan</label>
-                                <select v-model="newProject.major_id" class="w-full border border-gray-300 rounded p-2" required>
-                                    <option v-for="major in majors" :key="major.id" :value="major.id">
-                                        {{ major.major_name }}
+                                <label class="block text-sm font-medium"
+                                    >Program Studi</label
+                                >
+                                <select
+                                    v-model="newProject.prodi_id"
+                                    class="w-full border border-gray-300 rounded p-2"
+                                    required
+                                >
+                                    <option
+                                        v-for="prodi in prodis"
+                                        :key="prodi.id"
+                                        :value="prodi.id"
+                                    >
+                                        {{ prodi.prodi_name }}
                                     </option>
                                 </select>
                             </div>
                             <div class="mb-4">
-                                <label class="block text-sm font-medium">Tanggal Mulai</label>
-                                <input type="date" v-model="newProject.start_date"
-                                    class="w-full border border-gray-300 rounded p-2" required />
+                                <label class="block text-sm font-medium"
+                                    >Tanggal Mulai</label
+                                >
+                                <input
+                                    type="date"
+                                    v-model="newProject.start_date"
+                                    class="w-full border border-gray-300 rounded p-2"
+                                    required
+                                />
                             </div>
                             <div class="mb-4">
-                                <label class="block text-sm font-medium">Tanggal Selesai</label>
-                                <input type="date" v-model="newProject.end_date"
-                                    class="w-full border border-gray-300 rounded p-2" required />
+                                <label class="block text-sm font-medium"
+                                    >Tanggal Selesai</label
+                                >
+                                <input
+                                    type="date"
+                                    v-model="newProject.end_date"
+                                    class="w-full border border-gray-300 rounded p-2"
+                                    required
+                                />
                             </div>
                             <div class="flex justify-end">
-                                <button type="button" @click="closeModal"
-                                    class="px-4 py-2 bg-gray-300 text-black rounded mr-2">
+                                <button
+                                    type="button"
+                                    @click="closeModal"
+                                    class="px-4 py-2 bg-gray-300 text-black rounded mr-2"
+                                >
                                     Batal
                                 </button>
-                                <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded">
+                                <button
+                                    type="submit"
+                                    class="px-4 py-2 bg-blue-500 text-white rounded"
+                                >
                                     Simpan
                                 </button>
                             </div>
@@ -260,10 +366,11 @@ export default {
                 </div>
             </main>
         </div>
-        <button @click="openModal"
-            class="fixed bottom-8 right-8 flex items-center justify-center w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105">
+        <button
+            @click="openModal"
+            class="fixed bottom-8 right-8 flex items-center justify-center w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105"
+        >
             <font-awesome-icon :icon="['fas', 'plus']" />
         </button>
     </div>
 </template>
-

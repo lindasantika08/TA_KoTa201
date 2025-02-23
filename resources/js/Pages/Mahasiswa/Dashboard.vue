@@ -19,7 +19,7 @@ export default {
       projects: [],
       selectedProject: {
         project_name: null,
-        batch_year: null
+        batch_year: null,
       },
       selfAssessmentStatus: null,
       peerGroupSize: 0,
