@@ -14,33 +14,52 @@ class GroupSeeder extends Seeder
      */
     public function run()
     {
+        
         $groups = [
             [
                 'id' => Str::uuid()->toString(),
-                'batch_year' => '2022/2023',
-                'angkatan' => '2022',
-                'project_id' => '9e3a1a20-488d-4c66-af57-a97d31f1a4df',
-                'mahasiswa_id' => 'd7e6ad5a-a8e7-4654-aa65-1a3301a394so', // Adhiya
+                'batch_year' => '2024/2025',
+                'angkatan' => '2024',
+                'project_id' => 'oe4ad5a-a0e7-4654-qq45-1a3301a394pj',
+                'mahasiswa_id' => 'aa483968-7f8c-1c05-af8e-936823bf1bda', // Irvan Supriadi Situmorang
                 'group' => 'kelompok 1',
-                'dosen_id' => 'd7e6ad5a-a8e7-4654-aa65-1a3301a394ce'
+                'dosen_id' => 'ra483968-7f8c-4c01-af8a-936823bf6bda'
             ],
             [
                 'id' => Str::uuid()->toString(),
-                'batch_year' => '2022/2023',
-                'angkatan' => '2022',
-                'project_id' => '9e3a1a20-488d-4c66-af57-a97d31f1a4df',
-                'mahasiswa_id' => 'd7e6ad5a-a8e7-4654-aa65-1a3301a394cs', // Danendra
-                'group' => 'kelompok 1',
-                'dosen_id' => 'd7e6ad5a-a8e7-4654-aa65-1a3301a394ce'
+                'batch_year' => '2024/2025',
+                'angkatan' => '2024',
+                'project_id' => 'oe4ad5a-a0e7-4654-qq45-1a3301a394pj',
+                'mahasiswa_id' => 'aa483968-7f8c-1c05-af8e-936823bf7bdp', // Maulana Ishak
+                'group' => 'Kelompok 1',
+                'dosen_id' => 'ra483968-7f8c-4c01-af8a-936823bf6bda' // DSN1
             ],
             [
                 'id' => Str::uuid()->toString(),
-                'batch_year' => '2022/2023',
-                'angkatan' => '2022',
-                'project_id' => '9e3a1a20-488d-4c66-af57-a97d31f1a4df',
-                'mahasiswa_id' => 'd7e6ad5a-a8e7-4654-aa65-1a3301a394ln', // Linda
-                'group' => 'kelompok 1',
-                'dosen_id' => 'd7e6ad5a-a8e7-4654-aa65-1a3301a394ce'
+                'batch_year' => '2024/2025',
+                'angkatan' => '2024',
+                'project_id' => 'oe4ad5a-a0e7-4654-qq45-1a3301a394pj',
+                'mahasiswa_id' => 'aa483968-7f8c-1c05-af8e-936823bf7bdy', // Raffi Fauzi Hermawan
+                'group' => 'Kelompok 1',
+                'dosen_id' => 'ra483968-7f8c-4c01-af8a-936823bf6bda' // DSN1
+            ],
+            [
+                'id' => Str::uuid()->toString(),
+                'batch_year' => '2024/2025',
+                'angkatan' => '2024',
+                'project_id' => 'oe4ad5a-a0e7-4654-qq45-1a3301a394pj',
+                'mahasiswa_id' => 'aa483968-7f8c-8c05-af8e-936823bf9bda', // Tamam Hisabulah
+                'group' => 'Kelompok 1',
+                'dosen_id' => 'ra483968-7f8c-4c01-af8a-936823bf6bda' // DSN1
+            ],
+            [
+                'id' => Str::uuid()->toString(),
+                'batch_year' => '2024/2025',
+                'angkatan' => '2024',
+                'project_id' => 'oe4ad5a-a0e7-4654-qq45-1a3301a394pj',
+                'mahasiswa_id' => 'aa483968-7f8c-6c05-af8e-936823bf1bdc', // Wafi Ahlam Rizqulloh
+                'group' => 'Kelompok 1',
+                'dosen_id' => 'ra483968-7f8c-4c01-af8a-936823bf6bda' // DSN1
             ],
         ];
 

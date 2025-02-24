@@ -76,6 +76,7 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
                     DB::raw("'{$this->angkatan}' as angkatan"),
                     'users.name as mahasiswa_name',
                     'mahasiswa.nim',
+                    'class_room.class_name as class',
                     'dosen.kode_dosen as dosen_manajer',
                     DB::raw('COALESCE(groups.`group`, \'\') as kelompok'),
                 )
@@ -94,7 +95,7 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
 
     public function headings(): array
     {
-        return ['No', 'Tahun Ajaran', 'Proyek', 'Angkatan', 'Nama', 'NIM', 'Kode Dosen', 'Kelompok'];
+        return ['No', 'Tahun Ajaran', 'Proyek', 'Angkatan', 'Nama', 'NIM', 'Kelas', 'Kode Dosen', 'Kelompok'];
     }
 
     public function registerEvents(): array
@@ -163,8 +164,8 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
 
                 // Apply validations to all rows
                 for ($row = 2; $row <= $lastRow; $row++) {
-                    $worksheet->getCell('G' . $row)->setDataValidation(clone $dosenValidation);
-                    $worksheet->getCell('H' . $row)->setDataValidation(clone $groupValidation);
+                    $worksheet->getCell('H' . $row)->setDataValidation(clone $dosenValidation);
+                    $worksheet->getCell('I' . $row)->setDataValidation(clone $groupValidation);
                 }
 
                 // Set column widths
@@ -174,15 +175,16 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
                 $worksheet->getColumnDimension('D')->setWidth(10);  // Angkatan
                 $worksheet->getColumnDimension('E')->setWidth(30);  // Nama
                 $worksheet->getColumnDimension('F')->setWidth(15);  // NIM
-                $worksheet->getColumnDimension('G')->setWidth(15);  // Kode Dosen
-                $worksheet->getColumnDimension('H')->setWidth(10);  // Kelompok
+                $worksheet->getColumnDimension('G')->setWidth(15);  // Kelas
+                $worksheet->getColumnDimension('H')->setWidth(15);  // Kode Dosen
+                $worksheet->getColumnDimension('I')->setWidth(10);  // Kelompok
 
                 // Apply styles
-                $worksheet->getStyle('A1:H' . $lastRow)->getBorders()->getAllBorders()->setBorderStyle('thin');
-                $worksheet->getStyle('A1:H1')->getFont()->setBold(true);
-                $worksheet->getStyle('A1:H1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $worksheet->getStyle('A1:I' . $lastRow)->getBorders()->getAllBorders()->setBorderStyle('thin');
+                $worksheet->getStyle('A1:I1')->getFont()->setBold(true);
+                $worksheet->getStyle('A1:I1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
                 $worksheet->getStyle('A2:A' . $lastRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-                $worksheet->getStyle('B2:H' . $lastRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+                $worksheet->getStyle('B2:I' . $lastRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
             }
         ];
     }

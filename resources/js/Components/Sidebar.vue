@@ -154,6 +154,43 @@
             Feedback
           </a>
         </li>
+        <li class="mb-4">
+          <button
+            @click="toggleKelolaSettingsMenu"
+            :class="{
+              'bg-white':
+                isActive('/dosen/manage-mahasiswa') ||
+                isActive('/dosen/manage-dosen'),
+            }"
+            class="w-full text-left px-4 py-2 rounded flex justify-start hover:bg-gray-100"
+          >
+            <font-awesome-icon icon="fa-solid fa-cogs" class="mr-4" />
+            <span class="text-base font-medium">Manage Users</span>
+            <span
+              :class="{ 'rotate-180': isKelolaSettingsOpen }"
+              class="transform transition-all ml-2"
+              >▼</span
+            >
+          </button>
+          <ul v-if="isKelolaSettingsOpen" class="pl-4 mt-2 space-y-2">
+            <li>
+              <a
+                @click="goToKelolaMahasiswa"
+                :class="{
+                  'bg-gray-200': isActive('/dosen/manage-mahasiswa'),
+                }"
+                class="block px-4 py-2 rounded cursor-pointer hover:bg-gray-100 text-sm"
+              >
+                <font-awesome-icon
+                  icon="fa-solid fa-project-diagram"
+                  class="mr-4"
+                />
+                Manage Mahasiswa
+              </a>
+            </li>
+           
+          </ul>
+        </li>
       </ul>
     </aside>
 
@@ -181,7 +218,9 @@ export default {
       isKelolaProyekOpen:
         this.isActive("/dosen/kelola-proyek") ||
         this.isActive("/dosen/kelola-kelompok"),
-    };
+      isKelolaSettingsOpen:
+        this.isActive("/dosen/manage-mahasiswa"),
+    };
   },
   methods: {
     toggleAssessmentMenu() {
@@ -190,6 +229,9 @@ export default {
     toggleKelolaProyekMenu() {
       this.isKelolaProyekOpen = !this.isKelolaProyekOpen;
     },
+    toggleKelolaSettingsMenu() {
+      this.isKelolaSettingsOpen = !this.isKelolaSettingsOpen;
+    },
     goToCreateAssessment() {
       router.visit("/dosen/assessment/create");
     },
@@ -207,6 +249,9 @@ export default {
     },
     goToKelolaKelompok() {
       router.visit("/dosen/kelola-kelompok");
+    },
+    goToKelolaMahasiswa() {
+      router.visit("/dosen/manage-mahasiswa");
     },
   },
 };

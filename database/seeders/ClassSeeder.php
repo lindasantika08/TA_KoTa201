@@ -14,20 +14,27 @@ class ClassSeeder extends Seeder
      */
     public function run(): void
     {
-        $prodi = Prodi::first();
+        $prodiId = '5a5e8c63-1234-4abc-89de-56789abcdef0'; // D3 Teknik Informatika (Bisa disesuaikan)
 
         DB::table('class_room')->insert([
+            // Angkatan 2024 
             [
-                'id' => 'a7e6ad5a-a8e7-4654-aa65-1a3301a394cl',
-                'class_name' => 'B',
-                'prodi_id' =>$prodi->id,
-                'angkatan' => '2022',
+                'id' => 'be6ad5a-a8e7-4654-aa65-1a3301a394ab',
+                'class_name' => 'A',
+                'prodi_id' => $prodiId,
+                'angkatan' => '2024',
             ],
             [
-                'id' => 'be6ad5a-a8e7-4654-aa65-1a3301a394cl',
-                'class_name' => 'A',
-                'prodi_id' => $prodi->id,
-                'angkatan' => '2022',
+                'id' => 'be6ad5a-a8e7-4654-aa65-1a3301a394bc',
+                'class_name' => 'B',
+                'prodi_id' => $prodiId,
+                'angkatan' => '2024',
+            ],
+            [
+                'id' => 'be6ad5a-a8e7-4654-aa65-1a3301a394cd',
+                'class_name' => 'C',
+                'prodi_id' => $prodiId,
+                'angkatan' => '2024',
             ],
         ]);
     }

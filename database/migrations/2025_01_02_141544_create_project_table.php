@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('project', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->string('semester');
+            $table->string('semester')->nullable();
             $table->string('batch_year');
             $table->string('project_name');
             $table->foreignUuid('prodi_id')->constrained('prodi');

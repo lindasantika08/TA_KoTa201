@@ -66,7 +66,9 @@ class KelolaKelompokController extends Controller
             ->get()
             ->groupBy('project_id')
             ->map(function ($projectGroups) {
-                return $projectGroups->groupBy('group')
+                return $projectGroups->groupBy(function ($item) {
+                    return optional($item->mahasiswa->classRoom)->class_name . '-' . $item->group;
+                })
                     ->sortKeys()
                     ->map(function ($sameGroupItems) {
                         $firstGroup = $sameGroupItems->first();
@@ -74,12 +76,14 @@ class KelolaKelompokController extends Controller
                             return [
                                 'name' => optional($group->mahasiswa->user)->name ?? 'Unnamed',
                                 'nim' => optional($group->mahasiswa)->nim ?? 'N/A',
-                                'user_id' => optional($group->mahasiswa->user)->id ?? null
+                                'user_id' => optional($group->mahasiswa->user)->id ?? null,
+                                'class' => optional($group->mahasiswa->classRoom)->class_name ?? 'N/A'
                             ];
                         })->unique('nim')->values();
 
                         // Ambil angkatan dari classroom mahasiswa di group
                         $angkatan = optional($firstGroup->mahasiswa->classRoom)->angkatan ?? 'N/A';
+                        $class = optional($firstGroup->mahasiswa->classRoom)->class_name ?? 'N/A';
 
                         return [
                             'dosen_name' => optional($firstGroup->dosen->user)->name ?? 'Unnamed Dosen',
@@ -89,8 +93,10 @@ class KelolaKelompokController extends Controller
                                 'group' => $firstGroup->group,
                                 'anggota' => $members,
                                 'angkatan' => $angkatan,
+                                'class' => $class,
                                 'classroom' => [
-                                    'angkatan' => $angkatan
+                                    'angkatan' => $angkatan,
+                                    'class_name' => $class
                                 ]
                             ]]
                         ];
