@@ -20,7 +20,7 @@ class AnswerSeeder extends Seeder
         $answers = [
             [
                 'mahasiswa_id' => 'aa483968-7f8c-2c05-af8e-936823bf4bdd', // CHINTA
-                'dosen_id' => 'ra483968-7f8c-4c01-af8a-936823bf6bda',
+                
                 'status' => 'submitted',
                 'answers' => [
                     ['question_id' => '550e8400-e29b-41d4-a716-446655440001', 'score' => 5, 'answer' => 'Dalam mencari data lowongan kerja di Twitter, saya mengalami kemudahan dikeranakan saya menemukan akun khusus untuk mencari lowongan kerja IT, untuk Facebook saya mengalami kemudahan dikarenakan dalam Facebook terdapat fitur komunitas khusus untuk mencari atau membagikan lowongan kerja IT, sedangkan dalam LinkedIn saya juga mengalami kemudahan dikarenakan dalam LinkedIn saya hanya perlu mencari keyword pekerjaan yang diinginkan.'],
@@ -36,7 +36,7 @@ class AnswerSeeder extends Seeder
             ],
             [
                 'mahasiswa_id' => 'aa483968-7f8c-1c05-af8e-936823bf1bda', //ANDI
-                'dosen_id' => 'ra483968-7f8c-4c01-af8a-936823bf6bda',
+                
                 'status' => 'submitted',
                 'answers' => [
                     ['question_id' => '550e8400-e29b-41d4-a716-446655440001', 'score' => 4, 'answer' => 'Kesulitan dalam melakukan multitasking antara spreadsheet dengan media sosial lowongan pekerjaan (LinkedIn dan Instagram).'],
@@ -52,7 +52,7 @@ class AnswerSeeder extends Seeder
             ],
             [
                 'mahasiswa_id' => 'aa483968-7f8c-3c05-af8e-936823bf6bdf', // DWIKA
-                'dosen_id' => 'ra483968-7f8c-4c01-af8a-936823bf6bda',
+                
                 'status' => 'submitted',
                 'answers' => [
                     ['question_id' => '550e8400-e29b-41d4-a716-446655440001', 'score' => 4, 'answer' => 'Terdapat data duplikat, masalah jaringan internet. Saya mengumpulkan data di aplikasi Instagram jadi saya menggunakan hastag untuk memudahkan pencarian'],
@@ -68,7 +68,7 @@ class AnswerSeeder extends Seeder
             ],
             [
                 'mahasiswa_id' => 'aa483968-7f8c-1c05-af8e-936823bf2bdb', // ARIEF
-                'dosen_id' => 'ra483968-7f8c-4c01-af8a-936823bf6bda',
+                
                 'status' => 'submitted',
                 'answers' => [
                     ['question_id' => '550e8400-e29b-41d4-a716-446655440001', 'score' => 4, 'answer' => 'Mengumpulkan iklan di media sosial cenderung mudah di platform seperti X/Twitter, Facebook, Instagram dan LinkedIn. Sedangkan ada satu platform yang kontennya dikhususkan untuk video pendek yakni TikTok, saya kesulitan mencari iklan yang sesuai kriteria karna banyaknya konten iklan lowongan pekerjaan yang sesuai kriteria tak sebanyak di platform lain.'],
@@ -84,7 +84,7 @@ class AnswerSeeder extends Seeder
             ],
             [
                 'mahasiswa_id' => 'aa483968-7f8c-3c05-af8e-936823bf5bde', // CHRISTIAN
-                'dosen_id' => 'ra483968-7f8c-4c01-af8a-936823bf6bda',
+                
                 'status' => 'submitted',
                 'answers' => [
                     ['question_id' => '550e8400-e29b-41d4-a716-446655440001', 'score' => 4, 'answer' => 'Saya menghadapi sebuah kesulitan, karena ini adalah pertama kali saya mencari loker di media sosial, jadi pada saat mengumpulkan data dan mengekstrak data, pengerjaan saya lebih lambat dari teman- teman kelompok saya. Untuk kemudahan, saya mendapatkan kemudahan setelah mengerjakan tugas saya selama 3 minggu karena saya merasa sudah terbiasa dengan tugas-tugas saya.'],
@@ -100,7 +100,7 @@ class AnswerSeeder extends Seeder
             ],
             [
                 'mahasiswa_id' => 'aa483968-7f8c-6c05-af8e-936823bf2bdk', // FAWWAZ
-                'dosen_id' => 'ra483968-7f8c-4c02-af8b-936823bf6bdi',
+                
                 'status' => 'submitted',
                 'answers' => [
                     ['question_id' => '550e8400-e29b-41d4-a716-446655440001', 'score' => 4, 'answer' => 'Saya lumayan kemudahan ketika mencari lowongan pekerjaan'],
@@ -116,23 +116,23 @@ class AnswerSeeder extends Seeder
             ],
             [
                 'mahasiswa_id' => 'aa483968-7f8c-7c05-af8e-936823bf1bdj', // FARRAS
-                'dosen_id' => 'ra483968-7f8c-4c02-af8b-936823bf6bdi',
+                
                 'status' => 'submitted',
                 'answers' => [
-                    ['question_id' => '550e8400-e29b-41d4-a716-446655440001', 'score' => 5, 'answer' => 'Saya merasa sangat mudah dalam mengumpulkan iklan lowongan pekerjaan dikarnakan saya mendapatkan bagian tugas untuk mengumpulkan iklan lowongan pekerjaan di media sosial LinkedIn...'],
-                    ['question_id' => '550e8400-e29b-41d4-a716-446655440002', 'score' => 5, 'answer' => 'Saya menganalisisi iklan lowongan pekerjaan dengan cara dari judul lowongan pekerjaan, nama perusahaan, lokasi pekerjaan, deskripsi pekerjaan...'],
-                    ['question_id' => '550e8400-e29b-41d4-a716-446655440003', 'score' => 5, 'answer' => 'Saya puas karena struktur data yang dibuat oleh saya bersama kelompok saya semuanya telah baik dan memiliki tujuannya...'],
-                    ['question_id' => '550e8400-e29b-41d4-a716-446655440004', 'score' => 4, 'answer' => 'Saya memastikan keakuratan data yang saya input itu pasti akurat karena saya selalu melakukan cross-check sebelum lanjut menganalisis...'],
-                    ['question_id' => '550e8400-e29b-41d4-a716-446655440005', 'score' => 5, 'answer' => 'Proses penggabungan data dengan kelompok lain di kelas sangat seru, meski mengalami beberapa masalah seperti perbedaan kolom...'],
-                    ['question_id' => '550e8400-e29b-41d4-a716-446655440006', 'score' => 5, 'answer' => 'Kerja sama antara kelompok saya sangat baik karena kelompok saya selalu mengadakan rapat pagi atau koordinasi pagi...'],
-                    ['question_id' => '550e8400-e29b-41d4-a716-446655440007', 'score' => 5, 'answer' => 'Kerja sama antara kelompok lain juga sangat baik karena pada saat penggabungan data untuk satu kelas kami seluruh kelas mengadakan rapat besar...'],
-                    ['question_id' => '550e8400-e29b-41d4-a716-446655440008', 'score' => 5, 'answer' => 'Saya menghadapi masalah atau mengidentifikasi akan terjadinya masalah dengan tidak terburu-buru dan diselesaikan seiring berjalannya waktu...'],
-                    ['question_id' => '550e8400-e29b-41d4-a716-446655440009', 'score' => 5, 'answer' => 'Sangat baik, saya selalu memprioritaskan menyelesaikan tugas saya di kelompok hanya pada saat mata kuliah proyek 1...'],
-                ],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440001', 'score' => 5, 'answer' => 'Saya merasa sangat mudah dalam mengumpulkan iklan lowongan pekerjaan dikarenakan saya mendapatkan bagian tugas untuk mengumpulkan iklan lowongan pekerjaan di media sosial LinkedIn, karena saya sebelumnya sudah mengisi profil LinkedIn saya dengan latar belakang IT membuat seluruh lowongan pekerjaan yang muncul di laman lowongan pekerjaan LinkedIn semuanya relevan dengan bidang IT.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440002', 'score' => 5, 'answer' => 'Saya menganalisis iklan lowongan pekerjaan dengan cara dari judul lowongan pekerjaan, nama perusahaan, lokasi pekerjaan, deskripsi pekerjaan, tanggung jawab, dan kualifikasi kandidat.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440003', 'score' => 5, 'answer' => 'Saya puas karena struktur data yang dibuat oleh saya bersama kelompok saya semuanya telah baik dan memiliki tujuannya, meski beberapa di antara kolom data ada yang kurang dan berakhir dihapus saya tetap puas karena alasan keputusan yang tepat.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440004', 'score' => 4, 'answer' => 'Saya memastikan keakuratan data yang saya input itu pasti akurat karena saya selalu melakukan cross-check sebelum lanjut menganalisis lowongan pekerjaan lainnya untuk diinputkan kembali, meski pada saat itu ternyata struktur tabel saya dengan kelompok saya berbeda sehingga mengalami masalah saat penggabungan data.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440005', 'score' => 5, 'answer' => 'Proses penggabungan data dengan kelompok lain di kelas sangat seru, meski mengalami beberapa masalah seperti perbedaan kolom, kekurangan kolom, masalah tersebut berhasil diselesaikan dengan mudah dengan diskusi antar kelompok mengenai tujuan-tujuan dari kolom yang dipermasalahkan.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440006', 'score' => 5, 'answer' => 'Kerja sama antara kelompok saya sangat baik karena kelompok saya selalu mengadakan rapat pagi atau koordinasi pagi dan pergantian penulis untuk notulen kelompok yang membuat kelompok kami aktif dan tidak pasif dalam berkomunikasi satu sama lain.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440007', 'score' => 5, 'answer' => 'Kerja sama antara kelompok lain juga saya sangat baik karena pada saat penggabungan data untuk 1 kelas kami seluruh kelas mengadakan rapat besar untuk mendiskusikan, menyampaikan ide, menyampaikan dan mempertahankan argumen, serta saling menghargai siapa yang sedang berbicara dengan mendengarkan terlebih dahulu.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440008', 'score' => 5, 'answer' => 'Saya menghadapi masalah atau mengidentifikasi akan terjadinya masalah dengan tidak terburu-buru dan diselesaikan seiring berjalannya waktu dan tingkat urgensi masalah tersebut.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440009', 'score' => 5, 'answer' => 'Saya selalu memprioritaskan menyelesaikan tugas saya di kelompok hanya pada saat mata kuliah proyek 1 hingga saat itu tidak mengganggu waktu lain. Untuk skala prioritas saat pengerjaan, saya sangat memprioritaskan untuk mengerjakan pekerjaan saya terlebih dahulu sebelum membantu teman sekelompok tetapi ini tergantung tingkat urgensi juga.']
+                ]
             ],
             [
                 'mahasiswa_id' => 'aa483968-7f8c-5c05-af8e-936823bf7bdg', // EMIR
-                'dosen_id' => 'ra483968-7f8c-4c02-af8b-936823bf6bdi',
+                
                 'status' => 'submitted',
                 'answers' => [
                     ['question_id' => '550e8400-e29b-41d4-a716-446655440001', 'score' => 5, 'answer' => 'saya menghadapi kesulitan pada awal awal karena saya jarang menggunakan sosmed dan pada akhirnya saya terbiasa dengan menggunakan sosmed untuk mencari sesuatu spesifik'],
@@ -148,7 +148,7 @@ class AnswerSeeder extends Seeder
             ],
             [
                 'mahasiswa_id' => 'aa483968-7f8c-7c05-af8e-936823bf3bdl', // GILANG
-                'dosen_id' => 'ra483968-7f8c-4c02-af8b-936823bf6bdi',
+                
                 'status' => 'submitted',
                 'answers' => [
                     ['question_id' => '550e8400-e29b-41d4-a716-446655440001', 'score' => 4, 'answer' => 'Saat pengumpulan iklan pada platform Facebook, saya dimudahkan dengan adanya grup atau komunitas pencari lowongan kerja khusus IT. Selain itu, pada grup/komunitas tersebut terdapat fitur pencarian yang memudahkan saya untuk mencari dengan lebih detail berdasarkan tahun, tanggal, dan sebagainya.'],
@@ -164,7 +164,7 @@ class AnswerSeeder extends Seeder
             ],
             [
                 'mahasiswa_id' => 'aa483968-7f8c-6c05-af8e-936823bf9bdi', // FARIDHA
-                'dosen_id' => 'ra483968-7f8c-4c02-af8b-936823bf6bdi',
+                
                 'status' => 'submitted',
                 'answers' => [
                     ['question_id' => '550e8400-e29b-41d4-a716-446655440001', 'score' => 5, 'answer' => 'Terdapat sedikit kesulitan pada saat awal-awal pencarian lowongan pekerjaan pada platform TikTok, tetapi setelah saya mengeksplornya, pencarian lowongan pekerjaan menjadi lebih mudah, dan saya dapat mengumpulkan lowongan pekerjaan melebihi dari target awal.'],
@@ -180,7 +180,7 @@ class AnswerSeeder extends Seeder
             ],
             [
                 'mahasiswa_id' => 'aa483968-7f8c-5c05-af8e-936823bf8bdh', //FARREL
-                'dosen_id' => 'ra483968-7f8c-4c02-af8b-936823bf6bdi',
+                
                 'status' => 'submitted',
                 'answers' => [
                     ['question_id' => '550e8400-e29b-41d4-a716-446655440001', 'score' => 4, 'answer' => 'Untuk kesulitan mengumpulkan iklan bagi saya tidak ada karena di kelompok saya untuk proses pengumpulan iklan dibagi menjadi 1 anggota 1 platform dan saya mendapatkan bagian platform Instagram yang dimana Instagram ini merupakan salah satu social media yang saya sering gunakan. sehingga saya dapat dengan mudah mencari berbagai iklan di social media yang sangat familiar bagi saya ini yaitu Instagram.'],
@@ -196,7 +196,7 @@ class AnswerSeeder extends Seeder
             ],
             [
                 'mahasiswa_id' => 'aa483968-7f8c-2c05-af8e-936823bf8bdq', // FALIQ
-                'dosen_id' => 'ra483968-7f8c-4c03-af8c-936823bf6bdu',
+                
                 'status' => 'submitted',
                 'answers' => [
                     ['question_id' => '550e8400-e29b-41d4-a716-446655440001', 'score' => 4, 'answer' => 'Saya menghadapi kemudahan dalam mengumpulkan data dikarenakan platform yang saya gunakan memang berfungsi untuk mencari lowongan pekerjaan. Dan untuk kendala mungkin ketika saya sudah mengumpulkan data yang banyak, terdapat data yang hilang sehingga saya harus mengganti data tersebut dengan data yang lainnya. dan kendala lainnya adalah ketika saya mencari data, saya mencari data pada laman postingan sehingga itu tidak efisien menurut saya.'],
@@ -212,12 +212,12 @@ class AnswerSeeder extends Seeder
             ],
             [
                 'mahasiswa_id' => 'aa483968-7f8c-1c05-af8e-936823bf7bdp', // ISHAK
-                'dosen_id' => 'ra483968-7f8c-4c03-af8c-936823bf6bdu',
+                
                 'status' => 'submitted',
                 'answers' => [
                     ['question_id' => '550e8400-e29b-41d4-a716-446655440001', 'score' => 4, 'answer' => 'Kesulitan dalam mencari lowongan kerja di Facebook adalah memastikan bahwa iklan lowongan tersebut valid dan bukan penipuan. Selain itu, ada kemungkinan iklan yang sama diposting di akun atau grup yang berbeda sehingga harus selalu melakukan recheck.'],
                     ['question_id' => '550e8400-e29b-41d4-a716-446655440002', 'score' => 4, 'answer' => 'Saya melihat posisi pekerjaannya terlebih dahulu untuk memastikan bahwa lowongan ini adalah lowongan kerja IT. Setelah itu, saya melihat komentar postingan untuk mengetahui respon dari para pencari kerja terhadap postingan tersebut sehingga saya dapat mengetahui apakah lowongan tersebut valid atau penipuan.'],
-                    ['question_id' => '550e8400-e29b-41d4-a716-446655440003', 'score' => 4, 'answer' => 'Struktur data yang kelompok kami putuskan adalah sebagai berikut:\n- Nama Perusahaan\n- Posisi\n- Jenjang minimal\n- Jurusan\n- Batasan umur\n- Hardskill\n- Pengalaman Kerja\n- Jenis Kelamin\n- Domisili\n- Sistem Kerja\n- Platform\n- Link sumber\nKeputusan ini adalah hasil diskusi kelompok. Kami merasa struktur data ini sudah cukup untuk lowongan kerja. Pendapat saya pribadi, struktur ini memiliki beberapa kekurangan. Salah satunya adalah tidak adanya kontak seperti email atau nomor telepon.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440003', 'score' => 4, 'answer' => 'Struktur data yang kelompok kami putuskan adalah sebagai berikut:- Nama Perusahaan- Posisi- Jenjang minimal- Jurusan- Batasan umur- Hardskill- Pengalaman Kerja- Jenis Kelamin- Domisili- Sistem Kerja- Platform- Link sumber Keputusan ini adalah hasil diskusi kelompok. Kami merasa struktur data ini sudah cukup untuk lowongan kerja. Pendapat saya pribadi, struktur ini memiliki beberapa kekurangan. Salah satunya adalah tidak adanya kontak seperti email atau nomor telepon.'],
                     ['question_id' => '550e8400-e29b-41d4-a716-446655440004', 'score' => 3, 'answer' => 'Untuk memastikan data yang diinputkan akurat, saya melakukan analisis terlebih dahulu terhadap persyaratan yang tercantum di iklan lowongan pekerjaan. Setelah itu, saya menginputkan data satu persatu sesuai dengan yang tercantum di iklan lowongan. Namun, masih ada beberapa data yang kurang akurat seperti pada pengalaman ataupun hardskill. Dimana pada hardskill atau pengalaman itu sering kali ada beberapa yang tidak dijelaskan dengan akurat karena kesulitan dalam memahaminya.'],
                     ['question_id' => '550e8400-e29b-41d4-a716-446655440005', 'score' => 3, 'answer' => 'Saya tidak terlalu banyak berkontribusi, saya hanya memberikan beberapa saran dan pendapat dalam forum diskusi. Namun, saya tidak memberikan sesuatu yang dapat dipertimbangkan atau berpengaruh.'],
                     ['question_id' => '550e8400-e29b-41d4-a716-446655440006', 'score' => 4, 'answer' => 'Saya selalu melakukan konfirmasi dan bertanya ketika melakukan suatu pekerjaan agar apa yang dikerjakan itu benar dan tidak terjadi kesalahpahaman. Selain itu, saya juga cukup aktif dalam melakukan diskusi untuk membuat keputusan.'],
@@ -228,7 +228,7 @@ class AnswerSeeder extends Seeder
             ],
             [
                 'mahasiswa_id' => 'aa483968-7f8c-9c05-af8e-936823bf5bdn', // IRFAN
-                'dosen_id' => 'ra483968-7f8c-4c03-af8c-936823bf6bdu',
+                
                 'status' => 'submitted',
                 'answers' => [
                     ['question_id' => '550e8400-e29b-41d4-a716-446655440001', 'score' => 5, 'answer' => 'Saya mencari lowongan kerja melalui platform TikTok, dan awalnya saya merasa kesulitan dikarenakan dalam platform TikTok hanya sedikit informasi mengenai lowongan pekerjaan yang terlihat di beranda maupun melalui pencarian. Maka dari itu saya mencoba memasukkan keyword yang spesifik dalam melakukan pencarian lowongan kerja. Kemudian saya mencoba mencari akun-akun TikTok yang menyediakan/memposting berbagai lowongan pekerjaan sehingga akun-akun tersebut dapat mempermudah saya dalam mencari lowongan pekerjaan di TikTok.'],
@@ -257,7 +257,7 @@ class AnswerSeeder extends Seeder
             ],
             [
                 'mahasiswa_id' => 'aa483968-7f8c-0c05-af8e-936823bf6bdo', // MARRELY
-                'dosen_id' => 'ra483968-7f8c-4c03-af8c-936823bf6bdu',
+                
                 'status' => 'submitted',
                 'answers' => [
                     ['question_id' => '550e8400-e29b-41d4-a716-446655440001', 'score' => 5, 'answer' => 'Ya, saya mengalami kendala dimana beberapa link dari file saya tidak dapat terakses namun saya berhasil untuk membenarkan link yang bermasalah tersebut karna ternyata link tersebut bermasalah di file excel tersebut dan saya juga cukup mendapat kemudahan dikarenakan platform saya adalah X atau Twitter. Saya merasa sangat terbantu dengan banyaknya fitur yang dapat mempermudah tugas saya seperti adanya fitur advanced yang memungkinkan kita mengatur waktu tanggal post dan keyword pada post. Selain itu, platform X sendiri memiliki banyak akun yang dikhususkan untuk loker IT.'],
@@ -273,7 +273,7 @@ class AnswerSeeder extends Seeder
             ],
             [
                 'mahasiswa_id' => 'aa483968-7f8c-8c05-af8e-936823bf4bdm', // HILMI
-                'dosen_id' => 'ra483968-7f8c-4c03-af8c-936823bf6bdu',
+                
                 'status' => 'submitted',
                 'answers' => [
                     ['question_id' => '550e8400-e29b-41d4-a716-446655440001', 'score' => 4, 'answer' => 'Awalnya saya agak kesulitan mencari informasi tentang lowongan kerja di Instagram, sudah memakai hashtag juga hanya ada sedikit, namun ketika diberi oleh ketua, saya diberitahu untuk mencari terlebih dahulu di Google dengan keyword "akun Instagram info lowongan kerja IT". Lalu muncul akun Instagram yang berkaitan dengan lowongan kerja IT. Lalu ada beberapa postingan Instagram yang data informasinya sama, dan saya memilih satu data postingan saja untuk dikumpulkan datanya.'],
@@ -289,7 +289,7 @@ class AnswerSeeder extends Seeder
             ],
             [
                 'mahasiswa_id' => 'aa483968-7f8c-3c05-af8e-936823bf9bdr', // HANIF
-                'dosen_id' => 'ra483968-7f8c-4c03-af8c-936823bf6bdu',
+                
                 'status' => 'submitted',
                 'answers' => [
                     ['question_id' => '550e8400-e29b-41d4-a716-446655440001', 'score' => 4, 'answer' => 'Kesulitan dalam media sosial TikTok ketika saya membantu Irvan dalam mencari lowongan kerja karena banyak yang berupa video, bukan gambar.'],
@@ -302,9 +302,185 @@ class AnswerSeeder extends Seeder
                     ['question_id' => '550e8400-e29b-41d4-a716-446655440008', 'score' => 4, 'answer' => 'Ketika menemukan masalah, saya mencari solusinya sendiri terlebih dahulu. Jika tidak menemukan solusi, saya membuka ruang diskusi dengan anggota kelompok lain.'],
                     ['question_id' => '550e8400-e29b-41d4-a716-446655440009', 'score' => 4, 'answer' => 'Saya dan kelompok saya baik dalam mengatur waktu. Kami selalu memulai dengan berdoa, berdiskusi, dan menentukan target. Meskipun pada awalnya kami kesulitan, akhirnya kami dapat menyelesaikan tugas tepat waktu dan sering lebih cepat dari yang ditentukan.'],
                 ],
+            ],
+            [
+                'mahasiswa_id' => 'aa483968-7f8c-8c05-af8e-936823bf5bdw', // Nashwa
+                
+                'status' => 'submitted',
+                'answers' => [
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440001', 'score' => 5, 'answer' => 'Karena platform yang saya gunakan adalah Twitter/X sehingga lebih mudah untuk mencari data, kesulitannya karena ada beberapa data yang tidak jelas'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440002', 'score' => 4, 'answer' => 'Saya menganalisis isi lowongan dengan membacanya satu satu, hanya terdapat kesulitan saat informasi menggunakan bahasa inggris'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440003', 'score' => 5, 'answer' => 'Dalam membuat struktur data, kelompok kami mendiskusikan isi kolom struktur data'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440004', 'score' => 5, 'answer' => 'Saya memastikan keakuratan data dengan melihat progress teman saya berulang kali, apakah sudah sesuai atau masih ada yang belum sesuai.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440005', 'score' => 4, 'answer' => 'Dalam penggabungan data dari kelompok lain, saya hanya menganalisis apa perbedaan data kelompok kami dan data kelompok lain'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440006', 'score' => 5, 'answer' => 'Saya dan teman saya bergantian untuk mengingatkan apa yang ditugaskan, apa yang belum dikerjakan, dan apa yang harus dikerjakan.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440007', 'score' => 4, 'answer' => 'Saat rekan saya bertanya apakah harus membenarkan pernyataan kelompok lain atau tidak, saya meyakinkan rekan saya untuk menyampaikan pendapatnya kepada kelompok lain.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440008', 'score' => 4, 'answer' => 'Saya tidak terlalu banyak mengusulkan, tetapi saya berkontribusi untuk memberikan saran jika ada yang bertanya harus melakukan situasi A atau situasi B'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440009', 'score' => 5, 'answer' => 'Saya selalu mengerjakan tugas yang lebih cepat tanggal tenggatnya, maksimal 1 hari sebelum jadwal tenggat, progress pekerjaan sudah 80% selesai.']
+                ],
+            ],
+            [
+
+                'mahasiswa_id' => 'aa483968-7f8c-7c05-af8e-936823bf4bdv', // Naira
+                
+                'status' => 'submitted',
+                'answers' => [
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440001', 'score' => 4, 'answer' => 'Awalnya di dalam platform yang saya ditugaskan, yaitu Instagram, banyak banget kesulitan dalam menyari loker. Tetapi, setelah mengetahui cara yang mudah, yaitu mencari loker dari akun yang terkait loker IT, langsung tinggal menginput data-data tersebut ke dalam table.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440002', 'score' => 4, 'answer' => 'Dengan mengetahui posisi pekerjaan dan jenis lowongan kerja yang wajib berupa IT, Informasi tersebut menjadi lebih mudah untuk dipahami.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440003', 'score' => 4, 'answer' => 'Setelah mendiskusi dengan kelompok lain yang berada di kelas saya, kami bersepakatan dengan struktur data yang meliputi: No., Platform, Perusahaan, Penempatan wilayah, Posisi, Kualifikasi( Usia, Experience, Skill, Min. Pendidikan, Gender), Jenis Kontrak, Tanggal Terbit, Gmail, Kontrak, Link, Poster. dll.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440004', 'score' => 4, 'answer' => 'Tergantung informasi yang berada dalam Loker tersebut. Jika data yang tersedia too much to read, saya kadang menginput datanya disingkatin biar tidak banyak banyak banget di dalam tabel.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440005', 'score' => 4, 'answer' => 'Kenapa 4 dan tidak 5, hal itu dikarenakan waktu Ketua Kelompok saya dan Notalist bergabung dengan kelompok lain untuk berdiskusi, saya dan beberapa anggota kelompok fokus dengan cross check Data dari kelompok kami agar tidak ada kesalahan.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440006', 'score' => 4, 'answer' => 'Even if saya menolong dan berkominukasi, serta berkontribusi dengan kelompok saya... Saya merasa kurang terkait kolaborasi. Teteapi, saya berusaha dalam menolong anggota kelompok dan teman-teman saya sebesar mungkin.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440007', 'score' => 3, 'answer' => 'Di waktu dan tempat yang tepat, saya akan sebisa mungkin memberi saran atau advice yang dibutuhkan oleh kelompok kami. But, karena saya tidak mudah untuk berkomunikasi ide yang saya simpen, saya lebih mengutamakan mendengerin saran dari anggota kelompok yang lain.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440008', 'score' => 4, 'answer' => 'DIbantu oleh anggota kelompok kami yang saya menganggap sebagai teman-teman saya, tantangan dan permasalahan yang kami come across menjadi lebih mudah di selesaikan/solve.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440009', 'score' => 3, 'answer' => 'On the first few weeks, I encountered a problem involving the difficulty of Job Searching in Instagram. Due to this predicament, the total Job Application I found at that time were only 10-12, while my groupmates exceeded 18-25.']
+                ],
 
             ],
-
+            [
+                'mahasiswa_id' => 'aa483968-7f8c-6c05-af8e-936823bf3bdu', // NABIL
+                
+                'status' => 'submitted',
+                'answers' => [
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440001', 'score' => 5, 'answer' => 'Dalam mengumpulkan iklan saya mendapati kemudahan dimana saya menemukan akun yang berisi postingan tentang lowongan kerja khusus IT.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440002', 'score' => 5, 'answer' => 'Saat melihat lowongan saya memilih data yang penting saja contohnya nama perusahaan, nama pekerjaan, wilayah penempatan, dan contact person atau email untuk para pelamar mengirimkan dokumennya. Dari data tersebut banyak kesimpulan yang didapatkan, seperti: 1. Gender pelamar IT yang tidak ditentukan, maka wanita atau pria dapat melamar. 2. Wilayah penempatan, dimana berdasarkan data selain tidak mencantumkan atau remote, data terbanyak ada di kota Jakarta. 3. Kebutuhan atau tren developer, kita dapat menyimpulkan berdasarkan hasil data, apa rata-rata bahasa pemrograman atau framework yang paling banyak dibutuhkan. 4. Minimal pendidikan. Hasil data dapat menunjukkan seberapa besar potensi lulusan jenjang pendidikan seperti S1, D3, atau SMK. 5. Skill dan Pengalaman. Disimpulkan bahwa skill dan pengalaman menjadi nilai penting bagi perusahaan dalam menilai kompetensi pelamarnya.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440003', 'score' => 5, 'answer' => 'Saya merasa puas dengan data yang diambil, meski terbilang cukup banyak tetapi struktur data yang diambil mencantumkan banyak data penting yang saat akan dikumpulkan atau disatukan ke dalam data kelas, justru hanya sebagian yang dihapus, itu pun data yang diperlukan sebagai analisis atau sebagai kolektor data. (Karena data dikhususkan kepada pelamar).'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440004', 'score' => 5, 'answer' => 'Data yang saya inputkan bersifat mentah dari data poster TikTok, hal ini mempermudah karena saya hanya mencantumkan data yang ada ke dalam Excel sehingga keakuratan data sangat tepat.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440005', 'score' => 5, 'answer' => 'Saya ikut andil dalam memecahkan masalah penggabungan data. Saat diskusi para ketua kelompok banyak kesimpulan yang dihasilkan, termasuk dari saya. Dalam penggabungan kelompok saya hanya menghapus sebagian data yang bersifat tidak penting (bagi pelamar) seperti dokumen screenshot backup dari TikTok bila postingan tersebut dihapus.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440006', 'score' => 5, 'answer' => 'Saya melakukan komunikasi langsung dengan anggota kelompok baik saat keperluan individu atau kelompok untuk memecahkan masalah yang nantinya akan dikerjakan secara bersama-sama. Contohnya saat berdiskusi tentang struktur data apa saja yang diperlukan dan alasan diperlukannya. Lalu kami semua sepakat untuk membagi platform kepada masing-masing individu yang selanjutnya akan dikumpulkan datanya.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440007', 'score' => 5, 'answer' => 'Saat saya mendapat informasi atau pernyataan, saya memikirkan dulu beberapa skenario dari solusi yang ada, setelahnya saya akan menyampaikan langsung pendapat saya tersebut ke kelompok atau individu lain. Seperti pada saat diskusi penggabungan data kelas, saya memiliki temuan lalu menyampaikan solusi. Saya pun cukup menjaga diskusi agar tetap kondusif jika hal yang dibahas keluar dari pembahasan utama.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440008', 'score' => 5, 'answer' => 'Penyelesaian masalah saya cukup baik. Dalam tantangan teknis, saya bingung untuk mendapatkan 50 data dari TikTok yang dimana dalam platform tersebut postingannya dominan hiburan daripada informasi lowongan, dengan begitu saya berinisiatif untuk mencari akun yang mengumpulkan atau mengiklankan lowongan-lowongan khusus di bidang IT. Secara kolaboratif, setelah saya memahami permasalahan dan menemukan solusi, maka saya akan menyampaikannya dan bila ada pendapat lain, kami memikirkan solusi mana yang paling tepat, apakah yang A atau B atau malah solusi terbaik adalah gabungan dari solusi A dan B.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440009', 'score' => 5, 'answer' => 'Dalam menyusun prioritas, saya melihat dahulu bobot pekerjaan atau effort pekerjaan dan waktunya. Semakin dekat waktu, maka akan semakin diprioritaskan. Jika bobot pekerjaan sulit maka diperlukan waktu yang banyak yang dimana dalam hal ini diperlukan pengerjaan dari jauh hari sebelum tenggat waktu.'],
+                ],
+            ],
+            [
+                'mahasiswa_id' => 'aa483968-7f8c-8c05-af8e-936823bf9bda', // TAMAM
+                
+                'status' => 'submitted',
+                'answers' => [
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440001', 'score' => 4, 'answer' => 'menurut saya cukup mudah, karena saya cuma mencari lowongan dengan beberapa kriteria khusus'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440002', 'score' => 4, 'answer' => 'kurang lebih saya mencari lowongan yang memiliki nama IT atau pekerjaan yang ada hubungannya dengan internet'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440003', 'score' => 4, 'answer' => 'dari saya kurang lebih mencari lowongan yang memiliki kualifikasi yang dimana cukup penting dalam bekerja'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440004', 'score' => 3, 'answer' => 'saya memperkirakan apakah data yang ada pada lowongan itu masuk akal atau tidak'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440005', 'score' => 3, 'answer' => 'peran saya hanya memberi sedikit saran dan saya lebih banyak membantu saat menggabungkan data. Untuk masalah di kelompok saya sendiri untuk data yang kami masukkan ke excel ternyata banyak kekurangan dari pada kelompok lain'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440006', 'score' => 4, 'answer' => 'mungkin saya cukup pendiam awalnya karena belum terlalu kenal dengan teman sekelompok saya, tapi seiring berjalannya kelompok saya menjadi lebih sering untuk berkomunikasi dengan kelompok saya'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440007', 'score' => 4, 'answer' => 'pada sosial media yang saya pakai linkedin, disana tidak ada yang mencantumkan minimal maupun maksimal umur sehingga saya harus bertanya kepada ketua kelompok saya seperti apakah saya harus mengarang saja atau saya kosongkan saja'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440008', 'score' => 4, 'answer' => 'disini ketika saya mengobrol dengan ketua kelompok saya masalah terkait tidak adanya yang mencantumkan minimal ataupun maksimal umur pada lowongan yang saya dapatkan. akhirnya saya dan kelompok saya sepakat mengosongkannya, kecuali untuk yang ada minimal pendidikan'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440009', 'score' => 2, 'answer' => 'untuk managemen waktu ini saya seringkali mengumpulkan tugas proyek sehari sebelum tenggat waktunya dikarenakan seringkali ada tugas yang tenggat waktunya sebelum tugas dari proyek ini. Tapi saya masih mengumpulkannya tepat waktu'],
+                ],
+            ],
+            [
+                'mahasiswa_id' => 'aa483968-7f8c-6c05-af8e-936823bf1bdc', // WAFI
+                
+                'status' => 'submitted',
+                'answers' => [
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440001', 'score' => 4, 'answer' => 'Pada saat pengumpulan lowongan pekerjaan pada minggu pertama tidak ada kendala karena saya mencari data dengan keyword tertentu. Namun saya juga tidak dapat mengatakan bahwasannya tidak ada kendala sama sekali karena kendalanya ada pada kelengkapan sebuah poster lowongan kerja yang tersebar pada media sosial yang membuat kelompok saya memiliki sedikit struktur data pada kolom, sedangkan kelompok lain memiliki banyak jenis struktur. Kembali lagi itu tergantung dari bagaimana suatu kelompok berdiskusi.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440002', 'score' => 4, 'answer' => 'Lihat pada bagian atas yaitu nama perusahaan, soft skill, hard skill, pengalaman, minimal pendidikan, dan aspek lainnya yang cukup penting dan krusial bagi sebuah poster lowongan kerja. Karena seandainya sebuah poster hanya berbentuk teks yang tidak memuat hal-hal di atas maka untuk dikatakan sebagai poster lowongan kerja masih kurang lengkap.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440003', 'score' => 4, 'answer' => 'Pada saat pengambilan struktur data, pada awalnya kami hanya menggarap struktur yang menurut kami penting, seperti : Platform, Link (sumber asli), Minimal lulusan, Max umur, pengajuan, bidang pekerjaan, jenjang pendidikan. Karena dari struktur-struktur tersebut paling sering muncul pada poster lowongan kerja, jadi sulit rasanya sebagai ketua untuk memikirkan "kira-kira penting tidak ya untuk memasukkan struktur ini ke dalam excel kelompok atau hanya akan membebani anggota kelompok saya."'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440004', 'score' => 4, 'answer' => 'Setiap collecting data yang dilakukan pada excel, tentunya setiap kali menginput dari sebuah link asli dari sebuah media sosial. Hal yang saya pastikan adalah setelah semua kekumpul pada bagian data selanjutnya mengecek satu persatu data apakah benar data ini dari sumber ini atau tidak. Jika memang ada sebuah kesalahan kami akan memeriksanya langsung dan memperbaiki agar tidak ada kesalahan yang terjadi.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440005', 'score' => 2, 'answer' => 'Jujur sebagai ketua dan sebagai orang yang memiliki kekurangan dalam bersosialisasi antar individu, sulit rasanya bagi saya untuk bisa berkomunikasi antar kelompok, namun pastinya saya tetap bisa berdiskusi dengan kelompok lain seperti pada umumnya. Pada saat membicarakan hal-hal berkaitan dengan "kontribusi," maka saya akan katakan kontribusi saya pada saat melakukan penggabungan struktur kelompok tidak banyak dan masih membutuhkan evaluasi tersendiri.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440006', 'score' => 4, 'answer' => 'Komunikasi yang saya jalani pada saat rapat koordinat kelompok cukup datar karena di sini saya (ketua) cukup banyak diamnya karena menurut saya apa yang harus diomongi sudah jelas dan tidak ada yang perlu dijelaskan. Namun ternyata itu adalah sebuah kekeliruan dari saya. Bahwasannya sebuah komunikasi antar tim itu sangat penting bagi kelangsungan bersama, oleh karena itu cukup malu rasanya saat menjadi ketua yang tidak aktif pada kelompok.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440007', 'score' => 2, 'answer' => 'Saya tidak yakin pernah menyelesaikan sebuah persoalan karena bagi saya hal-hal yang menurut saya penting adalah saat dimana segala sesuatu memiliki dampak yang cukup signifikan untuk kelompok. Jadi seandainya ada masalah yang muncul, maka yang akan saya lakukan berdiskusi secara ringan dan menemukan solusi secara cepat.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440008', 'score' => 2, 'answer' => 'Saya bingung menjawab pertanyaan ini karena balik ke jawaban sebelumnya yaitu hanya sebatas melihat ke depan dan mencari solusi yang mungkin dapat menyelesaikan sebuah persoalan internal ataupun secara eksternal. Jadi secara teknis saya hanya menangani tantangan yang ringan dan tidak kompleks.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440009', 'score' => 4, 'answer' => 'Saat mengetahui sebuah tenggat dari tugas, pastinya saya akan memutuskan apakah cukup jika waktu ini dikerjakan pada saat ini dan itu. Maka yang akan terjadi adalah jika ada sebuah tenggat maka harus dikerjakan yang harus sesuai yang disuruh oleh manajer. Namun saya pernah mengalami keterlambatan dalam pengumpulan karena ukuran dari file dan itu adalah sebuah refleksi diri.']
+                ]
+            ],
+            [
+                'mahasiswa_id' => 'aa483968-7f8c-3c05-af8e-936823bf4bdf', // ZIDAN
+                
+                'status' => 'submitted',
+                'answers' => [
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440001', 'score' => 4, 'answer' => 'Kesulitan pada pencarian loker karena ada lumayan banyak loker yang sama.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440002', 'score' => 4, 'answer' => 'Saya menganalisis iklan lowongan dari video dan poster, melihat nama perusahaan, minimal jurusan, posisi penempatan, dan tempat pengajuan.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440003', 'score' => 4, 'answer' => 'Banyak loker dari berbagai platform tidak menampilkan kompetensi dan pengalaman. Awalnya yang dimasukkan adalah nama perusahaan, umur, posisi, minimal lulusan, link, dan tempat pengajuan. Setelah penggabungan data dengan kelompok lain, ditambahkan kompetensi, pengalaman, sertifikasi, domisili penempatan, dan sistem kerja.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440004', 'score' => 3, 'answer' => 'Dicek kembali pada platform apakah isinya sudah benar atau belum dengan spreadsheet.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440005', 'score' => 4, 'answer' => 'Saya ikut dalam rapat antar kelompok untuk mendiskusikan tambahan kolom di spreadsheet dan menghapus kolom yang tidak perlu.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440006', 'score' => 4, 'answer' => 'Saya berkomunikasi dalam kelompok dengan jelas tentang tugas di spreadsheet, berbicara sopan dengan anggota kelompok.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440007', 'score' => 3, 'answer' => 'Saat rapat dengan ketua dan notulen kelompok lain, bertanya kenapa kolom tertentu penting atau harus dihapus, misalnya gender ditambahkan karena ada beberapa loker yang menyebutkan gender tertentu.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440008', 'score' => 3, 'answer' => 'Saat menemukan loker yang double, saya mencari lagi loker lain di platform tersebut.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440009', 'score' => 3, 'answer' => 'Dengan waktu terbatas, pekerjaan diurutkan sesuai prioritas untuk efisiensi.'],
+                ],
+            ],
+            [
+                'mahasiswa_id' => 'aa483968-7f8c-5c05-af8e-936823bf2bdd', //ZAHWA
+                
+                'status' => 'submitted',
+                'answers' => [
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440001', 'score' => 4, 'answer' => 'Saya mengumpulkan jumlahnya sesuai dengan target yang diberikan, Kesulitannya seperti adanya poster yang datanya tidak lengkap dan perlu mencari lebih lanjut di internet.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440002', 'score' => 4, 'answer' => 'Saya menganalisis hal-hal umum seperti nama perusahaan, tempat pengajuan, minimal pendidikan namun, kurang menganalisis mengenai pekerjaannya padahal itu yang utama.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440003', 'score' => 4, 'answer' => 'Saya merasa tidak terlalu memaksimalkan di sini karena ada beberapa solusi dari sebuah tantangan seperti kolom data yang akan dipilih waktu pertemuan awal-awal, saya menyarankan beberapa kolom namun bagi mereka hal itu tidak begitu penting dan memilih untuk tidak memasukkannya. Namun sekarang saat sudah mulai kolaborasi dengan kelompok lain ternyata kolom tersebut dibutuhkan, hal ini membuat kami perlu menambahkannya.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440004', 'score' => 5, 'answer' => 'Saat saya mendapatkan data dari suatu poster contohnya letak dan nama perusahaan, terdapat beberapa poster yang tidak menampilkan jelas nama perusahaannya, misalnya hanya logonya saja. Nah saya menyelesaikan permasalahan ini dengan mencari datanya pada internet untuk memastikan benar ada atau tidaknya perusahaan dan apa nama perusahaannya.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440005', 'score' => 4, 'answer' => 'Penggabungan data dan struktur ini kita lakukan bersama, setelah ditentukan struktur data apa saja yang kelas kami tentukan, kami mulai melengkapi setiap platform kami masing-masing. Namun untuk kontribusi dengan kelompok lain saya rasa kurang peran saya di sini karena yang diskusi dengan kelompok lain hanya perwakilan kelompok saja dimana itu ketua dan notulen pada hari itu.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440006', 'score' => 4, 'answer' => 'Dalam kolaborasi kelompok khususnya mengenai komunikasi sering kali adanya perbedaan pendapat, peran saya baik di sini karena saya menyampaikan saran yang menurut saya perlu untuk kelompok kami namun jika memang saran yang menurut saya baik tapi anggota kelompok saya tidak menyetujuinya, saya tidak memaksakan pendapat saya terlalu dalam.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440007', 'score' => 5, 'answer' => 'Untuk penyampaian ide dan solusi saya merasa sangat baik dalam melakukannya, karena saya senang mengungkapkan pendapat dalam kelompok apalagi jika disetujui dan mungkin karena dalam kelompok saya perempuan sendiri jadi mereka tidak terlalu banyak bersuara atau memulai untuk mengeluarkan pendapat mereka. Salah satu contohnya adalah pada pertemuan ketiga, saya merasa kelompok saya sangat minim kolom data yang dipilih, saya mengajukan pendapat untuk menambahkan beberapa kolom data. Mengapa saya menyarankan hal ini, karena saat briefing pagi saya sempat bertukar informasi dengan anggota kelompok yang lain progres kelompok mereka dan rata-rata mereka baru mengumpulkan sebagian karena banyaknya kolom data yang kelompok mereka pilih. Sedangkan kelompok saya cepat mendapatkan poster namun dengan kolom data yang sedikit. Kolom data yang kita tambahkan adalah minimal pendidikan, kontak perusahaan/alamat email sebagai tempat pengajuan, dan batas minimum dan maksimum usia.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440008', 'score' => 4, 'answer' => 'Masalah yang datang biasanya kita selesaikan dengan cara berdiskusi dahulu dan suara terbanyak untuk penyelesaian tersebut bagaimana, namun jika masalah tersebut adalah kurangnya komunikasi sebenarnya cukup sulit namun kita memulai dengan briefing.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440009', 'score' => 5, 'answer' => 'Dalam penyelesaian tugas sebenarnya saya tidak pernah melebihi dari tenggat waktu yang diberikan, namun sebenarnya jika dibandingkan dengan teman-teman sekelompok saya akui mereka sangat cepat dalam mengerjakan sesuatu. Saya mengerjakan tugasnya saat pembelajaran berlangsung karena waktu pembelajaran di kampus cukup lama jadi saya memaksimalkannya selesai saat mata kuliah berlangsung, karena saat sampai di rumah biasanya malas untuk mengerjakannya kembali, kalaupun ada yang harus dikerjakan di rumah saya mengerjakannya sesuai prioritas dimana yang tenggatnya lebih dulu, atau melanjutkan yang sebelumnya saya kerjakan.']
+                ]
+            ],
+            [
+                'mahasiswa_id' => 'aa483968-7f8c-1c05-af8e-936823bf3bdc', // ARNOLD
+                
+                'status' => 'submitted',
+                'answers' => [
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440001', 'score' => 5, 'answer' => 'Awalnya memang saya kesulitan untuk mencari data karena tiktok sejatinya bukan media untuk mencari lowongan pekerjaan. Namun setelah menemukan kata kunci yang tepat, saya dapat mengumpulkan data dengan mudah.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440002', 'score' => 4, 'answer' => 'Terdapat beberapa data yang rancu sehingga sulit untuk dianalisis. Namun data-data yang keterangannya jelas dapat dengan mudah saya analisa dan saya masukkan ke hasil pekerjaan.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440003', 'score' => 5, 'answer' => 'Menurut saya struktur data yang kami pilih sudah cukup untuk mengakomodir informasi yang akan kami masukkan ke excel. Selain itu menurut saya, struktur data yang kami pilih juga sudah efektif dan efisien.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440004', 'score' => 4, 'answer' => 'Data-data yang saya inputkan ke excel sudah cukup lengkap sesuai dengan apa yang ada di poster. Namun di beberapa poster, ada beberapa informasi yang saya lewatkan karena saya tidak memahami data tersebut harus dimasukkan ke struktur data bagian apa.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440005', 'score' => 5, 'answer' => 'Awal dari proses penggabungan data di kelas kami diawali dengan mengumpulkan ketua kelompok dan notulen. Karena saya adalah ketua kelompok dari kelompok 6, saya ikut berperan aktif dan memberikan masukkan kepada kelompok yang lain tentang struktur data yang kelas kami pakai.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440006', 'score' => 4, 'answer' => 'Kelompok kami bekerjasama dengan baik. Di beberapa situasi yang membutuhkan backup anggota kelompok lain, pada saat itu juga saya dan anggota kelompok lain siap membackup dan membantu kesulitan anggota lain.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440007', 'score' => 4, 'answer' => 'Komunikasi saya dengan anggota lain sudah cukup baik. Walau terkadang ada saatnya komunikasi kami tidak berjalan dengan baik karena ada masalah atau perdebatan, namun kami bisa membuat komunikasi kami berjalan seperti biasa.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440008', 'score' => 3, 'answer' => 'Sebagai ketua kelompok, biasanya saya memberikan ide atau masukkan kepada anggota kelompok saya. Namun ada beberapa kondisi saya kurang bisa memberikan ide kepada anggota kelompok saya sehingga progress kelompok kami sering terhambat.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440009', 'score' => 4, 'answer' => 'Terkadang manajemen waktu saya cukup baik kadang pula cukup buruk. Saya sering lupa untuk menyelesaikan tugas saya sehingga saat dekat deadline/waktu pengumpulan, saya mengerjakannya dengan terburu-buru sehingga tugas yang saya kerjakan sedikit kurang maksimal. Namun ada kalanya saya menyelesaikan tugas jauh sebelum deadline sehingga saya bisa melihat progress anggota lain dan membackup anggota lain yang butuh bantuan.'],
+                ],
+            ],
+            [
+                'mahasiswa_id' => 'aa483968-7f8c-4c05-af8e-936823bf3bde', // ZAINANDHI
+                
+                'status' => 'submitted',
+                'answers' => [
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440001', 'score' => 5, 'answer' => 'Ada kesulitan dan ada pula kemudahannya. Kesulitannya adalah saat pencarian data mentah terkadang susah untuk mencari yang datanya lengkap sesuai kriteria data yang dibutuhkan oleh kelompok saya. Kemudahan dalam pengumpulannya adalah data atau loker yang saya dapat bisa cukup banyak atau melebihi dari target yang diperkirakan, karena saya mendapat tugas mencari loker pada platform Instagram, dan di Instagram tergolong cukup mudah untuk mencari iklan lowongan pekerjaan.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440002', 'score' => 4, 'answer' => 'Pertama saya melakukan pengumpulan data berupa link tautan ke sumber terlebih dahulu, lalu saya menganalisis apa saja data lowongan yang ada pada iklan lowongan pekerjaan, lalu saya meringkas informasinya apabila informasi dalam bentuk tulisan panjang, dan jika sudah berbentuk ringkas ataupun poin-poin maka saya akan langsung memasukkannya kedalam spreadsheet, selanjutnya saya menganalisis caption nya, bila mana mungkin ada informasi tambahan yang penting.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440003', 'score' => 5, 'answer' => 'Meski awalnya kelompok saya bingung dengan struktur data yang akan dipakai namun setelah banyak berdiskusi mengenai struktur data dan merasa bahwa struktur data yang kelompok kami pilih sudah relevan terhadap semua platform, kami langsung membuat spreadsheet untuk memasukkan struktur datanya. Struktur data yang kami pilih terdapat 14 data, yaitu No, Bidang Pekerjaan, Platform, Bidang, Tanggal Posting, Link, Nama Perusahaan, Tempat, Hard Skill, Pengajuan(berupa email dan link), Min Pendidikan, Jenis Kelamin, Min Pengalaman Kerja, dan Status.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440004', 'score' => 4, 'answer' => 'Saya memastikan data disaat saya melihat data yang ada pada iklan lowongan pekerjaan apakah data yang kelompok kami butuhkan ada pada iklan lowongan pekerjaan tersebut ada atau tidak, kalau dirasa kurang lengkap atau konteks isi data pada lowongan pekerjaan tidak sesuai dengan yang ada pada struktur data kelompok kami maka saya akan mencari kembali lowongan pekerjaan lain. Sehingga hal tersebut bisa menjadi data yang akurat untuk diinputkan pada spreadsheet.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440005', 'score' => 3, 'answer' => 'Peran saya adalah hanya berdiskusi dengan teman sekelompok mengenai struktur data kelompok lain ketika proses penggabungan struktur data untuk satu kelas dan hasil diskusi nya akan dikemukakan oleh satu orang entah itu ketua kelompok atau anggota lain dalam kelompok.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440006', 'score' => 4, 'answer' => 'Dengan cara berdiskusi atau bertanya secara langsung tentang apa yang tidak saya pahami. Dan selama pengerjaan proyek berlangsung kelompok saya berkomunikasi dengan cukup baik, sehingga mengurangi terjadinya miss komunikasi.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440007', 'score' => 4, 'answer' => 'Ketika saya melihat struktur data dari kelompok lain dan ada struktur data yang tidak saya pahami saya langsung bertanya kepada salah satu anggota kelompok tersebut, sehingga saya bisa paham dengan maksud dari struktur data yang mereka pakai. Dan hal tersebut menjadi bahan pertimbangan untuk saya terhadap struktur data kelompok saya, namun saya selalu berfikir bahwa struktur data yang kelompok saya pakai sudah relevan dengan seluruh platform yang dipakai pada pengumpulan data loker. Jadi saya tidak memberi usulan untuk penambahan struktur data pada kelompok saya.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440008', 'score' => 4, 'answer' => 'Contohnya adalah pada saat pengumpulan log book pertama kali kami merasa bingung dengan apa saja yang harus dikumpulkan, namun setelah berdiskusi kami sudah paham apa yang harus dikumpulkan pada saat itu. Jadi kunci dari kebingungan saat bekerja bersama di suatu tim adalah dengan cara berdiskusi.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440009', 'score' => 3, 'answer' => 'Biasanya saya hanya melakukan pencarian data mentah pada pertemuan di kampus, lalu di rumah saya menganalisis data data untuk dimasukkan ke spreadsheet dengan cara mencicil hingga tenggat waktu pengumpulan progress. Namun juga terkadang ada juga data yang langsung saya analisis dan saya masukkan di spreadsheet saat di kampus.'],
+                ],
+            ],
+            [
+                'mahasiswa_id' => 'aa483968-7f8c-7c05-af8e-936823bf0bdb', // TSINAN
+                
+                'status' => 'submitted',
+                'answers' => [
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440001', 'score' => 5, 'answer' => 'Dikarenakan saya bagian sosmed Facebook, ternyata di Facebook ada fitur seperti grup atau komunitas yang berisikan lowongan kerja IT. Lalu untuk kesulitan mungkin mencari yang sesuai dengan kebutuhan kelompok jadi saya harus melihat secara detail.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440002', 'score' => 5, 'answer' => 'Melihat seperti membutuhkan di bidang apa terlebih dahulu seperti front end, backend atau fullstack, lalu dilihat apakah sudah sesuai dengan struktur data yang dibutuhkan kelompok.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440003', 'score' => 5, 'answer' => 'Keputusan dalam membuat struktur data kelompok kami memiliki banyak kolom seperti bidang pekerjaan, nama perusahaan, minimal pendidikan, minimal pengalaman dan lain sebagainya. dan menurut saya itu sudah sesuai dengan kebutuhan kelompok.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440004', 'score' => 5, 'answer' => 'Saya menginputkan link dan bidang pekerjaan yang akan diinputkan ke excel, lalu melakukan analisis kembali terhadap iklan tersebut dengan cara mengunjungi kembali link tersebut. lalu menginputkan data sesuai struktur data kelompok ke excel.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440005', 'score' => 5, 'answer' => 'Peran saya menengahi ketika ada diskusi dikarenakan agar terfokus pada satu suara agar tidak terjadi miskomunikasi dan bagian interupsi semisalkan jika ada suatu argumen atau omongan yang tidak atomic. Masalah yang dihadapi sangat banyak terutama berada di struktur data yang berbeda, lalu bagaimana caranya menggabungkan struktur data tersebut agar menjadi sama dengan kelompok lain.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440006', 'score' => 5, 'answer' => 'Setiap proyek kami selalu melakukan koordinasi awal dan melakukan evaluasi terhadap proyek yang telah dikerjakan, lalu bertanya jika ada kebingungan atau kesulitan yang dihadapi di platform masing masing maupun ketika menginputkan data di excel. Lalu selalu bertanya progres sudah beres hingga mana dan berdiskusi jika ada arahan baru dari manajer.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440007', 'score' => 5, 'answer' => 'Selalu meminta perhatian agar terfokuskan kepada satu suara lalu menanyakan terkait masalah atau keputusan yang sedang dilalui. lalu mendiskusikan masalah atau keputusan tersebut bagaimana caranya agar bisa terselesaikan maupun terlaksana di proyek kami itu.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440008', 'score' => 5, 'answer' => 'Ketika ada masalah seperti ada perdebatan, saya selalu menjadi penengah atau bagian interupsi. lalu ketika saya mengalami kehambatan dalam input excel saya melakukan analisis bagaimana caranya menginput data excel secara cepat dan tepat agar mengefisienkan waktu dan saya melakukan seperti menginputkan terlebih dahulu link, nama perusahaan dan bidang pekerjaannya.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440009', 'score' => 5, 'answer' => 'Saya biasanya melakukan tugas dengan deadline terdekat lalu biasanya ketika ada 2 tugas yang sama deadlinenya saya melakukan tugas yang menurut saya lebih mudah terlebih dahulu agar tidak buang buang waktu.']
+                ],
+            ],
+            [
+                'mahasiswa_id' => 'aa483968-7f8c-4c05-af8e-936823bf1bds', //HASBI
+                
+                'status' => 'submitted',
+                'answers' => [
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440001', 'score' => 4, 'answer' => 'Karena saya dan kelompok saya hanya mengumpulkan 50 data lowongan pekerjaan dan 10 data untuk back-up, sedangkan kelompok lain ada yang jauh lebih dari 60 data per-orangnya. Untuk kesulitan tidak ada hanya saja kami sepakat untuk mengerjakan 60 data saja per-orangnya.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440002', 'score' => 4, 'answer' => 'Saya bertugas untuk mencari data lowongan kerja di LinkedIn, cara saya untuk menganalisis isi iklan lowongan adalah dengan membaca setiap detail detail yang dibutuhkan di struktur data kelompok kami seperti nama pekerjaan, alamat perusahaan, hard skill, minimal pendidikan, dan lain-lain. Di LinkedIn itu biasanya isi dari iklan lowongan itu berbahasa inggris maka saya perlu memahami isi jika ada bahasa inggris yang kurang saya pahami dari iklan lowongan tersebut dengan cara mentranslatekannya.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440003', 'score' => 5, 'answer' => 'Saya puas dengan struktur data yang diambil oleh kelompok kami karena struktur datanya banyak dan bisa dibilang lengkap dan itu rata-rata memuat apa yang dibutuhkan oleh sang pencari lowongan pekerjaan.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440004', 'score' => 4, 'answer' => 'Saya teliti dalam menginputkan data ke excel, saya seringkali mengecek ulang data data yang saya inputkan ke excel.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440005', 'score' => 4, 'answer' => 'Peran saya dalam proses penggabungan data dengan kelompok lain yaitu mengusulkan struktur data yang dikiranya penting, dan mendengarkan usulan dari kelompok lain.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440006', 'score' => 5, 'answer' => 'Sebelum mata kuliah dimulai/ saat mata kuliah baru dimulai, kami selalu melakukan koordinasi awal untuk membahas apa yang harus kami lakukan untuk kedepannya.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440007', 'score' => 4, 'answer' => 'Saya inisiatif untuk membahas masalah tersebut bersama kelompok saya untuk menentukan siapa yang membuat presentasi, membuat dokumen, dan siapa yang presentasi.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440008', 'score' => 4, 'answer' => 'Saya biasanya bertanya kepada anggota kelompok saya maupun dengan anggota kelompok lain jika ada tantangan teknis yang saya tidak mengerti.'],
+                    ['question_id' => '550e8400-e29b-41d4-a716-446655440009', 'score' => 4, 'answer' => 'Setelah pulang kuliah atau ketika ada waktu luang biasanya saya mengerjakan tugas yang belum selesai, saya mengerjakan tugas jauh-jauh hari sebelum deadlinenya.']
+                ],
+            ],
 
         ];
 
@@ -313,7 +489,7 @@ class AnswerSeeder extends Seeder
                 DB::table('answers')->insert([
                     'id' => Str::uuid(),
                     'mahasiswa_id' => $data['mahasiswa_id'],
-                    'dosen_id' => $data['dosen_id'],
+                    // 'dosen_id' => $data['dosen_id'],
                     'question_id' => $answer['question_id'],
                     'answer' => $answer['answer'],
                     'score' => $answer['score'],

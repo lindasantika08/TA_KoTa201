@@ -562,9 +562,15 @@ class ReportController extends Controller
                 ]);
             });
 
+            // Sort students by nilai_total (descending) and then by selisih (ascending)
+        $sortedStudentsData = $studentsData->sortBy([
+            ['nilai_total', 'desc'],
+            ['selisih', 'asc']
+        ])->values();
+
             return response()->json([
                 'success' => true,
-                'students' => $studentsData,
+                'students' => $sortedStudentsData,
                 'ranges' => $ranges
             ]);
         } catch (\Exception $e) {
