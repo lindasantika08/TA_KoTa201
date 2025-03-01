@@ -103,7 +103,13 @@ const handleDropdownChange = (event) => {
 
 const handleReportKelompokDetail = (kelompok) => {
     if (!selectedOption.value) return;
-    window.location.href = `/dosen/kelompok/report-detail?batch_year=${selectedOption.value.batch_year}&project_name=${selectedOption.value.project_name}&kelompok=${kelompok.nama_kelompok}`;
+
+    // Get the first member's class information since all members in the same group and class
+    const firstMember = kelompok.anggota[0];
+    const classId = firstMember?.class_id;
+
+    console.log("firstmember :", kelompok.anggota[0]);
+    window.location.href = `/dosen/kelompok/report-detail?batch_year=${selectedOption.value.batch_year}&project_name=${selectedOption.value.project_name}&kelompok=${kelompok.nama_kelompok}&class_id=${classId}`;
 };
 
 const fetchStudentData = async () => {

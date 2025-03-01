@@ -70,7 +70,7 @@ class ReportController extends Controller
             $query->where('batch_year', $request->batch_year)
                 ->where('project_name', $request->project_name);
         })
-            ->with(['mahasiswa.user']) // Eager load relasi mahasiswa dan user
+            ->with(['mahasiswa.user', 'mahasiswa.classRoom']) // Eager load relasi mahasiswa, user, dan class
             ->get(['id', 'group', 'mahasiswa_id']);
 
         // Jika tidak ada data, beri respon kosong
@@ -81,64 +81,58 @@ class ReportController extends Controller
             ]);
         }
 
-        // Group data berdasarkan nama kelompok (group)
-        $groupedKelompok = $kelompokData->groupBy('group');
+        // Group data berdasarkan nama kelompok dan class_id
+        $groupedKelompok = collect();
 
-        // Format data kelompok dan merge jika ada kelompok yang sama
-        $kelompokList = $groupedKelompok->map(function ($group, $kelompokName) {
-            // Ambil ID pertama dari kelompok
-            $kelompok = [
-                'id' => $group->pluck('id')->first(),
-                'nama_kelompok' => $kelompokName,
-                'anggota' => [],
-            ];
+        // Pertama, kelompokkan berdasarkan nama kelompok
+        $tempGroups = $kelompokData->groupBy('group');
 
-            // Ambil semua anggota dengan mahasiswa_id terkait
-            foreach ($group as $item) {
-                // Pastikan mahasiswa dan user ada
-                if ($item->mahasiswa && $item->mahasiswa->user) {
-                    $kelompok['anggota'][] = [
-                        'mahasiswa_id' => $item->mahasiswa_id,
-                        'name' => $item->mahasiswa->user->name, // Ambil nama dari relasi user
-                        'nim' => $item->mahasiswa->nim, // Optional: tambahkan NIM jika diperlukan
-                    ];
+        foreach ($tempGroups as $groupName => $members) {
+            $byClass = $members->groupBy(function ($item) {
+                return $item->mahasiswa->class_id ?? 'unknown';
+            });
+
+            foreach ($byClass as $classId => $classMembers) {
+                $firstMember = $classMembers->first();
+                $kelompok = [
+                    'id' => $firstMember->id,
+                    'nama_kelompok' => $groupName,
+                    'class_id' => $classId, // Add this line
+                    'anggota' => $classMembers->map(function ($item) {
+                        return [
+                            'mahasiswa_id' => $item->mahasiswa_id,
+                            'name' => $item->mahasiswa->user->name ?? '',
+                            'nim' => $item->mahasiswa->nim ?? '',
+                            'class_id' => $item->mahasiswa->class_id,
+                        ];
+                    })->filter()->values()->all()
+                ];
+
+                if (!empty($kelompok['anggota'])) {
+                    $groupedKelompok->push($kelompok);
                 }
             }
-
-            return $kelompok;
-        });
+        }
 
         return response()->json([
             'success' => true,
-            'kelompok' => $kelompokList,
+            'kelompok' => $groupedKelompok->values(),
         ]);
     }
 
 
     public function getScoreKelompok(Request $request)
     {
-        // Ambil parameter dari query string
-        $tahunAjaran = $request->query('batch_year');
-        $namaProyek = $request->query('project_name');
-        $kelompok = $request->query('kelompok');
-
-        // Log data untuk melihat apakah parameter diterima
-        Log::info('Data diterima di controller:', [
-            'tahun_ajaran' => $tahunAjaran,
-            'nama_proyek' => $namaProyek,
-            'kelompok' => $kelompok,
+        // Validate parameters
+        $request->validate([
+            'batch_year' => 'required|string',
+            'project_name' => 'required|string',
+            'kelompok' => 'required|string',
+            'class_id' => 'required' // Ensure class_id is validated
         ]);
 
-        // Validasi input
-        if (!$tahunAjaran || !$namaProyek || !$kelompok) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Parameter tidak lengkap'
-            ], 400);
-        }
-
-        // Mencari project_id berdasarkan nama proyek
-        $project = Project::where('project_name', $namaProyek)->first();
+        // Find the project by name
+        $project = Project::where('project_name', $request->project_name)->first();
 
         if (!$project) {
             return response()->json([
@@ -147,11 +141,14 @@ class ReportController extends Controller
             ], 404);
         }
 
-        // Ambil data kelompok dengan relasi
-        $groupMembers = Group::with(['mahasiswa', 'project'])
-            ->where('batch_year', $tahunAjaran)
+        // Fetch group members filtered by class_id
+        $groupMembers = Group::with(['mahasiswa.classRoom', 'mahasiswa.user'])
+            ->whereHas('mahasiswa', function ($query) use ($request) {
+                $query->where('class_id', $request->class_id);
+            })
+            ->where('batch_year', $request->batch_year)
             ->where('project_id', $project->id)
-            ->where('group', $kelompok)
+            ->where('group', $request->kelompok)
             ->get();
 
         if ($groupMembers->isEmpty()) {
@@ -161,16 +158,34 @@ class ReportController extends Controller
             ], 404);
         }
 
+        // Format the data for the response
+        $formattedGroup = [
+            'class_id' => $request->class_id,
+            'class_name' => $groupMembers->first()->mahasiswa->classRoom->class_name ?? 'Unknown Class',
+            'members' => $groupMembers->map(function ($member) {
+                return [
+                    'id' => $member->id,
+                    'mahasiswa_id' => $member->mahasiswa_id,
+                    'name' => $member->mahasiswa->user->name ?? '',
+                    'nim' => $member->mahasiswa->nim ?? '',
+                    'class_id' => $member->mahasiswa->class_id,
+                    'class_name' => $member->mahasiswa->classRoom->class_name ?? 'Unknown Class',
+                    'group' => $member->group
+                ];
+            })->values()->all() // Ensure values are reset
+        ];
+
         return Inertia::render('Dosen/ReportScore', [
-            'batch_year' => $tahunAjaran,
-            'project_name' => $namaProyek,
-            'kelompok' => $kelompok,
+            'batch_year' => $request->batch_year,
+            'project_name' => $request->project_name,
+            'kelompok' => $request->kelompok,
             'initialData' => [
-                'groupMembers' => $groupMembers,
+                'groupMembers' => [$formattedGroup], // Wrap in array for single group
                 'project' => $project
             ]
         ]);
     }
+
 
     public function getKelompokAnswers(Request $request)
     {
