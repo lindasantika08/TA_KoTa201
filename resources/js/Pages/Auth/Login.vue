@@ -45,21 +45,14 @@ export default {
                         "user_data",
                         JSON.stringify(response.data.user)
                     );
-                    // Set flag need_password_change - PERBAIKAN DI SINI
-                    // Tambahkan pengecekan pertama kali login atau password default
-                    const isFirstLogin =
-                        response.data.user.first_login || false;
-                    const isDefaultPassword =
-                        response.data.user.is_default_password || false;
-
-                    if (
-                        isFirstLogin ||
-                        isDefaultPassword ||
-                        response.data.need_password_change
-                    ) {
-                        console.log("Setting need_password_change flag"); // Debug
-                        localStorage.setItem("need_password_change", "true");
-                    }
+                    // Cek kondisi need_password_change dari response
+    if (response.data.need_password_change) {
+        console.log("Setting need_password_change flag"); // Debug
+        localStorage.setItem("need_password_change", "true");
+    } else {
+        // Pastikan untuk menghapus item jika tidak perlu ganti password
+        localStorage.removeItem("need_password_change");
+    }
 
                     axios.defaults.headers.common[
                         "Authorization"

@@ -84,7 +84,7 @@ export default {
     this.fetchProjectData();
     this.fetchSelfAssessmentStatus();
     this.fetchPeerAssessmentDetails();
-    this.initializePasswordCheck();
+    this.checkPasswordChangeStatus();
   },
   beforeUnmount() {
     if (this.toastTimeout) {
@@ -100,43 +100,64 @@ export default {
     },
   },
   methods: {
-    initializePasswordCheck() {
-      console.log("Initializing password check..."); // Debug
-
-      // Ambil data user dari localStorage
-      const userData = localStorage.getItem("user_data");
-      const needPasswordChange = localStorage.getItem("need_password_change");
-
-      console.log("User Data:", userData); // Debug
-      console.log("Need Password Change:", needPasswordChange); // Debug
-
-      if (needPasswordChange === "true") {
-        console.log("Showing password change notification"); // Debug
-        this.showChangePasswordToast = true;
-        this.needPasswordChange = true;
-
-        // Auto-hide setelah 10 detik
-        this.toastTimeout = setTimeout(() => {
-          this.showChangePasswordToast = false;
-        }, 10000);
-      }
-    },
     checkPasswordChangeStatus() {
-      // Tambahkan log untuk debugging
-      console.log("Checking password change status...");
+      console.log('Checking password change status...'); // Debugging
+
+      // Cek apakah need_password_change ada di localStorage
       const needPasswordChange = localStorage.getItem("need_password_change");
-      console.log("Need password change value:", needPasswordChange);
+      console.log('Need password change from localStorage:', needPasswordChange); // Debug
 
       if (needPasswordChange === "true") {
-        console.log("Setting up password change notification...");
+        console.log('Setting up password change notification from localStorage'); // Debug
         this.showChangePasswordToast = true;
         this.needPasswordChange = true;
 
         // Auto-hide toast after 10 seconds
         this.toastTimeout = setTimeout(() => {
-          console.log("Hiding toast after timeout");
+          console.log('Hiding toast after timeout');
           this.showChangePasswordToast = false;
         }, 10000);
+      } else {
+        // Jika tidak ada di localStorage atau false, cek status user dari API
+        this.checkUserStatus();
+      }
+    },
+
+    async checkUserStatus() {
+      console.log('Checking user status from API...'); // Debugging
+      try {
+        const response = await axios.get("/api/user/status");
+        console.log('User status response:', response.data);
+
+        // Pastikan properti change_password ada
+        if (response.data.hasOwnProperty('change_password')) {
+          console.log("Raw change_password value from API:", response.data.change_password);
+
+          // Perbaiki logika penentuan need_password_change
+          const needPasswordChange = !response.data.change_password;
+
+          if (needPasswordChange) {
+            console.log('User needs to change password');
+            this.showChangePasswordToast = true;
+            this.needPasswordChange = true;
+
+            // Simpan ke localStorage agar tetap konsisten
+            localStorage.setItem("need_password_change", "true");
+
+            // Auto-hide toast after 10 seconds
+            this.toastTimeout = setTimeout(() => {
+              console.log('Hiding toast after timeout');
+              this.showChangePasswordToast = false;
+            }, 10000);
+          } else {
+            console.log('User does not need to change password');
+            localStorage.removeItem("need_password_change");
+          }
+        } else {
+          console.error("API response missing change_password field");
+        }
+      } catch (error) {
+        console.error("Error checking user status:", error);
       }
     },
     fetchProjectData() {

@@ -610,22 +610,43 @@ class AnswerController extends Controller
         try {
             $batchYear = $request->query('batch_year');
             $projectId = $request->query('project_id');
+            $nimFilter = $request->query('nim'); // New query parameter for NIM filtering
+            $kelasFilter = $request->query('kelas'); // New query parameter for class filtering
 
-            // Find groups for specific project with mahasiswa loaded
-            $groups = Group::where('batch_year', $batchYear)
+            // Base query for groups
+            $groupsQuery = Group::where('batch_year', $batchYear)
                 ->where('project_id', $projectId)
-                ->with('mahasiswa.user') // Eager load mahasiswa and user
-                ->get();
+                ->with(['mahasiswa.user', 'mahasiswa.classRoom']); // Eager load relationships
+
+            // Apply NIM filter if provided
+            if ($nimFilter) {
+                $groupsQuery->whereHas('mahasiswa', function ($query) use ($nimFilter) {
+                    $query->where('nim', 'like', "%{$nimFilter}%");
+                });
+            }
+
+            // Apply class filter if provided
+            if ($kelasFilter) {
+                $groupsQuery->whereHas('mahasiswa.classRoom', function ($query) use ($kelasFilter) {
+                    $query->where('class_name', 'like', "%{$kelasFilter}%");
+                });
+            }
+
+            // Execute the query
+            $groups = $groupsQuery->get();
+
+            // Get mahasiswa IDs from filtered groups
+            $mahasiswaIds = $groups->pluck('mahasiswa_id')->toArray();
 
             $usersAlreadyFilled = Answers::whereHas('question', function ($query) use ($batchYear, $projectId) {
                 $query->where('batch_year', $batchYear)
                     ->where('project_id', $projectId);
             })
-                ->whereIn('mahasiswa_id', $groups->pluck('mahasiswa_id'))
+                ->whereIn('mahasiswa_id', $mahasiswaIds)
                 ->distinct('mahasiswa_id')
                 ->count();
 
-            // Prepare details of users who haven't submitted
+            // Prepare details of users from filtered groups
             $submissionStatus = $groups->map(function ($item) use ($batchYear, $projectId) {
                 $isSubmitted = Answers::whereHas('question', function ($query) use ($batchYear, $projectId) {
                     $query->where('batch_year', $batchYear)
@@ -635,8 +656,11 @@ class AnswerController extends Controller
                     ->exists();
 
                 return [
+                    'id' => $item->mahasiswa_id,
                     'index' => $item->id,
-                    'mahasiswaName' => optional($item->mahasiswa->user)->name ?? 'Unknown', // Safely retrieve name
+                    'nim' => optional($item->mahasiswa)->nim ?? 'N/A',
+                    'mahasiswaName' => optional($item->mahasiswa->user)->name ?? 'Unknown',
+                    'kelas' => optional($item->mahasiswa->classRoom)->class_name ?? 'N/A',
                     'status' => $isSubmitted ? 'submitted' : 'unsubmitted'
                 ];
             });

@@ -29,44 +29,44 @@ class PeerAssessment extends Controller
     {
         try {
             $user = auth()->user();
-            
+
             $mahasiswa = Mahasiswa::with(['user', 'classRoom'])
                 ->where('user_id', $user->id)
                 ->first();
-            
+
             if (!$mahasiswa) {
                 return response()->json([
                     'message' => 'Data mahasiswa tidak ditemukan'
                 ], 404);
             }
-            
+
             // Ambil parameter dari query string atau gunakan null jika tidak ada
             $batchYear = request()->query('batch_year');
             $projectName = request()->query('project_name');
-            
+
             Log::info('User Info Peer Request', [
                 'user_id' => $user->id,
                 'batch_year' => $batchYear,
                 'project_name' => $projectName
             ]);
-            
+
             // Cari group yang sesuai dengan batch_year dan project_name
             $specificGroup = Group::with('project')
                 ->where('mahasiswa_id', $mahasiswa->id)
                 ->when($batchYear && $projectName, function ($query) use ($batchYear, $projectName) {
-                    return $query->whereHas('project', function($q) use ($batchYear, $projectName) {
+                    return $query->whereHas('project', function ($q) use ($batchYear, $projectName) {
                         $q->where('batch_year', $batchYear)
-                          ->where('project_name', $projectName);
+                            ->where('project_name', $projectName);
                     });
                 })
                 ->first();
-            
+
             // Jika tidak ditemukan group spesifik, cari group terakhir
             $latestGroup = $specificGroup ?? Group::with('project')
                 ->where('mahasiswa_id', $mahasiswa->id)
                 ->orderBy('created_at', 'desc')
                 ->first();
-            
+
             $responseData = [
                 'id' => $mahasiswa->id,
                 'nim' => $mahasiswa->nim,
@@ -76,7 +76,7 @@ class PeerAssessment extends Controller
                 'project_name' => $latestGroup && $latestGroup->project ? $latestGroup->project->project_name : null,
                 'batch_year' => $latestGroup && $latestGroup->project ? $latestGroup->project->batch_year : null
             ];
-            
+
             return response()->json($responseData);
         } catch (\Exception $e) {
             Log::error('Error in getUserInfoPeer: ' . $e->getMessage());
@@ -114,33 +114,76 @@ class PeerAssessment extends Controller
             return response()->json(['message' => 'Group tidak ditemukan'], 404);
         }
 
-        $peers = Group::with(['mahasiswa.user'])
+        // Dapatkan semua pertanyaan assessment untuk project ini
+        $assessmentQuestions = Assessment::where('batch_year', $tahunAjaran)
+            ->where('project_id', $project->id)
+            ->where('type', 'peerAssessment')
+            ->get();
+
+        if ($assessmentQuestions->isEmpty()) {
+            return response()->json(['message' => 'Tidak ada pertanyaan assessment untuk project ini'], 404);
+        }
+
+        // Dapatkan semua ID pertanyaan
+        $questionIds = $assessmentQuestions->pluck('id')->toArray();
+        $totalQuestions = count($questionIds);
+
+        // Dapatkan semua peer dalam group yang sama, kecuali mahasiswa yang login
+        $allPeers = Group::with(['mahasiswa.user'])
             ->where('group', $userGroup->group)
             ->where('batch_year', $tahunAjaran)
             ->where('project_id', $project->id)
             ->where('mahasiswa_id', '!=', $mahasiswaId)
-            ->get()
-            ->map(function ($group) {
-                return [
-                    'id' => $group->mahasiswa->user->id,
-                    'mahasiswa_id' => $group->mahasiswa_id,
-                    'name' => $group->mahasiswa->user->name,
-                    'nim' => $group->mahasiswa->nim,
-                    'user' => [
-                        'id' => $group->mahasiswa->user->id,
-                        'name' => $group->mahasiswa->user->name
-                    ]
-                ];
-            });
+            ->get();
 
-        return response()->json($peers);
+        $result = [];
+
+        // Untuk setiap peer, periksa apakah semua pertanyaan sudah dijawab
+        foreach ($allPeers as $group) {
+            $peerId = $group->mahasiswa_id;
+
+            // Dapatkan jawaban yang sudah diisi oleh mahasiswa untuk peer ini
+            $answeredQuestions = AnswersPeer::where('mahasiswa_id', $mahasiswaId)
+                ->where('peer_id', $peerId)
+                ->whereIn('question_id', $questionIds)
+                ->pluck('question_id')
+                ->toArray();
+
+            // Hitung jumlah jawaban yang sudah diisi
+            $answeredCount = count($answeredQuestions);
+
+            // Pastikan apakah benar-benar perlu ditampilkan
+            // Jika jumlah pertanyaan yang terjawab kurang dari total pertanyaan
+            if ($answeredCount < $totalQuestions) {
+                // Verifikasi status peer review yang belum selesai
+                $missingQuestionIds = array_diff($questionIds, $answeredQuestions);
+
+                if (!empty($missingQuestionIds)) {
+                    $result[] = [
+                        'id' => $group->mahasiswa->user->id,
+                        'mahasiswa_id' => $group->mahasiswa_id,
+                        'name' => $group->mahasiswa->user->name,
+                        'nim' => $group->mahasiswa->nim,
+                        'user' => [
+                            'id' => $group->mahasiswa->user->id,
+                            'name' => $group->mahasiswa->user->name
+                        ],
+                        'answered_count' => $answeredCount,
+                        'total_questions' => $totalQuestions,
+                        'missing_questions' => count($missingQuestionIds)
+                    ];
+                }
+            }
+        }
+
+        return response()->json($result);
     }
 
     public function searchByNim(Request $request)
     {
         try {
             $nim = $request->query('nim');
-            
+
             $mahasiswa = Mahasiswa::where('nim', $nim)->first();
 
             if (!$mahasiswa) {
@@ -151,7 +194,6 @@ class PeerAssessment extends Controller
                 'mahasiswa_id' => $mahasiswa->id,
                 'name' => $mahasiswa->user->name
             ]);
-
         } catch (\Exception $e) {
             Log::error('Error in searchByNim: ' . $e->getMessage());
             return response()->json([
@@ -196,7 +238,7 @@ class PeerAssessment extends Controller
                     'assessment.id',
                     'assessment.type',
                     'assessment.question',
-                    'type_criteria.aspect',       
+                    'type_criteria.aspect',
                     'type_criteria.criteria',
                     'type_criteria.bobot_1',
                     'type_criteria.bobot_2',
@@ -232,7 +274,7 @@ class PeerAssessment extends Controller
                 ->where('mahasiswa_id', '!=', $mahasiswa->id)
                 ->with(['mahasiswa.user:id,name'])
                 ->get()
-                ->map(function($member) {
+                ->map(function ($member) {
                     return [
                         'mahasiswa_id' => $member->mahasiswa_id,
                         'name' => $member->mahasiswa->user->name
@@ -256,12 +298,11 @@ class PeerAssessment extends Controller
             Log::info('Final response:', $response);
 
             return response()->json($response);
-
         } catch (\Exception $e) {
             Log::error('Error in getQuestionsByProject: ' . $e->getMessage(), [
                 'trace' => $e->getTrace()
             ]);
-            
+
             return response()->json([
                 'status' => 'error',
                 'message' => 'Terjadi kesalahan saat mengambil data pertanyaan',
@@ -290,7 +331,7 @@ class PeerAssessment extends Controller
             }
 
             $mahasiswaGroup = Group::where('mahasiswa_id', $validated['mahasiswa_id'])
-                ->where('project_id', function($query) use ($validated) {
+                ->where('project_id', function ($query) use ($validated) {
                     $query->select('project_id')
                         ->from('assessment')
                         ->where('id', $validated['question_id']);
@@ -373,7 +414,7 @@ class PeerAssessment extends Controller
 
         try {
             DB::beginTransaction();
-            
+
             foreach ($request->answers as $answerData) {
                 AnswersPeer::updateOrCreate(
                     [
@@ -390,15 +431,14 @@ class PeerAssessment extends Controller
             }
 
             DB::commit();
-            
+
             return response()->json([
                 'message' => 'Answers saved successfully',
                 'status' => 'success'
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             return response()->json([
                 'message' => 'Failed to save answers',
                 'error' => $e->getMessage()
@@ -428,7 +468,6 @@ class PeerAssessment extends Controller
             ])->first();
 
             return response()->json($answer);
-
         } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
@@ -466,7 +505,6 @@ class PeerAssessment extends Controller
             ])->get();
 
             return response()->json($answers);
-
         } catch (\Exception $e) {
             Log::error('Error in getExistingPeerAnswers:', [
                 'message' => $e->getMessage(),
@@ -504,7 +542,7 @@ class PeerAssessment extends Controller
             }
 
             $answeredPeers = AnswersPeer::where('mahasiswa_id', $mahasiswa->id)
-                ->whereIn('peer_id', function($query) use ($userGroup, $request) {
+                ->whereIn('peer_id', function ($query) use ($userGroup, $request) {
                     $query->select('mahasiswa_id')
                         ->from('group')
                         ->where('group', $userGroup)
@@ -517,7 +555,6 @@ class PeerAssessment extends Controller
             return response()->json([
                 'answered_peers' => $answeredPeers
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Error fetching answered peers',
