@@ -35,6 +35,10 @@ export default {
         namaProyek: {
             type: String,
             default: ''
+        },
+        assessment_order: {
+            type: Number,
+            required: true
         }
     },
 
@@ -107,7 +111,8 @@ export default {
 
                 const params = {
                     batch_year: this.tahunAjaran,
-                    project_name: this.namaProyek
+                    project_name: this.namaProyek,
+                    assessment_order: this.assessment_order
                 };
 
                 const response = await axios.get('/api/questions-peer-dosen', { params });

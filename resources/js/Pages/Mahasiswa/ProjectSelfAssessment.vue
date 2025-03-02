@@ -37,35 +37,38 @@ export default {
   },
   methods: {
     handleAnswer(item) {
-    const batch_year = item.batch_year;
-    const project_name = item.project_name;
+      const batch_year = item.batch_year;
+      const project_name = item.project_name;
+      const assessment_order = item.assessment_order || 1; 
 
-    console.log('Batch Year:', batch_year);
-    console.log('Project Name:', project_name);
+      console.log('Batch Year:', batch_year);
+      console.log('Project Name:', project_name);
+      console.log('Assessment Order:', assessment_order);
 
-    router.visit(`/mahasiswa/assessment/self-assessment`, {
+      router.visit(`/mahasiswa/assessment/self-assessment`, {
         method: 'get',
         data: {
-            batch_year: batch_year,
-            project_name: project_name
+          batch_year: batch_year,
+          project_name: project_name,
+          assessment_order: assessment_order
         },
         preserveState: true,
         onError: (error) => {
-            console.error('Navigation error:', error);
+          console.error('Navigation error:', error);
         }
-    });
-  },
+      });
+    },
 
-  handleDetail(item) {
-    router.visit(`/mahasiswa/peer-assessment/self-detail`, {
+    handleDetail(item) {
+      router.visit(`/mahasiswa/peer-assessment/self-detail`, {
         method: 'get',
         data: {
-            batch_year: item.batch_year,
-            project_name: item.project_name
+          batch_year: item.batch_year,
+          project_name: item.project_name
         },
         preserveState: true
-    });
-},
+      });
+    },
 
   },
   mounted() {
@@ -75,8 +78,8 @@ export default {
           id: item.id,
           no: index + 1,
           batch_year: item.batch_year,
-          project_name: item.project_name, 
-          status: item.status, 
+          project_name: item.project_name,
+          status: item.status,
           date: dayjs(item.created_at).format('DD MMMM YYYY HH:mm'),
           total_questions: item.total_questions,
         }));

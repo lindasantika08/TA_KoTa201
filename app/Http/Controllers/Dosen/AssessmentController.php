@@ -17,8 +17,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Exports\AssessmentExport;
 use Maatwebsite\Excel\Facades\Excel;
-use Maatwebsite\Excel\Excel as ExcelType; // Jika perlu menggunakan tipe Excel
-use PhpOffice\PhpSpreadsheet\IOFactory; // Jika kamu perlu menggunakan IOFactory secara langsung
+use Maatwebsite\Excel\Excel as ExcelType;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 
 
@@ -111,6 +111,31 @@ class AssessmentController extends Controller
             $sheet1 = $spreadsheet->getSheet(0);
             $highestRow1 = $sheet1->getHighestRow();
 
+            $projectsInImport = [];
+
+            for ($row = 2; $row <= $highestRow1; $row++) {
+                $batchYear = trim($sheet1->getCellByColumnAndRow(2, $row)->getValue());
+                $projectName = trim($sheet1->getCellByColumnAndRow(3, $row)->getValue());
+
+                if (!empty($batchYear) && !empty($projectName)) {
+                    $project = Project::firstOrCreate(
+                        [
+                            'batch_year' => $batchYear,
+                            'project_name' => $projectName
+                        ]
+                    );
+
+                    $projectsInImport[$project->id] = true;
+                }
+            }
+
+            $projectOrders = [];
+            foreach (array_keys($projectsInImport) as $projectId) {
+                $maxOrder = Assessment::where('project_id', $projectId)
+                    ->max('assessment_order') ?? 0;
+                $projectOrders[$projectId] = $maxOrder + 1;
+            }
+
             for ($row = 2; $row <= $highestRow1; $row++) {
                 $batchYear = trim($sheet1->getCellByColumnAndRow(2, $row)->getValue());
                 $projectName = trim($sheet1->getCellByColumnAndRow(3, $row)->getValue());
@@ -121,41 +146,25 @@ class AssessmentController extends Controller
                 $criteria = trim($sheet1->getCellByColumnAndRow(8, $row)->getValue());
 
                 if (!empty($batchYear) && !empty($projectName)) {
-                    $project = Project::firstOrCreate(
-                        [
-                            'batch_year' => $batchYear,
-                            'project_name' => $projectName
-                        ]
-                    );
+                    $project = Project::where('batch_year', $batchYear)
+                        ->where('project_name', $projectName)
+                        ->first();
 
                     $typeCriteria = TypeCriteria::where('aspect', $aspect)
                         ->where('criteria', $criteria)
                         ->first();
 
-                    if ($typeCriteria) {
-                        $assessment = Assessment::where('batch_year', $batchYear)
-                            ->where('project_id', $project->id)
-                            ->where('question', $question)
-                            ->where('criteria_id', $typeCriteria->id)
-                            ->first();
-
-                        if ($assessment) {
-                            $assessment->update([
-                                'type' => $type,
-                                'end_date' => $request->end_date,
-                                'skill_type' => $skilltype
-                            ]);
-                        } else {
-                            Assessment::create([
-                                'batch_year' => $batchYear,
-                                'project_id' => $project->id,
-                                'type' => $type,
-                                'question' => $question,
-                                'criteria_id' => $typeCriteria->id,
-                                'end_date' => $request->end_date,
-                                'skill_type' => $skilltype
-                            ]);
-                        }
+                    if ($typeCriteria && $project) {
+                        Assessment::create([
+                            'batch_year' => $batchYear,
+                            'project_id' => $project->id,
+                            'type' => $type,
+                            'question' => $question,
+                            'criteria_id' => $typeCriteria->id,
+                            'end_date' => $request->end_date,
+                            'skill_type' => $skilltype,
+                            'assessment_order' => $projectOrders[$project->id]
+                        ]);
                     }
                 }
             }
@@ -172,8 +181,6 @@ class AssessmentController extends Controller
         }
     }
 
-
-
     public function getData()
     {
         $assessments = Assessment::all();
@@ -184,6 +191,7 @@ class AssessmentController extends Controller
     {
         $batchYear = $request->query('batch_year');
         $projectName = $request->query('project_name');
+        $assessmentOrder = $request->query('assessment_order', 1);
 
         $assessments = Assessment::with('typeCriteria')
             ->select(
@@ -192,7 +200,8 @@ class AssessmentController extends Controller
                 'assessment.question',
                 'assessment.criteria_id',
                 'assessment.batch_year',
-                'assessment.project_id'
+                'assessment.project_id',
+                'assessment.assessment_order'
             )
             ->join('project', 'assessment.project_id', '=', 'project.id')
             ->when($batchYear, function ($query, $batchYear) {
@@ -202,12 +211,23 @@ class AssessmentController extends Controller
                 $query->where('project.project_name', $projectName);
             })
             ->where('assessment.type', 'selfAssessment')
+            ->where('assessment.assessment_order', $assessmentOrder)
+            ->orderBy('assessment.id', 'asc')
             ->get();
+
+        $totalOrders = Assessment::join('project', 'assessment.project_id', '=', 'project.id')
+            ->where('assessment.batch_year', $batchYear)
+            ->where('project.project_name', $projectName)
+            ->where('assessment.type', 'selfAssessment')
+            ->distinct('assessment_order')
+            ->count('assessment_order');
 
         return Inertia::render('Dosen/SelfAssessment', [
             'assessments' => $assessments,
             'batchYear' => $batchYear,
-            'projectName' => $projectName
+            'projectName' => $projectName,
+            'currentOrder' => (int)$assessmentOrder,
+            'totalOrders' => $totalOrders
         ]);
     }
 

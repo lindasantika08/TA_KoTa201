@@ -15,6 +15,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->string('batch_year');
             $table->foreignUuid('project_id')->constrained('project');
+            $table->integer('assessment_order');
             $table->char('type', 255);
             $table->string('question', 255);
             $table->foreignUuid('criteria_id')->constrained('type_criteria');

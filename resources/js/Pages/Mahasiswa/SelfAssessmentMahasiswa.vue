@@ -35,6 +35,10 @@ export default {
         project_name: {
             type: String,
             default: ''
+        },
+        assessment_order: {
+            type: Number,
+            required: true
         }
     },
 
@@ -102,7 +106,8 @@ export default {
                 const response = await axios.get('/api/questions', {
                     params: {
                         batch_year: this.batch_year,
-                        project_name: this.project_name
+                        project_name: this.project_name,
+                        assessment_order: this.assessment_order
                     }
                 });
 

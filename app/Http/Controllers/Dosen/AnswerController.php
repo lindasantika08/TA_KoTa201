@@ -25,29 +25,30 @@ class AnswerController extends Controller
         $validated = $request->validate([
             'batch_year' => 'required|string',
             'project_name' => 'required|string',
+            'assessment_order' => 'required|integer',
         ]);
 
         return Inertia::render('Dosen/AnswerSelf', [
             'batch_year' => $validated['batch_year'],
             'project_name' => $validated['project_name'],
+            'assessment_order' => $validated['assessment_order'],
         ]);
     }
 
     public function answerPeer(Request $request)
     {
+        Log::info('AnswerPeer method called', $request->all());
+        
         $validated = $request->validate([
             'tahunAjaran' => 'required|string',
             'namaProyek' => 'required|string',
-        ]);
-
-        Log::info('AnswerPeer method called', [
-            'tahunAjaran' => $validated['tahunAjaran'],
-            'namaProyek' => $validated['namaProyek'],
+            'assessment_order' => 'required|integer',
         ]);
 
         return Inertia::render('Dosen/AnswerPeer', [
             'tahunAjaran' => $validated['tahunAjaran'],
             'namaProyek' => $validated['namaProyek'],
+            'assessment_order' => $validated['assessment_order'],
         ]);
     }
 
@@ -120,12 +121,10 @@ class AnswerController extends Controller
         $batchYear = $request->query('batch_year');
         $projectId = $request->query('project_id');
 
-        // Validate input
         if (!$batchYear || !$projectId) {
             return response()->json(['message' => 'Batch year and project ID are required.'], 400);
         }
 
-        // Count total self-assessment questions for the project and batch year
         $totalQuestions = Assessment::where('batch_year', $batchYear)
             ->where('project_id', $projectId)
             ->where('type', 'selfAssessment')
@@ -135,12 +134,10 @@ class AnswerController extends Controller
             return response()->json(['message' => 'No self-assessment questions found for the specified batch year and project.'], 404);
         }
 
-        // Get user IDs in the group for the specific project and batch year
         $usersInGroup = Group::where('batch_year', $batchYear)
             ->where('project_id', $projectId)
             ->pluck('mahasiswa_id');
 
-        // Fetch answers for the specific project, batch year, and self-assessment type
         $answers = Answers::whereIn('mahasiswa_id', $usersInGroup)
             ->join('assessment', 'answers.question_id', '=', 'assessment.id')
             ->where('assessment.batch_year', $batchYear)
@@ -159,7 +156,6 @@ class AnswerController extends Controller
 
             $answeredQuestionIds = $userAnswered->pluck('question_id');
 
-            // Determine submission status
             if ($answeredQuestionIds->count() === 0) {
                 $status = 'unsubmitted';
             } elseif ($answeredQuestionIds->count() < $totalQuestions) {
@@ -186,7 +182,6 @@ class AnswerController extends Controller
             $batchYear = $request->query('batch_year');
             $projectName = $request->query('project_name');
 
-            // Validate required parameters
             if (!$batchYear || !$projectName) {
                 return response()->json([
                     'message' => 'Batch year and project name are required'

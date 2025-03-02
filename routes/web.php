@@ -159,6 +159,32 @@ Route::middleware('auth')->group(function () {
         Route::get('/feedback-details', [FeedbackMahasiswa::class, 'getFeedbackDetailView']);
     });
 
+    // Route::get('/notifications/stream', function () {
+    //     header('Content-Type: text/event-stream');
+    //     header('Cache-Control: no-cache');
+    //     header('Connection: keep-alive');
+        
+    //     while (true) {
+    //         if (connection_aborted()) {
+    //             break;
+    //         }
+            
+    //         // Check for new notifications
+    //         $user = auth()->user();
+    //         $newNotifications = Notification::where('user_id', $user->id)
+    //             ->where('created_at', '>', now()->subSeconds(2))
+    //             ->count();
+                
+    //         if ($newNotifications > 0) {
+    //             echo "data: " . json_encode(['count' => $newNotifications]) . "\n\n";
+    //             ob_flush();
+    //             flush();
+    //         }
+            
+    //         sleep(2);
+    //     }
+    // });
+
     //Route untuk admin
     Route::middleware('role:admin')->prefix('admin')->group(function () {
         Route::get('/dashboard', [DashboardAdminController::class, 'dashboard'])->name('dashboard');

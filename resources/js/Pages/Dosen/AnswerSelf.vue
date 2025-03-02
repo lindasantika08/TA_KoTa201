@@ -35,6 +35,10 @@ export default {
         project_name: {
             type: String,
             default: ''
+        },
+        assessment_order: {
+            type: Number,
+            required: true
         }
     },
 
@@ -94,12 +98,13 @@ export default {
             try {
                 const params = {
                     batch_year: this.batch_year,
-                    project_name: this.project_name
+                    project_name: this.project_name,
+                    assessment_order: this.assessment_order
                 };
 
                 console.log('Request params:', params);
 
-                const response = await axios.get('/api/questions-dosen', { params });
+                const response = await axios.get('/api/questions', { params });
                 console.log('Raw API Response:', response.data);
 
                 if (response.data && Array.isArray(response.data)) {
@@ -126,7 +131,8 @@ export default {
                     status: error.response?.status,
                     params: {
                         batch_year: this.batch_year,
-                        project_name: this.project_name
+                        project_name: this.project_name,
+                        assessment_order: this.assessment_order
                     }
                 });
                 this.error = `Error loading questions: ${error.message}`;

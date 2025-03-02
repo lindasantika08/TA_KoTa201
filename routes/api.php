@@ -68,6 +68,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/toggle-publish-assessment-peer', [ProjectController::class, 'togglePublishAssessmentPeer']);
     Route::get('/projects/active', [DashboardDosen::class, 'getActiveProjects']);
 
+    Route::get('/data-with-bobot-self', [AssessmentController::class, 'getAssessmentsWithBobotSelf']);
+
+
     // self assessment dosen
     Route::get('/questions-dosen', [SelfAssessmentDosen::class, 'getQuestionsByProject']);
     Route::get('/user-info-dosen', [SelfAssessmentDosen::class, 'getUserInfoDosen']);
@@ -109,7 +112,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/get-majors', [UserManagementController::class, 'getMajor']);
 
     Route::get('/assessment/projects', [ProjectController::class, 'getProjectsWithAssessments']);
-    Route::get('/proyek-self-assessment', [ProjectController::class, 'getDataSelf']);
+    Route::get('/proyek-self-assessment', [ProjectController::class, 'getDataSelf']); 
+    Route::get('/proyek-self-assessment-grouped', [ProjectController::class, 'getDataSelfGrouped']);
     Route::post('/save-all-answers', [AssessmentController::class, 'saveAllAnswers']);
 
     //Dosen Profile
