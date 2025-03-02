@@ -49,13 +49,14 @@ class MahasiswaImport implements ToModel, WithHeadingRow, WithBatchInserts
                 $this->currentProdi = $row['prodi']; // Simpan jurusan dari data pertama
             } elseif ($this->currentAngkatan != $row['angkatan']) {
                 $this->currentAngkatan = 'mixed';
-            } elseif ($this->currentProdi != $row['Prodi']) {
-                // Jika ada multiple jurusan, matikan fitur cleanup
+            } elseif ($this->currentProdi != $row['prodi']) {
+                // Perbaikan: Menggunakan 'prodi' bukan 'Prodi' untuk konsistensi
                 $this->currentProdi = 'mixed';
             }
 
             // Generate password
             $password = Str::random(8);
+            $isNewUser = false;
 
             // Cek atau buat Major berdasarkan nama jurusan
             $major = Major::firstOrCreate(
@@ -111,34 +112,39 @@ class MahasiswaImport implements ToModel, WithHeadingRow, WithBatchInserts
                     'password' => bcrypt($password),
                     'role' => 'mahasiswa'
                 ]);
+                $isNewUser = true;
             }
 
-            // Kirim email kredensial
-            try {
-                Log::info('Mencoba mengirim kredensial ke email:', [
-                    'nama' => $row['nama_mahasiswa'],
-                    'email' => $row['email'],
-                    'password' => $password
-                ]);
+            // Kirim email kredensial hanya jika user baru
+            if ($isNewUser) {
+                try {
+                    Log::info('Mencoba mengirim kredensial ke email (user baru):', [
+                        'nama' => $row['nama_mahasiswa'],
+                        'email' => $row['email']
+                    ]);
 
-                Mail::to($row['email'])
-                    ->send(new CredentialMail($row['email'], $password, $row['nama_mahasiswa']));
+                    Mail::to($row['email'])
+                        ->send(new CredentialMail($row['email'], $password, $row['nama_mahasiswa']));
 
-                Log::info('Email kredensial berhasil dikirim', [
+                    Log::info('Email kredensial berhasil dikirim', [
+                        'nama' => $row['nama_mahasiswa'],
+                        'email' => $row['email'],
+                        'status' => 'success',
+                        'waktu_kirim' => now()->format('Y-m-d H:i:s')
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Gagal mengirim email kredensial', [
+                        'nama' => $row['nama_mahasiswa'],
+                        'email' => $row['email'],
+                        'error' => $e->getMessage(),
+                        'status' => 'failed',
+                        'waktu_error' => now()->format('Y-m-d H:i:s')
+                    ]);
+                }
+            } else {
+                Log::info('Melewati pengiriman email (user sudah ada)', [
                     'nama' => $row['nama_mahasiswa'],
-                    'email' => $row['email'],
-                    'password' => $password,
-                    'status' => 'success',
-                    'waktu_kirim' => now()->format('Y-m-d H:i:s')
-                ]);
-            } catch (\Exception $e) {
-                Log::error('Gagal mengirim email kredensial', [
-                    'nama' => $row['nama_mahasiswa'],
-                    'email' => $row['email'],
-                    'password' => $password,
-                    'error' => $e->getMessage(),
-                    'status' => 'failed',
-                    'waktu_error' => now()->format('Y-m-d H:i:s')
+                    'email' => $row['email']
                 ]);
             }
 

@@ -147,7 +147,8 @@ class UserManagementController extends Controller
 
         Excel::import(new MahasiswaImport, $request->file('file'));
 
-        return Redirect::route('dosen/manage-mahasiswa')->with('success', 'Data mahasiswa berhasil diimpor!');
+        // return Redirect::route('dosen/manage-mahasiswa')->with('success', 'Data mahasiswa berhasil diimpor!');
+        return redirect()->route('dosen.manage-mahasiswa')->with('success', 'Data mahasiswa berhasil diimpor!');
     }
 
     public function ManageDosen()
