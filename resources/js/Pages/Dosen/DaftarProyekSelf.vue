@@ -25,6 +25,7 @@ export default {
         { key: 'no', label: 'No' },
         { key: 'batch_year', label: 'Batch Year' },
         { key: 'project_name', label: 'Project Name' },
+        { key: 'assessment_order', label: 'Order' },
         { key: 'status', label: 'Status' },
         { key: 'date', label: 'Created Date' },
         { key: 'publish', label: 'Publish' },
@@ -35,23 +36,13 @@ export default {
   },
   methods: {
     handleDetail(item) {
-      console.log('/dosen/assessment/data-with-bobot-self with parameters:', {
-        batch_year: item.batch_year,
-        project_name: item.project_name
-      });
-
       router.get('/dosen/assessment/data-with-bobot-self', {
         batch_year: item.batch_year,
-        project_name: item.project_name
+        project_name: item.project_name,
+        assessment_order: item.assessment_order
       }, {
         preserveState: true
-      })
-        .then(response => {
-          console.log('Response received:', response);
-        })
-        .catch(error => {
-          console.error('Error occurred while fetching data:', error);
-        });
+      });
     },
 
     handleListAnswer(item) {
@@ -64,40 +55,45 @@ export default {
     },
 
     handleTogglePublish(item) {
+      const newStatus = !item.is_published;
       axios.post('/api/toggle-publish-assessment', {
         batch_year: item.batch_year,
         project_name: item.project_name,
-        is_published: !item.is_published
+        assessment_order: item.assessment_order,
+        is_published: newStatus
       })
         .then(response => {
-          axios.get('/api/proyek-self-assessment')
-            .then(response => {
-              this.items = response.data.map((item, index) => ({
-                no: index + 1,
-                batch_year: item.batch_year,
-                project_name: item.project_name,
-                status: item.status,
-                is_published: item.is_published === 1,
-                date: dayjs(item.created_at).format('DD MMMM YYYY HH:mm'),
-              }));
-            });
+          const index = this.items.findIndex(i =>
+            i.batch_year === item.batch_year &&
+            i.project_name === item.project_name &&
+            i.assessment_order === item.assessment_order
+          );
+
+          if (index !== -1) {
+            this.$set(this.items, index, { ...item, is_published: newStatus });
+          }
         })
         .catch(error => {
           console.error('Error toggling publish status:', error);
         });
+    },
+
+    updateItems(data) {
+      this.items = data.map((item, index) => ({
+        no: index + 1,
+        batch_year: item.batch_year,
+        project_name: item.project_name,
+        assessment_order: item.assessment_order,
+        status: item.status,
+        is_published: Boolean(item.is_published),
+        date: dayjs(item.created_at).format('DD MMMM YYYY HH:mm'),
+      }));
     }
   },
   mounted() {
     axios.get('/api/proyek-self-assessment')
       .then(response => {
-        this.items = response.data.map((item, index) => ({
-          no: index + 1,
-          batch_year: item.batch_year,
-          project_name: item.project_name,
-          status: item.status,
-          is_published: item.is_published || false,
-          date: dayjs(item.created_at).format('DD MMMM YYYY HH:mm'),
-        }));
+        this.updateItems(response.data);
       })
       .catch(error => {
         console.error('Error fetching data:', error);

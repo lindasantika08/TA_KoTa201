@@ -21,34 +21,40 @@ export default {
       userName: "",
       unreadNotificationsCount: 0,
       socket: null,
+      eventSource: null,
+      unreadNotificationsCount: 0
     };
   },
   mounted() {
     this.fetchUserName();
-    this.fetchNotificationsCount(); // Initial fetch
+    this.fetchNotificationsCount();
+    // this.initializeSSE();
     // this.initializeWebSocket();
   },
   beforeUnmount() {
     this.disconnectWebSocket();
   },
   methods: {
-    initializeWebSocket() {
-      // Replace with your WebSocket server URL
-      this.socket = new WebSocket('ws://localhost:8000/notifications');
-      
-      this.socket.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.type === 'notification_update') {
-          this.unreadNotificationsCount = data.count;
-        }
-      };
+    initializeSSE() {
+        this.eventSource = new EventSource('/notifications/stream');
+        
+        this.eventSource.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            this.unreadNotificationsCount = data.count;
+            this.showNotification('New notification received!');
+        };
+    },
 
-      this.socket.onclose = () => {
-        // Attempt to reconnect after 5 seconds if connection is lost
-        setTimeout(() => {
-          // this.initializeWebSocket();
-        }, 5000);
-      };
+    showNotification(message) {
+        if (Notification.permission === 'granted') {
+            new Notification(message);
+        }
+    },
+    
+    beforeUnmount() {
+        if (this.eventSource) {
+            this.eventSource.close();
+        }
     },
 
     disconnectWebSocket() {

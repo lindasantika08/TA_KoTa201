@@ -25,6 +25,7 @@ export default {
         { key: 'no', label: 'No' },
         { key: 'batch_year', label: 'Batch Year' },
         { key: 'project_name', label: 'Project Name' },
+        { key: 'assessment_order', label: 'Order' },
         { key: 'status', label: 'Status' },
         { key: 'date', label: 'Created Date' },
         { key: 'publish', label: 'Publish' },
@@ -37,7 +38,8 @@ export default {
     handleDetail(item) {
       router.get('/dosen/assessment/data-with-bobot-peer', {
         batch_year: item.batch_year,
-        project_name: item.project_name
+        project_name: item.project_name,
+        assessment_order: item.assessment_order
       }, {
         preserveState: true
       })
@@ -52,7 +54,8 @@ export default {
     handleListAnswer(item) {
       router.get('/dosen/answers-peer-assessment', {
         batch_year: item.batch_year,
-        project_name: item.project_name
+        project_name: item.project_name,
+        assessment_order: item.assessment_order,
       }, {
         preserveState: true
       });
@@ -62,37 +65,44 @@ export default {
       axios.post('/api/toggle-publish-assessment-peer', {
         batch_year: item.batch_year,
         project_name: item.project_name,
+        assessment_order: item.assessment_order,
         is_published: !item.is_published
       })
         .then(response => {
-          axios.get('/api/proyek-Peer-assessment')
-            .then(response => {
-              this.items = response.data.map((item, index) => ({
-                no: index + 1,
-                batch_year: item.batch_year,
-                project_name: item.project_name,
-                status: item.status,
-                is_published: item.is_published === 1,
-                date: dayjs(item.created_at).format('DD MMMM YYYY HH:mm'),
-              }));
-            });
+          const updatedItem = { ...item, is_published: !item.is_published };
+          
+          const index = this.items.findIndex(i => 
+            i.batch_year === item.batch_year && 
+            i.project_name === item.project_name && 
+            i.assessment_order === item.assessment_order
+          );
+          
+          if (index !== -1) {
+            this.items[index] = updatedItem;
+            this.items = [...this.items];
+          }
         })
         .catch(error => {
           console.error('Error toggling publish status:', error);
         });
+    },
+
+    updateItems(data) {
+      this.items = data.map((item, index) => ({
+        no: index + 1,
+        batch_year: item.batch_year,
+        project_name: item.project_name,
+        assessment_order: item.assessment_order,
+        status: item.status,
+        is_published: item.is_published == 1,
+        date: dayjs(item.created_at).format('DD MMMM YYYY HH:mm'),
+      }));
     }
   },
   mounted() {
     axios.get('/api/proyek-Peer-assessment')
       .then(response => {
-        this.items = response.data.map((item, index) => ({
-          no: index + 1,
-          batch_year: item.batch_year,
-          project_name: item.project_name,
-          is_published: item.is_published || false,
-          status: item.status,
-          date: dayjs(item.created_at).format('DD MMMM YYYY HH:mm'),
-        }));
+        this.updateItems(response.data);
       })
       .catch(error => {
         console.error('Error fetching data:', error);

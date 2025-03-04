@@ -150,12 +150,12 @@ export default {
             // Clear the selected member to ensure dropdown starts empty
             this.selectedMember = "";
 
-            try {
-                const batch_year = this.$page.props.batch_year;
-                const project_name = this.$page.props.project_name;
+      try {
+        const batch_year = this.$page.props.batch_year;
+        const project_name = this.$page.props.project_name;
 
-                console.log("Batch Year:", batch_year);
-                console.log("Project Name:", project_name);
+        console.log('Batch Year:', batch_year);
+        console.log('Project Name:', project_name);
 
                 const userInfoResponse = await axios.get(
                     "/api/user-info-peer",
@@ -205,20 +205,21 @@ export default {
                     });
                 }
 
-                await this.loadQuestions();
-                await this.loadExistingAnswers();
-                // Don't load saved state that might override the empty selection
-                // this.loadSavedState();
-            } catch (error) {
-                this.error = `Error loading data: ${error.message}`;
-                console.error("Error details:", error);
-                if (error.response) {
-                    console.error("Response data:", error.response.data);
-                }
-            } finally {
-                this.loading = false;
-            }
-        },
+        await this.loadQuestions();
+        await this.loadExistingAnswers();
+        await this.checkExistingAnswer();
+        this.loadSavedState();
+
+      } catch (error) {
+        this.error = `Error loading data: ${error.message}`;
+        console.error("Error details:", error);
+        if (error.response) {
+          console.error("Response data:", error.response.data);
+        }
+      } finally {
+        this.loading = false;
+      }
+    },
 
         async loadQuestions(retryCount = 3) {
             for (let i = 0; i < retryCount; i++) {
@@ -256,18 +257,19 @@ export default {
                         throw new Error("Invalid assessments format");
                     }
 
-                    this.questions = assessments.map((q) => ({
-                        id: q.id,
-                        type: q.type,
-                        question: q.question,
-                        aspect: q.aspect,
-                        criteria: q.criteria,
-                        bobot_1: q.bobot_1,
-                        bobot_2: q.bobot_2,
-                        bobot_3: q.bobot_3,
-                        bobot_4: q.bobot_4,
-                        bobot_5: q.bobot_5,
-                    }));
+          this.questions = assessments.map(q => ({
+            id: q.id,
+            type: q.type,
+            question: q.question,
+            aspect: q.aspect,
+            criteria: q.criteria,
+            skill_type: q.skill_type,
+            bobot_1: q.bobot_1,
+            bobot_2: q.bobot_2,
+            bobot_3: q.bobot_3,
+            bobot_4: q.bobot_4,
+            bobot_5: q.bobot_5
+          }));
 
                     if (Array.isArray(group_members)) {
                         this.groupMembers = group_members;
@@ -669,6 +671,8 @@ export default {
         },
     },
 };
+
+// console.log(currentQuestion.skill_type)
 </script>
 
 <template>
@@ -780,11 +784,22 @@ export default {
                             class="space-y-6"
                         >
                             <div class="bg-gray-50 p-4 rounded-lg">
-                                <h3 class="font-semibold text-lg mb-4">
-                                    Question {{ currentQuestionIndex + 1 }} dari
+                                <h3 class="font-semibold text-lg mb-4 flex items-center justify-between">
+                                    <span>
+                    Question {{ currentQuestionIndex + 1 }} dari
                                     {{ questions.length }}
-                                </h3>
-                                <p class="mb-2">
+                                  </span>
+
+                  <!-- Badge Skill Type -->
+                  <span class="px-3 py-1 rounded-full text-white text-sm ml-auto" :class="{
+                    'bg-blue-500': currentQuestion.skill_type === 'hardskill',
+                    'bg-green-500': currentQuestion.skill_type === 'softskill'
+                  }">
+                    {{ currentQuestion.skill_type === 'softskill' ? 'Soft Skill' : 'Hard Skill' }}
+                  </span>
+                </h3>
+                
+                <p class="mb-2">
                                     <strong>Aspek:</strong>
                                     {{ currentQuestion.aspect }}
                                 </p>

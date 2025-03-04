@@ -27,6 +27,7 @@ class PeerAssessmentDosen extends Controller
     {
         $tahunAjaran = $request->query('batch_year');
         $namaProyek = $request->query('project_name');
+        $assessmentOrder = $request->query('assessment_order');
 
         $assessments = Assessment::with(['typeCriteria', 'project'])
             ->select(
@@ -34,7 +35,8 @@ class PeerAssessmentDosen extends Controller
                 'assessment.type',
                 'assessment.question',
                 'assessment.criteria_id',
-                'assessment.project_id'
+                'assessment.project_id',
+                'assessment.assessment_order'
             )
             ->whereHas('project', function($query) use ($namaProyek) {
                 $query->where('project_name', $namaProyek);
@@ -43,12 +45,14 @@ class PeerAssessmentDosen extends Controller
                 $query->where('batch_year', $tahunAjaran);
             })
             ->where('type', 'peerAssessment')
+            ->where('assessment_order', $assessmentOrder)
             ->get()
             ->map(function($assessment) {
                 return [
                     'id' => $assessment->id,
                     'type' => $assessment->type,
                     'question' => $assessment->question,
+                    'assessment_order' => $assessment->assessment_order,
                     'aspect' => $assessment->typeCriteria->aspect,
                     'criteria' => $assessment->typeCriteria->criteria,
                     'bobot_1' => $assessment->typeCriteria->bobot_1,
@@ -63,6 +67,7 @@ class PeerAssessmentDosen extends Controller
             'assessments' => $assessments,
             'tahunAjaran' => $tahunAjaran,
             'namaProyek' => $namaProyek,
+            'assessmentOrder' => $assessmentOrder,
         ]);
     }
 
@@ -70,6 +75,7 @@ class PeerAssessmentDosen extends Controller
     {
         $tahunAjaran = $request->query('batch_year');
         $namaProyek = $request->query('project_name');
+        $assessmentOrder = $request->query('assessment_order');
 
         $assessments = Assessment::join('type_criteria', 'assessment.criteria_id', '=', 'type_criteria.id')
             ->join('project', 'assessment.project_id', '=', 'project.id')
@@ -77,6 +83,7 @@ class PeerAssessmentDosen extends Controller
                 'assessment.id',
                 'assessment.type',
                 'assessment.question',
+                'assessment.skill_type',
                 'type_criteria.aspect',
                 'type_criteria.criteria',
                 'type_criteria.bobot_1',
@@ -92,6 +99,8 @@ class PeerAssessmentDosen extends Controller
                 $query->where('project.project_name', $namaProyek);
             })
             ->where('assessment.type', 'peerAssessment')
+            ->where('assessment_order', $assessmentOrder)
+
             ->get();
 
         return response()->json($assessments);

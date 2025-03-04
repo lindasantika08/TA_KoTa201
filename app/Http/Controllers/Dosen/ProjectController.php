@@ -65,16 +65,23 @@ class ProjectController extends Controller
                 ->whereColumn('project.id', 'assessment.project_id')
                 ->where('assessment.type', 'selfAssessment');
         })
-            ->select([
-                'project.id',
-                'project.batch_year',
-                'project.project_name',
-                'project.status',
-                'project.created_at'
-            ])
-            ->selectRaw('(SELECT is_published FROM assessment WHERE project_id = project.id AND type = "selfAssessment" LIMIT 1) as is_published')
-            ->orderBy('created_at', 'desc')
-            ->get();
+        ->join('assessment', function($join) {
+            $join->on('project.id', '=', 'assessment.project_id')
+                ->where('assessment.type', '=', 'selfAssessment');
+        })
+        ->select([
+            'project.id',
+            'project.batch_year',
+            'project.project_name',
+            'project.status',
+            'project.created_at',
+            'assessment.assessment_order'
+        ])
+        ->selectRaw('(SELECT is_published FROM assessment WHERE project_id = project.id AND type = "selfAssessment" AND assessment_order = assessment.assessment_order LIMIT 1) as is_published')
+        ->distinct()
+        ->orderBy('project.project_name')
+        ->orderBy('assessment.assessment_order')
+        ->get();
 
         return response()->json($projects);
     }
@@ -82,19 +89,26 @@ class ProjectController extends Controller
     public function getDataPeer()
     {
         $projects = Project::whereExists(function ($query) {
-            $query->from('assessment')
-                ->whereColumn('project.id', 'assessment.project_id')
-                ->where('assessment.type', 'peerAssessment');
-        })
+                $query->from('assessment')
+                    ->whereColumn('project.id', 'assessment.project_id')
+                    ->where('assessment.type', 'peerAssessment');
+            })
+            ->join('assessment', function($join) {
+                $join->on('project.id', '=', 'assessment.project_id')
+                    ->where('assessment.type', '=', 'peerAssessment');
+            })
             ->select([
-                'id',
-                'batch_year',
-                'project_name',
-                'status',
-                'created_at'
+                'project.id',
+                'project.batch_year',
+                'project.project_name',
+                'project.status',
+                'project.created_at',
+                'assessment.assessment_order'
             ])
-            ->selectRaw('(SELECT is_published FROM assessment WHERE project_id = project.id AND type = "peerAssessment" LIMIT 1) as is_published')
-            ->orderBy('created_at', 'desc')
+            ->selectRaw('(SELECT is_published FROM assessment WHERE project_id = project.id AND type = "peerAssessment" AND assessment_order = assessment.assessment_order LIMIT 1) as is_published')
+            ->distinct()
+            ->orderBy('project.project_name')
+            ->orderBy('assessment.assessment_order')
             ->get();
 
         return response()->json($projects);
@@ -118,7 +132,8 @@ class ProjectController extends Controller
 
             $updated = Assessment::where([
                 'project_id' => $project->id,
-                'type' => 'selfAssessment'
+                'type' => 'selfAssessment',
+                'assessment_order' => $request->assessment_order
             ])->update([
                 'is_published' => $request->is_published ? 1 : 0
             ]);
@@ -161,7 +176,8 @@ class ProjectController extends Controller
 
             $updated = Assessment::where([
                 'project_id' => $project->id,
-                'type' => 'peerAssessment'
+                'type' => 'peerAssessment',
+                'assessment_order' => $request->assessment_order
             ])->update([
                 'is_published' => $request->is_published ? 1 : 0
             ]);

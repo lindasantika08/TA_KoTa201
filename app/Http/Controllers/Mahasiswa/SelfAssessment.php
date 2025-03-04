@@ -27,6 +27,7 @@ class SelfAssessment extends Controller
         $validated = $request->validate([
             'batch_year' => 'required|string',
             'project_name' => 'required|string',
+            'assessment_order' => 'required|string',
         ]);
 
         Log::info('Validated data:', $validated);
@@ -34,6 +35,7 @@ class SelfAssessment extends Controller
         return Inertia::render('Mahasiswa/SelfAssessmentMahasiswa', [
             'batch_year' => $validated['batch_year'],
             'project_name' => $validated['project_name'],
+            'assessment_order' => $validated['assessment_order'],
         ]);
     }
 
@@ -45,18 +47,18 @@ class SelfAssessment extends Controller
                 throw new \Exception('User not authenticated');
             }
 
-            // Ambil parameter dengan input()
             $batchYear = $request->input('batch_year');
             $projectName = $request->input('project_name');
+            $assessmentOrder = $request->input('assessment_order');
 
             \Log::info('Received Parameters', [
                 'batch_year' => $batchYear,
-                'project_name' => $projectName
+                'project_name' => $projectName,
+                'assessment_order' => $assessmentOrder
             ]);
 
-            // Validasi parameter
-            if (empty($batchYear) || empty($projectName)) {
-                throw new \Exception('Batch year and project name are required');
+            if (empty($batchYear) || empty($projectName) || empty($assessmentOrder)) {
+                throw new \Exception('Batch year, project name, and assessment order are required');
             }
 
             $mahasiswa = Mahasiswa::where('user_id', $user->id)->first();
@@ -64,7 +66,6 @@ class SelfAssessment extends Controller
                 throw new \Exception('Mahasiswa not found for user ID: ' . $user->id);
             }
 
-            // Cari group yang terkait dengan mahasiswa
             $group = Group::whereHas('project', function($query) use ($batchYear, $projectName) {
                 $query->where('batch_year', $batchYear)
                     ->where('project_name', $projectName);
@@ -74,7 +75,6 @@ class SelfAssessment extends Controller
                 throw new \Exception('Group not found for this project');
             }
 
-            // Ambil project dari group
             $project = $group->project;
             if (!$project) {
                 throw new \Exception('Project not found');
@@ -86,13 +86,15 @@ class SelfAssessment extends Controller
                 'project_name' => $project->project_name
             ]);
 
-            // Get assessments for the specific project
+            // Filter berdasarkan assessment_order
             $assessments = Assessment::where('project_id', $project->id)
                 ->where('type', 'selfAssessment')
+                ->where('assessment_order', $assessmentOrder) // Tambah filter berdasarkan assessment_order
+                ->where('is_published', 1) // Pastikan hanya mengambil yang sudah dipublish
                 ->get();
 
             if ($assessments->isEmpty()) {
-                throw new \Exception('No assessments found for this project');
+                throw new \Exception('No assessments found for this project and assessment order');
             }
 
             $formattedAssessments = $assessments->map(function ($assessment) {
@@ -106,6 +108,7 @@ class SelfAssessment extends Controller
                     'id' => $assessment->id,
                     'type' => $assessment->type,
                     'question' => $assessment->question,
+                    'skill_type' => $assessment->skill_type,
                     'aspek' => $criteria->aspect,
                     'kriteria' => $criteria->criteria,
                     'bobot_1' => $criteria->bobot_1,
@@ -117,7 +120,8 @@ class SelfAssessment extends Controller
             })->filter();
 
             \Log::info('Formatted Assessments', [
-                'count' => $formattedAssessments->count()
+                'count' => $formattedAssessments->count(),
+                'assessment_order' => $assessmentOrder
             ]);
 
             return response()->json($formattedAssessments);

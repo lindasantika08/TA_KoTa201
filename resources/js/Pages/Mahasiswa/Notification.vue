@@ -28,6 +28,9 @@ export default {
         return {
             loading: false,
             socket: null,
+            reconnectAttempts: 0,
+            maxReconnectAttempts: 5,
+            reconnectInterval: 5000,
             breadcrumbs: [
                 { text: 'Home', href: '/mahasiswa' },
                 { text: 'Notifications', href: '#' }
@@ -43,47 +46,98 @@ export default {
     },
     
     mounted() {
-        // this.initializeWebSocket();
+        this.initializeWebSocket();
+        // Initial fetch of notifications
+        this.refreshNotifications();
     },
     
     beforeUnmount() {
-        // this.disconnectWebSocket();
+        this.disconnectWebSocket();
     },
     
     methods: {
         initializeWebSocket() {
-            // Replace with your WebSocket server URL
-            this.socket = new WebSocket('ws://your-backend-url/notifications');
-            
-            this.socket.onmessage = (event) => {
-                const data = JSON.parse(event.data);
+            try {
+                // Replace with your actual WebSocket server URL
+                const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsHost = window.location.host;
+                this.socket = new WebSocket(`${wsProtocol}//${wsHost}/ws/notifications`);
                 
-                if (data.type === 'new_notification') {
-                    // Add new notification to the list
-                    const processedNotification = this.processNotifications([data.notification])[0];
-                    this.localNotifications = [processedNotification, ...this.localNotifications];
-                    this.localUnreadCount++;
-                } else if (data.type === 'notification_update') {
-                    // Update unread count if it changed
-                    this.localUnreadCount = data.unread_count;
-                }
-            };
+                this.socket.onopen = () => {
+                    console.log('WebSocket connected');
+                    this.reconnectAttempts = 0; // Reset reconnect attempts on successful connection
+                };
 
-            this.socket.onclose = () => {
-                // Attempt to reconnect after 5 seconds if connection is lost
+                this.socket.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    
+                    if (data.type === 'new_notification') {
+                        // Add new notification to the list
+                        const processedNotification = this.processNotifications([data.notification])[0];
+                        this.localNotifications = [processedNotification, ...this.localNotifications];
+                        this.localUnreadCount++;
+                        
+                        // Show browser notification if supported
+                        this.showBrowserNotification(processedNotification);
+                    } else if (data.type === 'notification_update') {
+                        // Update unread count if it changed
+                        this.localUnreadCount = data.unread_count;
+                    }
+                };
+
+                this.socket.onclose = () => {
+                    console.log('WebSocket disconnected');
+                    this.handleReconnect();
+                };
+
+                this.socket.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                };
+
+            } catch (error) {
+                console.error('Error initializing WebSocket:', error);
+                this.handleReconnect();
+            }
+        },
+
+        handleReconnect() {
+            if (this.reconnectAttempts < this.maxReconnectAttempts) {
+                this.reconnectAttempts++;
+                console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
                 setTimeout(() => {
-                    // this.initializeWebSocket();
-                }, 5000);
-            };
+                    this.initializeWebSocket();
+                }, this.reconnectInterval);
+            } else {
+                console.log('Max reconnection attempts reached');
+            }
+        },
+
+        async showBrowserNotification(notification) {
+            if (!("Notification" in window)) {
+                return;
+            }
+
+            if (Notification.permission === "granted") {
+                new Notification("New Notification", {
+                    body: notification.message,
+                    icon: "/path/to/your/icon.png" // Replace with your notification icon
+                });
+            } else if (Notification.permission !== "denied") {
+                const permission = await Notification.requestPermission();
+                if (permission === "granted") {
+                    this.showBrowserNotification(notification);
+                }
+            }
         },
 
         disconnectWebSocket() {
-            if (this.socket) {
+            if (this.socket && this.socket.readyState === WebSocket.OPEN) {
                 this.socket.close();
                 this.socket = null;
             }
         },
 
+        // Rest of your existing methods remain the same
         processNotifications(notifications) {
             return notifications.map(notification => {
                 if (notification.message !== undefined && notification.project_name !== undefined) {
