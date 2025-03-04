@@ -104,7 +104,7 @@ export default {
 
                 console.log('Request params:', params);
 
-                const response = await axios.get('/api/questions', { params });
+                const response = await axios.get('/api/questions-dosen', { params });
                 console.log('Raw API Response:', response.data);
 
                 if (response.data && Array.isArray(response.data)) {
