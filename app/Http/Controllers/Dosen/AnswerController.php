@@ -188,7 +188,7 @@ class AnswerController extends Controller
                 ], 400);
             }
 
-            // Find the specific project with exact batch year and project name
+            // Find the specific project
             $project = Project::where('batch_year', $batchYear)
                 ->where('project_name', $projectName)
                 ->first();
@@ -199,70 +199,67 @@ class AnswerController extends Controller
                 ], 404);
             }
 
-            // Get all groups ONLY for this specific project
+            // Get all groups for this specific project with their members and class information
             $allGroups = Group::where('project_id', $project->id)
-                ->select('id', 'group', 'project_id')
+                ->with(['mahasiswa.classRoom'])
+                ->select('id', 'group', 'project_id', 'mahasiswa_id')
                 ->get();
 
-            // Log for debugging
-            Log::info('Found groups for project', [
-                'project_id' => $project->id,
-                'batch_year' => $batchYear,
-                'project_name' => $projectName,
-                'group_count' => $allGroups->count()
-            ]);
-
-            // Group the groups by their names but strictly within this project
-            $uniqueGroups = $allGroups->groupBy('group')
-                ->map(function ($groups) {
-                    return [
-                        'group_id' => $groups->first()->id,
-                        'group_name' => $groups->first()->group,
-                        'project_id' => $groups->first()->project_id
-                    ];
-                })->values();
+            // Group the groups by group name AND class_id
+            $uniqueGroups = $allGroups->groupBy(function ($group) {
+                return $group->group . '_' . ($group->mahasiswa->class_id ?? 'unknown');
+            })->map(function ($groups) {
+                $firstMember = $groups->first()->mahasiswa;
+                return [
+                    'group_id' => $groups->first()->id,
+                    'group_name' => $groups->first()->group,
+                    'project_id' => $groups->first()->project_id,
+                    'class_id' => $firstMember ? $firstMember->class_id : null,
+                    'class_name' => $firstMember && $firstMember->classRoom ? $firstMember->classRoom->class_name : null
+                ];
+            })->values();
 
             $groupStatistics = $uniqueGroups->map(function ($uniqueGroup) use ($project) {
-                // Find all members specifically for this group in this project
+                // Find all members for this specific group and class
                 $groupMembers = Mahasiswa::whereHas('group', function ($query) use ($uniqueGroup, $project) {
                     $query->where('project_id', $project->id)
                         ->where('group', $uniqueGroup['group_name']);
-                })->get();
+                })
+                    ->where('class_id', $uniqueGroup['class_id'])
+                    ->with('user', 'classRoom')
+                    ->get();
 
-                // Log group members for debugging
-                Log::info('Group members', [
+                // Log for debugging
+                Log::info('Group details', [
                     'group_name' => $uniqueGroup['group_name'],
-                    'project_id' => $project->id,
+                    'class_id' => $uniqueGroup['class_id'],
                     'member_count' => $groupMembers->count()
                 ]);
 
-                // If no members, return not completed status
+                // If no members found
                 if ($groupMembers->isEmpty()) {
                     return [
                         'group_id' => $uniqueGroup['group_id'],
                         'group_name' => $uniqueGroup['group_name'],
                         'is_completed' => false,
                         'total_members' => 0,
-                        'batch_year' => $project->batch_year
+                        'class_id' => $uniqueGroup['class_id'],
+                        'class_name' => $uniqueGroup['class_name']
                     ];
                 }
 
                 // Check if every member has completed peer assessments for every other member
                 $isGroupCompleted = $groupMembers->every(function ($member) use ($groupMembers, $project) {
-                    // Get IDs of other members in the group
                     $otherMemberIds = $groupMembers->pluck('id')
                         ->filter(fn($peerId) => $peerId != $member->id);
 
-                    // Check if this member has assessed every other member
                     return $otherMemberIds->every(function ($peerId) use ($member, $project) {
-                        $assessmentCount = AnswersPeer::where('mahasiswa_id', $member->id)
+                        return AnswersPeer::where('mahasiswa_id', $member->id)
                             ->where('peer_id', $peerId)
                             ->whereHas('question', function ($query) use ($project) {
                                 $query->where('project_id', $project->id);
                             })
-                            ->count();
-
-                        return $assessmentCount > 0;
+                            ->count() > 0;
                     });
                 });
 
@@ -271,18 +268,43 @@ class AnswerController extends Controller
                     'group_name' => $uniqueGroup['group_name'],
                     'is_completed' => $isGroupCompleted,
                     'total_members' => $groupMembers->count(),
-                    'batch_year' => $project->batch_year
+                    'class_id' => $uniqueGroup['class_id'],
+                    'class_name' => $uniqueGroup['class_name'],
+                    'members' => $groupMembers->map(function ($member) {
+                        return [
+                            'id' => $member->id,
+                            'nim' => $member->nim,
+                            'name' => $member->user->name ?? null,
+                            'class_name' => $member->classRoom->class_name ?? null
+                        ];
+                    })
                 ];
             });
 
-            // Calculate statistics
-            $totalGroups = $uniqueGroups->count();
+            // Group statistics by class for better organization
+            $statisticsByClass = $groupStatistics->groupBy('class_id')
+                ->map(function ($groups) {
+                    $totalGroups = $groups->count();
+                    $completedGroups = $groups->where('is_completed', true)->count();
+
+                    return [
+                        'class_name' => $groups->first()['class_name'],
+                        'totalGroups' => $totalGroups,
+                        'completedGroups' => $completedGroups,
+                        'incompleteGroups' => $totalGroups - $completedGroups,
+                        'groups' => $groups
+                    ];
+                });
+
+            // Calculate overall statistics
+            $totalGroups = $groupStatistics->count();
             $completedGroups = $groupStatistics->where('is_completed', true)->count();
 
             return response()->json([
                 'totalGroup' => $totalGroups,
                 'groupSudahLengkap' => $completedGroups,
                 'groupBelumLengkap' => $totalGroups - $completedGroups,
+                'statisticsByClass' => $statisticsByClass,
                 'groupStatistics' => $groupStatistics,
                 'projectInfo' => [
                     'batch_year' => $project->batch_year,
@@ -583,22 +605,43 @@ class AnswerController extends Controller
         try {
             $batchYear = $request->query('batch_year');
             $projectId = $request->query('project_id');
+            $nimFilter = $request->query('nim'); // New query parameter for NIM filtering
+            $kelasFilter = $request->query('kelas'); // New query parameter for class filtering
 
-            // Find groups for specific project with mahasiswa loaded
-            $groups = Group::where('batch_year', $batchYear)
+            // Base query for groups
+            $groupsQuery = Group::where('batch_year', $batchYear)
                 ->where('project_id', $projectId)
-                ->with('mahasiswa.user') // Eager load mahasiswa and user
-                ->get();
+                ->with(['mahasiswa.user', 'mahasiswa.classRoom']); // Eager load relationships
+
+            // Apply NIM filter if provided
+            if ($nimFilter) {
+                $groupsQuery->whereHas('mahasiswa', function ($query) use ($nimFilter) {
+                    $query->where('nim', 'like', "%{$nimFilter}%");
+                });
+            }
+
+            // Apply class filter if provided
+            if ($kelasFilter) {
+                $groupsQuery->whereHas('mahasiswa.classRoom', function ($query) use ($kelasFilter) {
+                    $query->where('class_name', 'like', "%{$kelasFilter}%");
+                });
+            }
+
+            // Execute the query
+            $groups = $groupsQuery->get();
+
+            // Get mahasiswa IDs from filtered groups
+            $mahasiswaIds = $groups->pluck('mahasiswa_id')->toArray();
 
             $usersAlreadyFilled = Answers::whereHas('question', function ($query) use ($batchYear, $projectId) {
                 $query->where('batch_year', $batchYear)
                     ->where('project_id', $projectId);
             })
-                ->whereIn('mahasiswa_id', $groups->pluck('mahasiswa_id'))
+                ->whereIn('mahasiswa_id', $mahasiswaIds)
                 ->distinct('mahasiswa_id')
                 ->count();
 
-            // Prepare details of users who haven't submitted
+            // Prepare details of users from filtered groups
             $submissionStatus = $groups->map(function ($item) use ($batchYear, $projectId) {
                 $isSubmitted = Answers::whereHas('question', function ($query) use ($batchYear, $projectId) {
                     $query->where('batch_year', $batchYear)
@@ -608,8 +651,11 @@ class AnswerController extends Controller
                     ->exists();
 
                 return [
+                    'id' => $item->mahasiswa_id,
                     'index' => $item->id,
-                    'mahasiswaName' => optional($item->mahasiswa->user)->name ?? 'Unknown', // Safely retrieve name
+                    'nim' => optional($item->mahasiswa)->nim ?? 'N/A',
+                    'mahasiswaName' => optional($item->mahasiswa->user)->name ?? 'Unknown',
+                    'kelas' => optional($item->mahasiswa->classRoom)->class_name ?? 'N/A',
                     'status' => $isSubmitted ? 'submitted' : 'unsubmitted'
                 ];
             });

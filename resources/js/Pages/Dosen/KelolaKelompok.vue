@@ -30,6 +30,7 @@ export default {
         { label: "Tahun Ajaran", key: "batch_year" },
         { label: "Nama Proyek", key: "project_name" },
         { label: "Angkatan", key: "angkatan" },
+        { label: "Kelas", key: "class" }, 
         { label: "Kelompok", key: "group" },
         { label: "Manager Dosen", key: "dosen" },
         { label: "Anggota Kelompok", key: "anggota" },
@@ -56,6 +57,7 @@ export default {
         dosen: dosenGroup.dosen_name,
        // Ambil angkatan dari first group
        angkatan: project.angkatan || "-",
+       class: project.class || "-"
       }))
     );
      console.log("Filtered Kelompok:", this.filteredKelompok);
@@ -76,6 +78,7 @@ export default {
             ...project,
             dosen: dosenGroup.dosen_name,
             angkatan: project.angkatan || "-",
+            class: project.class || "-"
           }))
         );
         return;
@@ -92,6 +95,7 @@ export default {
             ...project,
             dosen: dosenGroup.dosen_name,
             angkatan: project.angkatan || "-",
+            class: project.class || "-"
           }))
       );
     },
@@ -142,6 +146,10 @@ export default {
             <template v-slot:column-angkatan="{ item }">
               <span>{{ item.angkatan }}</span>
             </template>
+
+            <template v-slot:column-class="{ item }">
+    <span>{{ item.class }}</span>
+  </template>
 
             <template v-slot:column-anggota="{ item }">
               <ul>

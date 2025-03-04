@@ -33,6 +33,7 @@ use Illuminate\Support\Facades\Auth;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->get('/validate-token', [AuthController::class, 'validateToken']);
+Route::middleware('auth:sanctum')->get('/user/status', [AuthController::class, 'getStatus']);
 Route::middleware('auth:sanctum')->post('/change-password', [AuthController::class, 'changePassword']);
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/reset-password', [AuthController::class, 'resetPassword']);

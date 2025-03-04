@@ -103,7 +103,13 @@ const handleDropdownChange = (event) => {
 
 const handleReportKelompokDetail = (kelompok) => {
     if (!selectedOption.value) return;
-    window.location.href = `/dosen/kelompok/report-detail?batch_year=${selectedOption.value.batch_year}&project_name=${selectedOption.value.project_name}&kelompok=${kelompok.nama_kelompok}`;
+
+    // Get the first member's class information since all members in the same group and class
+    const firstMember = kelompok.anggota[0];
+    const classId = firstMember?.class_id;
+
+    console.log("firstmember :", kelompok.anggota[0]);
+    window.location.href = `/dosen/kelompok/report-detail?batch_year=${selectedOption.value.batch_year}&project_name=${selectedOption.value.project_name}&kelompok=${kelompok.nama_kelompok}&class_id=${classId}`;
 };
 
 const fetchStudentData = async () => {
@@ -389,6 +395,11 @@ onMounted(() => {
                                     <thead class="bg-gray-50">
                                         <tr>
                                             <th
+                                                class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                            >
+                                                No
+                                            </th>
+                                            <th
                                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                                             >
                                                 Nama Mahasiswa
@@ -424,11 +435,18 @@ onMounted(() => {
                                         class="bg-white divide-y divide-gray-200"
                                     >
                                         <template
-                                            v-for="student in modalData.students"
+                                            v-for="(
+                                                student, index
+                                            ) in modalData.students"
                                             :key="student.id"
                                         >
                                             <!-- Main Student Row -->
                                             <tr>
+                                                <td
+                                                    class="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-900"
+                                                >
+                                                    {{ index + 1 }}
+                                                </td>
                                                 <td
                                                     class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
                                                 >
@@ -492,7 +510,7 @@ onMounted(() => {
                                                 "
                                             >
                                                 <td
-                                                    colspan="6"
+                                                    colspan="7"
                                                     class="px-6 py-4 bg-gray-50"
                                                 >
                                                     <div

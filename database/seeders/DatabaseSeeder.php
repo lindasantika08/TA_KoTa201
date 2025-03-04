@@ -21,6 +21,10 @@ class DatabaseSeeder extends Seeder
         $this->call(ClassSeeder::class);
         $this->call(DosenSeeder::class);
         $this->call(MahasiswaSeeder::class);
+        $this->call(ProjectSeeder::class);
+        $this->call(TypeCriteriaSeeder::class);
+        $this->call(AssessmentSeeder::class);
+        $this->call(AnswerSeeder::class);
 
     }
 }

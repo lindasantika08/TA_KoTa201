@@ -36,6 +36,9 @@ class AuthController extends Controller
             $user = Auth::user();
             $token = $user->createToken('auth_token')->plainTextToken;
 
+            // Cek apakah user sudah mengganti password
+            $needPasswordChange = !$user->change_password;
+
             return response()->json([
                 'token' => $token,
                 'user' => [
@@ -44,7 +47,7 @@ class AuthController extends Controller
                     'email' => $user->email,
                     'role' => $user->role
                 ],
-                'need_password_change' => true,
+                'need_password_change' => $needPasswordChange,
                 'message' => 'Login berhasil'
             ]);
         }
@@ -53,6 +56,22 @@ class AuthController extends Controller
             'message' => 'Email atau password salah'
         ], 401);
     }
+
+    public function getStatus()
+    {
+        $user = Auth::user();
+    
+        // Log untuk memastikan data dikirim dengan benar
+        Log::info("User ID {$user->id} - change_password status: " . ($user->change_password ? 'true' : 'false'));
+    
+        return response()->json([
+            'need_password_change' => !$user->change_password, // Pastikan ini tetap ada
+            'change_password' => $user->change_password, // Pastikan properti ini juga dikirim
+            'user_id' => $user->id,
+            'username' => $user->name,
+        ]);
+    }
+    
 
     public function validateToken(Request $request)
     {
@@ -113,9 +132,10 @@ class AuthController extends Controller
             // Hapus semua token yang ada
             $user->tokens()->delete();
 
-            // Update password
+            // Update password dan ubah status change_password menjadi true
             User::where('id', $user->id)->update([
-                'password' => Hash::make($request->newPassword)
+                'password' => Hash::make($request->newPassword),
+                'change_password' => true
             ]);
 
             // Buat token baru
@@ -131,7 +151,8 @@ class AuthController extends Controller
                     'name' => $user->name,
                     'email' => $user->email,
                     'role' => $user->role
-                ]
+                ],
+                'need_password_change' => false
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -144,11 +165,11 @@ class AuthController extends Controller
     }
 
     public function showResetForm($token)
-{
-    return Inertia::render('Auth/ResetPassword', [
-        'token' => $token
-    ]);
-}
+    {
+        return Inertia::render('Auth/ResetPassword', [
+            'token' => $token
+        ]);
+    }
 
     public function forgotPassword(Request $request)
     {

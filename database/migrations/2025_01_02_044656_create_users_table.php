@@ -20,8 +20,8 @@ class CreateUsersTable extends Migration
             $table->rememberToken();
             $table->string('photo', 2048)->nullable();
             $table->enum('role', ['mahasiswa', 'dosen', 'admin'])->default('mahasiswa');
+            $table->boolean('change_password')->nullable()->default(false);
             $table->timestamps();
-            // $table->softDeletes();
         });
     }
 

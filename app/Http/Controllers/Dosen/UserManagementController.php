@@ -18,6 +18,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redirect;
 
 
 class UserManagementController extends Controller
@@ -146,7 +147,8 @@ class UserManagementController extends Controller
 
         Excel::import(new MahasiswaImport, $request->file('file'));
 
-        return redirect()->route('ManageMahasiswa')->with('success', 'Data mahasiswa berhasil diimpor!');
+        // return Redirect::route('dosen/manage-mahasiswa')->with('success', 'Data mahasiswa berhasil diimpor!');
+        return redirect()->route('dosen.manage-mahasiswa')->with('success', 'Data mahasiswa berhasil diimpor!');
     }
 
     public function ManageDosen()
@@ -280,19 +282,19 @@ class UserManagementController extends Controller
     }
 
     public function getMajor()
-{
-    // Ambil major yang unik berdasarkan mahasiswa dengan role 'mahasiswa'
-    $major = Mahasiswa::join('users', 'users.id', '=', 'mahasiswa.user_id')
-        ->join('class_room', 'class_room.id', '=', 'mahasiswa.class_id')
-        ->join('prodi', 'prodi.id', '=', 'class_room.prodi_id')
-        ->join('major', 'major.id', '=', 'prodi.major_id')
-        ->where('users.role', 'mahasiswa')
-        ->distinct()
-        ->orderBy('major.major_name', 'asc')
-        ->pluck('major.major_name');
+    {
+        // Ambil major yang unik berdasarkan mahasiswa dengan role 'mahasiswa'
+        $major = Mahasiswa::join('users', 'users.id', '=', 'mahasiswa.user_id')
+            ->join('class_room', 'class_room.id', '=', 'mahasiswa.class_id')
+            ->join('prodi', 'prodi.id', '=', 'class_room.prodi_id')
+            ->join('major', 'major.id', '=', 'prodi.major_id')
+            ->where('users.role', 'mahasiswa')
+            ->distinct()
+            ->orderBy('major.major_name', 'asc')
+            ->pluck('major.major_name');
 
-    return response()->json($major);
-}
+        return response()->json($major);
+    }
 
     public function getClass()
     {

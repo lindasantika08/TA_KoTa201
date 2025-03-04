@@ -81,11 +81,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/answers/details', [AnswerController::class, 'getDetails']);
 
         // User Management Mahasiswa
-        Route::get('/manage-mahasiswa', [UserManagementController::class, 'ManageMahasiswa'])->name('ManageMahasiswa');
+        Route::get('/manage-mahasiswa', [UserManagementController::class, 'ManageMahasiswa'])->name('dosen.manage-mahasiswa');
         Route::get('/manage-mahasiswa/input', [UserManagementController::class, 'InputMahasiswa'])->name('InputMahasiswa');
         Route::get('/manage-mahasiswa/detail', [UserManagementController::class, 'DetailMahasiswa'])->name('DetailMahasiswa');
         Route::get('/manage-mahasiswa/export', [UserManagementController::class, 'ExportMahasiswa'])->name('ExportMahasiswa');
-        Route::post('/manage-mahasiswa/import', [UserManagementController::class, 'ImportMahasiswa'])->name('ImportMahasiswa');
+        Route::post('/manage-mahasiswa/importDosen', [UserManagementController::class, 'ImportMahasiswa'])->name('ImportMahasiswa');
 
         // User Management Dosen
         Route::get('/manage-dosen', [UserManagementController::class, 'ManageDosen'])->name('ManageDosen');
