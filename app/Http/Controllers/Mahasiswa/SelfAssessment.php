@@ -183,6 +183,7 @@ class SelfAssessment extends Controller
                 ], 404);
             }
         }
+        
             if (!$group) {
                 return response()->json([
                     'message' => 'No matching group found',
@@ -193,7 +194,6 @@ class SelfAssessment extends Controller
                     ]
                 ], 404);
             }
-        }
 
         return response()->json([
             'nim' => $mahasiswa->nim,
