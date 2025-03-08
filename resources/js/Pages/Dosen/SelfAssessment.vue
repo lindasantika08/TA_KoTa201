@@ -134,7 +134,7 @@ export default {
                         <button @click="handleAnswers()"
                             class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
                             <font-awesome-icon icon="fa-solid fa-pencil" class="mr-2" />
-                            Start Assessment
+                            Try Assessment
                         </button>
                     </div>
                 </div>
