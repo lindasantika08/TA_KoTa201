@@ -154,8 +154,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // assessment & project mhs
     Route::get('/bobot', [SelfAssessment::class, 'getFilteredBobot']);
-    Route::get('/peer-assessment', [AssessmentMahasiswa::class, 'getDataPeer']);
-    Route::get('/questions-peer', [PeerAssessment::class, 'getQuestionsByProject']);
     Route::get('/type-kriteria', [SelfAssessment::class, '']);
     Route::get('/proyek-self-assessment', [ProjectController::class, 'getDataSelf']);
     Route::get('/proyek-Peer-assessment', [ProjectController::class, 'getDataPeer']);

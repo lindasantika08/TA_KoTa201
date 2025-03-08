@@ -86,11 +86,10 @@ class SelfAssessment extends Controller
                 'project_name' => $project->project_name
             ]);
 
-            // Filter berdasarkan assessment_order
             $assessments = Assessment::where('project_id', $project->id)
                 ->where('type', 'selfAssessment')
-                ->where('assessment_order', $assessmentOrder) // Tambah filter berdasarkan assessment_order
-                ->where('is_published', 1) // Pastikan hanya mengambil yang sudah dipublish
+                ->where('assessment_order', $assessmentOrder)
+                ->where('is_published', 1) 
                 ->get();
 
             if ($assessments->isEmpty()) {
@@ -139,57 +138,55 @@ class SelfAssessment extends Controller
     }
 
     public function getUserInfo(Request $request)
-{
-    $user = Auth::user();
-    $mahasiswa = Mahasiswa::where('user_id', $user->id)->first();
-    
-    // Ubah cara pengambilan parameter
-    $batch_year = $request->input('batch_year');
-    $project_name = $request->input('project_name');
+    {
+        $user = Auth::user();
+        $mahasiswa = Mahasiswa::where('user_id', $user->id)->first();
+        
+        $batch_year = $request->input('batch_year');
+        $project_name = $request->input('project_name');
 
-    Log::info('User Info Request', [
-        'user_id' => $user->id,
-        'batch_year' => $batch_year,
-        'project_name' => $project_name
-    ]);
+        Log::info('User Info Request', [
+            'user_id' => $user->id,
+            'batch_year' => $batch_year,
+            'project_name' => $project_name
+        ]);
 
-    $group = Group::where('mahasiswa_id', $mahasiswa->id)
-        ->whereHas('project', function($query) use ($batch_year, $project_name) {
-            $query->where('batch_year', $batch_year)
-                  ->where('project_name', $project_name);
-        })
-        ->with('project')
-        ->first();
-
-    if (!$group) {
-        // Coba cari group terakhir jika tidak ditemukan
         $group = Group::where('mahasiswa_id', $mahasiswa->id)
+            ->whereHas('project', function($query) use ($batch_year, $project_name) {
+                $query->where('batch_year', $batch_year)
+                    ->where('project_name', $project_name);
+            })
             ->with('project')
-            ->orderBy('created_at', 'desc')
             ->first();
 
         if (!$group) {
-            return response()->json([
-                'message' => 'No matching group found',
-                'debug' => [
-                    'mahasiswa_id' => $mahasiswa->id,
-                    'batch_year' => $batch_year,
-                    'project_name' => $project_name
-                ]
-            ], 404);
-        }
-    }
+            $group = Group::where('mahasiswa_id', $mahasiswa->id)
+                ->with('project')
+                ->orderBy('created_at', 'desc')
+                ->first();
 
-    return response()->json([
-        'nim' => $mahasiswa->nim,
-        'name' => $user->name,
-        'class' => $mahasiswa->classRoom->class_name,
-        'group' => $group->group,
-        'project_name' => $group->project->project_name,
-        'batch_year' => $group->project->batch_year,
-        'date' => now()->format('d F Y')
-    ]);
-}
+            if (!$group) {
+                return response()->json([
+                    'message' => 'No matching group found',
+                    'debug' => [
+                        'mahasiswa_id' => $mahasiswa->id,
+                        'batch_year' => $batch_year,
+                        'project_name' => $project_name
+                    ]
+                ], 404);
+            }
+        }
+
+        return response()->json([
+            'nim' => $mahasiswa->nim,
+            'name' => $user->name,
+            'class' => $mahasiswa->classRoom->class_name,
+            'group' => $group->group,
+            'project_name' => $group->project->project_name,
+            'batch_year' => $group->project->batch_year,
+            'date' => now()->format('d F Y')
+        ]);
+    }
 
     public function saveAnswer(Request $request)
     {

@@ -28,6 +28,7 @@ export default {
         { key: 'no', label: 'No' },
         { key: 'batch_year', label: 'Tahun Ajaran' },
         { key: 'project_name', label: 'Proyek' },
+        { key: 'assessment_order', label: 'Order' },
         { key: 'status', label: 'Status' },
         { key: 'date', label: 'Tanggal Pengisian' },
         { key: 'actions', label: 'Actions' },
@@ -39,7 +40,7 @@ export default {
     handleAnswer(item) {
       const batch_year = item.batch_year;
       const project_name = item.project_name;
-      const assessment_order = item.assessment_order || 1; 
+      const assessment_order = item.assessment_order || '1'; 
 
       console.log('Batch Year:', batch_year);
       console.log('Project Name:', project_name);
@@ -79,6 +80,7 @@ export default {
           no: index + 1,
           batch_year: item.batch_year,
           project_name: item.project_name,
+          assessment_order: item.assessment_order,
           status: item.status,
           date: dayjs(item.created_at).format('DD MMMM YYYY HH:mm'),
           total_questions: item.total_questions,

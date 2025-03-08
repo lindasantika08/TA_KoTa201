@@ -56,6 +56,7 @@ export default {
 
     handleTogglePublish(item) {
       const newStatus = !item.is_published;
+
       axios.post('/api/toggle-publish-assessment', {
         batch_year: item.batch_year,
         project_name: item.project_name,
@@ -63,15 +64,18 @@ export default {
         is_published: newStatus
       })
         .then(response => {
-          const index = this.items.findIndex(i =>
-            i.batch_year === item.batch_year &&
-            i.project_name === item.project_name &&
-            i.assessment_order === item.assessment_order
-          );
+          const updatedItems = this.items.map(i => {
+            if (
+              i.batch_year === item.batch_year &&
+              i.project_name === item.project_name &&
+              i.assessment_order === item.assessment_order
+            ) {
+              return { ...i, is_published: newStatus };
+            }
+            return i;
+          });
 
-          if (index !== -1) {
-            this.$set(this.items, index, { ...item, is_published: newStatus });
-          }
+          this.items = updatedItems;
         })
         .catch(error => {
           console.error('Error toggling publish status:', error);
@@ -86,7 +90,7 @@ export default {
         assessment_order: item.assessment_order,
         status: item.status,
         is_published: Boolean(item.is_published),
-        date: dayjs(item.created_at).format('DD MMMM YYYY HH:mm'),
+        date: dayjs(item.created_at).format('DD MMMM YYYY'),
       }));
     }
   },

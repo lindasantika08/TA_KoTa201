@@ -110,7 +110,6 @@ export default {
 
         alert(response.data.message || "Data imported successfully.");
         event.target.value = '';
-        // Don't reset the end_date after import since it's a default value now
       } catch (error) {
         console.error("Import error:", error);
         alert("There was an error importing the data.");
@@ -227,26 +226,15 @@ export default {
                 <label for="end-date" class="block text-sm font-medium text-gray-700 mb-2">
                   Tanggal Akhir Pengisian Assessment
                 </label>
-                <input
-                  type="date"
-                  id="end-date"
-                  v-model="endDate"
-                  class="mt-1 p-2 border border-gray-300 rounded w-full"
-                  required
-                />
+                <input type="date" id="end-date" v-model="endDate"
+                  class="mt-1 p-2 border border-gray-300 rounded w-full" required />
               </div>
 
               <label for="file-upload" class="block text-sm font-medium text-gray-700">
                 Import Data Excel (File .xlsx/.xls)
               </label>
-              <input
-                type="file"
-                id="file-upload"
-                accept=".xlsx, .xls"
-                @change="handleFileUpload"
-                class="mt-2 p-2 border border-gray-300 rounded w-full"
-                :disabled="!endDate"
-              />
+              <input type="file" id="file-upload" accept=".xlsx, .xls" @change="handleFileUpload"
+                class="mt-2 p-2 border border-gray-300 rounded w-full" :disabled="!endDate" />
             </div>
           </template>
         </Card>
