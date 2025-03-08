@@ -50,6 +50,7 @@ export default {
             batch_year: computed(() => page.props.batch_year),
             project_id: computed(() => page.props.projectId),
             project_name: computed(() => page.props.project_name),
+            assessment_order: computed(() => page.props.assessment_order),
         };
     },
     mounted() {
@@ -112,7 +113,7 @@ export default {
         },
         showDetails(mahasiswaId) {
             router.visit(
-                `/dosen/answers/details?mahasiswaId=${mahasiswaId}&batch_year=${this.batch_year}&project_name=${this.project_name}&project_id=${this.project_id}`
+                `/dosen/answers/details?mahasiswaId=${mahasiswaId}&batch_year=${this.batch_year}&project_name=${this.project_name}&project_id=${this.project_id}&assessment_order=${this.assessment_order}`
             );
         },
         getStatusClass(status) {

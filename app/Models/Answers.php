@@ -20,6 +20,8 @@ class Answers extends Model
         'answer',
         'score',
         'status',
+        'score_SLA',
+        'similarity',
     ];
 
     /**
