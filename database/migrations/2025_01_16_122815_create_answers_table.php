@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignUuid('mahasiswa_id')->nullable()->constrained('mahasiswa');
             $table->foreignUuid('question_id')->constrained('assessment');
             $table->foreignUuid('dosen_id')->nullable()->constrained('dosen');
-            $table->string('answer');
+            $table->longText('answer');
             $table->integer('score');
             $table->string('status')->default('pending');
             $table->softDeletes();

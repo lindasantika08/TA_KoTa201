@@ -25,8 +25,10 @@ export default {
         { key: 'no', label: 'No' },
         { key: 'batch_year', label: 'Batch Year' },
         { key: 'project_name', label: 'Project Name' },
+        { key: 'assessment_order', label: 'Order' },
         { key: 'status', label: 'Status' },
         { key: 'date', label: 'Created Date' },
+        { key: 'publish', label: 'Publish' },
         { key: 'actions', label: 'Actions' },
       ],
       items: [],
@@ -36,7 +38,8 @@ export default {
     handleDetail(item) {
       router.get('/dosen/assessment/data-with-bobot-peer', {
         batch_year: item.batch_year,
-        project_name: item.project_name
+        project_name: item.project_name,
+        assessment_order: item.assessment_order
       }, {
         preserveState: true
       })
@@ -51,22 +54,55 @@ export default {
     handleListAnswer(item) {
       router.get('/dosen/answers-peer-assessment', {
         batch_year: item.batch_year,
-        project_name: item.project_name
+        project_name: item.project_name,
+        assessment_order: item.assessment_order,
       }, {
         preserveState: true
       });
+    },
+
+    handleTogglePublish(item) {
+      axios.post('/api/toggle-publish-assessment-peer', {
+        batch_year: item.batch_year,
+        project_name: item.project_name,
+        assessment_order: item.assessment_order,
+        is_published: !item.is_published
+      })
+        .then(response => {
+          const updatedItem = { ...item, is_published: !item.is_published };
+          
+          const index = this.items.findIndex(i => 
+            i.batch_year === item.batch_year && 
+            i.project_name === item.project_name && 
+            i.assessment_order === item.assessment_order
+          );
+          
+          if (index !== -1) {
+            this.items[index] = updatedItem;
+            this.items = [...this.items];
+          }
+        })
+        .catch(error => {
+          console.error('Error toggling publish status:', error);
+        });
+    },
+
+    updateItems(data) {
+      this.items = data.map((item, index) => ({
+        no: index + 1,
+        batch_year: item.batch_year,
+        project_name: item.project_name,
+        assessment_order: item.assessment_order,
+        status: item.status,
+        is_published: item.is_published == 1,
+        date: dayjs(item.created_at).format('DD MMMM YYYY'),
+      }));
     }
   },
   mounted() {
     axios.get('/api/proyek-Peer-assessment')
       .then(response => {
-        this.items = response.data.map((item, index) => ({
-          no: index + 1,
-          batch_year: item.batch_year,
-          project_name: item.project_name,
-          status: item.status,
-          date: dayjs(item.created_at).format('DD MMMM YYYY HH:mm'),
-        }));
+        this.updateItems(response.data);
       })
       .catch(error => {
         console.error('Error fetching data:', error);
@@ -91,6 +127,15 @@ export default {
           </div>
           <div v-else>
             <DataTable :headers="headers" :items="items" class="mt-10">
+              <template #column-publish="{ item }">
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" :checked="item.is_published" @change="handleTogglePublish(item)"
+                    class="sr-only peer">
+                  <div
+                    class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
+                  </div>
+                </label>
+              </template>
               <template #column-actions="{ item }">
                 <button @click="handleDetail(item)"
                   class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">

@@ -14,17 +14,17 @@ export default {
         Card,
         Breadcrumb,
     },
-    data() {
-        return {
-            breadcrumbs: [
-                { text: "Self Assessment", href: "/dosen/assessment/projectsSelf" },
-                { text: "Detail", href: null },
-            ],
-        };
-    },
     props: {
         batchYear: String,
         projectName: String,
+        currentOrder: {
+            type: Number,
+            required: true
+        },
+        totalOrders: {
+            type: Number,
+            required: true
+        },
         assessments: {
             type: Array,
             required: true,
@@ -33,6 +33,11 @@ export default {
     setup(props) {
         const showDropdown = ref(false);
         const page = usePage();
+
+        const breadcrumbs = [
+            { text: "Self Assessment", href: "/dosen/assessment/projectsSelf" },
+            { text: "Detail", href: null },
+        ];
 
         const toggleDropdown = () => {
             showDropdown.value = !showDropdown.value;
@@ -52,12 +57,23 @@ export default {
             return groups;
         });
 
+        const changeOrder = (newOrder) => {
+            router.get('/dosen/assessment/data-with-bobot-self', {
+                batch_year: props.batchYear,
+                project_name: props.projectName,
+                assessment_order: newOrder
+            }, {
+                preserveState: true
+            });
+        };
+
         const fetchQuestionId = async () => {
             try {
                 const response = await axios.get("/api/get-question-id", {
                     params: {
                         batch_year: props.batchYear,
                         project_name: props.projectName,
+                        assessment_order: props.currentOrder
                     },
                 });
 
@@ -75,26 +91,23 @@ export default {
             const questionId = await fetchQuestionId();
             if (!questionId) return;
 
-            const data = {
-                batch_year: props.batchYear,
-                project_name: props.projectName
-            };
-
-            console.log("Data to be sent:", data);
-
             router.visit("/dosen/AnswerSelf", {
                 method: "get",
-                data: data,
+                data: {
+                    batch_year: props.batchYear,
+                    project_name: props.projectName,
+                    assessment_order: props.currentOrder
+                },
             });
         };
 
         return {
+            breadcrumbs,
             toggleDropdown,
             showDropdown,
             groupedAssessments,
             handleAnswers,
-            batchYear: props.batchYear,
-            projectName: props.projectName,
+            changeOrder
         };
     },
 };
@@ -103,12 +116,9 @@ export default {
 <template>
     <div class="flex min-h-screen bg-gray-50">
         <Sidebar role="dosen" />
-
         <div class="flex-1">
             <Navbar userName="Dosen" />
-
             <main class="p-6">
-                <!-- Header Section -->
                 <div class="mb-6">
                     <Breadcrumb :items="breadcrumbs" />
                     <div class="mt-4 flex justify-between items-center">
@@ -117,6 +127,8 @@ export default {
                             <div class="mt-2 text-sm text-gray-600">
                                 <span class="font-medium">Project:</span> {{ projectName }} | 
                                 <span class="font-medium">Batch Year:</span> {{ batchYear }}
+                            </div>
+                            <div class="mt-2 flex items-center space-x-4">
                             </div>
                         </div>
                         <button @click="handleAnswers()"
@@ -131,7 +143,6 @@ export default {
                 <div class="space-y-6">
                     <div v-for="(group, aspect) in groupedAssessments" :key="aspect" 
                         class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                        <!-- Group Header -->
                         <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
                             <div class="flex justify-between items-center">
                                 <h2 class="text-lg font-semibold text-gray-900">{{ aspect || 'Uncategorized' }}</h2>
@@ -141,11 +152,9 @@ export default {
                             </div>
                         </div>
 
-                        <!-- Questions List -->
                         <div class="divide-y divide-gray-200">
                             <div v-for="(assessment, index) in group" :key="assessment.id" 
                                 class="p-6 hover:bg-gray-50 transition-colors">
-                                <!-- Question Header -->
                                 <div class="flex items-start space-x-4">
                                     <div class="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-semibold">
                                         {{ index + 1 }}
@@ -161,7 +170,6 @@ export default {
                                     </div>
                                 </div>
 
-                                <!-- Scoring Rubric -->
                                 <div class="mt-4 bg-gray-50 rounded-lg p-4">
                                     <h4 class="text-sm font-medium text-gray-700 mb-3">Scoring Rubric</h4>
                                     <div class="overflow-x-auto">

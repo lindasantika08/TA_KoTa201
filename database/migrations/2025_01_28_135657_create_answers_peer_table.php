@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignUuid('peer_id')->nullable()->constrained('mahasiswa');
             $table->foreignUuid('dosen_id')->nullable()->constrained('dosen');
             $table->uuid('question_id');
-            $table->text('answer');
+            $table->longText('answer');
             $table->integer('score');
             $table->string('status');
             $table->timestamps();

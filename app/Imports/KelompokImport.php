@@ -19,10 +19,29 @@ use Throwable;
 class KelompokImport implements ToModel, WithHeadingRow, SkipsOnError
 {
     private $dataBaru = [];
+    private $requiredColumns = [
+        'nim',
+        'angkatan',
+        'proyek',
+        'kelas',
+        'kode_dosen',
+        'kelompok'
+    ];
 
     public function model(array $row)
     {
         try {
+            // Validate required columns
+            foreach ($this->requiredColumns as $column) {
+                if (!isset($row[$column]) || empty($row[$column])) {
+                    Log::warning('Missing required column:', [
+                        'column' => $column,
+                        'row' => $row
+                    ]);
+                    return null; // Skip this row
+                }
+            }
+
             DB::beginTransaction();
 
             Log::info('Importing row:', $row);
@@ -32,8 +51,8 @@ class KelompokImport implements ToModel, WithHeadingRow, SkipsOnError
                 ->first();
 
             if (!$mahasiswa) {
-                Log::warning('Mahasiswa not found for NIM:', ['nim' => $row['nim']]);
-                throw new \Exception("Mahasiswa dengan NIM {$row['nim']} tidak ditemukan");
+                Log::warning('Mahasiswa not found for nim:', ['nim' => $row['nim']]);
+                throw new \Exception("Mahasiswa dengan nim {$row['nim']} tidak ditemukan");
             }
 
             // Validate angkatan
@@ -43,46 +62,54 @@ class KelompokImport implements ToModel, WithHeadingRow, SkipsOnError
                     'mahasiswa_angkatan' => $mahasiswa->classRoom->angkatan,
                     'input_angkatan' => $row['angkatan']
                 ]);
-                throw new \Exception("Angkatan tidak sesuai untuk mahasiswa dengan NIM {$row['nim']}");
+                throw new \Exception("Angkatan tidak sesuai untuk mahasiswa dengan nim {$row['nim']}");
+            }
+
+            // Validate class
+            if ($mahasiswa->classRoom->class_name != $row['kelas']) {
+                Log::warning('Class mismatch:', [
+                    'nim' => $row['nim'],
+                    'mahasiswa_class' => $mahasiswa->classRoom->class_name,
+                    'input_class' => $row['kelas']
+                ]);
+                throw new \Exception("Kelas tidak sesuai untuk mahasiswa dengan nim {$row['nim']}");
             }
 
             if (!$mahasiswa->classRoom) {
                 Log::warning('Class not found for mahasiswa:', ['nim' => $row['nim']]);
-                throw new \Exception("Kelas tidak ditemukan untuk mahasiswa dengan NIM {$row['nim']}");
+                throw new \Exception("Kelas tidak ditemukan untuk mahasiswa dengan nim {$row['nim']}");
             }
 
             if (!$mahasiswa->classRoom->prodi) {
                 Log::warning('Prodi not found for class:', ['class_id' => $mahasiswa->class_id]);
-                throw new \Exception("Program studi tidak ditemukan untuk kelas mahasiswa dengan NIM {$row['nim']}");
+                throw new \Exception("Program studi tidak ditemukan untuk kelas mahasiswa dengan nim {$row['nim']}");
             }
 
             if (!$mahasiswa->classRoom->prodi->major) {
                 Log::warning('Major not found for prodi:', ['prodi_id' => $mahasiswa->classRoom->prodi_id]);
-                throw new \Exception("Jurusan tidak ditemukan untuk program studi mahasiswa dengan NIM {$row['nim']}");
-            }
-
-            $dosenManager = explode(' - ', $row['dosen_manajer']);
-            $kodeDosen = count($dosenManager) > 1 ? trim($dosenManager[1]) : null;
-
-            $dosen = null;
-            if ($kodeDosen) {
-                $dosen = Dosen::where('kode_dosen', $kodeDosen)->first();
-                if (!$dosen) {
-                    Log::warning('Dosen not found for kode_dosen:', ['kode_dosen' => $kodeDosen]);
-                    throw new \Exception("Dosen dengan kode {$kodeDosen} tidak ditemukan");
-                }
+                throw new \Exception("Jurusan tidak ditemukan untuk program studi mahasiswa dengan nim {$row['nim']}");
             }
 
             $project = Project::where('project_name', $row['proyek'])
-                ->where('major_id', $mahasiswa->classRoom->prodi->major->id)
+                ->where('prodi_id', $mahasiswa->classRoom->prodi_id)
                 ->first();
 
             if (!$project) {
                 Log::warning('Project not found', [
                     'project_name' => $row['proyek'],
-                    'major_id' => $mahasiswa->classRoom->prodi->major->id
+                    'prodi_id' => $mahasiswa->classRoom->prodi_id
                 ]);
                 throw new \Exception("Project tidak ditemukan untuk proyek {$row['proyek']}");
+            }
+
+            // Find dosen by kode_dosen
+            $dosen = Dosen::where('kode_dosen', trim($row['kode_dosen']))
+                ->where('major_id', $mahasiswa->classRoom->prodi->major_id)
+                ->first();
+
+            if (!$dosen) {
+                Log::warning('Dosen not found for code:', ['kode_dosen' => $row['kode_dosen']]);
+                throw new \Exception("Dosen dengan kode {$row['kode_dosen']} tidak ditemukan");
             }
 
             $groupBaru = [
@@ -104,7 +131,7 @@ class KelompokImport implements ToModel, WithHeadingRow, SkipsOnError
                     'id' => Str::uuid(),
                     'group' => $row['kelompok'],
                     'batch_year' => $project->batch_year,
-                    'dosen_id' => $dosen ? $dosen->id : null,
+                    'dosen_id' => $dosen->id,
                     'angkatan' => $row['angkatan']
                 ]
             );
@@ -127,12 +154,10 @@ class KelompokImport implements ToModel, WithHeadingRow, SkipsOnError
 
     private function cleanupOldData($projectId, $dataBaru)
     {
-        // Ambil angkatan yang sedang diimpor dari data terbaru
         $angkatanTerbaru = collect($dataBaru)->pluck('angkatan')->unique();
 
-        // Ambil semua data lama yang memiliki project_id yang sama
         $dataLama = Group::where('project_id', $projectId)
-            ->whereIn('angkatan', $angkatanTerbaru) // Hanya ambil data lama dengan angkatan yang sama
+            ->whereIn('angkatan', $angkatanTerbaru)
             ->get();
 
         foreach ($dataLama as $data) {
@@ -142,7 +167,6 @@ class KelompokImport implements ToModel, WithHeadingRow, SkipsOnError
                     $item['angkatan'] == $data->angkatan;
             });
 
-            // Hanya hapus data jika tidak ditemukan dalam batch terbaru dengan angkatan yang sama
             if (!$isFound) {
                 $data->delete();
                 Log::info('Deleted old group:', [
@@ -153,7 +177,6 @@ class KelompokImport implements ToModel, WithHeadingRow, SkipsOnError
             }
         }
     }
-
 
     public function onError(Throwable $e)
     {

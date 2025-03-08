@@ -59,6 +59,11 @@ class Group extends Model
         return $this->belongsTo(Mahasiswa::class, 'mahasiswa_id');
     }
 
+    public function peer()
+    {
+        return $this->belongsTo(Mahasiswa::class, 'peer_id');
+    }
+
     public function dosen()
     {
         return $this->belongsTo(Dosen::class, 'dosen_id');
@@ -72,5 +77,15 @@ class Group extends Model
     public function report()
     {
         return $this->hasMany(Report::class, 'group_id');
+    }
+
+    public function feedback()
+    {
+        return $this->hasMany(Feedback::class, 'group_id');
+    }
+
+    public function feedbackAI()
+    {
+        return $this->hasMany(feedback_ai::class, 'group_id');
     }
 }

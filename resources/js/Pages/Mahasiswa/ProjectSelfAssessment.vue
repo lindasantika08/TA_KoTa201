@@ -8,6 +8,8 @@ import Breadcrumb from "@/Components/Breadcrumb.vue";
 import dayjs from 'dayjs';
 import { router } from '@inertiajs/vue3';
 
+
+
 export default {
   components: {
     DataTable,
@@ -26,6 +28,7 @@ export default {
         { key: 'no', label: 'No' },
         { key: 'batch_year', label: 'Tahun Ajaran' },
         { key: 'project_name', label: 'Proyek' },
+        { key: 'assessment_order', label: 'Order' },
         { key: 'status', label: 'Status' },
         { key: 'date', label: 'Tanggal Pengisian' },
         { key: 'actions', label: 'Actions' },
@@ -35,31 +38,38 @@ export default {
   },
   methods: {
     handleAnswer(item) {
-    const batch_year = item.batch_year;
-    const project_name = item.project_name;
+      const batch_year = item.batch_year;
+      const project_name = item.project_name;
+      const assessment_order = item.assessment_order || '1'; 
 
-    console.log('Batch Year:', batch_year);
-    console.log('Project Name:', project_name);
+      console.log('Batch Year:', batch_year);
+      console.log('Project Name:', project_name);
+      console.log('Assessment Order:', assessment_order);
 
-    router.visit(`/mahasiswa/assessment/self-assessment`, {
+      router.visit(`/mahasiswa/assessment/self-assessment`, {
         method: 'get',
         data: {
-            batch_year: batch_year,
-            project_name: project_name
+          batch_year: batch_year,
+          project_name: project_name,
+          assessment_order: assessment_order
         },
         preserveState: true,
         onError: (error) => {
-            console.error('Navigation error:', error);
+          console.error('Navigation error:', error);
         }
-    });
-  },
+      });
+    },
 
     handleDetail(item) {
       router.visit(`/mahasiswa/peer-assessment/self-detail`, {
         method: 'get',
+        data: {
+          batch_year: item.batch_year,
+          project_name: item.project_name
+        },
         preserveState: true
       });
-    }
+    },
 
   },
   mounted() {
@@ -69,8 +79,9 @@ export default {
           id: item.id,
           no: index + 1,
           batch_year: item.batch_year,
-          project_name: item.project_name, 
-          status: item.status, 
+          project_name: item.project_name,
+          assessment_order: item.assessment_order,
+          status: item.status,
           date: dayjs(item.created_at).format('DD MMMM YYYY HH:mm'),
           total_questions: item.total_questions,
         }));
@@ -112,7 +123,7 @@ export default {
             <template #column-status="{ item }">
               <span :class="[
                 'px-2 py-1 rounded-full text-xs font-medium',
-                item.status === 'aktif' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                item.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
               ]">
                 {{ item.status }}
               </span>

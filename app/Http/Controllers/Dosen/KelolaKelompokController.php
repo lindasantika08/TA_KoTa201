@@ -66,7 +66,9 @@ class KelolaKelompokController extends Controller
             ->get()
             ->groupBy('project_id')
             ->map(function ($projectGroups) {
-                return $projectGroups->groupBy('group')
+                return $projectGroups->groupBy(function ($item) {
+                    return optional($item->mahasiswa->classRoom)->class_name . '-' . $item->group;
+                })
                     ->sortKeys()
                     ->map(function ($sameGroupItems) {
                         $firstGroup = $sameGroupItems->first();
@@ -74,12 +76,14 @@ class KelolaKelompokController extends Controller
                             return [
                                 'name' => optional($group->mahasiswa->user)->name ?? 'Unnamed',
                                 'nim' => optional($group->mahasiswa)->nim ?? 'N/A',
-                                'user_id' => optional($group->mahasiswa->user)->id ?? null
+                                'user_id' => optional($group->mahasiswa->user)->id ?? null,
+                                'class' => optional($group->mahasiswa->classRoom)->class_name ?? 'N/A'
                             ];
                         })->unique('nim')->values();
 
                         // Ambil angkatan dari classroom mahasiswa di group
                         $angkatan = optional($firstGroup->mahasiswa->classRoom)->angkatan ?? 'N/A';
+                        $class = optional($firstGroup->mahasiswa->classRoom)->class_name ?? 'N/A';
 
                         return [
                             'dosen_name' => optional($firstGroup->dosen->user)->name ?? 'Unnamed Dosen',
@@ -89,8 +93,10 @@ class KelolaKelompokController extends Controller
                                 'group' => $firstGroup->group,
                                 'anggota' => $members,
                                 'angkatan' => $angkatan,
+                                'class' => $class,
                                 'classroom' => [
-                                    'angkatan' => $angkatan
+                                    'angkatan' => $angkatan,
+                                    'class_name' => $class
                                 ]
                             ]]
                         ];
@@ -237,18 +243,22 @@ class KelolaKelompokController extends Controller
         $request->validate([
             'file' => 'required|mimes:xlsx,xls',
         ]);
-
+    
         $file = $request->file('file');
-
+    
         try {
             Log::info('File uploaded', ['file_name' => $file->getClientOriginalName()]);
-
+    
+            // Log the file contents or data being imported
+            Log::info('File contents', ['contents' => file_get_contents($file->getRealPath())]);
+    
             Excel::import(new KelompokImport, $file);
-
+    
             return response()->json(['message' => 'Data kelompok berhasil diimpor'], 200);
         } catch (\Exception $e) {
-            Log::error('Import error: ' . $e->getMessage());
+            Log::error('Import error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             return response()->json(['error' => 'Terjadi kesalahan saat mengimpor data', 'details' => $e->getMessage()], 500);
         }
     }
+    
 }

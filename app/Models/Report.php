@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 class Report extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuids;
 
     protected $table = 'reports';
 
@@ -40,5 +41,19 @@ class Report extends Model
     public function typeCriteria()
     {
         return $this->belongsTo(TypeCriteria::class, 'typeCriteria_id', 'id');
+    }
+
+    public function setKeysForSaveQuery($query)
+    {
+        $keys = $this->getKeyName();
+        if (!is_array($keys)) {
+            return parent::setKeysForSaveQuery($query);
+        }
+
+        foreach ($keys as $key) {
+            $query->where($key, '=', $this->getAttribute($key));
+        }
+
+        return $query;
     }
 }

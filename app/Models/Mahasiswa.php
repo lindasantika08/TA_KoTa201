@@ -5,11 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Notifications\Notifiable;
 
 class Mahasiswa extends Model
 {
-    use HasFactory, HasUuids, SoftDeletes;
+    use HasFactory, HasUuids, Notifiable;
 
     protected $table = 'mahasiswa';
 
@@ -55,5 +55,20 @@ class Mahasiswa extends Model
     public function report()
     {
         return $this->hasMany(Report::class, 'mahasiswa_id');
+    }
+
+    public function feedback()
+    {
+        return $this->hasMany(Feedback::class, 'mahasiswa_id');
+    }
+
+    public function feedbacks()
+    {
+        return $this->hasMany(Feedback::class, 'peer_id');
+    }
+
+    public function feedback_ai()
+    {
+        return $this->hasMany(feedback_ai::class, 'peer_id');
     }
 }

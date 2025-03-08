@@ -18,9 +18,16 @@ class Assessment extends Model
         'id',
         'batch_year',
         'project_id',
+        'assessment_order',
         'type',
         'question',
         'criteria_id',
+        'skill_type',
+        'end_date'
+    ];
+
+    protected $casts = [
+        'is_published' => 'boolean'
     ];
 
     public function typeCriteria()

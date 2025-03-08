@@ -15,7 +15,7 @@ class ProjectController extends Controller
     public function index()
     {
         $projects = Project::select('batch_year', 'semester', 'project_name')
-            ->where('status', 'active') // Menambahkan filter hanya untuk project yang aktif
+            ->where('status', 'active')
             ->get();
 
         return response()->json($projects);
@@ -30,7 +30,7 @@ class ProjectController extends Controller
             ->select('id', 'batch_year', 'project_name', 'status', 'created_at')
             ->with(['assessments' => function ($query) {
                 $query->where('type', 'selfAssessment')
-                    ->with('typeCriteria'); // Load relasi typeCriteria jika diperlukan
+                    ->with('typeCriteria');
             }])
             ->distinct()
             ->get();
@@ -48,7 +48,7 @@ class ProjectController extends Controller
             ->select('id', 'batch_year', 'project_name', 'status', 'created_at')
             ->with(['assessments' => function ($query) {
                 $query->where('type', 'peerAssessment')
-                    ->with('typeCriteria'); // Load relasi typeCriteria jika diperlukan
+                    ->with('typeCriteria');
             }])
             ->distinct()
             ->get();
@@ -65,15 +65,23 @@ class ProjectController extends Controller
                 ->whereColumn('project.id', 'assessment.project_id')
                 ->where('assessment.type', 'selfAssessment');
         })
-            ->select([
-                'id',
-                'batch_year',
-                'project_name',
-                'status',
-                'created_at'
-            ])
-            ->orderBy('created_at', 'desc')
-            ->get();
+        ->join('assessment', function($join) {
+            $join->on('project.id', '=', 'assessment.project_id')
+                ->where('assessment.type', '=', 'selfAssessment');
+        })
+        ->select([
+            'project.id',
+            'project.batch_year',
+            'project.project_name',
+            'project.status',
+            'project.created_at',
+            'assessment.assessment_order'
+        ])
+        ->selectRaw('(SELECT is_published FROM assessment WHERE project_id = project.id AND type = "selfAssessment" AND assessment_order = assessment.assessment_order LIMIT 1) as is_published')
+        ->distinct()
+        ->orderBy('project.project_name')
+        ->orderBy('assessment.assessment_order')
+        ->get();
 
         return response()->json($projects);
     }
@@ -81,54 +89,143 @@ class ProjectController extends Controller
     public function getDataPeer()
     {
         $projects = Project::whereExists(function ($query) {
-            $query->from('assessment')
-                ->whereColumn('project.id', 'assessment.project_id')
-                ->where('assessment.type', 'peerAssessment');
-        })
+                $query->from('assessment')
+                    ->whereColumn('project.id', 'assessment.project_id')
+                    ->where('assessment.type', 'peerAssessment');
+            })
+            ->join('assessment', function($join) {
+                $join->on('project.id', '=', 'assessment.project_id')
+                    ->where('assessment.type', '=', 'peerAssessment');
+            })
             ->select([
-                'id',
-                'batch_year',
-                'project_name',
-                'status',
-                'created_at'
+                'project.id',
+                'project.batch_year',
+                'project.project_name',
+                'project.status',
+                'project.created_at',
+                'assessment.assessment_order'
             ])
-            ->orderBy('created_at', 'desc')
+            ->selectRaw('(SELECT is_published FROM assessment WHERE project_id = project.id AND type = "peerAssessment" AND assessment_order = assessment.assessment_order LIMIT 1) as is_published')
+            ->distinct()
+            ->orderBy('project.project_name')
+            ->orderBy('assessment.assessment_order')
             ->get();
 
         return response()->json($projects);
     }
 
+    public function togglePublishAssessment(Request $request)
+    {
+        try {
+            \DB::enableQueryLog();
+
+            $project = Project::where('batch_year', $request->batch_year)
+                            ->where('project_name', $request->project_name)
+                            ->first();
+
+            if (!$project) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Project not found'
+                ], 404);
+            }
+
+            $updated = Assessment::where([
+                'project_id' => $project->id,
+                'type' => 'selfAssessment',
+                'assessment_order' => $request->assessment_order
+            ])->update([
+                'is_published' => $request->is_published ? 1 : 0
+            ]);
+
+            \Log::info('SQL Query:', \DB::getQueryLog());
+            \Log::info('Update result:', ['updated' => $updated]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Assessment publish status updated successfully',
+                'data' => [
+                    'is_published' => $request->is_published,
+                    'updated_count' => $updated
+                ]
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Toggle publish error:', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update publish status: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function togglePublishAssessmentPeer(Request $request)
+    {
+        try {
+            \DB::enableQueryLog();
+
+            $project = Project::where('batch_year', $request->batch_year)
+                            ->where('project_name', $request->project_name)
+                            ->first();
+
+            if (!$project) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Project not found'
+                ], 404);
+            }
+
+            $updated = Assessment::where([
+                'project_id' => $project->id,
+                'type' => 'peerAssessment',
+                'assessment_order' => $request->assessment_order
+            ])->update([
+                'is_published' => $request->is_published ? 1 : 0
+            ]);
+
+            \Log::info('SQL Query:', \DB::getQueryLog());
+            \Log::info('Update result:', ['updated' => $updated]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Assessment publish status updated successfully',
+                'data' => [
+                    'is_published' => $request->is_published,
+                    'updated_count' => $updated
+                ]
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Toggle publish error:', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update publish status: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function changeStatus(Request $request)
     {
-        // Ambil data dari request
         $tahun_ajaran = $request->tahun_ajaran;
         $nama_proyek = $request->nama_proyek;
 
-        // Cari proyek berdasarkan tahun ajaran dan nama proyek
-        $project = Project::where('batch_year', $tahun_ajaran)  // Pastikan nama kolom sesuai
-            ->where('project_name', $nama_proyek)  // Pastikan nama kolom sesuai
+        $project = Project::where('batch_year', $tahun_ajaran)
+            ->where('project_name', $nama_proyek)
             ->first();
 
-        // Jika proyek tidak ditemukan
         if (!$project) {
             return response()->json(['error' => 'Project not found'], 404);
         }
 
-        // Validasi status
         $validator = Validator::make($request->all(), [
-            'status' => 'required|in:Active,NonActive',  // Pastikan status yang diterima adalah 'aktif' atau 'nonaktif'
+            'status' => 'required|in:Active,NonActive',
         ]);
 
-        // Jika validasi gagal
         if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()], 422);
         }
 
-        // Update status proyek
-        $project->status = $request->status; // Mengubah status proyek
-        $project->save(); // Simpan perubahan ke database
+        $project->status = $request->status;
+        $project->save();
 
-        // Kembalikan respons sukses
         return response()->json([
             'message' => 'Project status updated successfully',
             'project' => $project,

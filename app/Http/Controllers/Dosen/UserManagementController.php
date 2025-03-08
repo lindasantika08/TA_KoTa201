@@ -18,6 +18,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redirect;
 
 
 class UserManagementController extends Controller
@@ -49,40 +50,56 @@ class UserManagementController extends Controller
 
     public function getMahasiswa(Request $request)
     {
-        // Ambil parameter dari request
         $angkatan = $request->get('angkatan');
         $class = $request->get('class_name');
-    
-        // Mulai query untuk mengambil data mahasiswa
-        $query = Mahasiswa::with(['classRoom', 'user']);
-    
-        // Filter berdasarkan angkatan (angkatan)
+        $prodi = $request->get('prodi');
+        $major = $request->get('major');
+
+        $query = Mahasiswa::with(['classRoom.prodi.major', 'user'])
+            ->join('class_room', 'mahasiswa.class_id', '=', 'class_room.id')
+            ->join('prodi', 'class_room.prodi_id', '=', 'prodi.id')
+            ->join('major', 'prodi.major_id', '=', 'major.id')
+            ->orderBy('class_room.class_name', 'asc')
+            ->select('mahasiswa.*', 'major.major_name');
+
+        // Search by name or NIM
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('user', function ($subQ) use ($search) {
+                    $subQ->where('name', 'like', "%{$search}%");
+                })->orWhere('mahasiswa.nim', 'like', "%{$search}%");
+            });
+        }
+
         if ($angkatan) {
-            $query->whereHas('classRoom', function ($q) use ($angkatan) {
-                $q->where('angkatan', $angkatan);
+            $query->where('class_room.angkatan', $angkatan);
+        }
+
+        if ($prodi) {
+            $query->whereHas('classRoom.prodi', function ($q) use ($prodi) {
+                $q->where('prodi_name', $prodi);
             });
         }
-    
-        // Filter berdasarkan kelas
+
+        if ($major) {
+            $query->whereHas('classRoom.prodi.major', function ($q) use ($major) {
+                $q->where('major_name', $major);
+            });
+        }
+
         if ($class) {
-            $query->whereHas('classRoom', function ($q) use ($class) {
-                $q->where('class_name', $class);
-            });
+            $query->where('class_room.class_name', $class);
         }
-    
-        // Ambil data mahasiswa
-        $mahasiswa = $query->get();
-    
-        // Format data agar sesuai dengan yang dibutuhkan (misalnya menambahkan nomor urut)
-        $mahasiswa = $mahasiswa->map(function ($item, $index) {
+
+        $mahasiswa = $query->get()->map(function ($item, $index) {
             $item->no = $index + 1;
             return $item;
         });
-    
-        // Kirim data ke frontend
+
         return response()->json($mahasiswa);
     }
-    
+
     public function InputMahasiswa()
     {
 
@@ -130,7 +147,8 @@ class UserManagementController extends Controller
 
         Excel::import(new MahasiswaImport, $request->file('file'));
 
-        return redirect()->route('ManageMahasiswa')->with('success', 'Data mahasiswa berhasil diimpor!');
+        // return Redirect::route('dosen/manage-mahasiswa')->with('success', 'Data mahasiswa berhasil diimpor!');
+        return redirect()->route('dosen.manage-mahasiswa')->with('success', 'Data mahasiswa berhasil diimpor!');
     }
 
     public function ManageDosen()
@@ -204,45 +222,6 @@ class UserManagementController extends Controller
         return response()->json($dosen);
     }
 
-//     public function getDosen(Request $request)
-// {
-//     try {
-//         // Dapatkan user yang sedang login
-//         $user = auth()->user();
-        
-//         // Dapatkan major_id dari user yang login
-//         // Asumsikan user memiliki relasi ke dosen dan dosen memiliki major_id
-//         $majorId = $user->dosen->major_id;
-        
-//         // Query untuk mengambil data dosen
-//         $query = Dosen::with(['user'])
-//             ->where('major_id', $majorId)
-//             ->orderBy('created_at', 'desc');
-
-//         // Ambil data dosen
-//         $dosen = $query->get();
-
-//         // Format data dengan menambahkan nomor urut
-//         $dosen = $dosen->map(function ($item, $index) {
-//             $item->no = $index + 1;
-//             return $item;
-//         });
-
-//         return response()->json([
-//             'status' => 'success',
-//             'data' => $dosen
-//         ]);
-
-//     } catch (\Exception $e) {
-//         return response()->json([
-//             'status' => 'error',
-//             'message' => 'Gagal mengambil data dosen: ' . $e->getMessage()
-//         ], 500);
-//     }
-// }
-
-
-
     public function InputDosen()
     {
 
@@ -250,32 +229,32 @@ class UserManagementController extends Controller
     }
 
     public function ExportDosen(Request $request)
-{
-    try {
-        // Validate request
-        $validator = Validator::make($request->all(), [
-            'jurusan' => 'required|exists:major,id',
-        ]);
+    {
+        try {
+            // Validate request
+            $validator = Validator::make($request->all(), [
+                'jurusan' => 'required|exists:major,id',
+            ]);
 
-        if ($validator->fails()) {
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Get the major_id from the validated request
+            $majorId = $request->input('jurusan');
+
+            // Generate Excel file
+            return Excel::download(new DosenExport($majorId), 'Data_Dosen.xlsx');
+        } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
+                'message' => 'Error exporting data',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        // Get the major_id from the validated request
-        $majorId = $request->input('jurusan');
-
-        // Generate Excel file
-        return Excel::download(new DosenExport($majorId), 'Data_Dosen.xlsx');
-    } catch (\Exception $e) {
-        return response()->json([
-            'message' => 'Error exporting data',
-            'error' => $e->getMessage()
-        ], 500);
     }
-}
 
     public function ImportDosen(Request $request)
     {
@@ -298,8 +277,23 @@ class UserManagementController extends Controller
             ->where('users.role', 'mahasiswa') // Pastikan role adalah 'mahasiswa'
             ->distinct()
             ->pluck('class_room.angkatan'); // Ambil angkatan dari class_room
-    
+
         return response()->json($angkatan);
+    }
+
+    public function getMajor()
+    {
+        // Ambil major yang unik berdasarkan mahasiswa dengan role 'mahasiswa'
+        $major = Mahasiswa::join('users', 'users.id', '=', 'mahasiswa.user_id')
+            ->join('class_room', 'class_room.id', '=', 'mahasiswa.class_id')
+            ->join('prodi', 'prodi.id', '=', 'class_room.prodi_id')
+            ->join('major', 'major.id', '=', 'prodi.major_id')
+            ->where('users.role', 'mahasiswa')
+            ->distinct()
+            ->orderBy('major.major_name', 'asc')
+            ->pluck('major.major_name');
+
+        return response()->json($major);
     }
 
     public function getClass()
@@ -310,7 +304,7 @@ class UserManagementController extends Controller
             ->where('users.role', 'mahasiswa') // Pastikan role adalah 'mahasiswa'
             ->distinct()
             ->pluck('class_room.class_name'); // Ambil class_name dari class_room
-    
+
         return response()->json($kelas);
     }
 
@@ -343,7 +337,7 @@ class UserManagementController extends Controller
             ], 500);
         }
     }
-    
+
     public function getJurusanList()
     {
         try {

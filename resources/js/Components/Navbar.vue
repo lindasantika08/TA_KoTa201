@@ -19,12 +19,51 @@ export default {
       showProfileMenu: false,
       isLoggingOut: false,
       userName: "",
+      unreadNotificationsCount: 0,
+      socket: null,
+      eventSource: null,
+      unreadNotificationsCount: 0
     };
   },
   mounted() {
-    this.fetchUserName();  // Ambil nama pengguna saat komponen dimuat
+    this.fetchUserName();
+    this.fetchNotificationsCount();
+    // this.initializeSSE();
+    // this.initializeWebSocket();
+  },
+  beforeUnmount() {
+    this.disconnectWebSocket();
   },
   methods: {
+    initializeSSE() {
+        this.eventSource = new EventSource('/notifications/stream');
+        
+        this.eventSource.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            this.unreadNotificationsCount = data.count;
+            this.showNotification('New notification received!');
+        };
+    },
+
+    showNotification(message) {
+        if (Notification.permission === 'granted') {
+            new Notification(message);
+        }
+    },
+    
+    beforeUnmount() {
+        if (this.eventSource) {
+            this.eventSource.close();
+        }
+    },
+
+    disconnectWebSocket() {
+      if (this.socket) {
+        this.socket.close();
+        this.socket = null;
+      }
+    },
+
     toggleProfileMenu() {
       this.showProfileMenu = !this.showProfileMenu;
     },
@@ -32,19 +71,33 @@ export default {
     async fetchUserName() {
       try {
         const token = localStorage.getItem("auth_token");
-
         if (token) {
           const response = await axios.get("/api/user", {
             headers: {
               Authorization: `Bearer ${token}`,
             },
           });
-          this.userName = response.data.name;  // Set userName berdasarkan respons API
-        } else {
-          console.log("Token tidak ditemukan");
+          this.userName = response.data.name;
         }
       } catch (error) {
         console.error("Gagal mendapatkan data pengguna:", error);
+      }
+    },
+
+    async fetchNotificationsCount() {
+      try {
+        const token = localStorage.getItem("auth_token");
+        const response = await axios.post('/api/notifications/count', {}, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          }
+        });
+        if (response.data.success) {
+          this.unreadNotificationsCount = response.data.count;
+        }
+      } catch (error) {
+        console.error("Gagal mendapatkan jumlah notifikasi:", error);
+        this.unreadNotificationsCount = 0;
       }
     },
 
@@ -54,12 +107,8 @@ export default {
 
       try {
         const token = localStorage.getItem("auth_token");
-        console.log("Token yang dikirim:", token);
-
         if (token) {
-          console.log("Mengirim token untuk logout:", token);
-
-          const response = await axios.put(
+          await axios.put(
             "/api/logout",
             {},
             {
@@ -68,16 +117,12 @@ export default {
               },
             }
           );
-
-          console.log("Logout response:", response.data);
-        } else {
-          console.log("Token tidak ditemukan");
-          alert("You are not logged in.");
         }
       } catch (error) {
         console.error("Logout error:", error);
         alert("Logout failed. Please try again.");
       } finally {
+        this.disconnectWebSocket();
         localStorage.removeItem("auth_token");
         localStorage.removeItem("user_data");
         router.visit("/login");
@@ -86,14 +131,25 @@ export default {
     },
 
     goToNotifications() {
-      router.visit("/notifications");
+      axios.get('/api/user-role')
+        .then(response => {
+          const role = response.data.role;
+          if (role === 'mahasiswa') {
+            router.visit('/mahasiswa/notifications-mhs');
+          } else if (role === 'dosen') {
+            router.visit('/dosen/notifications');
+          }
+        })
+        .catch(error => {
+          console.error('Gagal mendapatkan role pengguna:', error);
+          alert('Terjadi kesalahan. Silakan coba lagi.');
+        });
     },
 
     goToProfile() {
       axios.get('/api/user-role')
         .then(response => {
           const role = response.data.role;
-
           if (role === 'dosen') {
             router.visit('/dosen/profile');
           } else if (role === 'mahasiswa') {
@@ -107,20 +163,20 @@ export default {
           alert('Terjadi kesalahan. Silakan coba lagi.');
         });
     },
-
   },
 };
 </script>
+
 <template>
   <nav class="bg-white text-black py-4 px-6 flex justify-between items-center sticky top-0 w-full z-10 shadow-md">
     <div class="text-xl font-bold">Assessment App</div>
     <div class="flex items-center space-x-4">
       <button aria-label="Notifications" class="relative group focus:outline-none"
-        @click="$inertia.visit('/dosen/notifications')">
+        @click="goToNotifications">
         <font-awesome-icon icon="fa-solid fa-bell" class="w-6 h-6 text-black group-hover:text-gray-200" />
-        <span
-          class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-          3
+        <span v-if="unreadNotificationsCount > 0"
+          class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-5 h-5 flex items-center justify-center px-1">
+          {{ unreadNotificationsCount > 99 ? '99+' : unreadNotificationsCount }}
         </span>
       </button>
 
@@ -141,6 +197,5 @@ export default {
     </div>
   </nav>
 </template>
-
 
 <style scoped></style>

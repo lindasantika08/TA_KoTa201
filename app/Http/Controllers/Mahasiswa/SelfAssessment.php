@@ -27,6 +27,7 @@ class SelfAssessment extends Controller
         $validated = $request->validate([
             'batch_year' => 'required|string',
             'project_name' => 'required|string',
+            'assessment_order' => 'required|string',
         ]);
 
         Log::info('Validated data:', $validated);
@@ -34,6 +35,7 @@ class SelfAssessment extends Controller
         return Inertia::render('Mahasiswa/SelfAssessmentMahasiswa', [
             'batch_year' => $validated['batch_year'],
             'project_name' => $validated['project_name'],
+            'assessment_order' => $validated['assessment_order'],
         ]);
     }
 
@@ -45,18 +47,18 @@ class SelfAssessment extends Controller
                 throw new \Exception('User not authenticated');
             }
 
-            // Ambil parameter dengan input()
             $batchYear = $request->input('batch_year');
             $projectName = $request->input('project_name');
+            $assessmentOrder = $request->input('assessment_order');
 
             \Log::info('Received Parameters', [
                 'batch_year' => $batchYear,
-                'project_name' => $projectName
+                'project_name' => $projectName,
+                'assessment_order' => $assessmentOrder
             ]);
 
-            // Validasi parameter
-            if (empty($batchYear) || empty($projectName)) {
-                throw new \Exception('Batch year and project name are required');
+            if (empty($batchYear) || empty($projectName) || empty($assessmentOrder)) {
+                throw new \Exception('Batch year, project name, and assessment order are required');
             }
 
             $mahasiswa = Mahasiswa::where('user_id', $user->id)->first();
@@ -64,7 +66,6 @@ class SelfAssessment extends Controller
                 throw new \Exception('Mahasiswa not found for user ID: ' . $user->id);
             }
 
-            // Cari group yang terkait dengan mahasiswa
             $group = Group::whereHas('project', function($query) use ($batchYear, $projectName) {
                 $query->where('batch_year', $batchYear)
                     ->where('project_name', $projectName);
@@ -74,7 +75,6 @@ class SelfAssessment extends Controller
                 throw new \Exception('Group not found for this project');
             }
 
-            // Ambil project dari group
             $project = $group->project;
             if (!$project) {
                 throw new \Exception('Project not found');
@@ -86,13 +86,14 @@ class SelfAssessment extends Controller
                 'project_name' => $project->project_name
             ]);
 
-            // Get assessments for the specific project
             $assessments = Assessment::where('project_id', $project->id)
                 ->where('type', 'selfAssessment')
+                ->where('assessment_order', $assessmentOrder)
+                ->where('is_published', 1) 
                 ->get();
 
             if ($assessments->isEmpty()) {
-                throw new \Exception('No assessments found for this project');
+                throw new \Exception('No assessments found for this project and assessment order');
             }
 
             $formattedAssessments = $assessments->map(function ($assessment) {
@@ -106,6 +107,7 @@ class SelfAssessment extends Controller
                     'id' => $assessment->id,
                     'type' => $assessment->type,
                     'question' => $assessment->question,
+                    'skill_type' => $assessment->skill_type,
                     'aspek' => $criteria->aspect,
                     'kriteria' => $criteria->criteria,
                     'bobot_1' => $criteria->bobot_1,
@@ -117,7 +119,8 @@ class SelfAssessment extends Controller
             })->filter();
 
             \Log::info('Formatted Assessments', [
-                'count' => $formattedAssessments->count()
+                'count' => $formattedAssessments->count(),
+                'assessment_order' => $assessmentOrder
             ]);
 
             return response()->json($formattedAssessments);
@@ -135,57 +138,55 @@ class SelfAssessment extends Controller
     }
 
     public function getUserInfo(Request $request)
-{
-    $user = Auth::user();
-    $mahasiswa = Mahasiswa::where('user_id', $user->id)->first();
-    
-    // Ubah cara pengambilan parameter
-    $batch_year = $request->input('batch_year');
-    $project_name = $request->input('project_name');
+    {
+        $user = Auth::user();
+        $mahasiswa = Mahasiswa::where('user_id', $user->id)->first();
+        
+        $batch_year = $request->input('batch_year');
+        $project_name = $request->input('project_name');
 
-    Log::info('User Info Request', [
-        'user_id' => $user->id,
-        'batch_year' => $batch_year,
-        'project_name' => $project_name
-    ]);
+        Log::info('User Info Request', [
+            'user_id' => $user->id,
+            'batch_year' => $batch_year,
+            'project_name' => $project_name
+        ]);
 
-    $group = Group::where('mahasiswa_id', $mahasiswa->id)
-        ->whereHas('project', function($query) use ($batch_year, $project_name) {
-            $query->where('batch_year', $batch_year)
-                  ->where('project_name', $project_name);
-        })
-        ->with('project')
-        ->first();
-
-    if (!$group) {
-        // Coba cari group terakhir jika tidak ditemukan
         $group = Group::where('mahasiswa_id', $mahasiswa->id)
+            ->whereHas('project', function($query) use ($batch_year, $project_name) {
+                $query->where('batch_year', $batch_year)
+                    ->where('project_name', $project_name);
+            })
             ->with('project')
-            ->orderBy('created_at', 'desc')
             ->first();
 
         if (!$group) {
-            return response()->json([
-                'message' => 'No matching group found',
-                'debug' => [
-                    'mahasiswa_id' => $mahasiswa->id,
-                    'batch_year' => $batch_year,
-                    'project_name' => $project_name
-                ]
-            ], 404);
-        }
-    }
+            $group = Group::where('mahasiswa_id', $mahasiswa->id)
+                ->with('project')
+                ->orderBy('created_at', 'desc')
+                ->first();
 
-    return response()->json([
-        'nim' => $mahasiswa->nim,
-        'name' => $user->name,
-        'class' => $mahasiswa->classRoom->class_name,
-        'group' => $group->group,
-        'project_name' => $group->project->project_name,
-        'batch_year' => $group->project->batch_year,
-        'date' => now()->format('d F Y')
-    ]);
-}
+            if (!$group) {
+                return response()->json([
+                    'message' => 'No matching group found',
+                    'debug' => [
+                        'mahasiswa_id' => $mahasiswa->id,
+                        'batch_year' => $batch_year,
+                        'project_name' => $project_name
+                    ]
+                ], 404);
+            }
+        }
+
+        return response()->json([
+            'nim' => $mahasiswa->nim,
+            'name' => $user->name,
+            'class' => $mahasiswa->classRoom->class_name,
+            'group' => $group->group,
+            'project_name' => $group->project->project_name,
+            'batch_year' => $group->project->batch_year,
+            'date' => now()->format('d F Y')
+        ]);
+    }
 
     public function saveAnswer(Request $request)
     {

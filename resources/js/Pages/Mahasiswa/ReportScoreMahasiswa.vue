@@ -41,6 +41,8 @@ const scoreData = ref(null);
 const loading = ref(false);
 const error = ref(null);
 const activeTab = ref("overview");
+const feedbackLoading = ref(false);
+const feedbackError = ref(null);
 
 // Computed properties
 const projectScoreDetails = computed(() => scoreData.value);
@@ -81,8 +83,8 @@ const analysisScores = computed(() => {
 const radarChartOptions = computed(() => ({
   chart: {
     type: "radar",
-    height: "100%",  // Changed from fixed height to 100%
-    width: "100%",
+    height: "100%",  // Reduced from 100% to make it smaller
+    width: "100%",   // Reduced from 100% to make it smaller
     dropShadow: {
       enabled: true,
       blur: 1,
@@ -106,17 +108,17 @@ const radarChartOptions = computed(() => ({
     },
   ],
   labels: analysisScores.value.map((score) => score.aspek),
-  colors: ["#4F46E5", "#10B981"],
+  colors: ["#2563EB", "#F97316"], // Changed to blue and orange
   stroke: {
-    width: 3,  // Increased from 2
+    width: 2,  // Reduced from 3 to match smaller size
   },
   fill: {
     opacity: 0.4,
   },
   markers: {
-    size: 8,  // Increased from 6
+    size: 6,
     hover: {
-      size: 10,  // Increased from 8
+      size: 8,
     },
   },
   tooltip: {
@@ -132,27 +134,27 @@ const radarChartOptions = computed(() => ({
     labels: {
       formatter: (val) => val.toFixed(1),
       style: {
-        fontSize: "16px",  // Increased from 14px
+        fontSize: "14px",  // Reduced from 16px
       },
     },
   },
   xaxis: {
     labels: {
       style: {
-        fontSize: "16px",  // Increased from 14px
+        fontSize: "14px",  // Reduced from 16px
       },
     },
   },
   legend: {
     position: "bottom",
     horizontalAlign: "center",
-    fontSize: "16px",  // Increased from 14px
+    fontSize: "14px",  // Reduced from 16px
     markers: {
-      width: 20,  // Increased from 18
-      height: 20,  // Increased from 18
+      width: 16,  // Reduced from 20
+      height: 16,  // Reduced from 20
     },
     itemMargin: {
-      horizontal: 20,  // Increased from 15
+      horizontal: 15,  // Reduced from 20
     },
   },
 }));
@@ -210,9 +212,41 @@ const calculateSummaryStats = computed(() => {
   };
 });
 
+
+const feedback = ref({
+  aiFeedback: null,
+  lecturerFeedback: []
+});
+
+const fetchFeedback = async () => {
+  feedbackLoading.value = true;
+  feedbackError.value = null;
+
+  try {
+    const response = await axios.get('/api/project-feedback', {
+      params: {
+        batch_year: props.batchYear,
+        project_name: props.projectName
+      }
+    });
+
+    if (response.data.status === 'success') {
+      feedback.value = response.data.data;
+    } else {
+      feedbackError.value = response.data.message || 'Failed to fetch feedback';
+    }
+  } catch (err) {
+    console.error('Error details:', err.response?.data);
+    feedbackError.value = err.response?.data?.message || 'Failed to fetch feedback';
+  } finally {
+    feedbackLoading.value = false;
+  }
+};
+
 // Lifecycle hooks
 onMounted(() => {
   fetchProjectScoreDetails();
+  fetchFeedback();
 });
 </script>
 
@@ -321,19 +355,20 @@ onMounted(() => {
           <!-- Navigation Tabs -->
           <div class="border-b border-gray-200">
             <nav class="-mb-px flex space-x-8">
-              <button
-                v-for="tab in ['overview', 'details', 'analysis']"
-                :key="tab"
-                @click="activeTab = tab"
-                :class="[
-                  activeTab === tab
-                    ? 'border-indigo-500 text-indigo-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                  'whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm',
-                ]"
-              >
-                {{ tab.charAt(0).toUpperCase() + tab.slice(1) }}
-              </button>
+<!-- Add to navigation tabs -->
+<button
+  v-for="tab in ['overview', 'details', 'analysis', 'feedback']"
+  :key="tab"
+  @click="activeTab = tab"
+  :class="[
+    activeTab === tab
+      ? 'border-indigo-500 text-indigo-600'
+      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+    'whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm',
+  ]"
+>
+  {{ tab.charAt(0).toUpperCase() + tab.slice(1) }}
+</button>
             </nav>
           </div>
 
@@ -534,6 +569,153 @@ onMounted(() => {
               </div>
             </Card>
           </div>
+          <!-- Add new tab content -->
+          <div v-if="activeTab === 'feedback'" class="space-y-6">
+  <!-- AI Feedback Card -->
+  <Card class="bg-white shadow-lg">
+    <template #title>
+      <div class="flex items-center space-x-3">
+        <svg 
+          class="w-6 h-6 text-indigo-600" 
+          fill="none" 
+          stroke="currentColor" 
+          viewBox="0 0 24 24"
+        >
+          <path 
+            stroke-linecap="round" 
+            stroke-linejoin="round" 
+            stroke-width="2" 
+            d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"
+          />
+        </svg>
+        <span class="text-xl font-bold text-gray-900">Feedback Rekan Kelompok</span>
+      </div>
+    </template>
+    
+    <div class="p-6">
+      <!-- Loading State -->
+      <div v-if="feedbackLoading" class="flex justify-center p-8">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
+
+      <!-- Error State -->
+      <div v-else-if="feedbackError" class="bg-red-50 border-l-4 border-red-500 p-4">
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+            </svg>
+          </div>
+          <div class="ml-3">
+            <p class="text-sm text-red-700">{{ feedbackError }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Feedback Content -->
+      <div v-else-if="feedback.aiFeedback" class="space-y-6">
+        <div class="border-b border-gray-200 pb-4">
+          <h3 class="text-lg font-medium text-gray-900">Feedback dari Rekan</h3>
+          <p class="mt-1 text-sm text-gray-500">
+            Berikut adalah rangkuman feedback dari rekan-rekan kelompok Anda
+          </p>
+        </div>
+
+        <div class="prose max-w-none text-gray-700">
+          <div class="bg-gray-50 rounded-lg p-6">
+            <div class="flex items-start space-x-3">
+              <svg class="w-6 h-6 text-indigo-600 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+              <div class="flex-1">
+                <p class="whitespace-pre-line">{{ feedback.aiFeedback }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Additional Info -->
+        <div class="mt-6 bg-yellow-50 rounded-lg p-4">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <svg 
+                class="h-5 w-5 text-yellow-400" 
+                viewBox="0 0 20 20" 
+                fill="currentColor"
+              >
+                <path 
+                  fill-rule="evenodd" 
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" 
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </div>
+            <div class="ml-3">
+              <h3 class="text-sm font-medium text-yellow-800">
+                Catatan
+              </h3>
+              <div class="mt-2 text-sm text-yellow-700">
+                <p>
+                  Feedback ini dihasilkan berdasarkan penilaian dari rekan-rekan kelompok Anda. 
+                  Gunakan feedback ini sebagai bahan evaluasi untuk meningkatkan kinerja Anda dalam tim.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="feedback.lecturerFeedback && feedback.lecturerFeedback.length > 0" class="mt-8 space-y-6">
+  <div class="border-b border-gray-200 pb-4">
+    <h3 class="text-lg font-medium text-gray-900">Feedback dari Dosen</h3>
+    <p class="mt-1 text-sm text-gray-500">
+      Feedback dan evaluasi dari dosen pembimbing
+    </p>
+  </div>
+
+  <div class="space-y-4">
+    <div 
+      v-for="(item, index) in feedback.lecturerFeedback" 
+      :key="index"
+      class="bg-white shadow-sm rounded-lg border border-gray-200 p-4"
+    >
+      <div class="flex items-start justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="flex-shrink-0">
+            <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
+              <span class="text-indigo-700 font-medium">
+                {{ item.dosenName.charAt(0) }}
+              </span>
+            </div>
+          </div>
+          <div>
+            <p class="text-sm font-medium text-gray-900">{{ item.dosenName }}</p>
+            <p class="text-sm text-gray-500">
+              {{ new Date(item.createdAt).toLocaleDateString() }}
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="mt-4 text-sm text-gray-700">
+        <p class="whitespace-pre-line">{{ item.feedback }}</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+      <!-- No Feedback Available -->
+      <div v-else-if="!feedback.aiFeedback && (!feedback.lecturerFeedback || feedback.lecturerFeedback.length === 0)" class="text-center py-12">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">Belum ada feedback</h3>
+        <p class="mt-1 text-sm text-gray-500">
+          Feedback akan tersedia setelah rekan kelompok dan dosen memberikan penilaian.
+        </p>
+      </div>
+    </div>
+  </Card>
+</div>
         </div>
       </div>
     </div>

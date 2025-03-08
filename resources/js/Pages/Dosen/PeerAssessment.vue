@@ -28,7 +28,15 @@ export default {
         assessments: {
             type: Array,
             required: true
-        }
+        },
+        assessmentOrder: {
+            type: Number,
+            required: true
+        },
+        totalOrders: {
+            type: Number,
+            required: true
+        },
     },
     setup(props) {
         const showDropdown = ref(false);
@@ -55,6 +63,7 @@ export default {
                     params: {
                         batch_year: props.tahunAjaran,
                         project_name: props.namaProyek,
+                        assessment_order: props.assessmentOrder
                     },
                 });
 
@@ -74,16 +83,22 @@ export default {
             const questionId = await fetchQuestionId();
             if (!questionId) return;
 
-            const data = {
+            if (!props.assessmentOrder) {
+                console.error("assessment_order is undefined");
+                return;
+            }
+
+            const requestData = {
                 tahunAjaran: props.tahunAjaran,
                 namaProyek: props.namaProyek,
+                assessment_order: props.assessmentOrder
             };
 
-            console.log("Data yang akan dikirim:", data);
+            console.log("Data yang akan dikirim:", requestData);
 
             router.visit("/dosen/AnswerPeer", {
                 method: "get",
-                data: data,
+                data: requestData,
             });
         };
 
@@ -94,6 +109,7 @@ export default {
             tahunAjaran: props.tahunAjaran,
             namaProyek: props.namaProyek,
             handleAnswers,
+            assessmentOrder: props.assessmentOrder,
         };
     },
 };
@@ -113,10 +129,8 @@ export default {
                 <Card :title="`Peer Assessment - ${namaProyek} (${tahunAjaran})`">
                     <template #actions>
                         <div class="flex justify-end">
-                            <button
-                                @click="handleAnswers()"
-                                class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                            >
+                            <button @click="handleAnswers()"
+                                class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                                 <font-awesome-icon icon="fa-solid fa-pencil" />
                                 Attempt
                             </button>
@@ -189,4 +203,3 @@ export default {
         </div>
     </div>
 </template>
-

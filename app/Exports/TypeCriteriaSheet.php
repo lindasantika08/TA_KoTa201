@@ -27,12 +27,10 @@ class TypeCriteriaSheet implements FromCollection, WithHeadings, WithEvents, Wit
 
     public function collection()
     {
-        // Get criteria IDs used in assessments for this project
         $criteriaIds = Assessment::where('project_id', $this->projectId)
             ->pluck('criteria_id')
             ->unique();
 
-        // Get type criteria for this project only
         $typeCriterias = TypeCriteria::whereIn('id', $criteriaIds)
             ->select(
                 'aspect',
@@ -46,7 +44,6 @@ class TypeCriteriaSheet implements FromCollection, WithHeadings, WithEvents, Wit
             ->get();
 
         if ($typeCriterias->isEmpty()) {
-            // Create empty template
             $data = collect(range(1, 5))->map(function ($i) {
                 return [
                     'no' => $i,
@@ -60,7 +57,6 @@ class TypeCriteriaSheet implements FromCollection, WithHeadings, WithEvents, Wit
                 ];
             });
         } else {
-            // Map existing data
             $data = $typeCriterias->map(function ($item, $key) {
                 return [
                     'no' => $key + 1,

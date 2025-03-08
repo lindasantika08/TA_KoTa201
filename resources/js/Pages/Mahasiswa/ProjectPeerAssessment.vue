@@ -26,6 +26,7 @@ export default {
         { key: 'no', label: 'No' },
         { key: 'batch_year', label: 'Tahun Ajaran' },
         { key: 'project_name', label: 'Nama Proyek' },
+        { key: 'assessment_order', label: 'Order' },
         { key: 'status', label: 'Status' },
         { key: 'date', label: 'Tanggal Pengisian' },
         { key: 'actions', label: 'Actions' },
@@ -37,12 +38,14 @@ export default {
     handleAnswer(item) {
       const batch_year = item.batch_year;
       const project_name = item.project_name;
+      const assessment_order = item.assessment_order || '1';
 
       router.visit(`/mahasiswa/assessment/peer-assessment`, {
         method: 'get',
         data: {
           batch_year: batch_year,
-          project_name: project_name
+          project_name: project_name,
+          assessment_order: assessment_order
         },
         preserveState: true,
         onError: (error) => {
@@ -53,9 +56,14 @@ export default {
     handleDetail(item) {
       router.visit(`/mahasiswa/peer-assessment/peer-detail`, {
         method: 'get',
+        data: {
+            batch_year: item.batch_year,
+            project_name: item.project_name,
+            assessment_order: item.assessment_order || '1'
+        },
         preserveState: true
-      });
-    }
+    });
+},
   },
   mounted() {
     axios.get('/api/peer-assessment')
@@ -66,6 +74,7 @@ export default {
           no: index + 1,
           batch_year: item.batch_year,
           project_name: item.project_name,
+          assessment_order: item.assessment_order || '1',
           status: item.status,
           date: dayjs(item.created_at).format('DD MMMM YYYY HH:mm'),
           total_questions: item.total_questions,
@@ -113,7 +122,7 @@ export default {
             <template #column-status="{ item }">
               <span :class="[
                 'px-2 py-1 rounded-full text-xs font-medium',
-                item.status === 'aktif' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                item.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
               ]">
                 {{ item.status }}
               </span>

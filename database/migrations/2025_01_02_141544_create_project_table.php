@@ -13,10 +13,10 @@ return new class extends Migration
     {
         Schema::create('project', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->string('semester');
+            $table->string('semester')->nullable();
             $table->string('batch_year');
             $table->string('project_name');
-            $table->foreignUuid('major_id')->constrained('major');
+            $table->foreignUuid('prodi_id')->constrained('prodi');
             $table->date('start_date');
             $table->date('end_date');
             $table->string('status');

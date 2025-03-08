@@ -6,18 +6,18 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Spatie\Permission\Traits\HasRoles;
+use App\Notifications\ResetPasswordNotification;
 
 class User extends Authenticatable
 {
     use HasApiTokens;
     use HasFactory;
     use Notifiable;
-    use SoftDeletes;
     use HasUuids;
     use HasRoles;
+    use Notifiable;
 
     protected $guard_name = 'sanctum';
     public $incrementing = false;
@@ -59,6 +59,10 @@ class User extends Authenticatable
         ];
     }
 
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new ResetPasswordNotification($token));
+    }
 
     public function dosen()
     {
@@ -70,8 +74,23 @@ class User extends Authenticatable
         return $this->role === 'dosen';
     }
 
+    public function isAdmin()
+    {
+        return $this->role === 'admin';
+    }
+
     public function isMahasiswa()
     {
         return $this->role === 'mahasiswa';
     }
+
+    public function mahasiswa()
+    {
+        return $this->hasOne(Mahasiswa::class, 'user_id');
+    }
+
+    // public function routeNotificationForMail()
+    // {
+    //     return $this->email;
+    // }
 }

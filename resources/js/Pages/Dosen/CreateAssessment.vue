@@ -25,6 +25,11 @@ export default {
     const inputMode = ref("export");
     const selectedActiveProject = ref(null);
     const selectedInactiveProject = ref(null);
+    // const endDate = ref("");
+
+    const defaultEndDate = new Date();
+    defaultEndDate.setDate(defaultEndDate.getDate() + 7);
+    const endDate = ref(defaultEndDate.toISOString().split('T')[0]);
 
     const activeProjects = computed(() => {
       return projects.value.filter(project => project.status === 'Active');
@@ -88,8 +93,11 @@ export default {
       const file = event.target.files[0];
       if (!file) return;
 
+      const selectedEndDate = endDate.value || defaultEndDate.toISOString().split('T')[0];
+
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("end_date", selectedEndDate);
 
       try {
         const token = localStorage.getItem("auth_token");
@@ -127,6 +135,7 @@ export default {
       downloadInactiveTemplate,
       handleFileUpload,
       inputMode,
+      endDate,
     };
   },
 };
@@ -165,7 +174,6 @@ export default {
 
             <div v-if="inputMode === 'export'">
               <div class="grid grid-cols-2 gap-8">
-                <!-- Active Project Section -->
                 <div class="border-r pr-4">
                   <label class="block text-sm font-medium text-gray-700 mb-2">
                     Proyek Aktif
@@ -213,11 +221,20 @@ export default {
             </div>
 
             <div v-if="inputMode === 'import'" class="mt-8">
+              <!-- New End Date Input -->
+              <div class="mb-4">
+                <label for="end-date" class="block text-sm font-medium text-gray-700 mb-2">
+                  Tanggal Akhir Pengisian Assessment
+                </label>
+                <input type="date" id="end-date" v-model="endDate"
+                  class="mt-1 p-2 border border-gray-300 rounded w-full" required />
+              </div>
+
               <label for="file-upload" class="block text-sm font-medium text-gray-700">
                 Import Data Excel (File .xlsx/.xls)
               </label>
               <input type="file" id="file-upload" accept=".xlsx, .xls" @change="handleFileUpload"
-                class="mt-2 p-2 border border-gray-300 rounded w-full" />
+                class="mt-2 p-2 border border-gray-300 rounded w-full" :disabled="!endDate" />
             </div>
           </template>
         </Card>

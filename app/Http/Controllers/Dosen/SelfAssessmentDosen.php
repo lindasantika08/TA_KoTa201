@@ -64,6 +64,7 @@ class SelfAssessmentDosen extends Controller
     {
         $tahunAjaran = $request->query('batch_year');
         $namaProyek = $request->query('project_name');
+        $assessmentOrder = $request->query('assessment_order');
 
         $project = Project::where('batch_year', $tahunAjaran)
             ->where('project_name', $namaProyek)
@@ -76,6 +77,7 @@ class SelfAssessmentDosen extends Controller
         $assessments = Assessment::with('typeCriteria')
             ->where('project_id', $project->id)
             ->where('type', 'selfAssessment')
+            ->where('assessment_order', $assessmentOrder)
             ->get()
             ->map(function ($assessment) {
                 $criteria = TypeCriteria::find($assessment->criteria_id);
@@ -83,6 +85,7 @@ class SelfAssessmentDosen extends Controller
                     'id' => $assessment->id,
                     'type' => $assessment->type,
                     'question' => $assessment->question,
+                    'skill_type' => $assessment->skill_type,
                     'aspek' => $criteria->aspect,
                     'kriteria' => $criteria->criteria,
                     'bobot_1' => $criteria->bobot_1,

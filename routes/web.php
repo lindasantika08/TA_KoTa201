@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Controllers\Admin\DashboardAdminController;
+use App\Http\Controllers\Admin\MajorAdminController;
+use App\Http\Controllers\Admin\UserAdminController;
+
 use App\Http\Controllers\Dosen\DashboardDosen;
 use App\Http\Controllers\Dosen\AssessmentController;
 use App\Http\Controllers\Dosen\ProjectController;
@@ -21,12 +25,17 @@ use App\Http\Controllers\Mahasiswa\ReportMahasiswa;
 use App\Http\Controllers\Mahasiswa\DetailSelfMahasiswa;
 use App\Http\Controllers\Mahasiswa\DetailPeerMahasiswa;
 use App\Http\Controllers\Mahasiswa\ProfileMahasiswa;
+use App\Http\Controllers\Mahasiswa\NotificationMahasiswa;
+
 
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
+
 Route::redirect('/', 'login');
 Route::get('/login', [AuthController::class, 'index'])->name('login');
+Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
+
 Route::middleware('auth')->group(function () {
 
     // Route untuk dosen
@@ -45,7 +54,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/assessment/data-with-bobot-self', [AssessmentController::class, 'getAssessmentsWithBobotSelf'])->name('dosen.assessment.data-with-bobot-self');
         Route::get('/assessment/data-with-bobot-peer', [PeerAssessmentDosen::class, 'getAssessmentsWithBobotpeer'])->name('dosen.assessment.data-with-bobot-peer');
         Route::get('/assessment/create', [AssessmentController::class, 'create'])->name('CreateAssessment');
-        
+
         Route::get('/export-self-assessment', [AssessmentController::class, 'exportExcel'])->name('dosen.export-self');
 
         Route::get('/assessment/projectsSelf', [ProjectController::class, 'getProjectsWithAssessmentsSelf']);
@@ -72,11 +81,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/answers/details', [AnswerController::class, 'getDetails']);
 
         // User Management Mahasiswa
-        Route::get('/manage-mahasiswa', [UserManagementController::class, 'ManageMahasiswa'])->name('ManageMahasiswa');
+        Route::get('/manage-mahasiswa', [UserManagementController::class, 'ManageMahasiswa'])->name('dosen.manage-mahasiswa');
         Route::get('/manage-mahasiswa/input', [UserManagementController::class, 'InputMahasiswa'])->name('InputMahasiswa');
         Route::get('/manage-mahasiswa/detail', [UserManagementController::class, 'DetailMahasiswa'])->name('DetailMahasiswa');
         Route::get('/manage-mahasiswa/export', [UserManagementController::class, 'ExportMahasiswa'])->name('ExportMahasiswa');
-        Route::post('/manage-mahasiswa/import', [UserManagementController::class, 'ImportMahasiswa'])->name('ImportMahasiswa');
+        Route::post('/manage-mahasiswa/importDosen', [UserManagementController::class, 'ImportMahasiswa'])->name('ImportMahasiswa');
 
         // User Management Dosen
         Route::get('/manage-dosen', [UserManagementController::class, 'ManageDosen'])->name('ManageDosen');
@@ -88,6 +97,10 @@ Route::middleware('auth')->group(function () {
         //REPORT
         Route::get('/report', [ReportController::class, 'report'])->name('report');
         Route::get('/kelompok/report-detail', [ReportController::class, 'getScoreKelompok']);
+
+        //Feedback
+        Route::get('/feedback-detail', [FeedbackController::class, 'feedbackDetailView']);
+        Route::post('/feedbacks-store-dosen', [FeedbackController::class, 'storeFeedback']);
     });
 
     //Route untuk Mahasiswa
@@ -104,6 +117,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/peer-assessment/answers/{userId}', [AssessmentMahasiswa::class, 'getUserPeerAnswers']);
         Route::get('/peer-assessment/peer-detail', [DetailPeerMahasiswa::class, 'showDetail']);
         Route::get('/peer-assessment/self-detail', [DetailSelfMahasiswa::class, 'showDetail']);
+        // Route::get('/notifications-mhs', [NotificationMahasiswa::class, 'index'])->name('index');
 
         Route::get('/profile', [ProfileMahasiswa::class, 'profile'])->name('profile');
 
@@ -113,5 +127,80 @@ Route::middleware('auth')->group(function () {
 
         //-----------REPORT-------------//
         Route::get('/project-score-details', [ReportMahasiswa::class, 'getProjectScoreDetailsView']);
+
+        // notif
+        Route::get('/notifications-mhs', [NotificationMahasiswa::class, 'index'])->name('notifications.index');
+        Route::post('/notifications/{id}/mark-as-read', [NotificationMahasiswa::class, 'markAsRead'])->name('notifications.markAsRead');
+        Route::post('/notifications/mark-all-read', [NotificationMahasiswa::class, 'markAllAsRead'])->name('notifications.markAllAsRead');
+
+        Route::get('/test-email', function() {
+            $user = Auth::user();
+            
+            if (!$user) {
+                return "Please login first!";
+            }
+            
+            try {
+                $notificationController = new NotificationMahasiswa();
+                $result = $notificationController->getNotifications();
+                
+                $responseData = json_decode($result->getContent());
+                
+                if ($responseData->success) {
+                    return "Notifications processed successfully! Check your email inbox (and spam folder).";
+                } else {
+                    return "Error processing notifications: " . ($responseData->message ?? 'Unknown error');
+                }
+            } catch (\Exception $e) {
+                return "Error: " . $e->getMessage();
+            }
+        });
+        //Mahasiswa Feedback
+        Route::get('/feedback-details', [FeedbackMahasiswa::class, 'getFeedbackDetailView']);
+    });
+
+    // Route::get('/notifications/stream', function () {
+    //     header('Content-Type: text/event-stream');
+    //     header('Cache-Control: no-cache');
+    //     header('Connection: keep-alive');
+        
+    //     while (true) {
+    //         if (connection_aborted()) {
+    //             break;
+    //         }
+            
+    //         // Check for new notifications
+    //         $user = auth()->user();
+    //         $newNotifications = Notification::where('user_id', $user->id)
+    //             ->where('created_at', '>', now()->subSeconds(2))
+    //             ->count();
+                
+    //         if ($newNotifications > 0) {
+    //             echo "data: " . json_encode(['count' => $newNotifications]) . "\n\n";
+    //             ob_flush();
+    //             flush();
+    //         }
+            
+    //         sleep(2);
+    //     }
+    // });
+
+    //Route untuk admin
+    Route::middleware('role:admin')->prefix('admin')->group(function () {
+        Route::get('/dashboard', [DashboardAdminController::class, 'dashboard'])->name('dashboard');
+
+        //admin manage major
+        Route::get('/ManageMajor', [MajorAdminController::class, 'createMajor']);
+        Route::get('/ManageProdi', [MajorAdminController::class, 'showManageProdi']);
+
+        //admin manage user
+        Route::get('/ManageDosen', [UserAdminController::class, 'showManageDosen']);
+        Route::get('/ManageMahasiswa', [UserAdminController::class, 'showManageMahasiswa'])->name('ManageMahasiswa');
+        Route::get('/manage-dosen/input', [UserAdminController::class, 'InputDosen'])->name('InputDosen');
+        Route::get('/manage-dosen/export', [UserAdminController::class, 'ExportDosen']);
+        Route::post('/manage-dosen/import', [UserAdminController::class, 'ImportDosen']);
+        Route::get('/manage-mahasiswa/input', [UserAdminController::class, 'InputMahasiswa'])->name('InputMahasiswa');
+        Route::get('/manage-mahasiswa/export', [UserAdminController::class, 'ExportMahasiswa']);
+        Route::post('/manage-mahasiswa/import', [UserAdminController::class, 'ImportMahasiswa']);
     });
 });
