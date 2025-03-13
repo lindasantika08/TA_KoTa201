@@ -22,6 +22,8 @@ class AnswersPeer extends Model
         'answer',
         'score',
         'status',
+        'score_SLA',
+        'similarity',
     ];
 
     protected $casts = [
@@ -30,6 +32,8 @@ class AnswersPeer extends Model
         'peer_id' => 'string',
         'question_id' => 'string',
         'score' => 'integer',
+        'score_SLA' => 'integer',
+        'similarity' => 'float',
     ];
 
     public function mahasiswa()

@@ -38,7 +38,7 @@ class AnswerController extends Controller
     public function answerPeer(Request $request)
     {
         Log::info('AnswerPeer method called', $request->all());
-        
+
         $validated = $request->validate([
             'tahunAjaran' => 'required|string',
             'namaProyek' => 'required|string',
@@ -396,6 +396,8 @@ class AnswerController extends Controller
                         'pertanyaan' => optional($answer->question)->question,
                         'answer' => $answer->answer,
                         'score' => $answer->score,
+                        'score_SLA' => $answer->score_SLA,
+                        'similarity' => $answer->similarity,
                         'status' => $answer->status,
                         'kelompok' => $group ?? '-'
                     ];
@@ -444,6 +446,7 @@ class AnswerController extends Controller
     {
         $batch_year = $request->query('batch_year');
         $project_name = $request->query('project_name');
+        $assessment_order = $request->query('assessment_order');
 
         $project = Project::where('project_name', $project_name)
             ->where('batch_year', $batch_year)
@@ -452,7 +455,8 @@ class AnswerController extends Controller
         return Inertia::render('Dosen/AnswersSelfAssessment', [
             'batch_year' => $batch_year,
             'projectId' => $project->id,
-            'project_name' => $project->project_name,  // Add this line
+            'project_name' => $project->project_name,
+            'assessment_order' => $assessment_order
         ]);
     }
 
@@ -679,38 +683,38 @@ class AnswerController extends Controller
     public function getDetails(Request $request)
     {
         $validated = $request->validate([
-            'mahasiswaName' => 'required|string', // Changed from userName
-            'batch_year' => 'required|string', // Changed from tahun_ajaran
-            'project_name' => 'required|string', // Changed from nama_proyek
-            'project_id' => 'required|string', // Added project_id
+            'mahasiswaId' => 'required|string', // Changed back to mahasiswaId
+            'batch_year' => 'required|string',
+            'project_name' => 'required|string',
+            'project_id' => 'required|string',
+            'assessment_order' => 'required|integer',
         ]);
 
+        // Fetch the mahasiswa name based on the mahasiswaId
+        $mahasiswa = Mahasiswa::findOrFail($validated['mahasiswaId']);
+
         return Inertia::render('Dosen/AnswerDetailSelf', [
-            'mahasiswaName' => $validated['mahasiswaName'],
+            'mahasiswaName' => $mahasiswa->name, // Assuming there's a name field
+            'mahasiswaId' => $validated['mahasiswaId'],
             'batch_year' => $validated['batch_year'],
             'project_name' => $validated['project_name'],
             'project_id' => $validated['project_id'],
+            'assessment_order' => $validated['assessment_order'],
         ]);
     }
 
     public function getDetailsAnswer(Request $request)
     {
         $validated = $request->validate([
-            'mahasiswaName' => 'required|string', // Changed from userName
-            'batch_year' => 'required|string', // Changed from tahun_ajaran
-            'project_name' => 'required|string', // Changed from nama_proyek
-            'project_id' => 'required|string', // Added project_id
+            'mahasiswaId' => 'required|string', // Changed from mahasiswaName
+            'batch_year' => 'required|string',
+            'project_name' => 'required|string',
+            'project_id' => 'required|string',
+            'assessment_order' => 'required|integer',
         ]);
 
-        // Find user by name
-        $user = User::where('name', $validated['mahasiswaName'])->first();
-
-        if (!$user) {
-            return response()->json(['error' => 'Pengguna tidak ditemukan'], 404);
-        }
-
-        // Find mahasiswa associated with user
-        $mahasiswa = Mahasiswa::where('user_id', $user->id)->first();
+        // Find mahasiswa directly by ID
+        $mahasiswa = Mahasiswa::findOrFail($validated['mahasiswaId']);
 
         if (!$mahasiswa) {
             return response()->json(['error' => 'Mahasiswa tidak ditemukan'], 404);
@@ -720,7 +724,8 @@ class AnswerController extends Controller
             ->where('mahasiswa_id', $mahasiswa->id)
             ->whereHas('question', function ($query) use ($validated) {
                 $query->where('batch_year', $validated['batch_year'])
-                    ->where('project_id', $validated['project_id']);
+                    ->where('project_id', $validated['project_id'])
+                    ->where('assessment_order', $validated['assessment_order']); // Added this line
             })
             ->get();
 
@@ -734,6 +739,8 @@ class AnswerController extends Controller
                     'pertanyaan' => $answer->question->question,
                     'jawaban' => $answer->answer,
                     'skor' => $answer->score,
+                    'score_SLA' => $answer->score_SLA,
+                    'similarity' => $answer->similarity,
                 ];
             }),
         ]);

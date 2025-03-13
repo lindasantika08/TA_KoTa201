@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use App\Jobs\ProcessFlaskPeerAssessment;
 
 class PeerAssessment extends Controller
 {
@@ -392,11 +393,20 @@ class PeerAssessment extends Controller
                     $answer = AnswersPeer::create($validated);
                 }
 
+                $simpleAnswerData = [
+                    'question_id' => $validated['question_id'],
+                    'answer' => $validated['answer'],
+                    'score' => $validated['score']
+                ];
+
+                ProcessFlaskPeerAssessment::dispatch($simpleAnswerData, $answer->id)
+                    ->onQueue('flask-peer-processing');
+
                 DB::commit();
 
                 return response()->json([
                     'success' => true,
-                    'message' => 'Jawaban peer berhasil disimpan.',
+                    'message' => 'Answers saved successfully.',
                     'data' => $answer,
                 ], 201);
             } catch (\Exception $e) {
@@ -415,7 +425,6 @@ class PeerAssessment extends Controller
                 'file' => $e->getFile(),
                 'line' => $e->getLine()
             ]);
-
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan saat menyimpan jawaban peer.',
@@ -423,6 +432,54 @@ class PeerAssessment extends Controller
             ], 500);
         }
     }
+
+    // public function saveAllAnswersPeer(Request $request)
+    // {
+    //     $request->validate([
+    //         'answers' => 'required|array',
+    //         'answers.*.mahasiswa_id' => 'required|string|exists:mahasiswa,id',
+    //         'answers.*.peer_id' => 'required|string|exists:mahasiswa,id',
+    //         'answers.*.question_id' => 'required|exists:assessment,id',
+    //         'answers.*.answer' => 'required|string',
+    //         'answers.*.score' => 'required|numeric|min:0|max:100',
+    //         'answers.*.status' => 'required|string'
+    //     ]);
+
+    //     try {
+    //         DB::beginTransaction();
+
+    //         foreach ($request->answers as $answerData) {
+    //             AnswersPeer::updateOrCreate(
+    //                 [
+    //                     'mahasiswa_id' => $answerData['mahasiswa_id'],
+    //                     'peer_id' => $answerData['peer_id'],
+    //                     'question_id' => $answerData['question_id']
+    //                 ],
+    //                 [
+    //                     'answer' => $answerData['answer'],
+    //                     'score' => $answerData['score'],
+    //                     'status' => $answerData['status']
+    //                 ]
+    //             );
+    //         }
+
+    //         DB::commit();
+
+    //         return response()->json([
+    //             'message' => 'Answers saved successfully',
+    //             'status' => 'success'
+    //         ]);
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
+
+    //         return response()->json([
+    //             'message' => 'Failed to save answers',
+    //             'error' => $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
+
+
 
     public function saveAllAnswersPeer(Request $request)
     {
@@ -439,8 +496,11 @@ class PeerAssessment extends Controller
         try {
             DB::beginTransaction();
 
+            $savedAnswers = [];
+
             foreach ($request->answers as $answerData) {
-                AnswersPeer::updateOrCreate(
+                // Simpan jawaban ke database
+                $answer = AnswersPeer::updateOrCreate(
                     [
                         'mahasiswa_id' => $answerData['mahasiswa_id'],
                         'peer_id' => $answerData['peer_id'],
@@ -452,16 +512,33 @@ class PeerAssessment extends Controller
                         'status' => $answerData['status']
                     ]
                 );
+
+                $savedAnswers[] = $answer;
+
+                // Prepare simplified data for the Flask job
+                $simpleAnswerData = [
+                    'question_id' => $answerData['question_id'],
+                    'answer' => $answerData['answer'],
+                    'score' => $answerData['score']
+                ];
+
+                // Kirim job ke queue untuk diproses di background
+                ProcessFlaskPeerAssessment::dispatch($simpleAnswerData, $answer->id)
+                    ->onQueue('flask-peer-processing');
             }
 
             DB::commit();
 
             return response()->json([
-                'message' => 'Answers saved successfully',
+                'message' => 'Answers saved successfully.',
                 'status' => 'success'
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Error in saveAllAnswersPeer:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
 
             return response()->json([
                 'message' => 'Failed to save answers',

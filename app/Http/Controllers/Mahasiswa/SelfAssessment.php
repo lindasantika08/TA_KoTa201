@@ -17,6 +17,9 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Services\GeminiService;
+use Illuminate\Support\Facades\Http;
+use App\Jobs\ProcessFlaskAssessment;
 
 class SelfAssessment extends Controller
 {
@@ -51,7 +54,7 @@ class SelfAssessment extends Controller
             $projectName = $request->input('project_name');
             $assessmentOrder = $request->input('assessment_order');
 
-            \Log::info('Received Parameters', [
+            Log::info('Received Parameters', [
                 'batch_year' => $batchYear,
                 'project_name' => $projectName,
                 'assessment_order' => $assessmentOrder
@@ -66,7 +69,7 @@ class SelfAssessment extends Controller
                 throw new \Exception('Mahasiswa not found for user ID: ' . $user->id);
             }
 
-            $group = Group::whereHas('project', function($query) use ($batchYear, $projectName) {
+            $group = Group::whereHas('project', function ($query) use ($batchYear, $projectName) {
                 $query->where('batch_year', $batchYear)
                     ->where('project_name', $projectName);
             })->where('mahasiswa_id', $mahasiswa->id)->first();
@@ -80,7 +83,7 @@ class SelfAssessment extends Controller
                 throw new \Exception('Project not found');
             }
 
-            \Log::info('Project Details', [
+            Log::info('Project Details', [
                 'project_id' => $project->id,
                 'batch_year' => $project->batch_year,
                 'project_name' => $project->project_name
@@ -98,7 +101,7 @@ class SelfAssessment extends Controller
 
             $formattedAssessments = $assessments->map(function ($assessment) {
                 $criteria = TypeCriteria::find($assessment->criteria_id);
-                
+
                 if (!$criteria) {
                     return null;
                 }
@@ -118,15 +121,14 @@ class SelfAssessment extends Controller
                 ];
             })->filter();
 
-            \Log::info('Formatted Assessments', [
+            Log::info('Formatted Assessments', [
                 'count' => $formattedAssessments->count(),
                 'assessment_order' => $assessmentOrder
             ]);
 
             return response()->json($formattedAssessments);
-
         } catch (\Exception $e) {
-            \Log::error('Error in getQuestionsByProject:', [
+            Log::error('Error in getQuestionsByProject:', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -145,6 +147,11 @@ class SelfAssessment extends Controller
         $batch_year = $request->input('batch_year');
         $project_name = $request->input('project_name');
 
+        Log::info('User Info Request', [
+            'user_id' => $user->id,
+            'batch_year' => $batch_year,
+            'project_name' => $project_name
+        ]);
         Log::info('User Info Request', [
             'user_id' => $user->id,
             'batch_year' => $batch_year,
@@ -176,6 +183,17 @@ class SelfAssessment extends Controller
                 ], 404);
             }
         }
+        
+            if (!$group) {
+                return response()->json([
+                    'message' => 'No matching group found',
+                    'debug' => [
+                        'mahasiswa_id' => $mahasiswa->id,
+                        'batch_year' => $batch_year,
+                        'project_name' => $project_name
+                    ]
+                ], 404);
+            }
 
         return response()->json([
             'nim' => $mahasiswa->nim,
@@ -199,15 +217,16 @@ class SelfAssessment extends Controller
                 'answers.*.score' => 'required|integer|between:1,5',
                 'answers.*.status' => 'required|string',
             ]);
-
+            
             $user = Auth::user();
             $mahasiswa = Mahasiswa::where('user_id', $user->id)->first();
             
             if (!$mahasiswa) {
                 throw new \Exception('Mahasiswa tidak ditemukan');
             }
-
+            
             $savedAnswers = [];
+            
             foreach ($validated['answers'] as $answerData) {
                 $answer = Answers::updateOrCreate(
                     [
@@ -222,28 +241,99 @@ class SelfAssessment extends Controller
                         'status' => $answerData['status']
                     ]
                 );
+                
                 $savedAnswers[] = $answer;
+                
+                $simpleAnswerData = [
+                    'question_id' => $answerData['question_id'],
+                    'answer' => $answerData['answer'],
+                    'score' => $answerData['score']
+                ];
+                
+                ProcessFlaskAssessment::dispatch($simpleAnswerData, $answer->id)
+                    ->onQueue('flask-processing');
             }
-
+            
             DB::commit();
-
+            
             return response()->json([
-                'message' => 'All answers saved successfully',
+                'success' => true,
+                'message' => 'All answers saved successfully.',
                 'answers' => $savedAnswers
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
+            
             Log::error('Error in saveAnswer:', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-
+            
             return response()->json([
+                'success' => false,
                 'error' => 'Failed to save answers: ' . $e->getMessage()
             ], 500);
         }
     }
+
+
+    // public function saveAllAnswers(Request $request)
+    // {
+    //     DB::beginTransaction();
+    //     try {
+    //         $validated = $request->validate([
+    //             'answers' => 'required|array',
+    //             'answers.*.question_id' => 'required|uuid',
+    //             'answers.*.answer' => 'required|string',
+    //             'answers.*.score' => 'required|integer|between:1,5',
+    //             'answers.*.status' => 'required|string'
+    //         ]);
+
+    //         $user = Auth::user();
+    //         $mahasiswa = Mahasiswa::where('user_id', $user->id)->first();
+
+    //         if (!$mahasiswa) {
+    //             throw new \Exception('Mahasiswa tidak ditemukan untuk user_id: ' . $user->id);
+    //         }
+
+    //         foreach ($validated['answers'] as $answerData) {
+    //             $dataToSave = [
+    //                 'question_id' => $answerData['question_id'],
+    //                 'answer' => $answerData['answer'],
+    //                 'score' => $answerData['score'],
+    //                 'status' => $answerData['status'],
+    //                 'mahasiswa_id' => $mahasiswa->id
+    //             ];
+
+    //             Answers::updateOrCreate(
+    //                 [
+    //                     'question_id' => $dataToSave['question_id'],
+    //                     'mahasiswa_id' => $mahasiswa->id
+    //                 ],
+    //                 $dataToSave
+    //             );
+    //         }
+
+    //         DB::commit();
+    //         return response()->json([
+    //             'success' => true,
+    //             'message' => 'All answers saved successfully.'
+    //         ]);
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
+    //         Log::error('Error in saveAllAnswers:', [
+    //             'error' => $e->getMessage(),
+    //             'trace' => $e->getTraceAsString()
+    //         ]);
+
+    //         return response()->json([
+    //             'success' => false,
+    //             'error' => 'Failed to save answers: ' . $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
+
+
 
     public function saveAllAnswers(Request $request)
     {
@@ -256,45 +346,60 @@ class SelfAssessment extends Controller
                 'answers.*.score' => 'required|integer|between:1,5',
                 'answers.*.status' => 'required|string'
             ]);
-    
+
             $user = Auth::user();
             $mahasiswa = Mahasiswa::where('user_id', $user->id)->first();
-            
+
             if (!$mahasiswa) {
                 throw new \Exception('Mahasiswa tidak ditemukan untuk user_id: ' . $user->id);
             }
-    
+
+            $savedAnswers = [];
+
+            // Simpan semua jawaban terlebih dahulu tanpa menunggu hasil Flask
             foreach ($validated['answers'] as $answerData) {
-                $dataToSave = [
-                    'question_id' => $answerData['question_id'],
-                    'answer' => $answerData['answer'],
-                    'score' => $answerData['score'],
-                    'status' => $answerData['status'],
-                    'mahasiswa_id' => $mahasiswa->id
-                ];
-    
-                Answers::updateOrCreate(
+                $answer = Answers::updateOrCreate(
                     [
-                        'question_id' => $dataToSave['question_id'],
+                        'question_id' => $answerData['question_id'],
                         'mahasiswa_id' => $mahasiswa->id
                     ],
-                    $dataToSave
+                    [
+                        'question_id' => $answerData['question_id'],
+                        'mahasiswa_id' => $mahasiswa->id,
+                        'answer' => $answerData['answer'],
+                        'score' => $answerData['score'],
+                        'status' => $answerData['status']
+                    ]
                 );
+
+                $savedAnswers[] = $answer;
+
+                // Kirim job ke queue untuk diproses di background
+                // Hanya kirim data minimun yang diperlukan
+                $simpleAnswerData = [
+                    'question_id' => $answerData['question_id'],
+                    'answer' => $answerData['answer'],
+                    'score' => $answerData['score']
+                ];
+
+                ProcessFlaskAssessment::dispatch($simpleAnswerData, $answer->id)
+                    ->onQueue('flask-processing'); // Gunakan queue spesifik (opsional)
             }
-    
+
             DB::commit();
+
             return response()->json([
                 'success' => true,
                 'message' => 'All answers saved successfully.'
             ]);
-            
         } catch (\Exception $e) {
             DB::rollBack();
+
             Log::error('Error in saveAllAnswers:', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-    
+
             return response()->json([
                 'success' => false,
                 'error' => 'Failed to save answers: ' . $e->getMessage()
@@ -307,7 +412,7 @@ class SelfAssessment extends Controller
         try {
             $user = Auth::user();
             $mahasiswa = Mahasiswa::where('user_id', $user->id)->first();
-            
+
             if (!$mahasiswa) {
                 throw new \Exception('Mahasiswa tidak ditemukan');
             }
@@ -325,7 +430,6 @@ class SelfAssessment extends Controller
                 'answer' => $answer->answer,
                 'score' => $answer->score
             ]);
-
         } catch (\Exception $e) {
             Log::error('Error in getAnswer:', [
                 'error' => $e->getMessage(),
