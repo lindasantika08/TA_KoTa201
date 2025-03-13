@@ -89,15 +89,16 @@ class ReportController extends Controller
 
         foreach ($tempGroups as $groupName => $members) {
             $byClass = $members->groupBy(function ($item) {
-                return $item->mahasiswa->class_id ?? 'unknown';
+                return $item->mahasiswa->classRoom->name ?? 'unknown';
             });
 
-            foreach ($byClass as $classId => $classMembers) {
+            foreach ($byClass as $className => $classMembers) {
                 $firstMember = $classMembers->first();
                 $kelompok = [
                     'id' => $firstMember->id,
                     'nama_kelompok' => $groupName,
-                    'class_id' => $classId, // Add this line
+                    'class_name' => $className,
+                    'class_id' => $firstMember->mahasiswa->class_id ?? 'unknown',
                     'anggota' => $classMembers->map(function ($item) {
                         return [
                             'mahasiswa_id' => $item->mahasiswa_id,
@@ -114,9 +115,42 @@ class ReportController extends Controller
             }
         }
 
+        // Buat fungsi untuk ekstrak nomor dan huruf dari nama kelompok (misalnya "1A" -> [1, "A"])
+        $extractGroupInfo = function ($groupName) {
+            // Menggunakan regex untuk memisahkan angka dan huruf
+            preg_match('/(\d+)([A-Za-z]*)/', $groupName, $matches);
+
+            if (count($matches) >= 3) {
+                return [
+                    'number' => (int)$matches[1],
+                    'letter' => strtoupper($matches[2] ?? '')
+                ];
+            }
+
+            // Jika format tidak sesuai, gunakan default values
+            return [
+                'number' => 999,  // Nomor tinggi untuk kelompok yang tidak sesuai format
+                'letter' => $groupName
+            ];
+        };
+
+        // Urutkan kelompok berdasarkan nomor dan huruf
+        $sortedKelompok = $groupedKelompok->sort(function ($a, $b) use ($extractGroupInfo) {
+            $infoA = $extractGroupInfo($a['nama_kelompok']);
+            $infoB = $extractGroupInfo($b['nama_kelompok']);
+
+            // Bandingkan nomor terlebih dahulu
+            if ($infoA['number'] !== $infoB['number']) {
+                return $infoA['number'] <=> $infoB['number'];
+            }
+
+            // Jika nomor sama, bandingkan huruf
+            return $infoA['letter'] <=> $infoB['letter'];
+        });
+
         return response()->json([
             'success' => true,
-            'kelompok' => $groupedKelompok->values(),
+            'kelompok' => $sortedKelompok->values(),
         ]);
     }
 
@@ -578,10 +612,10 @@ class ReportController extends Controller
             });
 
             // Sort students by nilai_total (descending) and then by selisih (ascending)
-        $sortedStudentsData = $studentsData->sortBy([
-            ['nilai_total', 'desc'],
-            ['selisih', 'asc']
-        ])->values();
+            $sortedStudentsData = $studentsData->sortBy([
+                ['nilai_total', 'desc'],
+                ['selisih', 'asc']
+            ])->values();
 
             return response()->json([
                 'success' => true,

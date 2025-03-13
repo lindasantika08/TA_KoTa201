@@ -10,7 +10,6 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use App\Models\AnswersPeer;
-use App\Models\Assessment;
 use Illuminate\Support\Facades\DB;
 
 class ProcessFlaskPeerAssessment implements ShouldQueue
@@ -54,84 +53,21 @@ class ProcessFlaskPeerAssessment implements ShouldQueue
                 'data' => $this->answerData
             ]);
 
-            // First, try to directly load the record by ID (most reliable method)
-            // This avoids composite key issues
+            // Get the answer record
             $answerRecord = AnswersPeer::find($this->answerId);
 
             if (!$answerRecord) {
-                Log::warning('Answer not found by ID, trying to find by composite keys', [
+                Log::error('Peer answer not found', [
                     'peer_answer_id' => $this->answerId
                 ]);
-
-                // As a fallback, try to find by composite keys
-                if (
-                    isset($this->answerData['mahasiswa_id']) &&
-                    isset($this->answerData['peer_id']) &&
-                    isset($this->answerData['question_id'])
-                ) {
-
-                    $answerRecord = AnswersPeer::where([
-                        'mahasiswa_id' => $this->answerData['mahasiswa_id'],
-                        'peer_id' => $this->answerData['peer_id'],
-                        'question_id' => $this->answerData['question_id']
-                    ])->first();
-
-                    if (!$answerRecord) {
-                        Log::error('Answer not found by composite keys either, aborting job', [
-                            'mahasiswa_id' => $this->answerData['mahasiswa_id'] ?? null,
-                            'peer_id' => $this->answerData['peer_id'] ?? null,
-                            'question_id' => $this->answerData['question_id'] ?? null
-                        ]);
-                        return;
-                    }
-                } else {
-                    Log::error('Required fields missing in answer data and record not found by ID', [
-                        'answer_data' => $this->answerData
-                    ]);
-                    return;
-                }
+                return;
             }
 
-            // Get the answer text and score directly from the current record if not provided in job data
-            $answerText = $this->answerData['answer'] ?? $answerRecord->answer;
-            $scoreGiven = $this->answerData['score_given'] ?? $this->answerData['score'] ?? $answerRecord->score;
-
-            // Normalize score to 1-5 range if it's currently 0-100
-            $normalizedScore = (int)$scoreGiven;
-            if ($normalizedScore > 5) {
-                $normalizedScore = min(5, max(1, ceil($normalizedScore / 20)));
-            }
-
-            // Get criteria information
-            $question = Assessment::with('typeCriteria')->where('id', $answerRecord->question_id)->first();
-
-            // Create criteria dictionary
-            $criteriaDict = [];
-            if ($question && $question->typeCriteria) {
-                for ($i = 1; $i <= 5; $i++) {
-                    $bobotField = "bobot_" . $i;
-                    $criteriaDict[$i] = $question->typeCriteria->$bobotField ?? "No criteria defined for score $i";
-                }
-            } else {
-                $criteriaDict = [
-                    1 => "Did not meet any requirements",
-                    2 => "Met few requirements",
-                    3 => "Met some requirements",
-                    4 => "Met most requirements",
-                    5 => "Met all requirements"
-                ];
-            }
-
-            // Check if we have criteria from the job data
-            if (isset($this->answerData['criteria']) && is_array($this->answerData['criteria'])) {
-                $criteriaDict = $this->answerData['criteria'];
-            }
-
-            // Prepare data for Flask service
+            // Prepare data for Flask - only send question_id, answer, and score
             $flaskData = [
-                'answer' => $answerText,
-                'score_given' => $normalizedScore,
-                'criteria' => $criteriaDict
+                'question_id' => $answerRecord->question_id,
+                'answer' => $this->answerData['answer'],
+                'score' => $this->answerData['score']
             ];
 
             // Log data being sent to Flask

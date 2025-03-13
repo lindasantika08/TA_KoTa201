@@ -507,8 +507,15 @@ class PeerAssessment extends Controller
 
                 $savedAnswers[] = $answer;
 
+                // Prepare simplified data for the Flask job
+                $simpleAnswerData = [
+                    'question_id' => $answerData['question_id'],
+                    'answer' => $answerData['answer'],
+                    'score' => $answerData['score']
+                ];
+
                 // Kirim job ke queue untuk diproses di background
-                ProcessFlaskPeerAssessment::dispatch($answerData, $answer->id)
+                ProcessFlaskPeerAssessment::dispatch($simpleAnswerData, $answer->id)
                     ->onQueue('flask-peer-processing');
             }
 
