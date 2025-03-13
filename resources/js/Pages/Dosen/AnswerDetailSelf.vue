@@ -28,6 +28,18 @@ export default {
                 { key: "pertanyaan", label: "Pertanyaan", width: "50%" },
                 { key: "jawaban", label: "Jawaban", width: "30%" },
                 { key: "skor", label: "Skor", width: "15%", align: "center" },
+                {
+                    key: "score_SLA",
+                    label: "Skor SLA",
+                    width: "15%",
+                    align: "center",
+                },
+                {
+                    key: "similarity",
+                    label: "similarity",
+                    width: "15%",
+                    align: "center",
+                },
             ],
             loading: true,
             error: null,
@@ -168,6 +180,18 @@ export default {
                                     }"
                                 >
                                     {{ item.skor }}
+                                </div>
+                            </template>
+
+                            <template #column-score_SLA="{ item }">
+                                <div class="text-gray-600">
+                                    {{ item.score_SLA }}
+                                </div>
+                            </template>
+
+                            <template #column-similarity="{ item }">
+                                <div class="text-gray-600">
+                                    {{ item.similarity }}
                                 </div>
                             </template>
                         </DataTable>

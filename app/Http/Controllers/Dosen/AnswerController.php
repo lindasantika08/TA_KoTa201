@@ -396,6 +396,8 @@ class AnswerController extends Controller
                         'pertanyaan' => optional($answer->question)->question,
                         'answer' => $answer->answer,
                         'score' => $answer->score,
+                        'score_SLA' => $answer->score_SLA,
+                        'similarity' => $answer->similarity,
                         'status' => $answer->status,
                         'kelompok' => $group ?? '-'
                     ];
@@ -737,6 +739,8 @@ class AnswerController extends Controller
                     'pertanyaan' => $answer->question->question,
                     'jawaban' => $answer->answer,
                     'skor' => $answer->score,
+                    'score_SLA' => $answer->score_SLA,
+                    'similarity' => $answer->similarity,
                 ];
             }),
         ]);

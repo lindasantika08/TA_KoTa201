@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Exports\AssessmentExport;
+use App\Jobs\ImportCriteriaToFlask;
 use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\Excel as ExcelType;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -136,6 +137,8 @@ class AssessmentController extends Controller
                 $projectOrders[$projectId] = $maxOrder + 1;
             }
 
+            $createdAssessmentIds = []; // Track assessment IDs created during import
+
             for ($row = 2; $row <= $highestRow1; $row++) {
                 $batchYear = trim($sheet1->getCellByColumnAndRow(2, $row)->getValue());
                 $projectName = trim($sheet1->getCellByColumnAndRow(3, $row)->getValue());
@@ -155,7 +158,7 @@ class AssessmentController extends Controller
                         ->first();
 
                     if ($typeCriteria && $project) {
-                        Assessment::create([
+                        $assessment = Assessment::create([
                             'batch_year' => $batchYear,
                             'project_id' => $project->id,
                             'type' => $type,
@@ -165,12 +168,19 @@ class AssessmentController extends Controller
                             'skill_type' => $skilltype,
                             'assessment_order' => $projectOrders[$project->id]
                         ]);
+
+                        // Add assessment ID to the import list
+                        $createdAssessmentIds[] = $assessment->id;
                     }
                 }
             }
 
             DB::commit();
-            return response()->json(['message' => 'Data berhasil diimpor']);
+
+            // After successful import, dispatch jobs to send criteria to Flask
+            $this->dispatchAssessmentsToFlask($createdAssessmentIds);
+
+            return response()->json(['message' => 'Data berhasil diimpor dan sedang dikirim ke Flask']);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Import Error: ' . $e->getMessage());
@@ -178,6 +188,22 @@ class AssessmentController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ], 500);
+        }
+    }
+
+    /**
+     * Dispatch jobs to send assessment data to Flask
+     * 
+     * @param array $assessmentIds IDs of assessments to send
+     * @return void
+     */
+    private function dispatchAssessmentsToFlask(array $assessmentIds)
+    {
+        foreach ($assessmentIds as $assessmentId) {
+            // Dispatch with a small delay between each job to prevent overwhelming the Flask server
+            ImportCriteriaToFlask::dispatch($assessmentId)->delay(now()->addSeconds(rand(1, 10)));
+
+            Log::info("Dispatched ImportCriteriaToFlask job for assessment ID: {$assessmentId}");
         }
     }
 
@@ -339,7 +365,7 @@ class AssessmentController extends Controller
 
             // Ambil dosen berdasarkan user_id
             $dosen = Dosen::where('user_id', $userId)->first();
-            \Log::info('Dosen retrieved:', ['dosen' => $dosen]);
+            Log::info('Dosen retrieved:', ['dosen' => $dosen]);
 
             // Loop melalui setiap jawaban dan simpan
             foreach ($validated['answers'] as $answerData) {
@@ -375,7 +401,7 @@ class AssessmentController extends Controller
             return response()->json(['message' => 'All answers saved successfully.']);
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Error in saveAllAnswers:', [
+            Log::error('Error in saveAllAnswers:', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);

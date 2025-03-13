@@ -1,5 +1,4 @@
 <?php
-// Pertama, buat Job baru: app/Jobs/ProcessFlaskAssessment.php
 
 namespace App\Jobs;
 
@@ -11,7 +10,6 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use App\Models\Answers;
-use App\Models\Assessment;
 
 class ProcessFlaskAssessment implements ShouldQueue
 {
@@ -41,44 +39,21 @@ class ProcessFlaskAssessment implements ShouldQueue
     public function handle()
     {
         try {
-            // Get the question to access its criteria
-            $question = Assessment::with('typeCriteria')->where('id', $this->answerData['question_id'])->first();
+            // Get the answer record to access the question_id
+            $answer = Answers::find($this->answerId);
 
-            if (!$question) {
-                Log::error('Question not found in background job', [
-                    'question_id' => $this->answerData['question_id'],
+            if (!$answer) {
+                Log::error('Answer not found in job', [
                     'answer_id' => $this->answerId
                 ]);
                 return;
             }
 
-            // Get criteria information
-            $typeCriteria = $question->typeCriteria;
-
-            // Create criteria dictionary
-            $criteriaDict = [];
-            if ($typeCriteria) {
-                for ($i = 1; $i <= 5; $i++) {
-                    $bobotField = "bobot_" . $i;
-                    $criteriaDict[$i] = isset($typeCriteria->$bobotField) && !empty($typeCriteria->$bobotField)
-                        ? $typeCriteria->$bobotField
-                        : "No criteria defined for score $i";
-                }
-            } else {
-                $criteriaDict = [
-                    1 => "Did not meet any requirements",
-                    2 => "Met few requirements",
-                    3 => "Met some requirements",
-                    4 => "Met most requirements",
-                    5 => "Met all requirements"
-                ];
-            }
-
-            // Prepare data for Flask service
+            // Prepare data for Flask - only send question_id, score, and answer
             $flaskData = [
+                'question_id' => $answer->question_id, // Pass the actual question_id from the answer record
                 'answer' => $this->answerData['answer'],
-                'score_given' => $this->answerData['score'],
-                'criteria' => $criteriaDict
+                'score' => $this->answerData['score']
             ];
 
             // Log data yang akan dikirim ke Flask
@@ -98,18 +73,15 @@ class ProcessFlaskAssessment implements ShouldQueue
                 $flaskResult = $flaskResponse->json();
 
                 // Update jawaban dengan hasil dari Flask
-                $answer = Answers::find($this->answerId);
-                if ($answer) {
-                    $answer->update([
-                        'score_SLA' => $flaskResult['best_score'] ?? null,
-                        'similarity' => $flaskResult['best_similarity'] ?? null
-                    ]);
+                $answer->update([
+                    'score_SLA' => $flaskResult['best_score'] ?? null,
+                    'similarity' => $flaskResult['best_similarity'] ?? null
+                ]);
 
-                    Log::info('Successfully updated answer with Flask result in job', [
-                        'answer_id' => $this->answerId,
-                        'flask_result' => $flaskResult
-                    ]);
-                }
+                Log::info('Successfully updated answer with Flask result in job', [
+                    'answer_id' => $this->answerId,
+                    'flask_result' => $flaskResult
+                ]);
             } else {
                 Log::error('Flask service returned error in job', [
                     'status' => $flaskResponse->status(),

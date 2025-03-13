@@ -112,9 +112,42 @@ export default {
             this.fetchStatistics();
         },
         showDetails(mahasiswaId) {
-            router.visit(
-                `/dosen/answers/details?mahasiswaId=${mahasiswaId}&batch_year=${this.batch_year}&project_name=${this.project_name}&project_id=${this.project_id}&assessment_order=${this.assessment_order}`
-            );
+            // Pastikan semua parameter tersedia sebelum melakukan router.visit
+            if (
+                this.batch_year &&
+                this.project_name &&
+                this.project_id &&
+                this.assessment_order
+            ) {
+                // Encode parameter URL untuk menghindari masalah karakter khusus
+                const url = `/dosen/answers/details?mahasiswaId=${encodeURIComponent(
+                    mahasiswaId
+                )}&batch_year=${encodeURIComponent(
+                    this.batch_year
+                )}&project_name=${encodeURIComponent(
+                    this.project_name
+                )}&project_id=${encodeURIComponent(
+                    this.project_id
+                )}&assessment_order=${encodeURIComponent(
+                    this.assessment_order
+                )}`;
+
+                // Gunakan router.visit dengan parameter kedua untuk memberikan opsi tambahan jika diperlukan
+                router.visit(url, {
+                    preserveScroll: true, // Opsional: mempertahankan posisi scroll
+                    only: [], // Opsional: untuk partial reloads
+                });
+            } else {
+                // Tampilkan pesan error jika ada parameter yang hilang
+                console.error("Missing required parameters for navigation:", {
+                    batch_year: this.batch_year,
+                    project_name: this.project_name,
+                    project_id: this.project_id,
+                    assessment_order: this.assessment_order,
+                });
+                // Opsional: tampilkan pesan error ke pengguna
+                // alert('Terjadi kesalahan saat memuat detail. Mohon coba lagi.');
+            }
         },
         getStatusClass(status) {
             const statusClasses = {

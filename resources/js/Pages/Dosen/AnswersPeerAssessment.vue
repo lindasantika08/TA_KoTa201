@@ -762,6 +762,18 @@
                                                 >
                                                     Skor: {{ qa.skor }}
                                                 </span>
+                                                <span
+                                                    class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm"
+                                                >
+                                                    Score_SLA:
+                                                    {{ qa.score_SLA }}
+                                                </span>
+                                                <span
+                                                    class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm"
+                                                >
+                                                    Similarity:
+                                                    {{ qa.similarity }}
+                                                </span>
                                             </div>
                                             <div
                                                 class="bg-gray-50 p-3 rounded border border-gray-200"
@@ -937,6 +949,8 @@ export default {
                     pertanyaan: answer.pertanyaan,
                     jawaban: answer.jawaban,
                     skor: answer.skor,
+                    score_SLA: answer.score_SLA,
+                    similarity: answer.similarity,
                 });
             });
 
@@ -1058,6 +1072,8 @@ export default {
                             nama_pengguna: item.user?.name || "-",
                             nama_rekan: item.peer?.name || "-",
                             skor: item.score,
+                            score_SLA: item.score_SLA,
+                            similarity: item.similarity,
                             jawaban: item.answer,
                             pertanyaan: item.pertanyaan || "-",
                             status: item.status,
