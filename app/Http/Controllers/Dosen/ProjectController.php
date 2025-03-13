@@ -138,9 +138,6 @@ class ProjectController extends Controller
                 'is_published' => $request->is_published ? 1 : 0
             ]);
 
-            \Log::info('SQL Query:', \DB::getQueryLog());
-            \Log::info('Update result:', ['updated' => $updated]);
-
             return response()->json([
                 'success' => true,
                 'message' => 'Assessment publish status updated successfully',
