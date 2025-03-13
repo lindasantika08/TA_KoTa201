@@ -393,11 +393,20 @@ class PeerAssessment extends Controller
                     $answer = AnswersPeer::create($validated);
                 }
 
+                $simpleAnswerData = [
+                    'question_id' => $validated['question_id'],
+                    'answer' => $validated['answer'],
+                    'score' => $validated['score']
+                ];
+
+                ProcessFlaskPeerAssessment::dispatch($simpleAnswerData, $answer->id)
+                    ->onQueue('flask-peer-processing');
+
                 DB::commit();
 
                 return response()->json([
                     'success' => true,
-                    'message' => 'Jawaban peer berhasil disimpan.',
+                    'message' => 'Answers saved successfully.',
                     'data' => $answer,
                 ], 201);
             } catch (\Exception $e) {
@@ -416,7 +425,6 @@ class PeerAssessment extends Controller
                 'file' => $e->getFile(),
                 'line' => $e->getLine()
             ]);
-
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan saat menyimpan jawaban peer.',
@@ -522,7 +530,7 @@ class PeerAssessment extends Controller
             DB::commit();
 
             return response()->json([
-                'message' => 'Answers saved successfully. Assessment will be processed in background.',
+                'message' => 'Answers saved successfully.',
                 'status' => 'success'
             ]);
         } catch (\Exception $e) {

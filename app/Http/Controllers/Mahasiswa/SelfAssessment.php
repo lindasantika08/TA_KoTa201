@@ -217,32 +217,17 @@ class SelfAssessment extends Controller
                 'answers.*.score' => 'required|integer|between:1,5',
                 'answers.*.status' => 'required|string',
             ]);
-
+            
             $user = Auth::user();
             $mahasiswa = Mahasiswa::where('user_id', $user->id)->first();
-
+            
             if (!$mahasiswa) {
                 throw new \Exception('Mahasiswa tidak ditemukan');
             }
-
+            
             $savedAnswers = [];
-            $flaskResults = [];
-
+            
             foreach ($validated['answers'] as $answerData) {
-                // Get the question to access its criteria
-                $question = Assessment::with('typeCriteria')->where('id', $answerData['question_id'])->first();
-
-                if (!$question) {
-                    throw new \Exception('Question not found');
-                }
-
-                // Get the criteria information based on the score
-                $typeCriteria = $question->typeCriteria;
-
-                // Create a criteria dictionary for the Flask service
-                $criteriaDict = $this->prepareCriteriaDictionary($typeCriteria);
-
-                // Store the initial answer
                 $answer = Answers::updateOrCreate(
                     [
                         'question_id' => $answerData['question_id'],
@@ -256,158 +241,38 @@ class SelfAssessment extends Controller
                         'status' => $answerData['status']
                     ]
                 );
-
-                // Prepare data for Flask service
-                $flaskData = [
-                    'answer' => $answerData['answer'], // Send original answer
-                    'score_given' => $answerData['score'],
-                    'criteria' => $criteriaDict
+                
+                $savedAnswers[] = $answer;
+                
+                $simpleAnswerData = [
+                    'question_id' => $answerData['question_id'],
+                    'answer' => $answerData['answer'],
+                    'score' => $answerData['score']
                 ];
-
-                // Log the complete Flask data for debugging
-                Log::info('Sending data to Flask service:', [
-                    'answer_id' => $answer->id,
-                    'flask_data' => $flaskData
-                ]);
-
-                // Send to Flask service for assessment
-                try {
-                    $flaskResult = $this->sendToFlaskService($flaskData);
-
-                    if ($flaskResult) {
-                        // Update the answer with SLA score and similarity
-                        $answer->update([
-                            'score_SLA' => $flaskResult['best_score'] ?? null,
-                            'similarity' => $flaskResult['best_similarity'] ?? null
-                        ]);
-
-                        $flaskResults[] = [
-                            'answer_id' => $answer->id,
-                            'score_SLA' => $flaskResult['best_score'] ?? null,
-                            'similarity' => $flaskResult['best_similarity'] ?? null,
-                            'sentiment' => $flaskResult['sentiment'] ?? null,
-                            'similarity_scores' => $flaskResult['similarity_scores'] ?? null
-                        ];
-
-                        Log::info('Successfully processed answer with Flask', [
-                            'answer_id' => $answer->id,
-                            'flask_result' => $flaskResult
-                        ]);
-                    }
-                } catch (\Exception $e) {
-                    Log::error('Error connecting to Flask service', [
-                        'error' => $e->getMessage(),
-                        'trace' => $e->getTraceAsString(),
-                        'answer_id' => $answer->id
-                    ]);
-                }
-
-                $savedAnswers[] = $answer->fresh();
+                
+                ProcessFlaskAssessment::dispatch($simpleAnswerData, $answer->id)
+                    ->onQueue('flask-processing');
             }
-
+            
             DB::commit();
-
+            
             return response()->json([
-                'message' => 'All answers saved successfully',
-                'answers' => $savedAnswers,
-                'flask_results' => $flaskResults
+                'success' => true,
+                'message' => 'All answers saved successfully.',
+                'answers' => $savedAnswers
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+            
             Log::error('Error in saveAnswer:', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-
+            
             return response()->json([
+                'success' => false,
                 'error' => 'Failed to save answers: ' . $e->getMessage()
             ], 500);
-        }
-    }
-
-    /**
-     * Prepare criteria dictionary without translations
-     * 
-     * @param mixed $typeCriteria
-     * @return array
-     */
-    private function prepareCriteriaDictionary($typeCriteria)
-    {
-        $criteriaDict = [];
-
-        if ($typeCriteria) {
-            Log::info('TypeCriteria data:', [
-                'type_criteria_id' => $typeCriteria->id,
-                'bobot_1' => $typeCriteria->bobot_1,
-                'bobot_2' => $typeCriteria->bobot_2,
-                'bobot_3' => $typeCriteria->bobot_3,
-                'bobot_4' => $typeCriteria->bobot_4,
-                'bobot_5' => $typeCriteria->bobot_5,
-            ]);
-
-            // Process each criteria individually to ensure better tracking
-            for ($i = 1; $i <= 5; $i++) {
-                $bobotField = "bobot_" . $i;
-
-                if (isset($typeCriteria->$bobotField) && !empty($typeCriteria->$bobotField)) {
-                    $criteriaDict[$i] = $typeCriteria->$bobotField;
-                } else {
-                    $criteriaDict[$i] = "No criteria defined for score $i";
-                    Log::warning("Missing criteria for bobot_{$i}");
-                }
-            }
-        } else {
-            // Use default criteria if typeCriteria is not found
-            $criteriaDict = [
-                1 => "Did not meet any requirements",
-                2 => "Met few requirements",
-                3 => "Met some requirements",
-                4 => "Met most requirements",
-                5 => "Met all requirements"
-            ];
-            Log::warning('TypeCriteria not found, using default criteria');
-        }
-
-        // Final verification - ensure all criteria are present
-        foreach ($criteriaDict as $score => $criteria) {
-            Log::info("Final criteria for score {$score}: {$criteria}");
-        }
-
-        return $criteriaDict;
-    }
-
-    /**
-     * Send data to Flask service
-     * 
-     * @param array $flaskData
-     * @return array|null
-     */
-    private function sendToFlaskService($flaskData)
-    {
-        // Replace with your actual Flask endpoint
-        $flaskUrl = env('FLASK_SERVICE_URL', 'http://localhost:5000/assess');
-
-        try {
-            $flaskResponse = Http::timeout(30)->withHeaders([
-                'Content-Type' => 'application/json',
-                'Accept' => 'application/json'
-            ])->post($flaskUrl, $flaskData);
-
-            if ($flaskResponse->successful()) {
-                return $flaskResponse->json();
-            } else {
-                Log::error('Flask service returned an error', [
-                    'status' => $flaskResponse->status(),
-                    'response' => $flaskResponse->body()
-                ]);
-                return null;
-            }
-        } catch (\Exception $e) {
-            Log::error('Error connecting to Flask service', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            return null;
         }
     }
 
@@ -525,7 +390,7 @@ class SelfAssessment extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'All answers saved successfully. Assessment will be processed in background.'
+                'message' => 'All answers saved successfully.'
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
