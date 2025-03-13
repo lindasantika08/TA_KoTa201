@@ -52,4 +52,5 @@ class Answers extends Model
     {
         return $this->belongsTo(Dosen::class, 'dosen_id', 'id');
     }
+
 }
