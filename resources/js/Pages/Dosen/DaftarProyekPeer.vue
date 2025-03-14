@@ -95,7 +95,7 @@ export default {
         assessment_order: item.assessment_order,
         status: item.status,
         is_published: item.is_published == 1,
-        date: dayjs(item.created_at).format('DD MMMM YYYY HH:mm'),
+        date: dayjs(item.created_at).format('DD MMMM YYYY'),
       }));
     }
   },

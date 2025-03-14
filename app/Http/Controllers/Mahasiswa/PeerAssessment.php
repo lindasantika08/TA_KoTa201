@@ -20,9 +20,16 @@ class PeerAssessment extends Controller
 {
     public function PeerAssessment(Request $request)
     {
+        $validated = $request->validate([
+            'batch_year' => 'required|string',
+            'project_name' => 'required|string',
+            'assessment_order' => 'sometimes|string', 
+        ]);
+
         return Inertia::render('Mahasiswa/PeerAssessmentMahasiswa', [
-            'batch_year' => $request->batch_year,
-            'project_name' => $request->project_name
+            'batch_year' => $validated['batch_year'],
+            'project_name' => $validated['project_name'],
+            'assessment_order' => $validated['assessment_order'],
         ]);
     }
 
@@ -204,115 +211,130 @@ class PeerAssessment extends Controller
     }
 
     public function getQuestionsByProject(Request $request)
-    {
-        try {
-            $user = auth()->user();
-            $batch_year = $request->query('batch_year');
-            $project_name = $request->query('project_name');
+{
+    try {
+        $user = auth()->user();
+        $batch_year = $request->query('batch_year');
+        $project_name = $request->query('project_name');
+        $assessment_order = $request->query('assessment_order', '1'); // Tambahkan parameter assessment_order dengan default '1'
 
-            Log::info('getQuestionsByProject request:', [
-                'batch_year' => $batch_year,
-                'project_name' => $project_name,
-                'user_id' => $user->id
-            ]);
+        Log::info('getQuestionsByProject request:', [
+            'batch_year' => $batch_year,
+            'project_name' => $project_name,
+            'assessment_order' => $assessment_order,
+            'user_id' => $user->id
+        ]);
 
-            $mahasiswa = Mahasiswa::where('user_id', $user->id)->first();
-            if (!$mahasiswa) {
-                return response()->json(['message' => 'Data mahasiswa tidak ditemukan'], 404);
-            }
-
-            $project = Project::where('project_name', $project_name)->first();
-            if (!$project) {
-                return response()->json(['message' => 'Project tidak ditemukan'], 404);
-            }
-
-            $group = Group::where('mahasiswa_id', $mahasiswa->id)
-                ->where('project_id', $project->id)
-                ->first();
-
-            if (!$group) {
-                return response()->json(['message' => 'Data kelompok tidak ditemukan'], 404);
-            }
-
-            $assessments = Assessment::join('type_criteria', 'assessment.criteria_id', '=', 'type_criteria.id')
-                ->select(
-                    'assessment.id',
-                    'assessment.type',
-                    'assessment.question',
-                    'assessment.skill_type',
-                    'type_criteria.aspect',
-                    'type_criteria.criteria',
-                    'type_criteria.bobot_1',
-                    'type_criteria.bobot_2',
-                    'type_criteria.bobot_3',
-                    'type_criteria.bobot_4',
-                    'type_criteria.bobot_5'
-                )
-                ->where('assessment.project_id', $project->id)
-                ->where('assessment.type', 'peerAssessment')
-                ->get()
-                ->map(function ($assessment) {
-                    return [
-                        'id' => $assessment->id,
-                        'type' => $assessment->type,
-                        'question' => $assessment->question,
-                        'skill_type' => $assessment->skill_type,
-                        'aspect' => $assessment->aspect,
-                        'criteria' => $assessment->criteria,
-                        'bobot_1' => $assessment->bobot_1,
-                        'bobot_2' => $assessment->bobot_2,
-                        'bobot_3' => $assessment->bobot_3,
-                        'bobot_4' => $assessment->bobot_4,
-                        'bobot_5' => $assessment->bobot_5
-                    ];
-                });
-
-            Log::info('Assessment query result:', [
-                'count' => $assessments->count(),
-                'first_item' => $assessments->first()
-            ]);
-
-            $groupMembers = Group::where('project_id', $project->id)
-                ->where('group', $group->group)
-                ->where('mahasiswa_id', '!=', $mahasiswa->id)
-                ->with(['mahasiswa.user:id,name'])
-                ->get()
-                ->map(function ($member) {
-                    return [
-                        'mahasiswa_id' => $member->mahasiswa_id,
-                        'name' => $member->mahasiswa->user->name
-                    ];
-                });
-
-            $response = [
-                'status' => 'success',
-                'data' => [
-                    'assessments' => $assessments,
-                    'group_members' => $groupMembers,
-                    'project_details' => [
-                        'project_id' => $project->id,
-                        'project_name' => $project->project_name,
-                        'group' => $group->group,
-                        'batch_year' => $project->batch_year
-                    ]
-                ]
-            ];
-
-            Log::info('Final response:', $response);
-
-            return response()->json($response);
-        } catch (\Exception $e) {
-            Log::error('Error in getQuestionsByProject: ' . $e->getMessage(), [
-                'trace' => $e->getTrace()
-            ]);
-
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Terjadi kesalahan saat mengambil data pertanyaan',
-                'error' => $e->getMessage()
-            ], 500);
+        // Validasi input
+        if (empty($batch_year) || empty($project_name)) {
+            return response()->json(['message' => 'Tahun batch dan nama proyek harus diisi'], 400);
         }
+
+        $mahasiswa = Mahasiswa::where('user_id', $user->id)->first();
+        if (!$mahasiswa) {
+            return response()->json(['message' => 'Data mahasiswa tidak ditemukan'], 404);
+        }
+
+        $project = Project::where('project_name', $project_name)
+                          ->where('batch_year', $batch_year)
+                          ->first();
+        if (!$project) {
+            return response()->json(['message' => 'Project tidak ditemukan'], 404);
+        }
+
+        $group = Group::where('mahasiswa_id', $mahasiswa->id)
+                      ->where('project_id', $project->id)
+                      ->first();
+
+        if (!$group) {
+            return response()->json(['message' => 'Data kelompok tidak ditemukan'], 404);
+        }
+
+        $assessments = Assessment::join('type_criteria', 'assessment.criteria_id', '=', 'type_criteria.id')
+            ->select(
+                'assessment.id',
+                'assessment.type',
+                'assessment.question',
+                'assessment.skill_type',
+                'assessment.assessment_order', // Tambahkan field assessment_order
+                'type_criteria.aspect',       
+                'type_criteria.criteria',
+                'type_criteria.bobot_1',
+                'type_criteria.bobot_2',
+                'type_criteria.bobot_3',
+                'type_criteria.bobot_4',
+                'type_criteria.bobot_5'
+            )
+            ->where('assessment.project_id', $project->id)
+            ->where('assessment.type', 'peerAssessment')
+            ->where('assessment.assessment_order', $assessment_order) // Filter berdasarkan assessment_order
+            ->where('assessment.is_published', 1) // Hanya tampilkan yang sudah dipublish
+            ->get()
+            ->map(function ($assessment) {
+                return [
+                    'id' => $assessment->id,
+                    'type' => $assessment->type,
+                    'question' => $assessment->question,
+                    'skill_type' => $assessment->skill_type,
+                    'assessment_order' => $assessment->assessment_order, // Sertakan di hasil
+                    'aspect' => $assessment->aspect,
+                    'criteria' => $assessment->criteria,
+                    'bobot_1' => $assessment->bobot_1,
+                    'bobot_2' => $assessment->bobot_2,
+                    'bobot_3' => $assessment->bobot_3,
+                    'bobot_4' => $assessment->bobot_4,
+                    'bobot_5' => $assessment->bobot_5
+                ];
+            });
+
+        Log::info('Assessment query result:', [
+            'count' => $assessments->count(),
+            'assessment_order' => $assessment_order,
+            'first_item' => $assessments->first()
+        ]);
+
+        $groupMembers = Group::where('project_id', $project->id)
+            ->where('group', $group->group)
+            ->where('mahasiswa_id', '!=', $mahasiswa->id)
+            ->with(['mahasiswa.user:id,name'])
+            ->get()
+            ->map(function ($member) {
+                return [
+                    'mahasiswa_id' => $member->mahasiswa_id,
+                    'name' => $member->mahasiswa->user->name
+                ];
+            });
+
+        $response = [
+            'status' => 'success',
+            'data' => [
+                'assessments' => $assessments,
+                'group_members' => $groupMembers,
+                'project_details' => [
+                    'project_id' => $project->id,
+                    'project_name' => $project->project_name,
+                    'group' => $group->group,
+                    'batch_year' => $project->batch_year,
+                    'assessment_order' => $assessment_order
+                ]
+            ]
+        ];
+
+        Log::info('Final response:', $response);
+
+        return response()->json($response);
+    } catch (\Exception $e) {
+        Log::error('Error in getQuestionsByProject: ' . $e->getMessage(), [
+            'trace' => $e->getTrace()
+        ]);
+
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Terjadi kesalahan saat mengambil data pertanyaan',
+            'error' => $e->getMessage()
+        ], 500);
     }
+}
 
     public function AnswersPeer(Request $request)
     {
@@ -371,11 +393,20 @@ class PeerAssessment extends Controller
                     $answer = AnswersPeer::create($validated);
                 }
 
+                $simpleAnswerData = [
+                    'question_id' => $validated['question_id'],
+                    'answer' => $validated['answer'],
+                    'score' => $validated['score']
+                ];
+
+                ProcessFlaskPeerAssessment::dispatch($simpleAnswerData, $answer->id)
+                    ->onQueue('flask-peer-processing');
+
                 DB::commit();
 
                 return response()->json([
                     'success' => true,
-                    'message' => 'Jawaban peer berhasil disimpan.',
+                    'message' => 'Answers saved successfully.',
                     'data' => $answer,
                 ], 201);
             } catch (\Exception $e) {
@@ -394,7 +425,6 @@ class PeerAssessment extends Controller
                 'file' => $e->getFile(),
                 'line' => $e->getLine()
             ]);
-
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan saat menyimpan jawaban peer.',
@@ -500,7 +530,7 @@ class PeerAssessment extends Controller
             DB::commit();
 
             return response()->json([
-                'message' => 'Answers saved successfully. Assessment will be processed in background.',
+                'message' => 'Answers saved successfully.',
                 'status' => 'success'
             ]);
         } catch (\Exception $e) {
