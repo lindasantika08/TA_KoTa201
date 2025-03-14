@@ -89,12 +89,15 @@ export default {
 
         async fetchPeerQuestions() {
             try {
-                const response = await axios.get("/api/questions-peer-dosen", {
-                    params: {
-                        batch_year: this.batch_year,
-                        project_name: this.project_name,
-                    },
-                });
+                const response = await axios.get(
+                    "/api/questions-peer-dosen-report",
+                    {
+                        params: {
+                            batch_year: this.batch_year,
+                            project_name: this.project_name,
+                        },
+                    }
+                );
 
                 this.peerQuestions = Object.fromEntries(
                     response.data.map((question) => [
@@ -1070,7 +1073,6 @@ export default {
                             </div>
                         </div>
 
-                        <!-- Analysis Score Section -->
                         <!-- Analysis Score Section -->
                         <div class="mt-6">
                             <div

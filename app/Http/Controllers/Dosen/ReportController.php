@@ -356,31 +356,6 @@ class ReportController extends Controller
                     $skorPeer = $groupAnswers->avg('score');
                     $selisih = abs($skorSelf - $skorPeer);
 
-                    // Calculate nilai_total based on ranges
-                    $nilaiTotal = 60; // Default value
-                    foreach ($ranges as $range) {
-                        if ($selisih >= $range['min'] && $selisih <= $range['max']) {
-                            $nilaiTotal = $range['score'];
-                            break;
-                        }
-                    }
-
-                    // // Save to Report model
-                    // Report::updateOrCreate(
-                    //     [
-                    //         'project_id' => $project->id,
-                    //         'group_id' => $group->id,
-                    //         'mahasiswa_id' => $mahasiswaId,
-                    //         'typeCriteria_id' => $typeCriteriaId
-                    //     ],
-                    //     [
-                    //         'skor_self' => $skorSelf,
-                    //         'skor_peer' => $skorPeer,
-                    //         'selisih' => $selisih,
-                    //         'nilai_total' => $nilaiTotal,
-                    //     ]
-                    // );
-
                     $evaluatorGroups = $groupAnswers->groupBy('mahasiswa_id');
                     $evaluatedBy = $evaluatorGroups->map(function ($answers, $evaluatorId) use ($mahasiswaDetails) {
                         return [
@@ -708,5 +683,40 @@ class ReportController extends Controller
                 })
             ];
         });
+    }
+
+    public function getQuestionsByProjectPeerReport(Request $request)
+    {
+        $tahunAjaran = $request->query('batch_year');
+        $namaProyek = $request->query('project_name');
+
+
+        $assessments = Assessment::join('type_criteria', 'assessment.criteria_id', '=', 'type_criteria.id')
+            ->join('project', 'assessment.project_id', '=', 'project.id')
+            ->select(
+                'assessment.id',
+                'assessment.type',
+                'assessment.question',
+                'assessment.skill_type',
+                'type_criteria.aspect',
+                'type_criteria.criteria',
+                'type_criteria.bobot_1',
+                'type_criteria.bobot_2',
+                'type_criteria.bobot_3',
+                'type_criteria.bobot_4',
+                'type_criteria.bobot_5'
+            )
+            ->when($tahunAjaran, function ($query, $tahunAjaran) {
+                $query->where('assessment.batch_year', $tahunAjaran);
+            })
+            ->when($namaProyek, function ($query, $namaProyek) {
+                $query->where('project.project_name', $namaProyek);
+            })
+            ->where('assessment.type', 'peerAssessment')
+
+
+            ->get();
+
+        return response()->json($assessments);
     }
 }
