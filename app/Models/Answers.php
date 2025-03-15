@@ -52,5 +52,18 @@ class Answers extends Model
     {
         return $this->belongsTo(Dosen::class, 'dosen_id', 'id');
     }
+    
+    /**
+     * Scope a query to only include answers pending Flask processing.
+     */
+//     public function scopePendingFlaskProcessing($query)
+//     {
+//         return $query->whereNull('score_SLA');
+//     }
+
+//     public function assessment()
+// {
+//     return $this->belongsTo(Assessment::class, 'question_id', 'id');
+// }
 
 }

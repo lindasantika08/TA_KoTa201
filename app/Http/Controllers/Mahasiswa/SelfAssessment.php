@@ -564,6 +564,13 @@ class SelfAssessment extends Controller
                     ->onQueue('flask-processing'); // Gunakan queue spesifik (opsional)
             }
 
+            //     $savedAnswers[] = $answer;
+
+            //     // Kirim job ke queue untuk diproses di background
+            //     ProcessFlaskAssessment::dispatch($answerData, $answer->id)
+            //         ->onQueue('flask-processing'); // Gunakan queue spesifik (opsional)
+            // }
+
             DB::commit();
 
             return response()->json([
@@ -572,7 +579,6 @@ class SelfAssessment extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
-
             Log::error('Error in saveAllAnswers:', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
