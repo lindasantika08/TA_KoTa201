@@ -35,6 +35,7 @@ export default {
                 { key: "actions", label: "Actions" },
             ],
             items: [],
+            loading: false,
         };
     },
     methods: {
@@ -51,10 +52,25 @@ export default {
                 }
             );
         },
+        handleListAnswer(item) {
+            router.get('/dosen/answers-self-assessment', {
+                batch_year: item.batch_year,
+                project_name: item.project_name,
+                assessment_order: item.assessment_order,
+            }, {
+                preserveState: true
+            });
+        },
 
         handleTogglePublish(item) {
-            console.log('test', item)
             const newStatus = !item.is_published;
+
+            this.items = this.items.map(i => {
+                if (i.uniqueKey === item.uniqueKey) {
+                    return { ...i, is_published: newStatus };
+                }
+                return i;
+            });
 
             axios.post('/api/toggle-publish-assessment', {
                 project_id: item.id,
@@ -64,21 +80,23 @@ export default {
                 is_published: newStatus
             })
                 .then(response => {
-                    const updatedItems = this.items.map(i => {
-                        if (
-                            i.id === item.id &&
-                            i.assessment_order === item.assessment_order
-                        ) {
-                            console.log('sydg',i)
-                            return { ...i, is_published: newStatus };
+                    console.log('Publish status updated successfully');
+                })
+                .catch(error => {
+                    console.error('Error toggling publish status:', error);
+
+                    this.items = this.items.map(i => {
+                        if (i.uniqueKey === item.uniqueKey) {
+                            return { ...i, is_published: !newStatus };
                         }
                         return i;
                     });
 
-                    this.items = updatedItems;
-                })
-                .catch(error => {
-                    console.error('Error toggling publish status:', error);
+                    if (this.$toast) {
+                        this.$toast.error("Gagal memperbarui status publikasi");
+                    } else {
+                        console.error("Gagal memperbarui status publikasi");
+                    }
                 });
         },
 
@@ -90,22 +108,32 @@ export default {
                 project_name: item.project_name,
                 assessment_order: item.assessment_order,
                 status: item.status,
+                // Buat uniqueKey dari kombinasi id dan assessment_order
+                uniqueKey: item.unique_key || `${item.id}-${item.assessment_order}`,
                 is_published: Boolean(item.is_published),
                 date: dayjs(item.created_at).format('DD MMMM YYYY'),
             }));
-        }
+        },
 
+        fetchData() {
+            this.loading = true;
+            axios.get('/api/proyek-self-assessment')
+                .then(response => {
+                    console.log('Raw API response:', response.data);
+                    this.updateItems(response.data);
+                })
+                .catch(error => {
+                    console.error('Error fetching data:', error);
+                    // Optional: Tampilkan notifikasi error jika diperlukan
+                    this.$toast.error("Gagal memuat data");
+                })
+                .finally(() => {
+                    this.loading = false;
+                });
+        }
     },
     mounted() {
-        axios.get('/api/proyek-self-assessment')
-            .then(response => {
-                this.updateItems(response.data);
-                // console.log(response.data)
-            })
-            .catch(error => {
-                console.error('Error fetching data:', error);
-            });
-
+        this.fetchData();
     }
 }
 </script>
@@ -121,7 +149,10 @@ export default {
                 </div>
 
                 <Card title="SELF ASSESSMENT PROJECT LIST" description="" class="w-full">
-                    <div v-if="items.length === 0" class="text-center text-gray-500 py-6">
+                    <div v-if="loading" class="text-center text-gray-500 py-6">
+                        Loading...
+                    </div>
+                    <div v-else-if="items.length === 0" class="text-center text-gray-500 py-6">
                         No assessment available
                     </div>
                     <div v-else>

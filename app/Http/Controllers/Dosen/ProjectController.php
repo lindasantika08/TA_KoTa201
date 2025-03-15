@@ -60,58 +60,111 @@ class ProjectController extends Controller
 
     public function getDataSelf()
     {
-        $projects = Project::whereExists(function ($query) {
-            $query->from('assessment')
-                ->whereColumn('project.id', 'assessment.project_id')
-                ->where('assessment.type', 'selfAssessment');
-        })
-        ->join('assessment', function($join) {
-            $join->on('project.id', '=', 'assessment.project_id')
-                ->where('assessment.type', '=', 'selfAssessment');
-        })
-        ->select([
-            'project.id',
-            'project.batch_year',
-            'project.project_name',
-            'project.status',
-            'project.created_at',
-            'assessment.assessment_order'
-        ])
-        ->selectRaw('(SELECT is_published FROM assessment WHERE project_id = project.id AND type = "selfAssessment" AND assessment_order = assessment.assessment_order LIMIT 1) as is_published')
-        ->distinct()
-        ->orderBy('project.project_name')
-        ->orderBy('assessment.assessment_order')
-        ->get();
-
-        return response()->json($projects);
+        try {
+            $projects = Project::where('status', 'Active')
+                ->orderBy('created_at', 'desc')
+                ->get();
+            
+            $result = [];
+            
+            foreach ($projects as $project) {
+                // Untuk setiap assessment order yang terkait dengan proyek ini
+                $assessmentOrders = Assessment::where('project_id', $project->id)
+                    ->select('assessment_order')
+                    ->distinct()
+                    ->orderBy('assessment_order')
+                    ->pluck('assessment_order');
+                
+                foreach ($assessmentOrders as $order) {
+                    $isPublished = Assessment::where('project_id', $project->id)
+                        ->where('assessment_order', $order)
+                        ->where('type', 'selfAssessment')
+                        ->value('is_published');
+                    
+                    // Jika tidak ada record, anggap sebagai not published
+                    $isPublished = $isPublished !== null ? $isPublished : 0;
+                    
+                    $result[] = [
+                        'id' => $project->id,
+                        'batch_year' => $project->batch_year,
+                        'project_name' => $project->project_name,
+                        'assessment_order' => $order,
+                        'status' => $project->status,
+                        'is_published' => $isPublished,
+                        'created_at' => $project->created_at,
+                        'unique_key' => $project->id . '-' . $order // tambhain ini buat publish di fe nya gengs
+                    ];
+                }
+            }
+            
+            return response()->json($result);
+        } catch (\Exception $e) {
+            Log::error('Error in getProyekSelfAssessment:', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch self assessment projects',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function getDataPeer()
     {
-        $projects = Project::whereExists(function ($query) {
-                $query->from('assessment')
-                    ->whereColumn('project.id', 'assessment.project_id')
-                    ->where('assessment.type', 'peerAssessment');
-            })
-            ->join('assessment', function($join) {
-                $join->on('project.id', '=', 'assessment.project_id')
-                    ->where('assessment.type', '=', 'peerAssessment');
-            })
-            ->select([
-                'project.id',
-                'project.batch_year',
-                'project.project_name',
-                'project.status',
-                'project.created_at',
-                'assessment.assessment_order'
-            ])
-            ->selectRaw('(SELECT is_published FROM assessment WHERE project_id = project.id AND type = "peerAssessment" AND assessment_order = assessment.assessment_order LIMIT 1) as is_published')
-            ->distinct()
-            ->orderBy('project.project_name')
-            ->orderBy('assessment.assessment_order')
-            ->get();
-
-        return response()->json($projects);
+        try {
+            $projects = Project::where('status', 'Active')
+                ->orderBy('created_at', 'desc')
+                ->get();
+            
+            $result = [];
+            
+            foreach ($projects as $project) {
+                $assessmentOrders = Assessment::where('project_id', $project->id)
+                    ->where('type', 'peerAssessment')
+                    ->select('assessment_order')
+                    ->distinct()
+                    ->orderBy('assessment_order')
+                    ->pluck('assessment_order');
+                
+                foreach ($assessmentOrders as $order) {
+                    $isPublished = Assessment::where('project_id', $project->id)
+                        ->where('assessment_order', $order)
+                        ->where('type', 'peerAssessment')
+                        ->value('is_published');
+                    
+                    $isPublished = $isPublished !== null ? $isPublished : 0;
+                    
+                    $result[] = [
+                        'id' => $project->id,
+                        'batch_year' => $project->batch_year,
+                        'project_name' => $project->project_name,
+                        'assessment_order' => $order,
+                        'status' => $project->status,
+                        'is_published' => $isPublished,
+                        'created_at' => $project->created_at,
+                        'unique_key' => $project->id . '-' . $order
+                    ];
+                }
+            }
+            
+            return response()->json($result);
+        } catch (\Exception $e) {
+            Log::error('Error in getProyekPeerAssessment:', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch peer assessment projects',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function togglePublishAssessment(Request $request)

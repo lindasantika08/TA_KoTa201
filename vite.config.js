@@ -18,4 +18,11 @@ export default defineConfig({
             '@ziggy': path.resolve('vendor/tightenco/ziggy/dist'),
         },
     },
+    server: {
+        host: '0.0.0.0',
+        port: 5173,
+        hmr: {
+            host: '127.0.0.1',
+        },
+    },
 });

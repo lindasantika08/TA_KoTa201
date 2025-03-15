@@ -45,7 +45,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/dashboard/peer', [DashboardDosen::class, 'dashboardpeer'])->name('dashboardpeer');
         Route::get('/notifications', [DashboardDosen::class, 'notifications'])->name('notifications');
 
-        Route::get('/profile', [ProfileController::class, 'profile'])->name('profile');
+        Route::get('/profile', [ProfileController::class, 'profile'])->name('profile.dosen');
 
         Route::get('/self', [AssessmentController::class, 'self'])->name('dosen.self-assessment');
         Route::get('/peer', [AssessmentController::class, 'peer'])->name('dosen.peer-assessment');
@@ -108,8 +108,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/dashboard', [DashboardMahasiswa::class, 'dashboard'])->name('mahasiswa.dashboard');
         Route::get('/assessment/self', [AssessmentMahasiswa::class, 'selfAssessment'])->name('mahasiswa.assessment.self');
         Route::get('/assessment/peer', [AssessmentMahasiswa::class, 'peerAssessment'])->name('mahasiswa.assessment.peer');
-        Route::get('/assessment/self-assessment', [SelfAssessment::class, 'assessment'])->name('mahasiswa.assessment');
-        Route::get('/assessment/peer-assessment', [PeerAssessment::class, 'PeerAssessment'])->name('mahasiswa.assessment');
+        Route::get('/assessment/self-assessment', [SelfAssessment::class, 'assessment'])->name('mahasiswa.self.assessment');
+        Route::get('/assessment/peer-assessment', [PeerAssessment::class, 'PeerAssessment'])->name('mahasiswa.peer.assessment');
         Route::get('/feedback', [FeedbackMahasiswa::class, 'feedbackMahasiswa'])->name('mahasiswa.feedback');
         Route::get('/report', [ReportMahasiswa::class, 'reportMahasiswa'])->name('mahasiswa.report');
         Route::get('/user-info', [SelfAssessment::class, 'getUserInfo'])->name('mahasiswa.info-student');
@@ -187,7 +187,7 @@ Route::middleware('auth')->group(function () {
 
     //Route untuk admin
     Route::middleware('role:admin')->prefix('admin')->group(function () {
-        Route::get('/dashboard', [DashboardAdminController::class, 'dashboard'])->name('dashboard');
+        Route::get('/dashboard', [DashboardAdminController::class, 'dashboard'])->name('dashboard.admin');
 
         //admin manage major
         Route::get('/ManageMajor', [MajorAdminController::class, 'createMajor']);
@@ -195,11 +195,11 @@ Route::middleware('auth')->group(function () {
 
         //admin manage user
         Route::get('/ManageDosen', [UserAdminController::class, 'showManageDosen']);
-        Route::get('/ManageMahasiswa', [UserAdminController::class, 'showManageMahasiswa'])->name('ManageMahasiswa');
-        Route::get('/manage-dosen/input', [UserAdminController::class, 'InputDosen'])->name('InputDosen');
+        Route::get('/ManageMahasiswa', [UserAdminController::class, 'showManageMahasiswa'])->name('admin.ManageMahasiswa');
+        Route::get('/manage-dosen/input', [UserAdminController::class, 'InputDosen'])->name('admin.InputDosen');
         Route::get('/manage-dosen/export', [UserAdminController::class, 'ExportDosen']);
         Route::post('/manage-dosen/import', [UserAdminController::class, 'ImportDosen']);
-        Route::get('/manage-mahasiswa/input', [UserAdminController::class, 'InputMahasiswa'])->name('InputMahasiswa');
+        Route::get('/manage-mahasiswa/input', [UserAdminController::class, 'InputMahasiswa'])->name('admin.InputMahasiswa');
         Route::get('/manage-mahasiswa/export', [UserAdminController::class, 'ExportMahasiswa']);
         Route::post('/manage-mahasiswa/import', [UserAdminController::class, 'ImportMahasiswa']);
     });

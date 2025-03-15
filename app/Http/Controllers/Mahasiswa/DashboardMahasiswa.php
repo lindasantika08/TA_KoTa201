@@ -89,10 +89,12 @@ class DashboardMahasiswa extends Controller
 
             $selfAssessmentQuestions = Assessment::where('type', 'selfAssessment')
                 ->where('project_id', $project->id)
+                ->where('is_published', true)
                 ->count();
 
             $peerAssessmentQuestions = Assessment::where('type', 'peerAssessment')
                 ->where('project_id', $project->id)
+                ->where('is_published', true)
                 ->count();
 
             $groupPeers = Group::where('project_id', $project->id)
@@ -102,7 +104,8 @@ class DashboardMahasiswa extends Controller
 
             $selfAssessmentCount = Answers::whereHas('question', function ($query) use ($project) {
                 $query->where('type', 'selfAssessment')
-                    ->where('project_id', $project->id);
+                    ->where('project_id', $project->id)
+                    ->where('is_published', true);
             })
                 ->where('mahasiswa_id', $mahasiswa->id)
                 ->count();
@@ -112,9 +115,22 @@ class DashboardMahasiswa extends Controller
             $peerAssessmentCount = Answers::where('mahasiswa_id', $mahasiswa->id)
                 ->whereHas('question', function ($query) use ($project) {
                     $query->where('type', 'peerAssessment')
-                        ->where('project_id', $project->id);
+                        ->where('project_id', $project->id)
+                        ->where('is_published', true);
                 })
                 ->count();
+
+            $latestSelfAssessment = Assessment::where('type', 'selfAssessment')
+                ->where('project_id', $project->id)
+                ->where('is_published', true)
+                ->orderBy('assessment_order', 'desc')
+                ->first();
+
+            $latestPeerAssessment = Assessment::where('type', 'peerAssessment')
+                ->where('project_id', $project->id)
+                ->where('is_published', true)
+                ->orderBy('assessment_order', 'desc')
+                ->first();
 
             $selfAssessmentStatus = $selfAssessmentCount == 0
                 ? 'Not Started'
@@ -133,17 +149,25 @@ class DashboardMahasiswa extends Controller
                 'peerAssessmentCount' => $peerAssessmentCount,
                 'selfAssessmentQuestions' => $selfAssessmentQuestions,
                 'totalExpectedPeerAnswers' => $totalExpectedPeerAnswers,
-                'groupPeersCount' => count($groupPeers)
+                'groupPeersCount' => count($groupPeers),
+                'latest_self_assessment_order' => $latestSelfAssessment ? $latestSelfAssessment->assessment_order : null,
+                'latest_peer_assessment_order' => $latestPeerAssessment ? $latestPeerAssessment->assessment_order : null,
+                'latest_self_assessment_end_date' => $latestSelfAssessment ? $latestSelfAssessment->end_date : null,
+                'latest_peer_assessment_end_date' => $latestPeerAssessment ? $latestPeerAssessment->end_date : null
             ];
         });
 
         $overallSelfAssessmentStatus = $projectStatuses->every(function ($status) {
             return $status['selfAssessmentStatus'] === 'Completed';
-        }) ? 'Completed' : 'Pending';
+        }) ? 'Completed' : ($projectStatuses->every(function ($status) {
+            return $status['selfAssessmentStatus'] === 'Not Started';
+        }) ? 'Not Started' : 'Pending');
 
         $overallPeerAssessmentStatus = $projectStatuses->every(function ($status) {
             return $status['peerAssessmentStatus'] === 'Completed';
-        }) ? 'Completed' : 'Pending';
+        }) ? 'Completed' : ($projectStatuses->every(function ($status) {
+            return $status['peerAssessmentStatus'] === 'Not Started';
+        }) ? 'Not Started' : 'Pending');
 
         return response()->json([
             'overallSelfAssessmentStatus' => $overallSelfAssessmentStatus,

@@ -1,0 +1,76 @@
+FROM php:8.3-cli
+
+# Set working directory
+WORKDIR /var/www/
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libpng-dev \
+    libjpeg62-turbo-dev \
+    libfreetype6-dev \
+    locales \
+    zip \
+    libonig-dev \
+    libzip-dev \
+    jpegoptim optipng pngquant gifsicle \
+    ca-certificates \
+    vim \
+    tmux \
+    unzip \
+    git \
+    python3 \
+    python3-pip \
+    python3-venv \
+    curl \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# install node
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs
+
+# Install extensions
+RUN docker-php-ext-install pdo_mysql mbstring zip exif pcntl
+RUN docker-php-ext-configure gd --with-jpeg=/usr/include/ --with-freetype=/usr/include/
+RUN docker-php-ext-install gd
+RUN pecl install -o -f redis &&  rm -rf /tmp/pear && docker-php-ext-enable redis
+
+# Install composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+# Create necessary directories
+RUN mkdir -p /var/www/app/Modules
+
+# Copy project files into the container
+COPY . /var/www/
+
+# Set permissions
+RUN chown -R www-data:www-data /var/www
+RUN chmod -R 755 /var/www/public
+RUN chown -R www-data:www-data /var/www/public
+
+# dependencies python
+# Buat virtual environment
+RUN python3 -m venv /var/www/TA_201_Flask/venv
+
+# Aktifkan virtual environment dan install dependencies
+RUN /var/www/TA_201_Flask/venv/bin/pip install --no-cache-dir -r /var/www/TA_201_Flask/requirements.txt
+
+# Tambahkan path ke environment variable agar virtualenv digunakan secara default
+ENV PATH="/var/www/TA_201_Flask/venv/bin:$PATH"
+RUN python3 -m spacy download en_core_web_sm
+
+# Install dependencies with composer
+RUN composer install --ignore-platform-reqs
+RUN npm install
+RUN npm run build
+
+# Expose port
+EXPOSE 5000 8000 5173
+
+# Copy entrypoint script and give execution permission
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Run entrypoint script
+ENTRYPOINT ["docker-entrypoint.sh"]

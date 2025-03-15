@@ -21,3 +21,6 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+/TA_201_Flask/__pycache__
+/TA_201_Flask/logs
+/TA_201_Flask/venv
