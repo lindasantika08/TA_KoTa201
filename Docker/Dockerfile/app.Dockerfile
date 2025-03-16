@@ -7,7 +7,7 @@ COPY package.json ./
 RUN npm install
 
 # Copy the frontend source code
-COPY resources/js resources/js
+COPY resources resources
 COPY vite.config.js ./
 
 # Build the frontend assets
