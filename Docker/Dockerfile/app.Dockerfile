@@ -56,6 +56,9 @@ EXPOSE 9000
 # Tambahkan konfigurasi supervisor
 COPY Docker/supervisor/ /etc/
 
+COPY dockeprodr-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/prod-entrypoint.sh
+
 ENTRYPOINT ["prod-entrypoint.sh"]
 
 # Ganti user ke www-data
