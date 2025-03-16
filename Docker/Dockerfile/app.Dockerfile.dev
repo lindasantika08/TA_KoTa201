@@ -35,7 +35,7 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 RUN mkdir -p /var/www/app/Modules
 
 # Copy project files into the container
-COPY . .
+COPY . /var/www/
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www
