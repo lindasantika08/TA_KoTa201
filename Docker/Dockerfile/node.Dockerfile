@@ -6,7 +6,7 @@ WORKDIR /var/www
 COPY package*.json vite.config.js ./
 RUN npm install
 
-# COPY . .
+COPY . .
 
 RUN npm run build
 
