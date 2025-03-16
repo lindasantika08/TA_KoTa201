@@ -3,10 +3,10 @@ FROM node:20 as build
 WORKDIR /var/www
 
 # Copy dependencies and install
-COPY package*.json vite.config.js ./
-RUN npm install
+# COPY package*.json vite.config.js ./
+# RUN npm install
 
-COPY . .
+# COPY . .
 
 RUN npm run build
 
