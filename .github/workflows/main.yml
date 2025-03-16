@@ -3,7 +3,7 @@
 # on:
 #   push:
 #     branches:
-#       - linda  # Runs only when the develop branch is updated
+#       - linda 
 
 # jobs:
 #   build-and-push:
@@ -19,13 +19,12 @@
 #           username: ${{ secrets.DOCKER_USERNAME }}
 #           password: ${{ secrets.DOCKER_PASSWORD }}
 
-
 #       - name: Build and Push App Docker Image
 #         run: |
-#           docker build -f Docker/Dockerfile/app.Dockerfile -t najibalimudin/sipta-app:dev .
-#           docker push najibalimudin/sipta-app:dev
+#           docker build -f Docker/Dockerfile/app.Dockerfile -t 3b052lindasantika/assessment-app-kota201 .
+#           docker push 3b052lindasantika/assessment-app-kota201
 
 #       - name: Build and Push Web Server Docker Image
 #         run: |
-#           docker build -f Docker/Dockerfile/web_server.Dockerfile -t najibalimudin/sipta-web_server:dev .
-#           docker push najibalimudin/sipta-web_server
+#           docker build -f Docker/Dockerfile/web_server.Dockerfile -t 3b052lindasantika/assessment-app-kota201-web_server:dev .
+#           docker push 3b052lindasantika/assessment-app-kota201-web_server

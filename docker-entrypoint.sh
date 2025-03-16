@@ -20,7 +20,12 @@ if php artisan migrate --force; then
     echo "Migrasi berhasil."
 else
     echo "Gagal menjalankan migrasi."
-    exit 1
+    if php artisan db:wipe; then
+        echo "Membersihkan database berhasil."
+    else
+        echo "Gagal Membersihkan database."
+        exit 1
+    fi
 fi
 
 # Jalankan seeder
@@ -30,24 +35,31 @@ if [ "${RUN_SEEDER}" = "true" ]; then
         echo "Seeder berhasil."
     else
         echo "Gagal menjalankan seeder."
-        exit 1
+        if php artisan migrate:refresh --seed; then
+            echo "Melakukan migrate refresh berhasil."
+        else
+            echo "Gagal Melakukan migrate refresh."
+            exit 1
+        fi
     fi
 else
     echo "Seeder tidak dijalankan (RUN_SEEDER=false)."
 fi
 
-echo "run flask..."
-cd TA_201_Flask
-python3 app.py
+# echo "Menjalankan queue work SLA peer..."
+# if php artisan queue:work --queue=flask-peer-processing --tries=3 --timeout=300; then
+#         echo "Menjalankan queue work SLA peer berhasil."
+#     else
+#         echo "Menjalankan queue work SLA peer gagal."
+# fi
 
-echo "Menjalankan score SLA peer"
-cd ..
-php artisan queue:work --queue=flask-peer-processing --tries=3 --timeout=300
-
-echo "Menjalankan score SLA self"
-php artisan queue:work --queue=flask-processing --tries=3 --timeout=300
+# echo "Menjalankan queue work SLA self..."
+# if php artisan queue:work --queue=flask-processing --tries=3 --timeout=300; then
+#         echo "Menjalankan queue work SLA self berhasil."
+#     else
+#         echo "Menjalankan queue work SLA self gagal."
+# fi
 
 # Jalankan server Laravel
 echo "Menjalankan server..."
-php artisan serve --host=0.0.0.0 --port=8000 && npm run dev
-
+php artisan serve --host=0.0.0.0 --port=8000
