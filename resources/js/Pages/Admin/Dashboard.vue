@@ -7,7 +7,7 @@ import Navbar from "@/components/Navbar.vue";
 export default {
     name: "DashboardAdmin",
     components: {
-        Sidebar,
+        SidebarAdmin,
         Navbar,
     },
     props: {
@@ -21,7 +21,7 @@ export default {
 
 <template>
     <div class="flex min-h-screen bg-gray-50">
-        <Sidebar role="admin" />
+        <SidebarAdmin role="admin" />
         <div class="flex-1">
             <navbar userName="admin" />
             <main class="p-6">
