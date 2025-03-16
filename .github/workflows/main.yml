@@ -25,7 +25,6 @@ jobs:
           IMAGES=(
             "3b052lindasantika/assessment-app-kota201:Docker/Dockerfile/app.Dockerfile"
             "3b052lindasantika/assessment-app-kota201-flask:Docker/Dockerfile/flask.Dockerfile"
-            "3b052lindasantika/assessment-app-kota201-node:Docker/Dockerfile/node.Dockerfile"
             "3b052lindasantika/assessment-app-kota201-web_server:Docker/Dockerfile/web_server.Dockerfile"
           )
 

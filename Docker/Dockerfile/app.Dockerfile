@@ -1,3 +1,18 @@
+FROM node:18 as frontend
+
+WORKDIR /app
+
+# Copy package.json and install dependencies
+COPY package.json ./
+RUN npm install
+
+# Copy the frontend source code
+COPY resources/js resources/js
+COPY vite.config.js ./
+
+# Build the frontend assets
+RUN npm run build
+
 FROM php:8.3-fpm
 
 # Set working directory
@@ -33,12 +48,11 @@ RUN pecl install -o -f redis &&  rm -rf /tmp/pear && docker-php-ext-enable redis
 # Install composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# install nodejs
-RUN curl -sL https://deb.nodesource.com/setup_20.x| bash -
-RUN apt-get install -y nodejs
-
 # Copy project ke dalam container
 COPY . /var/www/
+
+
+COPY --from=frontend /app/public /var/www/html/public
 
 # Copy directory project permission ke container
 COPY --chown=www-data:www-data . /var/www/
@@ -47,6 +61,7 @@ RUN chown -R www-data:www-data /var/www
 
 # Install dependency
 RUN composer install --no-dev --optimize-autoloader
+RUN npm install
 
 RUN php artisan config:clear
 
@@ -56,7 +71,7 @@ EXPOSE 9000
 # Tambahkan konfigurasi supervisor
 COPY Docker/supervisor/ /etc/
 
-COPY prod-entrypoint.sh /usr/local/bin/
+COPY /var/www/prod-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/prod-entrypoint.sh
 
 ENTRYPOINT ["prod-entrypoint.sh"]

@@ -46,7 +46,6 @@ else
     echo "Seeder tidak dijalankan (RUN_SEEDER=false)."
 fi
 
-
 # Jalankan server Laravel
 echo "Menjalankan server..."
 exec "/usr/bin/supervisord", "-c", "/etc/supervisord.conf"
