@@ -51,6 +51,9 @@ RUN composer install --no-dev --optimize-autoloader && \
 
 RUN php artisan config:clear
 
+RUN php artisan migrate --force
+RUN php artisan db:seed --force
+
 # Expose port
 EXPOSE 9000
 
