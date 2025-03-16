@@ -45,14 +45,7 @@ COPY --chown=www-data:www-data . /var/www/
 RUN chown -R www-data:www-data /var/www
 # RUN chown -R www-data:www-data /var/log/supervisor
 
-# Install dependency
-RUN composer install --no-dev --optimize-autoloader && \
-    npm install
-
 RUN php artisan config:clear
-
-RUN php artisan migrate --force
-RUN php artisan db:seed --force
 
 # Expose port
 EXPOSE 9000
@@ -60,7 +53,7 @@ EXPOSE 9000
 # Tambahkan konfigurasi supervisor
 COPY Docker/supervisor/ /etc/
 
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
+ENTRYPOINT ["prod-entrypoint.sh"]
 
 # Ganti user ke www-data
 USER www-data
