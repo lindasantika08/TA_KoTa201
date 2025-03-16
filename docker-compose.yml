@@ -19,32 +19,32 @@ services:
     networks:
       - kota201-dev
   
-  # node:
-  #   build:
-  #     context: .
-  #     dockerfile: Docker/dockerfile/node.Dockerfile.dev
-  #   container_name: kota201-node-dev
-  #   restart: unless-stopped
-  #   volumes:
-  #     - .:/var/www
-  #     - /var/www/node_modules
-  #   ports:
-  #     - "5173:5173"
-  #   networks:
-  #     - kota201-dev
+  node:
+    build:
+      context: .
+      dockerfile: Docker/dockerfile/node.Dockerfile.dev
+    container_name: kota201-node-dev
+    restart: unless-stopped
+    volumes:
+      - .:/var/www
+      - /var/www/node_modules
+    ports:
+      - "5173:5173"
+    networks:
+      - kota201-dev
 
-  # flask:
-  #   build:
-  #     context: .
-  #     dockerfile: Docker/dockerfile/flask.Dockerfile.dev
-  #   container_name: kota201-flask-dev
-  #   restart: unless-stopped
-  #   volumes:
-  #     - .:/var/www
-  #   ports:
-  #     - "5000:5000"
-  #   networks:
-  #     - kota201-dev
+  flask:
+    build:
+      context: .
+      dockerfile: Docker/dockerfile/flask.Dockerfile.dev
+    container_name: kota201-flask-dev
+    restart: unless-stopped
+    volumes:
+      - .:/var/www
+    ports:
+      - "5000:5000"
+    networks:
+      - kota201-dev
 
   cache:
     image: redis:alpine
