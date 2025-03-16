@@ -1,13 +1,13 @@
 <script>
 import axios from "axios";
 import { router } from "@inertiajs/vue3";
-import SidebarAdmin from "@/components/SidebarAdmin.vue";
+import Sidebar from "@/components/SidebarAdmin.vue";
 import Navbar from "@/components/Navbar.vue";
 
 export default {
     name: "DashboardAdmin",
     components: {
-        SidebarAdmin,
+        Sidebar,
         Navbar,
     },
     props: {
@@ -21,9 +21,9 @@ export default {
 
 <template>
     <div class="flex min-h-screen bg-gray-50">
-        <SidebarAdmin role="admin" />
+        <Sidebar role="admin" />
         <div class="flex-1">
-            <Navbar userName="admin" />
+            <navbar userName="admin" />
             <main class="p-6">
                 <div
                     class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
