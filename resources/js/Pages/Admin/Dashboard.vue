@@ -1,8 +1,8 @@
 <script>
 import axios from "axios";
 import { router } from "@inertiajs/vue3";
-import Sidebar from "../../components/SidebarAdmin.vue";
-import Navbar from "../../components/Navbar.vue";
+import Sidebar from "@/components/SidebarAdmin.vue";
+import Navbar from "@/components/Navbar.vue";
 
 export default {
     name: "DashboardAdmin",
