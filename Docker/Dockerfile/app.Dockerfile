@@ -61,7 +61,6 @@ RUN chown -R www-data:www-data /var/www
 
 # Install dependency
 RUN composer install --no-dev --optimize-autoloader
-RUN npm install
 
 RUN php artisan config:clear
 
@@ -71,10 +70,10 @@ EXPOSE 9000
 # Tambahkan konfigurasi supervisor
 COPY Docker/supervisor/ /etc/
 
-COPY /var/www/prod-entrypoint.sh /usr/local/bin/
+COPY prod-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/prod-entrypoint.sh
 
-ENTRYPOINT ["prod-entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/prod-entrypoint.sh"]
 
 # Ganti user ke www-data
 USER www-data
