@@ -44,9 +44,6 @@ COPY . /var/www/
 COPY --chown=www-data:www-data . /var/www/
 RUN chown -R www-data:www-data /var/www
 # RUN chown -R www-data:www-data /var/log/supervisor
-RUN chown -R www-data:www-data /var/www
-RUN chmod -R 755 /var/www/public
-RUN chown -R www-data:www-data /var/www/public
 
 # Install dependency
 RUN npm install
