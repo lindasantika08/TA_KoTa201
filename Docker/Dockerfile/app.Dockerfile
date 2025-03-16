@@ -33,6 +33,10 @@ RUN pecl install -o -f redis &&  rm -rf /tmp/pear && docker-php-ext-enable redis
 # Install composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
+# install nodejs
+RUN curl -sL https://deb.nodesource.com/setup_20.x| bash -
+RUN apt-get install -y nodejs
+
 # Copy project ke dalam container
 COPY . /var/www/
 
@@ -43,8 +47,11 @@ RUN chown -R www-data:www-data /var/www
 
 # Install dependency
 RUN composer install
+RUN npm install
 
-# Expose port 9000
+RUN npm run build
+
+# Expose port
 EXPOSE 9000
 
 # Tambahkan konfigurasi supervisor
