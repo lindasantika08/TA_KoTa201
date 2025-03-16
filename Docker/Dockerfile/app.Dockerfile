@@ -46,11 +46,10 @@ RUN chown -R www-data:www-data /var/www
 # RUN chown -R www-data:www-data /var/log/supervisor
 
 # Install dependency
-RUN npm install
-RUN composer install
-RUN php artisan config:clear
+RUN composer install --no-dev --optimize-autoloader && \
+    npm install
 
-RUN npm run build
+RUN php artisan config:clear
 
 # Expose port
 EXPOSE 9000
