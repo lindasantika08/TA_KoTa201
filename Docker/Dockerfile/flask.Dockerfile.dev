@@ -7,7 +7,7 @@ WORKDIR /var/www/TA_201_Flask
 COPY TA_201_Flask /var/www/TA_201_Flask
 
 # Upgrade pip dan install dependencies
-RUN pip install --upgrade pip setuptools wheel gunicorn
+RUN pip install --upgrade pip setuptools wheel
 
 # Install dependencies dari `requirements.txt`
 RUN pip install --no-cache-dir -r /var/www/TA_201_Flask/requirements.txt
@@ -19,4 +19,4 @@ RUN python -m spacy download en_core_web_sm
 EXPOSE 5000
 
 # Jalankan aplikasi Flask dengan virtual environment
-CMD ["gunicorn", "-b", "0.0.0.0:5000", "app:app"]
+CMD ["python", "/var/www/TA_201_Flask/app.py"]

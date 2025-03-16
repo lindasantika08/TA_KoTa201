@@ -1,17 +1,17 @@
-# Set the base image
-FROM node:20
+FROM node:20 as build
 
-# Set working directory
 WORKDIR /var/www
 
-# Copy `package.json` and `package-lock.json`
+# Copy dependencies and install
 COPY package*.json ./
-
-# Install project dependencies
 RUN npm install
 
-# Expose the port Vite runs on
-EXPOSE 5173
+RUN npm run build
 
-# Start the Vite server
-CMD ["npm", "run", "dev"]
+# Use Nginx to serve static files
+FROM nginx:alpine
+
+COPY --from=build /var/www/dist /usr/share/nginx/html
+
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

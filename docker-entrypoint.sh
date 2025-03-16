@@ -46,19 +46,6 @@ else
     echo "Seeder tidak dijalankan (RUN_SEEDER=false)."
 fi
 
-# echo "Menjalankan queue work SLA peer..."
-# if php artisan queue:work --queue=flask-peer-processing --tries=3 --timeout=300; then
-#         echo "Menjalankan queue work SLA peer berhasil."
-#     else
-#         echo "Menjalankan queue work SLA peer gagal."
-# fi
-
-# echo "Menjalankan queue work SLA self..."
-# if php artisan queue:work --queue=flask-processing --tries=3 --timeout=300; then
-#         echo "Menjalankan queue work SLA self berhasil."
-#     else
-#         echo "Menjalankan queue work SLA self gagal."
-# fi
 
 # Jalankan server Laravel
 echo "Menjalankan server..."

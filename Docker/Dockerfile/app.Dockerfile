@@ -24,9 +24,6 @@ RUN apt-get update && apt-get install -y \
     curl \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
-    apt-get install -y nodejs
-
 # Install extensions
 RUN docker-php-ext-install pdo_mysql mbstring zip exif pcntl
 RUN docker-php-ext-configure gd --with-jpeg=/usr/include/ --with-freetype=/usr/include/
@@ -46,15 +43,14 @@ RUN chown -R www-data:www-data /var/www
 
 # Install dependency
 RUN composer install
-RUN npm install
 
 # Expose port 9000
 EXPOSE 9000
 
 # Tambahkan konfigurasi supervisor
-# COPY Docker/supervisor/ /etc/
+COPY Docker/supervisor/ /etc/
 
-# CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
 
-# # Ganti user ke www-data
-# USER www-data
+# Ganti user ke www-data
+USER www-data
