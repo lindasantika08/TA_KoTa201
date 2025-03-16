@@ -6,14 +6,9 @@ WORKDIR /var/www
 COPY package*.json vite.config.js ./
 RUN npm install
 
-COPY . .
+# COPY . .
 
 RUN npm run build
-
-# Use Nginx to serve static files
-FROM nginx:alpine
-
-COPY --from=build /var/www/dist /usr/share/nginx/html
 
 EXPOSE 5173
 
