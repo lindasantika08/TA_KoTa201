@@ -42,7 +42,7 @@ COPY --chown=www-data:www-data . /var/www/
 COPY --chown=www-data:www-data resources /var/www/resources
 
 # Ensure the SidebarAdmin.vue file exists
-RUN ls -l /var/www/resources/js/components
+RUN ls -l /var/www/resources/js
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www
