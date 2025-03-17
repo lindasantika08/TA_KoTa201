@@ -53,7 +53,7 @@ RUN php artisan config:clear
 RUN npm run build
 
 # Expose port
-EXPOSE 8888
+EXPOSE 9000
 
 # Tambahkan konfigurasi supervisor
 COPY Docker/supervisor/ /etc/
