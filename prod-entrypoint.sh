@@ -1,10 +1,5 @@
 #!/bin/bash
 
-# Load environment variables dari .env
-set -o allexport
-source .env
-set +o allexport
-
 php artisan key:generate
 
 # Fungsi untuk menunggu database siap
