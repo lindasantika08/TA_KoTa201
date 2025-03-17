@@ -40,9 +40,6 @@ RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
 # Copy project ke dalam container
 COPY . /var/www/
 
-
-COPY --from=frontend /app/public /var/www/html/public
-
 # Copy directory project permission ke container
 COPY --chown=www-data:www-data . /var/www/
 RUN chown -R www-data:www-data /var/www
