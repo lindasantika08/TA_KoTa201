@@ -41,7 +41,8 @@ RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
 COPY --chown=www-data:www-data . /var/www/
 COPY --chown=www-data:www-data resources /var/www/resources
 
-RUN ls -l /var/www/resources
+# Ensure the SidebarAdmin.vue file exists
+RUN ls -l /var/www/resources/js/components
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www
