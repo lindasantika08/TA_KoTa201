@@ -41,4 +41,4 @@ fi
 
 # Jalankan server Laravel
 echo "Menjalankan server..."
-exec "/usr/bin/supervisord", "-c", "/etc/supervisord.conf"
+exec "/usr/bin/supervisord", "-c", "/etc/supervisord.conf" --force
