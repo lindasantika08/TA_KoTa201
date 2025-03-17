@@ -39,7 +39,6 @@ RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
 
 # Copy project ke dalam container
 COPY --chown=www-data:www-data . /var/www/
-COPY --chown=www-data:www-data .env /var/www/
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www
