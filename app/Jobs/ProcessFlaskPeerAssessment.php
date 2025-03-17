@@ -77,7 +77,7 @@ class ProcessFlaskPeerAssessment implements ShouldQueue
             ]);
 
             // Send to Flask service
-            $flaskUrl = env('FLASK_SERVICE_URL', 'http://localhost:5000/assess');
+            $flaskUrl = env('FLASK_SERVICE_URL');
 
             $flaskResponse = Http::timeout(120)
                 ->withHeaders([
