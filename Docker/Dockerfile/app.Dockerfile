@@ -50,7 +50,7 @@ RUN composer install --no-dev --optimize-autoloader
 RUN npm install
 
 RUN php artisan config:clear
-RUN npm run build
+RUN npm run prod
 
 # Expose port
 EXPOSE 9000
