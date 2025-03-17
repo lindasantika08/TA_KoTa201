@@ -63,7 +63,7 @@ class ProcessFlaskAssessment implements ShouldQueue
             ]);
 
             // Send to Flask service
-            $flaskUrl = env('FLASK_SERVICE_URL');
+            $flaskUrl = env('FLASK_SERVICE_URL', 'http://localhost:5000/assess');
             $flaskResponse = Http::timeout(120)->withHeaders([
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json'
