@@ -38,13 +38,12 @@ RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
     apt-get install -y nodejs
 
 # Copy project ke dalam container
-COPY . /var/www/
-COPY resources /var/www/resources
+COPY --chown=www-data:www-data . /var/www/
+COPY --chown=www-data:www-data resources /var/www/resources
 
 RUN ls -l /var/www/resources
 
-# Copy directory project permission ke container
-COPY --chown=www-data:www-data . /var/www/
+# Set permissions
 RUN chown -R www-data:www-data /var/www
 # RUN chown -R www-data:www-data /var/log/supervisor
 
