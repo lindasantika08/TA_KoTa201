@@ -1,18 +1,4 @@
-FROM node:18 as frontend
-
-WORKDIR /app
-
-# Copy package.json and install dependencies
-COPY package.json ./
-RUN npm install
-
-# Copy the frontend source code
-COPY . .
-
-# Build the frontend assets
-RUN npm run build
-
-FROM php:8.3-fpm
+FROM php:8.3-fpm as backed
 
 # Set working directory
 WORKDIR /var/www/
@@ -47,6 +33,10 @@ RUN pecl install -o -f redis &&  rm -rf /tmp/pear && docker-php-ext-enable redis
 # Install composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
+# Install Node.js (latest LTS) from NodeSource
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs
+
 # Copy project ke dalam container
 COPY . /var/www/
 
@@ -60,8 +50,10 @@ RUN chown -R www-data:www-data /var/www
 
 # Install dependency
 RUN composer install --no-dev --optimize-autoloader
+RUN npm install -g npm@latest
 
 RUN php artisan config:clear
+RUN npm run build
 
 # Expose port
 EXPOSE 9000
