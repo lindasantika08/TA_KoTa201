@@ -39,6 +39,9 @@ RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
 
 # Copy project ke dalam container
 COPY . /var/www/
+COPY /resources /var/www/resources
+
+RUN ls -l /var/www/resources
 
 # Copy directory project permission ke container
 COPY --chown=www-data:www-data . /var/www/
@@ -50,7 +53,8 @@ RUN composer install --no-dev --optimize-autoloader
 RUN npm install
 
 RUN php artisan config:clear
-RUN npm run prod
+
+RUN npm run build
 
 # Expose port
 EXPOSE 9000
