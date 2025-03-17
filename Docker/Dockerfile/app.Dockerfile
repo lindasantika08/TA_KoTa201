@@ -42,7 +42,7 @@ COPY --chown=www-data:www-data . /var/www/
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www
-# RUN chown -R www-data:www-data /var/log/supervisor
+RUN chown -R www-data:www-data /var/log/supervisor
 
 # Install dependency
 RUN composer install --no-dev --optimize-autoloader
