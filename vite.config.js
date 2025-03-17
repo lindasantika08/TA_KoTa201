@@ -13,9 +13,15 @@ export default defineConfig({
     ],
     resolve: {
         alias: {
-            '@': path.resolve(__dirname, './resources/js'),
-            ziggy: path.resolve('vendor/tightenco/ziggy/dist/vue.m.js'),
-            '@ziggy': path.resolve('vendor/tightenco/ziggy/dist'),
+            //  enable if run locally
+            // '@': path.resolve(__dirname, './resources/js')
+            // ziggy: path.resolve('vendor/tightenco/ziggy/dist/vue.m.js'),
+            // '@ziggy': path.resolve('vendor/tightenco/ziggy/dist'),
+
+            // disable if u run locally
+            '@': path.resolve(__dirname, 'var/www/resources/js'), 
+            ziggy: path.resolve('var/www/vendor/tightenco/ziggy/dist/vue.m.js'),
+            '@ziggy': path.resolve('var/www/vendor/tightenco/ziggy/dist'),
         },
     },
     server: {
