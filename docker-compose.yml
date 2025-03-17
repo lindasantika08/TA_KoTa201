@@ -46,7 +46,7 @@ services:
     networks:
       - kota201-dev
 
-  cache:
+  cache-kota201:
     image: redis:alpine
     container_name: kota201-cache-dev
     restart: unless-stopped

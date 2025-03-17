@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# Copy .env file from server directory
-cp ~/assessment-app-kota201/production/.env .env
-
 # Load environment variables dari .env
 set -o allexport
 source .env
