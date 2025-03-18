@@ -67,7 +67,7 @@ RUN chmod +x /usr/local/bin/prod-entrypoint.sh
 # COPY Docker/www/www.conf /usr/local/etc/php-fpm.d/www.conf
 COPY Docker/www//zz-docker.conf /usr/local/etc/php-fpm.d//zz-docker.conf
 
+ENTRYPOINT ["/usr/local/bin/prod-entrypoint.sh"]
+
 # Ganti user ke www-data
 USER www-data
-
-ENTRYPOINT ["/usr/local/bin/prod-entrypoint.sh"]
