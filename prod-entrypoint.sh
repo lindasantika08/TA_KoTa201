@@ -19,4 +19,5 @@ if [ "$RUN_MIGRATIONS" = "true" ]; then
 fi
 
 # Start supervisord
+
 exec /usr/bin/supervisord -c /etc/supervisord.conf

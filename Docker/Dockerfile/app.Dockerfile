@@ -61,6 +61,9 @@ COPY Docker/supervisor/ /etc/
 COPY prod-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/prod-entrypoint.sh
 
+# Override PHP-FPM configuration
+COPY Docker/www/www.conf /usr/local/etc/php-fpm.d/www.conf
+
 ENTRYPOINT ["/usr/local/bin/prod-entrypoint.sh"]
 
 # Ganti user ke www-data
