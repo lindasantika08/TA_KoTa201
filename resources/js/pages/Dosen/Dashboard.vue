@@ -257,7 +257,7 @@ export default {
     handleListAnswer() {
       if (this.selectedProject) {
         router.get(
-          "/dosen/answers-self-assessment",
+          "/sispa/dosen/answers-self-assessment",
           {
             batch_year: this.selectedProject.batch_year,
             project_name: this.selectedProject.project_name,
@@ -271,7 +271,7 @@ export default {
     handleListAnswerPeer() {
       if (this.selectedProject) {
         router.get(
-          "/dosen/answers-peer-assessment",
+          "/sispa/dosen/answers-peer-assessment",
           {
             batch_year: this.selectedProject.batch_year,
             project_name: this.selectedProject.project_name,
@@ -287,7 +287,7 @@ export default {
       this.showChangePasswordToast = false;
       this.needPasswordChange = false;
       localStorage.removeItem("need_password_change");
-      router.visit("/dosen/profile");
+      router.visit("/sispa/dosen/profile");
     },
   },
 };

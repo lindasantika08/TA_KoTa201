@@ -89,8 +89,8 @@ export default {
   data() {
     return {
       breadcrumbs: [
-        { text: "Manage Dosen", href: "/dosen/manage-dosen" },
-        { text: "Detail", href: "/dosen/manage-dosen/detail" },
+        { text: "Manage Dosen", href: "/sispa/dosen/manage-dosen" },
+        { text: "Detail", href: "/sispa/dosen/manage-dosen/detail" },
       ],
       profileImage: "", // Ganti dengan URL gambar asli jika ada
       namaDosen: "",

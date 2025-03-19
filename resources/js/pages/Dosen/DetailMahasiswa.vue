@@ -95,8 +95,8 @@ export default {
   data() {
     return {
       breadcrumbs: [
-        { text: "Manage Mahasiswa", href: "/dosen/manage-mahasiswa" },
-        { text: "Detail", href: "/dosen/manage-mahasiswa/detail" },
+        { text: "Manage Mahasiswa", href: "/sispa/dosen/manage-mahasiswa" },
+        { text: "Detail", href: "/sispa/dosen/manage-mahasiswa/detail" },
       ],
       profileImage: "", // Ganti dengan URL gambar asli jika ada
       namaMahasiswa: "",
