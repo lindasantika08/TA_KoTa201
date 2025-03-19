@@ -1,4 +1,4 @@
-FROM php:8.3-fpm as backed
+FROM php:8.3-apache
 
 # Set working directory
 WORKDIR /var/www/
@@ -55,7 +55,7 @@ RUN php artisan config:clear
 RUN npm run build
 
 # Expose port
-EXPOSE 9000
+EXPOSE 80
 
 # Tambahkan konfigurasi supervisor
 COPY Docker/supervisor/ /etc/
@@ -63,9 +63,12 @@ COPY Docker/supervisor/ /etc/
 COPY prod-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/prod-entrypoint.sh
 
+# Copy Apache virtual host configuration
+COPY Docker/apache/apache.conf /etc/apache2/sites-available/000-default.conf
+
 # Override PHP-FPM configuration
 # COPY Docker/www/www.conf /usr/local/etc/php-fpm.d/www.conf
-COPY Docker/www//zz-docker.conf /usr/local/etc/php-fpm.d//zz-docker.conf
+# COPY Docker/www//zz-docker.conf /usr/local/etc/php-fpm.d//zz-docker.conf
 
 ENTRYPOINT ["/usr/local/bin/prod-entrypoint.sh"]
 
