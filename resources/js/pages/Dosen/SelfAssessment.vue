@@ -35,7 +35,7 @@ export default {
         const page = usePage();
 
         const breadcrumbs = [
-            { text: "Self Assessment", href: "/dosen/assessment/projectsSelf" },
+            { text: "Self Assessment", href: "/sispa/dosen/assessment/projects-self" },
             { text: "Detail", href: null },
         ];
 
@@ -58,7 +58,7 @@ export default {
         });
 
         const changeOrder = (newOrder) => {
-            router.get('/dosen/assessment/data-with-bobot-self', {
+            router.get('/sispa/dosen/assessment/data-with-bobot-self', {
                 batch_year: props.batchYear,
                 project_name: props.projectName,
                 assessment_order: newOrder
@@ -91,7 +91,7 @@ export default {
             const questionId = await fetchQuestionId();
             if (!questionId) return;
 
-            router.visit("/dosen/AnswerSelf", {
+            router.visit("/sispa/dosen/AnswerSelf", {
                 method: "get",
                 data: {
                     batch_year: props.batchYear,

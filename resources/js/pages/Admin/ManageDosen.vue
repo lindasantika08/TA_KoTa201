@@ -20,7 +20,7 @@ export default {
     data() {
         return {
             breadcrumbs: [
-                { text: "Manage Dosen", href: "/admin/manage-dosen" },
+                { text: "Manage Dosen", href: "/sispa/admin/manage-dosen" },
             ],
             users: [],
             filteredUsers: [],
@@ -85,7 +85,7 @@ export default {
             });
         },
         inputDosen() {
-            router.visit("/admin/manage-dosen/input");
+            router.visit("/sispa/admin/manage-dosen/input");
         },
         editDosen(dosen) {
             this.editedDosen = {

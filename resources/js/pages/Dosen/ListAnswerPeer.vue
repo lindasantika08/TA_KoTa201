@@ -20,7 +20,7 @@ export default {
       user_ids: "",
       answers: [],
       breadcrumbs: [
-        { text: "Peer Assessment", href: "/dosen/assessment/projectsPeer" },
+        { text: "Peer Assessment", href: "/sispa/dosen/assessment/projects-peer" },
         { text: "List Answer", href: null },
       ],
       headers: [
@@ -80,7 +80,7 @@ export default {
   },
 
     handleDetail(item) {
-      router.get("/dosen/answers-peer-assessment", {
+      router.get("/sispa/dosen/answers-peer-assessment", {
         tahun_ajaran: this.tahun_ajaran,
         nama_proyek: this.nama_proyek,
         kelompok: item.kelompok,

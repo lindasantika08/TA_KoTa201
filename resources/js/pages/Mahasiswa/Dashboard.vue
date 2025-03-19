@@ -214,7 +214,7 @@ export default {
       this.showChangePasswordToast = false;
       this.needPasswordChange = false;
       localStorage.removeItem("need_password_change");
-      router.visit("/mahasiswa/profile");
+      router.visit("/sispa/mahasiswa/profile");
     },
     goToDashboardSelf(path) {
       router.visit(path);

@@ -199,8 +199,8 @@ export default {
     data() {
         return {
             breadcrumbs: [
-                { text: "Manage Dosen", href: "/admin/ManageDosen" },
-                { text: "Input", href: "/admin/manage-dosen/input" },
+                { text: "Manage Dosen", href: "/sispa/admin/ManageDosen" },
+                { text: "Input", href: "/sispa/admin/manage-dosen/input" },
             ],
         };
     },
@@ -248,7 +248,7 @@ export default {
 
             try {
                 const token = localStorage.getItem("auth_token");
-                const response = await axios.get("/admin/manage-dosen/export", {
+                const response = await axios.get("/sispa/admin/manage-dosen/export", {
                     params: { jurusan: selectedJurusan.value },
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -318,7 +318,7 @@ export default {
             try {
                 isUploading.value = true;
                 const token = localStorage.getItem("auth_token");
-                await axios.post("/admin/manage-dosen/import", formData, {
+                await axios.post("/sispa/admin/manage-dosen/import", formData, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                         "Content-Type": "multipart/form-data",

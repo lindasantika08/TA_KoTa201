@@ -17,7 +17,7 @@ export default {
     data() {
         return {
             breadcrumbs: [
-                { text: "Peer Assessment", href: "/dosen/assessment/projectsPeer" },
+                { text: "Peer Assessment", href: "/sispa/dosen/assessment/projectsPeer" },
                 { text: "Detail", href: null }
             ],
         }
@@ -96,7 +96,7 @@ export default {
 
             console.log("Data yang akan dikirim:", requestData);
 
-            router.visit("/dosen/AnswerPeer", {
+            router.visit("/sispa/dosen/AnswerPeer", {
                 method: "get",
                 data: requestData,
             });

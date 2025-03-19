@@ -19,7 +19,7 @@ export default {
     data() {
         return {
             breadcrumbs: [
-                { text: "Manage Mahasiswa", href: "/admin/manage-mahasiswa" },
+                { text: "Manage Mahasiswa", href: "/sispa/admin/manage-mahasiswa" },
             ],
             users: [],
             filteredUsers: [],
@@ -127,7 +127,7 @@ export default {
             });
         },
         inputMahasiswa() {
-            router.visit("/admin/manage-mahasiswa/input");
+            router.visit("/sispa/admin/manage-mahasiswa/input");
         },
         editMahasiswa(mahasiswa) {
             this.editedMahasiswa = {
