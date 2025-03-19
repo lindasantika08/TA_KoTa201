@@ -75,7 +75,7 @@ const submitFeedbackDosen = async () => {
       .querySelector('meta[name="csrf-token"]')
       ?.getAttribute("content");
 
-    const response = await fetch("/dosen/feedbacks-store-dosen", {
+    const response = await fetch("/sispa/dosen/feedbacks-store-dosen", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
