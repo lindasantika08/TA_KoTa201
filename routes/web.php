@@ -27,16 +27,17 @@ use App\Http\Controllers\Mahasiswa\DetailPeerMahasiswa;
 use App\Http\Controllers\Mahasiswa\ProfileMahasiswa;
 use App\Http\Controllers\Mahasiswa\NotificationMahasiswa;
 
-
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
 
-Route::redirect('/', 'login');
-Route::get('/login', [AuthController::class, 'index'])->name('login');
-Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
+Route::prefix('sispa')->group(function () {
+    Route::redirect('/', 'login');
+    Route::get('/login', [AuthController::class, 'index'])->name('login');
+    Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
+});
 
-Route::middleware('auth')->group(function () {
+Route::middleware('auth')->prefix('sispa')->group(function () {
 
     // Route untuk dosen
     Route::middleware(['role:dosen'])->prefix('dosen')->group(function () {
@@ -57,8 +58,8 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/export-self-assessment', [AssessmentController::class, 'exportExcel'])->name('dosen.export-self');
 
-        Route::get('/assessment/projectsSelf', [ProjectController::class, 'getProjectsWithAssessmentsSelf']);
-        Route::get('/assessment/projectsPeer', [ProjectController::class, 'getProjectsWithAssessmentsPeer']);
+        Route::get('/assessment/projects-self', [ProjectController::class, 'getProjectsWithAssessmentsSelf']);
+        Route::get('/assessment/projects-peer', [ProjectController::class, 'getProjectsWithAssessmentsPeer']);
 
         Route::get('/kelola-proyek', [KelolaProyekController::class, 'KelolaProyekView'])->name('kelola.proyek');
         Route::post('/tambah-proyek', [KelolaProyekController::class, 'AddProyek'])->name('kelola-proyek.store');
@@ -155,35 +156,9 @@ Route::middleware('auth')->group(function () {
                 return "Error: " . $e->getMessage();
             }
         });
-        //Mahasiswa Feedback
+
         Route::get('/feedback-details', [FeedbackMahasiswa::class, 'getFeedbackDetailView']);
     });
-
-    // Route::get('/notifications/stream', function () {
-    //     header('Content-Type: text/event-stream');
-    //     header('Cache-Control: no-cache');
-    //     header('Connection: keep-alive');
-        
-    //     while (true) {
-    //         if (connection_aborted()) {
-    //             break;
-    //         }
-            
-    //         // Check for new notifications
-    //         $user = auth()->user();
-    //         $newNotifications = Notification::where('user_id', $user->id)
-    //             ->where('created_at', '>', now()->subSeconds(2))
-    //             ->count();
-                
-    //         if ($newNotifications > 0) {
-    //             echo "data: " . json_encode(['count' => $newNotifications]) . "\n\n";
-    //             ob_flush();
-    //             flush();
-    //         }
-            
-    //         sleep(2);
-    //     }
-    // });
 
     //Route untuk admin
     Route::middleware('role:admin')->prefix('admin')->group(function () {

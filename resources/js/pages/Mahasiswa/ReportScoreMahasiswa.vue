@@ -33,7 +33,7 @@ const props = defineProps({
 
 // Reactive state
 const breadcrumbs = ref([
-  { text: "Report", href: "/mahasiswa/project/report" },
+  { text: "Report", href: "/sispa/mahasiswa/project/report" },
   { text: "Detail Score", href: null },
 ]);
 
