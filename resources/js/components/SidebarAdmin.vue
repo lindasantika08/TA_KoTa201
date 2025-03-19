@@ -26,7 +26,6 @@
                         Dashboard
                     </a>
                 </li>
-
                 <li>
                     <button
                         @click="toggleMajorMenu"

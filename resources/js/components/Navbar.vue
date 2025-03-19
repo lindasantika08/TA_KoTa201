@@ -28,8 +28,6 @@ export default {
   mounted() {
     this.fetchUserName();
     this.fetchNotificationsCount();
-    // this.initializeSSE();
-    // this.initializeWebSocket();
   },
   beforeUnmount() {
     this.disconnectWebSocket();

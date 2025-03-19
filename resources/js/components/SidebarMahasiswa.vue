@@ -44,7 +44,6 @@ export default {
     },
 };
 </script>
-
 <template>
     <div class="flex">
         <aside class="w-64 bg-white text-black py-6 px-4 sticky top-0 h-screen shadow-2xl">
