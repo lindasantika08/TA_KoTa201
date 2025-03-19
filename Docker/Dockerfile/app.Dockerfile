@@ -32,7 +32,7 @@ RUN pecl install -o -f redis &&  rm -rf /tmp/pear && docker-php-ext-enable redis
 # Install net-tools for netstat
 RUN apt-get update && apt-get install -y net-tools && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# RUN a2enmod rewrite
+RUN a2enmod rewrite
 
 # Install composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
@@ -66,7 +66,7 @@ COPY prod-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/prod-entrypoint.sh
 
 # Copy Apache virtual host configuration
-# COPY Docker/apache/apache.conf /etc/apache2/sites-available/000-default.conf
+COPY Docker/apache/apache.conf /etc/apache2/sites-available/000-default.conf
 
 # Override PHP-FPM configuration
 # COPY Docker/www/www.conf /usr/local/etc/php-fpm.d/www.conf
