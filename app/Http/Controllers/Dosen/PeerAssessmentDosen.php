@@ -7,7 +7,7 @@ use App\Models\TypeCriteria;
 use App\Models\Assessment;
 use App\Models\Answers;
 use App\Models\AnswersPeer;
-use App\Models\project;
+use App\Models\Project;
 use App\Models\User;
 use App\Models\Dosen;
 use App\Models\Mahasiswa;

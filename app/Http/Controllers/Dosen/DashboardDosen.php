@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Dosen;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use App\Models\project;
+use App\Models\Project;
 use App\Models\Dosen;
 use App\Models\User;
 use App\Models\Group;

@@ -8,7 +8,7 @@ use Inertia\Inertia;
 use App\Models\Assessment;
 use App\Models\AnswersPeer;
 use App\Models\Group;
-use App\Models\project;
+use App\Models\Project;
 use App\Models\Mahasiswa;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;

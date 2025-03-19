@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Mahasiswa;
 
-use App\Models\project;
+use App\Models\Project;
 use App\Models\Group;
 use App\Models\User;
 use App\Models\Assessment;
