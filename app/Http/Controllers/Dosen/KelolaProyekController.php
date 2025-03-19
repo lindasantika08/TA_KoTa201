@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Dosen;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\project;
+use App\Models\Project;
 use App\Models\Prodi;
 use App\Models\Major;
 use Inertia\Inertia;
