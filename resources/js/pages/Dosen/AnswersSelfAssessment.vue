@@ -1,4 +1,4 @@
-<script>
+/sispa<script>
 import Navbar from "@/Components/Navbar.vue";
 import Sidebar from "@/Components/Sidebar.vue";
 import Breadcrumb from "@/Components/Breadcrumb.vue";
@@ -25,7 +25,7 @@ export default {
             breadcrumbs: [
                 {
                     text: "Self Assessment",
-                    href: "/dosen/assessment/projectsSelf",
+                    href: "/sispa/dosen/assessment/projects-self",
                 },
             ],
             headers: [
@@ -120,7 +120,7 @@ export default {
                 this.assessment_order
             ) {
                 // Encode parameter URL untuk menghindari masalah karakter khusus
-                const url = `/dosen/answers/details?mahasiswaId=${encodeURIComponent(
+                const url = `/sispa/dosen/answers/details?mahasiswaId=${encodeURIComponent(
                     mahasiswaId
                 )}&batch_year=${encodeURIComponent(
                     this.batch_year
