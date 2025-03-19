@@ -34,7 +34,10 @@ RUN apt-get update && apt-get install -y net-tools && apt-get clean && rm -rf /v
 
 RUN apt-get update && apt-get install -y apache2
 
-RUN a2enmod rewrite headers proxy proxy_http
+RUN a2enmod rewrite
+
+# Copy Apache virtual host configuration
+COPY Docker/apache/apache.conf /etc/apache2/sites-available/000-default.conf
 
 # Install composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
@@ -66,9 +69,6 @@ COPY Docker/supervisor/ /etc/
 
 COPY prod-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/prod-entrypoint.sh
-
-# Copy Apache virtual host configuration
-COPY Docker/apache/apache.conf /etc/apache2/sites-available/000-default.conf
 
 # Override PHP-FPM configuration
 # COPY Docker/www/www.conf /usr/local/etc/php-fpm.d/www.conf
