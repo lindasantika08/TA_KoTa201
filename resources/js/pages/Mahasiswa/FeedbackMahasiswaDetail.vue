@@ -15,7 +15,7 @@ const props = defineProps({
 });
 
 const breadcrumbs = ref([
-  { text: "Dashboard", href: "/mahasiswa/dashboard" },
+  { text: "Dashboard", href: "/sispa/mahasiswa/dashboard" },
   { text: "Feedback", href: null },
 ]);
 
