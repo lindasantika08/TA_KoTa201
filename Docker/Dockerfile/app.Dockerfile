@@ -52,6 +52,8 @@ COPY --chown=www-data:www-data . /var/www/
 # Set permissions
 RUN chown -R www-data:www-data /var/www
 RUN chown -R www-data:www-data /var/log/supervisor
+RUN chmod -R 755 /var/log/supervisor
+RUN chmod +x /var/www/artisan
 
 # Install dependency
 RUN composer install --no-dev --optimize-autoloader
