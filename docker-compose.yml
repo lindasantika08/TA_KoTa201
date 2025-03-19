@@ -13,7 +13,7 @@ services:
       - /var/www/vendor
     depends_on:
       - cache
-      - database-kota201
+      - database
     ports:
       - "8000:8000"
     networks:
@@ -46,14 +46,14 @@ services:
     networks:
       - kota201-dev
 
-  cache-kota201:
+  cache:
     image: redis:alpine
     container_name: kota201-cache-dev
     restart: unless-stopped
     networks:
       - kota201-dev
 
-  database-kota201:
+  database:
     image: mysql:8.0
     container_name: kota201-db-dev
     restart: unless-stopped
