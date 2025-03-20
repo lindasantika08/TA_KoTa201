@@ -34,7 +34,7 @@ RUN apt-get update && apt-get install -y net-tools && apt-get clean && rm -rf /v
 
 RUN apt-get update && apt-get install -y apache2
 
-RUN a2enmod rewrite
+RUN a2enmod rewrite headers
 
 # Copy Apache virtual host configuration
 COPY Docker/apache/apache.conf /etc/apache2/sites-available/000-default.conf
