@@ -14,11 +14,14 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Determine Changed Files
         id: changed-files
         uses: dorny/paths-filter@v2
         with:
+          base: origin/linda_v2
           filters: |
             ci_cd:
               - '.github/workflows/**'
