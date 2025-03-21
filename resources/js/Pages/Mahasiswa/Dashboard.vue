@@ -4,7 +4,7 @@ import { router } from "@inertiajs/vue3";
 import VueApexCharts from "vue3-apexcharts";
 import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
-import SidebarMahasiswa from "../../Components/SidebarMahasiswa.vue";
+import SidebarMahasiswa from "@/Components/SidebarMahasiswa.vue";
 
 export default {
   name: "Dashboard",

@@ -3,9 +3,9 @@ import axios from 'axios';
 import DataTable from "@/Components/DataTable.vue";
 import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
-import SidebarMahasiswa from '../../Components/SidebarMahasiswa.vue';
+import SidebarMahasiswa from '@/Components/SidebarMahasiswa.vue';
 import Breadcrumb from "@/Components/Breadcrumb.vue";
-import ConfirmModal from '../../Components/ConfirmModal.vue';
+import ConfirmModal from '@/Components/ConfirmModal.vue';
 
 export default {
     components: {
