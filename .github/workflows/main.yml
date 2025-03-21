@@ -24,11 +24,19 @@ jobs:
         uses: dorny/paths-filter@v2
         with:
           filters: |
+            ci_cd:
+              - '.github/workflows/**'
             flask:
               - 'TA_201_Flask/**'
               - 'Docker/Dockerfile/flask.Dockerfile'
             app:
-              - '!(TA_201_Flask/**|Docker/Dockerfile/flask.Dockerfile)'  # Everything except Flask-related changes
+              - '!(TA_201_Flask/**|Docker/Dockerfile/flask.Dockerfile|.github/workflows/**)'  # Everything except Flask & CI/CD
+
+      - name: Skip Build (If Only CI/CD Files Changed)
+        if: steps.changed-files.outputs.ci_cd == 'true' && steps.changed-files.outputs.flask != 'true' && steps.changed-files.outputs.app != 'true'
+        run: |
+          echo "Only CI/CD files changed. Skipping build."
+          exit 0
 
       - name: Build and Push Flask Image (Only if Flask files changed)
         if: steps.changed-files.outputs.flask == 'true'
