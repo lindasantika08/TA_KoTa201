@@ -30,9 +30,13 @@ use App\Http\Controllers\Mahasiswa\NotificationMahasiswa;
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
+Route::redirect('/', 'sispa');
 
 Route::prefix('sispa')->group(function () {
-    Route::redirect('/', 'login/sispa');
+    Route::get('/', function () {
+        return redirect('sispa/login');
+    });
+
     Route::get('/login', [AuthController::class, 'index'])->name('login');
     Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
 
