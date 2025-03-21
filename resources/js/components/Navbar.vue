@@ -70,7 +70,7 @@ export default {
       try {
         const token = localStorage.getItem("auth_token");
         if (token) {
-          const response = await axios.get("/api/user", {
+          const response = await axios.get("/sispa/api/user", {
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -85,7 +85,7 @@ export default {
     async fetchNotificationsCount() {
       try {
         const token = localStorage.getItem("auth_token");
-        const response = await axios.post('/api/notifications/count', {}, {
+        const response = await axios.post('/sispa/api/notifications/count', {}, {
           headers: {
             Authorization: `Bearer ${token}`,
           }
@@ -107,7 +107,7 @@ export default {
         const token = localStorage.getItem("auth_token");
         if (token) {
           await axios.put(
-            "/api/logout",
+            "/sispa/api/logout",
             {},
             {
               headers: {
@@ -129,7 +129,7 @@ export default {
     },
 
     goToNotifications() {
-      axios.get('/api/user-role')
+      axios.get('/sispa/api/user-role')
         .then(response => {
           const role = response.data.role;
           if (role === 'mahasiswa') {
@@ -145,7 +145,7 @@ export default {
     },
 
     goToProfile() {
-      axios.get('/api/user-role')
+      axios.get('/sispa/api/user-role')
         .then(response => {
           const role = response.data.role;
           if (role === 'dosen') {

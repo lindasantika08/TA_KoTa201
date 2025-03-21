@@ -27,7 +27,7 @@ export default {
                 isLoading.value = true;
                 error.value = null;
 
-                const response = await axios.post("/api/login", {
+                const response = await axios.post("/sispa/api/login", {
                     email: email.value,
                     password: password.value,
                     remember_me: rememberMe.value,

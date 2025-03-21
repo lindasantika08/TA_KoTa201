@@ -44,7 +44,7 @@ export default {
 
             try {
                 const response = await axios.get(
-                    `/api/get-prodi/${selectedJurusan.value}`
+                    `/sispa/api/get-prodi/${selectedJurusan.value}`
                 );
                 if (response.data.status === "success") {
                     filteredProdi.value = response.data.data;
@@ -206,7 +206,7 @@ export default {
             generateAngkatanOptions();
 
             try {
-                const response = await axios.get("/api/get-jurusan");
+                const response = await axios.get("/sispa/api/get-jurusan");
                 if (response.data.status === "success") {
                     jurusanList.value = response.data.data;
                 } else {

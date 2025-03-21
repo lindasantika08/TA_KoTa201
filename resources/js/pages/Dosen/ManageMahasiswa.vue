@@ -209,7 +209,7 @@ export default {
 
         async fetchUsers() {
             try {
-                const response = await axios.get("/api/get-mahasiswa");
+                const response = await axios.get("/sispa/api/get-mahasiswa");
                 this.allUsers = response.data;
                 this.applyFilters();
             } catch (error) {
@@ -219,7 +219,7 @@ export default {
 
         async fetchAngkatan() {
             try {
-                const response = await axios.get("/api/get-angkatan");
+                const response = await axios.get("/sispa/api/get-angkatan");
                 this.angkatanList = response.data;
             } catch (error) {
                 console.error("Error fetching angkatan:", error);
@@ -228,7 +228,7 @@ export default {
 
         async fetchClassList() {
             try {
-                const response = await axios.get("/api/get-class");
+                const response = await axios.get("/sispa/api/get-class");
                 this.classList = response.data;
             } catch (error) {
                 console.error("Error fetching class list:", error);

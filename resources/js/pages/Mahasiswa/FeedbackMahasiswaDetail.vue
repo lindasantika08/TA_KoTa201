@@ -32,7 +32,7 @@ const submittedFeedbacks = ref([]); // Menyimpan daftar feedback yang telah dibe
 // Fungsi untuk mengambil daftar feedback yang telah diberikan
 const fetchSubmittedFeedbacks = async () => {
   try {
-    const response = await axios.get('/api/feedback/given');
+    const response = await axios.get('/sispa/api/feedback/given');
     submittedFeedbacks.value = response.data;
   } catch (err) {
     console.error('Failed to fetch submitted feedbacks:', err);
@@ -47,8 +47,8 @@ const fetchGroupMembers = async () => {
     
     // Ambil daftar anggota kelompok dan feedback yang sudah diberikan
     const [membersResponse, feedbacksResponse] = await Promise.all([
-      axios.get(`/api/project/${props.projectId}/group-members`),
-      axios.get(`/api/feedback/given`)
+      axios.get(`/sispa/api/project/${props.projectId}/group-members`),
+      axios.get(`/sispa/api/feedback/given`)
     ]);
 
     if (membersResponse.data && Array.isArray(membersResponse.data)) {
@@ -82,7 +82,7 @@ const submitFeedback = async () => {
     error.value = null;
     validationErrors.value = null;
 
-    const response = await axios.post('/api/feedback/store', {
+    const response = await axios.post('/sispa/api/feedback/store', {
       recipientId: selectedMember.value.id,
       message: feedbackMessage.value,
       projectId: props.projectId,

@@ -69,7 +69,7 @@ export default {
 
         const fetchQuestionId = async () => {
             try {
-                const response = await axios.get("/api/get-question-id", {
+                const response = await axios.get("/sispa/api/get-question-id", {
                     params: {
                         batch_year: props.batchYear,
                         project_name: props.projectName,

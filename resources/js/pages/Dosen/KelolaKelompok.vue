@@ -65,7 +65,7 @@ export default {
   methods: {
     async fetchProjects() {
       try {
-        const response = await axios.get("/api/project-dropdown");
+        const response = await axios.get("/sispa/api/project-dropdown");
         this.projects = response.data;
       } catch (error) {
         console.error("Error fetching projects:", error);
