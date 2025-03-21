@@ -12,16 +12,10 @@ jobs:
       flask_changed: ${{ steps.changed-files.outputs.flask }}
       app_changed: ${{ steps.changed-files.outputs.app }}
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
       - name: Determine Changed Files
         id: changed-files
         uses: dorny/paths-filter@v2
         with:
-          base: origin/linda_v2
           filters: |
             ci_cd:
               - '.github/workflows/**'
@@ -29,10 +23,10 @@ jobs:
               - 'TA_201_Flask/**'
               - 'Docker/Dockerfile/flask.Dockerfile'
             app:
-              - '**'
-              - '!TA_201_Flask/**'
-              - '!Docker/Dockerfile/flask.Dockerfile'
-              - '!.github/workflows/**'
+              - '**' # Capture all files
+              - '!TA_201_Flask/**'  # Exclude Flask directory
+              - '!Docker/Dockerfile/flask.Dockerfile'  # Exclude Flask Dockerfile
+              - '!.github/workflows/**'  # Exclude CI/CD workflow files
 
       - name: Debug Changed Files
         run: |
