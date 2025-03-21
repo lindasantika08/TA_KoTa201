@@ -35,6 +35,12 @@ jobs:
               - '!Docker/Dockerfile/flask.Dockerfile'  # Exclude Flask Dockerfile
               - '!.github/workflows/**'  # Exclude CI/CD workflow files
 
+      - name: Debug Changed Files
+        run: |
+          echo "CI/CD changed: ${{ steps.changed-files.outputs.ci_cd }}"
+          echo "Flask changed: ${{ steps.changed-files.outputs.flask }}"
+          echo "App changed: ${{ steps.changed-files.outputs.app }}"
+
       - name: Skip Build (If Only CI/CD Files Changed)
         if: steps.changed-files.outputs.ci_cd == 'true' && steps.changed-files.outputs.flask != 'true' && steps.changed-files.outputs.app != 'true'
         run: |
