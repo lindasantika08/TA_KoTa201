@@ -22,6 +22,7 @@ jobs:
       - name: Determine Changed Files
         id: changed-files
         uses: dorny/paths-filter@v2
+        base: origin/linda_v2
         with:
           filters: |
             ci_cd:
