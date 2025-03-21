@@ -31,9 +31,11 @@ use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('sispa')->group(function () {
-    Route::redirect('/', '/sispa/login');
-    Route::get('/login', [AuthController::class, 'index'])->name('login');
-    Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
+    
+    Route::middleware('guest')->group(function (){
+        Route::get('/login', [AuthController::class, 'index'])->name('login');
+        Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
+    });
 
     Route::middleware('auth')->group(function () {
 
