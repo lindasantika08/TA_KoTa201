@@ -6,22 +6,19 @@ on:
       - linda_v2
 
 jobs:
-  determine-changes:
+  deploy:
     runs-on: ubuntu-latest
-    outputs:
-      flask_changed: ${{ steps.changed-files.outputs.flask }}
-      app_changed: ${{ steps.changed-files.outputs.app }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch full history for accurate change detection
+          fetch-depth: 0  # Ensure full history for accurate change detection
 
       - name: Determine Changed Files
-        id: changed-files
+        id: changes
         uses: dorny/paths-filter@v3
         with:
-          base: origin/linda_v2  # Compare changes against the base branch
+          base: origin/linda_v2  # Compare against base branch
           filters: |
             flask:
               - 'TA_201_Flask/**'
@@ -36,16 +33,8 @@ jobs:
         run: |
           echo "Changed files:"
           git diff --name-only origin/linda_v2 HEAD
-          echo "Flask changed: ${{ steps.changed-files.outputs.flask }}"
-          echo "App changed: ${{ steps.changed-files.outputs.app }}"
-
-  build-flask:
-    needs: determine-changes
-    if: steps.changed-files.outputs.flask == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+          echo "Flask changed: ${{ steps.changes.outputs.flask }}"
+          echo "App changed: ${{ steps.changes.outputs.app }}"
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
@@ -54,26 +43,14 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build and Push Flask Image
+        if: steps.changes.outputs.flask == 'true'
         run: |
           echo "Detected changes in Flask files. Building Flask image..."
           docker build -f Docker/Dockerfile/flask.Dockerfile -t 3b052lindasantika/assessment-app-kota201-flask .
           docker push 3b052lindasantika/assessment-app-kota201-flask
 
-  build-app:
-    needs: determine-changes
-    if: steps.changed-files.outputs.app == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
       - name: Build and Push App Image
+        if: steps.changes.outputs.app == 'true'
         run: |
           echo "Detected changes in application files. Building app image..."
           docker build -f Docker/Dockerfile/app.Dockerfile -t 3b052lindasantika/assessment-app-kota201 .
