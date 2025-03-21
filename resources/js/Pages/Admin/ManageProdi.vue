@@ -1,9 +1,9 @@
 <script>
-import Sidebar from "@/components/SidebarAdmin.vue";
-import Navbar from "@/components/Navbar.vue";
-import Card from "@/components/Card.vue";
-import Breadcrumb from "@/components/Breadcrumb.vue";
-import DataTable from "@/components/DataTable.vue";
+import Sidebar from "@/Components/SidebarAdmin.vue";
+import Navbar from "@/Components/Navbar.vue";
+import Card from "@/Components/Card.vue";
+import Breadcrumb from "@/Components/Breadcrumb.vue";
+import DataTable from "@/Components/DataTable.vue";
 import axios from "axios";
 
 export default {
