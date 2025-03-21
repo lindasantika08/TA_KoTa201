@@ -30,6 +30,7 @@ use App\Http\Controllers\Mahasiswa\NotificationMahasiswa;
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
+// redirect
 Route::get('/', function () {
     return redirect('/sispa/login');
 });
