@@ -31,10 +31,9 @@ use App\Http\Controllers\AuthController;
 use App\Http\Middleware\Authenticate;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-
 Route::get('/', function () {
-    return view('welcome');
-})->middleware('auth');
+    return redirect()->route('login');
+});
 
 Route::prefix('sispa')->group(function () {
     Route::get('/login', [AuthController::class, 'index'])->name('login');
