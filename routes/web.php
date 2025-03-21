@@ -31,22 +31,24 @@ use App\Http\Controllers\AuthController;
 use App\Http\Middleware\Authenticate;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-Route::get('/', function () {
-    if (Auth::check()) {
-        $user = Auth::user();
-        
-        if ($user->hasRole('admin')) {
-            return redirect()->route('dashboard.admin');
-        } elseif ($user->hasRole('dosen')) {
-            return redirect()->route('dashboard');
-        } elseif ($user->hasRole('mahasiswa')) {
-            return redirect()->route('mahasiswa.dashboard');
-        }
-    }
-    return redirect()->route('login');
-})->name('sispa.home');
 
 Route::prefix('sispa')->group(function () {
+    Route::get('/', function () {
+        if (Auth::check()) {
+            $user = Auth::user();
+            dd();
+            
+            if ($user->role == 'admin') {
+                return redirect()->route('dashboard.admin');
+            } elseif ($user->role == "dosen") {
+                return redirect()->route('dashboard');
+            } elseif ($user->role == "mahasiswa") {
+                return redirect()->route('mahasiswa.dashboard');
+            }
+        }
+        return redirect()->route('login');
+    });
+
     Route::get('/login', [AuthController::class, 'index'])->name('login');
     Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
 
