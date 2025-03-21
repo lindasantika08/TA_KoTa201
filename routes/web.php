@@ -33,8 +33,8 @@ use Inertia\Inertia;
 
 Route::prefix('sispa')->group(function () {
     Route::get('/', function () {
-        return redirect('/sispa/login');
-    });
+        return view('welcome');
+    })->middleware('auth');
     
     Route::get('/login', [AuthController::class, 'index'])->name('login');
     Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
