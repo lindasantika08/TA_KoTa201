@@ -29,10 +29,12 @@ use App\Http\Controllers\Mahasiswa\NotificationMahasiswa;
 
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
+
 
 Route::prefix('sispa')->group(function () {
     Route::get('/', function () {
-        return redirect('/sispa/login');
+        return Inertia::render('Auth/Login');
     });
 
     Route::get('/login', [AuthController::class, 'index'])->name('login');
