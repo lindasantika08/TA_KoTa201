@@ -9,11 +9,13 @@ jobs:
   determine-changes:
     runs-on: ubuntu-latest
     outputs:
-      flask_changed: ${{ steps.changed-files.outputs.flask }}
-      app_changed: ${{ steps.changed-files.outputs.app }}
+      flask_changed: ${{ steps.set-outputs.outputs.flask }}
+      app_changed: ${{ steps.set-outputs.outputs.app }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Ensure full history for accurate change detection
 
       - name: Determine Changed Files
         id: changed-files
@@ -26,21 +28,32 @@ jobs:
               - 'TA_201_Flask/**'
               - 'Docker/Dockerfile/flask.Dockerfile'
             app:
-              - '**' # Capture all files
-              - '!TA_201_Flask/**'  # Exclude Flask directory
-              - '!Docker/Dockerfile/flask.Dockerfile'  # Exclude Flask Dockerfile
-              - '!.github/workflows/**'  # Exclude CI/CD workflow files
+              - '**'
+              - '!TA_201_Flask/**'
+              - '!Docker/Dockerfile/flask.Dockerfile'
+              - '!.github/workflows/**'
 
       - name: Debug Changed Files
         run: |
+          echo "Changed files:"
+          git diff --name-only origin/linda_v2 HEAD
           echo "Flask changed: ${{ steps.changed-files.outputs.flask }}"
           echo "App changed: ${{ steps.changed-files.outputs.app }}"
 
+      - name: Ensure Boolean Outputs
+        id: set-outputs
+        run: |
+          echo "flask=${{ steps.changed-files.outputs.flask == 'true' }}" >> $GITHUB_ENV
+          echo "app=${{ steps.changed-files.outputs.app == 'true' }}" >> $GITHUB_ENV
+
   build-flask:
     needs: determine-changes
-    if: needs.determine-changes.outputs.flask_changed == 'true'
+    if: env.flask == 'true'
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
@@ -55,9 +68,12 @@ jobs:
 
   build-app:
     needs: determine-changes
-    if: needs.determine-changes.outputs.app_changed == 'true'
+    if: env.app == 'true'
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
