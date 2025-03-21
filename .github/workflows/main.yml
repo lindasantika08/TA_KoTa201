@@ -5,7 +5,7 @@ on:
     branches:
       - linda_v2
     paths-ignore:
-      - '.github/workflows/**'
+      # - '.github/workflows/**'
       - 'README.md'
 
 jobs:
@@ -68,7 +68,7 @@ jobs:
 
   deploy-app:
     needs: diff
-    if: needs.diff.outputs.app == 'true'
+    if: needs.diff.outputs.app == 'false'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
