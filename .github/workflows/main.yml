@@ -9,28 +9,7 @@ on:
       - 'README.md'
 
 jobs:
-  diff:
-    runs-on: ubuntu-latest
-    outputs:
-      flask: ${{ steps.check_flask.outputs.changed }}
-      app: ${{ steps.check_app.outputs.changed }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Check for changes in Flask
-        id: check_flask
-        run: |
-          if git diff --name-only HEAD^ HEAD | grep -qE '^flask/|Docker/Dockerfile/flask.Dockerfile'; then
-            echo "changed=true" >> $GITHUB_ENV
-          else
-            echo "changed=false" >> $GITHUB_ENV
-          fi
-        shell: bash
-
   deploy-flask:
-    needs: diff
-    if: needs.diff.outputs.flask == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
