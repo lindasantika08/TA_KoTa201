@@ -31,11 +31,11 @@ use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+Route::get('/', function () {
+    return view('welcome');
+})->middleware('auth');
+
 Route::prefix('sispa')->group(function () {
-    Route::get('/', function () {
-        return view('welcome');
-    })->middleware('auth');
-    
     Route::get('/login', [AuthController::class, 'index'])->name('login');
     Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
 
