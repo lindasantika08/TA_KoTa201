@@ -32,8 +32,19 @@ use App\Http\Middleware\Authenticate;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 Route::get('/', function () {
+    if (Auth::check()) {
+        $user = Auth::user();
+        
+        if ($user->hasRole('admin')) {
+            return redirect()->route('dashboard.admin');
+        } elseif ($user->hasRole('dosen')) {
+            return redirect()->route('dashboard');
+        } elseif ($user->hasRole('mahasiswa')) {
+            return redirect()->route('mahasiswa.dashboard');
+        }
+    }
     return redirect()->route('login');
-});
+})->name('sispa.home');
 
 Route::prefix('sispa')->group(function () {
     Route::get('/login', [AuthController::class, 'index'])->name('login');
