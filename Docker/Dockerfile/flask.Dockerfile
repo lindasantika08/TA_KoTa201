@@ -15,7 +15,6 @@ RUN pip install --no-cache-dir -r /var/www/TA_201_Flask/requirements.txt
 # Download model Spacy
 RUN python -m spacy download en_core_web_sm
 
-# Expose Flask port
 EXPOSE 5000
 
 # Jalankan aplikasi Flask dengan virtual environment
