@@ -11,18 +11,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Ensure full history
-          ref: linda_v2  # Explicitly check out the correct branch
-
-      - name: Fetch base branch
-        run: git fetch origin linda_v2 --depth=1  # Ensure base branch exists
 
       - name: Determine Changed Files
         id: changes
         uses: dorny/paths-filter@v3
         with:
-          base: origin/linda_v2  # Compare against remote branch
           filters: |
             flask:
               - 'TA_201_Flask/**'
