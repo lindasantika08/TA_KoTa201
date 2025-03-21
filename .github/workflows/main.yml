@@ -48,7 +48,6 @@ jobs:
 
   build-flask:
     needs: determine-changes
-    if: env.flask == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -68,7 +67,6 @@ jobs:
 
   build-app:
     needs: determine-changes
-    if: env.app == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
