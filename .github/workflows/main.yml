@@ -6,9 +6,43 @@ on:
       - linda_v2
 
 jobs:
-  build-and-push:
+  determine-changes:
     runs-on: ubuntu-latest
+    outputs:
+      flask_changed: ${{ steps.changed-files.outputs.flask }}
+      app_changed: ${{ steps.changed-files.outputs.app }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Ensure full commit history
 
+      - name: Determine Changed Files
+        id: changed-files
+        uses: dorny/paths-filter@v2
+        with:
+          base: origin/linda_v2
+          filters: |
+            ci_cd:
+              - '.github/workflows/**'
+            flask:
+              - 'TA_201_Flask/**'
+              - 'Docker/Dockerfile/flask.Dockerfile'
+            app:
+              - '**'
+              - '!TA_201_Flask/**'
+              - '!Docker/Dockerfile/flask.Dockerfile'
+              - '!.github/workflows/**'
+
+      - name: Debug Changed Files
+        run: |
+          echo "Flask changed: ${{ steps.changed-files.outputs.flask }}"
+          echo "App changed: ${{ steps.changed-files.outputs.app }}"
+
+  build-flask:
+    needs: determine-changes
+    if: needs.determine-changes.outputs.flask_changed == 'true'
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
@@ -19,45 +53,28 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Determine Changed Files
-        id: changed-files
-        uses: dorny/paths-filter@v2
-        base: origin/linda_v2
-        with:
-          filters: |
-            ci_cd:
-              - '.github/workflows/**'
-            flask:
-              - 'TA_201_Flask/**'
-              - 'Docker/Dockerfile/flask.Dockerfile'
-            app:
-              - '**' # Capture all files
-              - '!TA_201_Flask/**'  # Exclude Flask directory
-              - '!Docker/Dockerfile/flask.Dockerfile'  # Exclude Flask Dockerfile
-              - '!.github/workflows/**'  # Exclude CI/CD workflow files
-
-      - name: Debug Changed Files
-        run: |
-          echo "CI/CD changed: ${{ steps.changed-files.outputs.ci_cd }}"
-          echo "Flask changed: ${{ steps.changed-files.outputs.flask }}"
-          echo "App changed: ${{ steps.changed-files.outputs.app }}"
-
-      - name: Skip Build (If Only CI/CD Files Changed)
-        if: steps.changed-files.outputs.ci_cd == 'true' && steps.changed-files.outputs.flask != 'true' && steps.changed-files.outputs.app != 'true'
-        run: |
-          echo "Only CI/CD files changed. Skipping build."
-          exit 0
-
-      - name: Build and Push Flask Image (Only if Flask files changed)
-        if: steps.changed-files.outputs.flask == 'true'
+      - name: Build and Push Flask Image
         run: |
           echo "Detected changes in Flask files. Building Flask image..."
           docker build -f Docker/Dockerfile/flask.Dockerfile -t 3b052lindasantika/assessment-app-kota201-flask .
           docker push 3b052lindasantika/assessment-app-kota201-flask
 
-      - name: Build and Push App Image (If anything except Flask & CI/CD changed)
-        if: steps.changed-files.outputs.app == 'true'
+  build-app:
+    needs: determine-changes
+    if: needs.determine-changes.outputs.app_changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and Push App Image
         run: |
-          echo "Building main application image..."
+          echo "Detected changes in application files. Building app image..."
           docker build -f Docker/Dockerfile/app.Dockerfile -t 3b052lindasantika/assessment-app-kota201 .
           docker push 3b052lindasantika/assessment-app-kota201
