@@ -24,5 +24,6 @@ export default defineConfig({
         hmr: {
             host: '127.0.0.1',
         },
-    }
+    },
+    base: '/sispa/build/',
 });
