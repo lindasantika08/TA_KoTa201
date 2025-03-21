@@ -30,7 +30,10 @@ jobs:
               - 'TA_201_Flask/**'
               - 'Docker/Dockerfile/flask.Dockerfile'
             app:
-              - '!(TA_201_Flask/**|Docker/Dockerfile/flask.Dockerfile|.github/workflows/**)'  # Everything except Flask & CI/CD
+              - '**' # Capture all files
+              - '!TA_201_Flask/**'  # Exclude Flask directory
+              - '!Docker/Dockerfile/flask.Dockerfile'  # Exclude Flask Dockerfile
+              - '!.github/workflows/**'  # Exclude CI/CD workflow files
 
       - name: Skip Build (If Only CI/CD Files Changed)
         if: steps.changed-files.outputs.ci_cd == 'true' && steps.changed-files.outputs.flask != 'true' && steps.changed-files.outputs.app != 'true'
@@ -45,7 +48,7 @@ jobs:
           docker build -f Docker/Dockerfile/flask.Dockerfile -t 3b052lindasantika/assessment-app-kota201-flask .
           docker push 3b052lindasantika/assessment-app-kota201-flask
 
-      - name: Build and Push App Image (If anything except Flask changed)
+      - name: Build and Push App Image (If anything except Flask & CI/CD changed)
         if: steps.changed-files.outputs.app == 'true'
         run: |
           echo "Building main application image..."
