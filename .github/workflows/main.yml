@@ -28,7 +28,7 @@ jobs:
               - 'TA_201_Flask/**'
               - 'Docker/Dockerfile/flask.Dockerfile'
             app:
-              - '!flask/**'  # Everything except Flask changes
+              - '!(TA_201_Flask/**|Docker/Dockerfile/flask.Dockerfile)'  # Everything except Flask-related changes
 
       - name: Build and Push Flask Image (Only if Flask files changed)
         if: steps.changed-files.outputs.flask == 'true'
@@ -38,7 +38,7 @@ jobs:
           docker push 3b052lindasantika/assessment-app-kota201-flask
 
       - name: Build and Push App Image (If anything except Flask changed)
-        if: steps.changed-files.outputs.app == 'true' || steps.changed-files.outputs.flask != 'true'
+        if: steps.changed-files.outputs.app == 'true'
         run: |
           echo "Building main application image..."
           docker build -f Docker/Dockerfile/app.Dockerfile -t 3b052lindasantika/assessment-app-kota201 .
