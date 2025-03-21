@@ -12,13 +12,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Ensure full history for accurate change detection
+          fetch-depth: 0
 
       - name: Determine Changed Files
         id: changes
         uses: dorny/paths-filter@v3
         with:
-          base: origin/linda_v2  # Compare against base branch
           filters: |
             flask:
               - 'TA_201_Flask/**'
