@@ -12,6 +12,9 @@ jobs:
       flask_changed: ${{ steps.changed-files.outputs.flask }}
       app_changed: ${{ steps.changed-files.outputs.app }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Determine Changed Files
         id: changed-files
         uses: dorny/paths-filter@v2
