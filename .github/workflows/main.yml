@@ -15,7 +15,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Ensure full history for accurate change detection
+          fetch-depth: 0
 
       - name: Determine Changed Files
         id: changed-files
