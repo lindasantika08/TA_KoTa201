@@ -9,21 +9,20 @@ jobs:
   determine-changes:
     runs-on: ubuntu-latest
     outputs:
-      flask_changed: ${{ steps.set-outputs.outputs.flask }}
-      app_changed: ${{ steps.set-outputs.outputs.app }}
+      flask_changed: ${{ steps.changed-files.outputs.flask }}
+      app_changed: ${{ steps.changed-files.outputs.app }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # Fetch full history for accurate change detection
 
       - name: Determine Changed Files
         id: changed-files
-        uses: dorny/paths-filter@v2
+        uses: dorny/paths-filter@v3
         with:
+          base: origin/linda_v2  # Compare changes against the base branch
           filters: |
-            ci_cd:
-              - '.github/workflows/**'
             flask:
               - 'TA_201_Flask/**'
               - 'Docker/Dockerfile/flask.Dockerfile'
@@ -40,14 +39,9 @@ jobs:
           echo "Flask changed: ${{ steps.changed-files.outputs.flask }}"
           echo "App changed: ${{ steps.changed-files.outputs.app }}"
 
-      - name: Ensure Boolean Outputs
-        id: set-outputs
-        run: |
-          echo "flask=${{ steps.changed-files.outputs.flask == 'true' }}" >> $GITHUB_ENV
-          echo "app=${{ steps.changed-files.outputs.app == 'true' }}" >> $GITHUB_ENV
-
   build-flask:
     needs: determine-changes
+    if: steps.changed-files.outputs.flask == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -67,6 +61,7 @@ jobs:
 
   build-app:
     needs: determine-changes
+    if: steps.changed-files.outputs.app == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
