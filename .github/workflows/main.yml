@@ -9,7 +9,46 @@ on:
       - 'README.md'
 
 jobs:
-  deploy:
+  diff:
+    runs-on: ubuntu-latest
+    outputs:
+      flask: ${{ steps.check_flask.outputs.changed }}
+      app: ${{ steps.check_app.outputs.changed }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check for changes in Flask
+        id: check_flask
+        run: |
+          if git diff --name-only HEAD^ HEAD | grep -qE '^TA_201_Flask/|Docker/Dockerfile/flask.Dockerfile'; then
+            echo "changed=true" >> $GITHUB_ENV
+          else
+            echo "changed=false" >> $GITHUB_ENV
+          fi
+        shell: bash
+
+      - name: Set output for Flask
+        run: echo "changed=${{ env.changed }}" >> $GITHUB_OUTPUT
+        id: set_flask_output
+
+      - name: Check for changes in all folders except TA_201_Flask
+        id: check_app
+        run: |
+          if git diff --name-only HEAD^ HEAD | grep -v '^TA_201_Flask/' | grep -qE '^[^/]+'; then
+            echo "changed=true" >> $GITHUB_ENV
+          else
+            echo "changed=false" >> $GITHUB_ENV
+          fi
+        shell: bash
+
+      - name: Set output for App
+        run: echo "changed=${{ env.changed }}" >> $GITHUB_OUTPUT
+        id: set_app_output
+
+  deploy-flask:
+    needs: diff
+    if: needs.diff.outputs.flask == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -22,14 +61,26 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build and Push Flask Image
-        if: steps.changes.outputs.flask == 'true'
         run: |
           echo "Detected changes in Flask files. Building Flask image..."
           docker build -f Docker/Dockerfile/flask.Dockerfile -t 3b052lindasantika/assessment-app-kota201-flask .
           docker push 3b052lindasantika/assessment-app-kota201-flask
 
+  deploy-app:
+    needs: diff
+    if: needs.diff.outputs.app == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
       - name: Build and Push App Image
-        if: steps.changes.outputs.app == 'true'
         run: |
           echo "Detected changes in application files. Building app image..."
           docker build -f Docker/Dockerfile/app.Dockerfile -t 3b052lindasantika/assessment-app-kota201 .
