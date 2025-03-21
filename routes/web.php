@@ -36,17 +36,13 @@ Route::prefix('sispa')->group(function () {
     Route::get('/', function () {
         if (Auth::check()) {
             $user = Auth::user();
-            
-            if ($user->role == 'admin') {
-                return redirect()->route('dashboard.admin');
-            } elseif ($user->role == "dosen") {
-                return redirect()->route('dashboard');
-            } elseif ($user->role == "mahasiswa") {
-                return redirect()->route('mahasiswa.dashboard');
-            }
+            return response()->json([
+                'role' => $user->role,
+                'redirect_to' => route($user->role == 'admin' ? 'dashboard.admin' : ($user->role == 'dosen' ? 'dashboard' : 'mahasiswa.dashboard'))
+            ]);
         }
-        return redirect()->route('login');
-    });
+        return response()->json(['redirect_to' => route('login')]);
+    });    
 
     Route::get('/login', [AuthController::class, 'index'])->name('login');
     Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
