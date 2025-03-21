@@ -36,7 +36,6 @@ Route::prefix('sispa')->group(function () {
     Route::get('/', function () {
         if (Auth::check()) {
             $user = Auth::user();
-            dd();
             
             if ($user->role == 'admin') {
                 return redirect()->route('dashboard.admin');
