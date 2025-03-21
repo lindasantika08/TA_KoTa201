@@ -23,7 +23,6 @@ jobs:
 
       - name: Build and Push Flask Image
         run: |
-          echo "Detected changes in Flask files. Building Flask image..."
           docker build -f Docker/Dockerfile/flask.Dockerfile -t 3b052lindasantika/assessment-app-kota201-flask .
           docker push 3b052lindasantika/assessment-app-kota201-flask
 
@@ -41,6 +40,5 @@ jobs:
 
       - name: Build and Push App Image
         run: |
-          echo "Detected changes in application files. Building app image..."
           docker build -f Docker/Dockerfile/app.Dockerfile -t 3b052lindasantika/assessment-app-kota201 .
           docker push 3b052lindasantika/assessment-app-kota201
