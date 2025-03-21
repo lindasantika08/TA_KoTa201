@@ -32,6 +32,20 @@ jobs:
         run: echo "changed=${{ env.changed }}" >> $GITHUB_OUTPUT
         id: set_flask_output
 
+      - name: Check for changes in all folders except TA_201_Flask
+        id: check_app
+        run: |
+          if git diff --name-only HEAD^ HEAD | grep -qvE '^TA_201_Flask/|Docker/Dockerfile/flask.Dockerfile'; then
+            echo "changed=true" >> $GITHUB_ENV
+          else
+            echo "changed=false" >> $GITHUB_ENV
+          fi
+        shell: bash
+
+      - name: Set output for App
+        run: echo "changed=${{ env.changed }}" >> $GITHUB_OUTPUT
+        id: set_app_output
+
   deploy-flask:
     needs: diff
     if: needs.diff.outputs.flask == 'true'
@@ -53,6 +67,8 @@ jobs:
           docker push 3b052lindasantika/assessment-app-kota201-flask
 
   deploy-app:
+    needs: diff
+    if: needs.diff.outputs.app == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
