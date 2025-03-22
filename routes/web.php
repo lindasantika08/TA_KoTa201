@@ -31,8 +31,6 @@ use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('sispa')->group(function () {
-    Auth::routes();
-    
     Route::get('/', function () {
         $user = Auth::user();
     
