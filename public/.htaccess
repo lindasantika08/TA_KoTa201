@@ -1,7 +1,5 @@
 <IfModule mod_rewrite.c>
-    <IfModule mod_negotiation.c>
-        Options -MultiViews -Indexes
-    </IfModule>
+    Options -MultiViews -Indexes
 
     RewriteEngine On
 
@@ -9,21 +7,26 @@
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
-    # Redirect Trailing Slashes If Not A Folder...
+    # Redirect Trailing Slashes If Not A Folder (Avoid Loop)
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_URI} (.+)/$
     RewriteRule ^ %1 [L,R=301]
 
-    # Send Requests To Front Controller...
+    # Prevent redirect loops (Exclude /sispa)
+    RewriteCond %{REQUEST_URI} !^/sispa
+
+    # Send Requests To Front Controller (index.php)
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 
-    RewriteEngine On
+    # Force HTTPS (But Exclude Internal Redirects)
     RewriteCond %{HTTPS} off
-    RewriteRule (.*) https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+    RewriteCond %{REQUEST_URI} !^/sispa  # Prevent /sispa looping
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
 </IfModule>
 
+# Cache Static Files (Performance Boost)
 <FilesMatch "\.(css|js|png|jpg|jpeg|gif|ico|woff|woff2|ttf|svg)$">
     Header set Cache-Control "max-age=31536000, public"
 </FilesMatch>
