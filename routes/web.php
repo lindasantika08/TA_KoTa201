@@ -45,8 +45,6 @@ Route::prefix('sispa')->group(function () {
         } elseif ($user->role == "mahasiswa") {
             return redirect()->route('mahasiswa.dashboard');
         }
-    
-        return redirect()->route('login');
     });
 
     Route::get('/login', [AuthController::class, 'index'])->name('login');
