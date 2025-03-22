@@ -49,8 +49,23 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
             $majorId = DB::table('prodi')
                 ->where('id', $project->prodi_id)
                 ->value('major_id');
-
+            
+            // Initialize the row number counter
+            DB::statement('SET @row_number = 0');
+            
+            // Build the query properly without using from() with raw expression
             $mahasiswaQuery = DB::table('mahasiswa')
+                ->select(
+                    DB::raw('@row_number := @row_number + 1 AS no'),
+                    DB::raw("'{$this->tahunAjaran}' as batch_year"),
+                    DB::raw("'{$this->namaProyek}' as project_name"),
+                    DB::raw("'{$this->angkatan}' as angkatan"),
+                    'users.name as mahasiswa_name',
+                    'mahasiswa.nim',
+                    'class_room.class_name as class',
+                    'dosen.kode_dosen as dosen_manajer',
+                    DB::raw("COALESCE(`groups`.`group_field`, '') as kelompok")
+                )
                 ->join('users', 'mahasiswa.user_id', '=', 'users.id')
                 ->join('class_room', 'mahasiswa.class_id', '=', 'class_room.id')
                 ->join('prodi', 'class_room.prodi_id', '=', 'prodi.id')
@@ -60,27 +75,15 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
                             $query->select(DB::raw(1))
                                 ->from('project')
                                 ->whereRaw('project.id = groups.project_id')
-                                ->where('project.id', $project->id);
+                                ->where('project.id', '=', $project->id);
                         });
                 })
                 ->leftJoin('dosen', function ($join) use ($majorId) {
                     $join->on('groups.dosen_id', '=', 'dosen.id')
-                        ->where('dosen.major_id', $majorId);
+                        ->where('dosen.major_id', '=', $majorId);
                 })
-                ->where('prodi.id', $project->prodi_id)
-                ->where('class_room.angkatan', $this->angkatan)
-                ->select(
-                    DB::raw('(@row_number:=@row_number + 1) AS no'),
-                    DB::raw("'{$this->tahunAjaran}' as batch_year"),
-                    DB::raw("'{$this->namaProyek}' as project_name"),
-                    DB::raw("'{$this->angkatan}' as angkatan"),
-                    'users.name as mahasiswa_name',
-                    'mahasiswa.nim',
-                    'class_room.class_name as class',
-                    'dosen.kode_dosen as dosen_manajer',
-                    DB::raw('COALESCE(groups.`group`, \'\') as kelompok'),
-                )
-                ->from(DB::raw('(SELECT @row_number:=0) as r, mahasiswa'))
+                ->where('prodi.id', '=', $project->prodi_id)
+                ->where('class_room.angkatan', '=', $this->angkatan)
                 ->get();
 
             return $mahasiswaQuery;
