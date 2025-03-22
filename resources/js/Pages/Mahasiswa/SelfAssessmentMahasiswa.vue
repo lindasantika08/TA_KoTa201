@@ -138,7 +138,7 @@ export default {
                 const batch_year = this.$page.props.batch_year || this.$route.query.batch_year;
                 const project_name = this.$page.props.project_name || this.$route.query.project_name;
 
-                const response = await axios.get('/sispa/api/user-info', {
+                const response = await axios.get('/sispa/user-info', {
                     params: {
                         batch_year: batch_year,
                         project_name: project_name
