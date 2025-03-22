@@ -279,7 +279,7 @@ export default {
                 if (response.data.success) {
                     this.clearFormFields();
                     alert('Semua jawaban berhasil disimpan!');
-                    this.$inertia.visit('/sispa/dosen/assessment/projectsSelf');
+                    this.$inertia.visit('/sispa/dosen/assessment/projects-self');
                 }
             } catch (error) {
                 console.error('Error submitting answers:', error);

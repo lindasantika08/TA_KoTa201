@@ -46,7 +46,7 @@ export default {
       console.log('Project Name:', project_name);
       console.log('Assessment Order:', assessment_order);
 
-      router.visit(`/mahasiswa/assessment/self-assessment`, {
+      router.visit(`/sispa/mahasiswa/assessment/self-assessment`, {
         method: 'get',
         data: {
           batch_year: batch_year,
@@ -61,7 +61,7 @@ export default {
     },
 
     handleDetail(item) {
-      router.visit(`/mahasiswa/peer-assessment/self-detail`, {
+      router.visit(`/sispa/mahasiswa/peer-assessment/self-detail`, {
         method: 'get',
         data: {
           batch_year: item.batch_year,

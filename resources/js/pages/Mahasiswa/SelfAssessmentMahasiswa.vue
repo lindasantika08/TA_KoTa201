@@ -165,17 +165,23 @@ export default {
                 return;
             }
 
+            // Save the current answer to temporary storage first
+            this.saveTemporaryAnswer();
+
             try {
+                // Send both the current answer and all temporary answers
                 const response = await axios.post('/api/save-answer-mhs', {
                     answers: [{
                         question_id: this.currentQuestion.id,
                         answer: this.answer,
                         score: this.score,
                         status: 'submitted'
-                    }]
+                    }],
+                    temporaryAnswers: this.temporaryAnswers // Send all temporary answers
                 });
 
                 if (response.data.message.includes('successfully')) {
+                    // Remove this answer from temporary storage as it's now saved
                     delete this.temporaryAnswers[this.currentQuestion.id];
                     localStorage.setItem('temporaryAnswers', JSON.stringify(this.temporaryAnswers));
 

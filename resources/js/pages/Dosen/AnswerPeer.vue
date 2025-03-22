@@ -305,7 +305,7 @@ export default {
                         .filter(([questionId]) => !this.questions.find(q => q.id === questionId));
                     this.temporaryAnswers = Object.fromEntries(otherProjectAnswers);
                     localStorage.setItem('temporaryAnswers', JSON.stringify(this.temporaryAnswers));
-                    this.$inertia.visit('/sispa/dosen/assessment/projectsPeer');
+                    this.$inertia.visit('/sispa/dosen/assessment/projects-peer');
                 }
             } catch (error) {
                 console.error('Error submitting answers:', error);
