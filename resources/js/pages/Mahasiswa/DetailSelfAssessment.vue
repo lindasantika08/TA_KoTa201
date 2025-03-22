@@ -50,7 +50,7 @@ export default {
     methods: {
         async fetchUserInfo() {
             try {
-                const response = await axios.get("/api/user-detail-answer", {
+                const response = await axios.get("/sispa/api/user-detail-answer", {
                     params: {
                         batch_year: this.batchYear,
                         project_name: this.projectName,
@@ -63,7 +63,7 @@ export default {
         },
         async fetchAnswerSelf() {
     try {
-        const response = await axios.get("/api/detail-answer-self", {
+        const response = await axios.get("/sispa/api/detail-answer-self", {
             params: {
                 batch_year: this.batchYear,
                 project_name: this.projectName

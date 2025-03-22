@@ -59,7 +59,7 @@ export default {
 
         const fetchQuestionId = async () => {
             try {
-                const response = await axios.get("/api/get-question-id", {
+                const response = await axios.get("/sispa/api/get-question-id", {
                     params: {
                         batch_year: props.tahunAjaran,
                         project_name: props.namaProyek,
@@ -96,7 +96,7 @@ export default {
 
             console.log("Data yang akan dikirim:", requestData);
 
-            router.visit("/dosen/AnswerPeer", {
+            router.visit("/sispa/dosen/AnswerPeer", {
                 method: "get",
                 data: requestData,
             });

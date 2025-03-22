@@ -22,7 +22,7 @@ const expandedStudents = ref({});
 
 const fetchDropdownOptions = async () => {
     try {
-        const response = await axios.get("/api/dropdown-options");
+        const response = await axios.get("/sispa/api/dropdown-options");
         combinedOptions.value = response.data.options || [];
 
         const storedOption = localStorage.getItem("selectedOption");
@@ -63,7 +63,7 @@ const fetchKelompok = async () => {
 
     isLoading.value = true;
     try {
-        const response = await axios.get("/api/kelompok/report", {
+        const response = await axios.get("/sispa/api/kelompok/report", {
             params: {
                 batch_year: selectedOption.value.batch_year,
                 project_name: selectedOption.value.project_name,
@@ -119,7 +119,7 @@ const fetchStudentData = async () => {
     showModal.value = true;
 
     try {
-        const response = await axios.get("/api/student-peer-data", {
+        const response = await axios.get("/sispa/api/student-peer-data", {
             params: {
                 batch_year: selectedOption.value.batch_year,
                 project_name: selectedOption.value.project_name,

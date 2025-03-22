@@ -61,7 +61,7 @@ export default {
         async addProject() {
             try {
                 const response = await axios.post(
-                    "/api/project",
+                    "/sispa/api/project",
                     this.newProject,
                     {
                         headers: {
@@ -81,7 +81,7 @@ export default {
         },
         async getProjects() {
             try {
-                const response = await axios.get("/api/projects", {
+                const response = await axios.get("/sispa/api/projects", {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem(
                             "auth_token"
@@ -112,7 +112,7 @@ export default {
                 const newStatus =
                     project.status === "Active" ? "NonActive" : "Active";
                 const response = await axios.post(
-                    "/api/changeStatus",
+                    "/sispa/api/changeStatus",
                     {
                         tahun_ajaran: project.batch_year,
                         nama_proyek: project.project_name,
@@ -148,7 +148,7 @@ export default {
         },
         async getProdis() {
             try {
-                const response = await axios.get("/api/prodis-by-major", {
+                const response = await axios.get("/sispa/api/prodis-by-major", {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem(
                             "auth_token"

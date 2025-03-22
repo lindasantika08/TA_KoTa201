@@ -24,22 +24,22 @@ export default {
             this.isKelolaProyekOpen = !this.isKelolaProyekOpen;
         },
         goToCreateAssessment() {
-            router.visit("/mahasiswa/assessment/create");
+            router.visit("/sispa/mahasiswa/assessment/create");
         },
         goToSelfAssessment() {
-            router.visit("/mahasiswa/assessment/self");
+            router.visit("/sispa/mahasiswa/assessment/self");
         },
         goToPeerAssessment() {
-            router.visit("/mahasiswa/assessment/peer");
+            router.visit("/sispa/mahasiswa/assessment/peer");
         },
         isActive(route) {
             return this.$page.url === route;
         },
         goToKelolaProyek() {
-            router.visit("/mahasiswa/kelola-proyek");
+            router.visit("/sispa/mahasiswa/kelola-proyek");
         },
         goToKelolaKelompok() {
-            router.visit("/mahasiswa/kelola-kelompok");
+            router.visit("/sispa/mahasiswa/kelola-kelompok");
         },
     },
 };

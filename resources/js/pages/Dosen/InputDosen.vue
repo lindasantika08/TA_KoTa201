@@ -33,7 +33,7 @@ export default {
             try {
                 isLoading.value = true;
                 const token = localStorage.getItem("auth_token");
-                const response = await axios.get("/api/majors", {
+                const response = await axios.get("/sispa/api/majors", {
                     headers: {
                         Authorization: `Bearer ${token}`,
                         Accept: "application/json",

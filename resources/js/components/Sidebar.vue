@@ -232,25 +232,25 @@ export default {
       this.isKelolaSettingsOpen = !this.isKelolaSettingsOpen;
     },
     goToCreateAssessment() {
-      router.visit("/dosen/assessment/create");
+      router.visit("/sispa/dosen/assessment/create");
     },
     goToSelfAssessment() {
-      router.visit("/dosen/assessment/projects-self");
+      router.visit("/sispa/dosen/assessment/projects-self");
     },
     goToPeerAssessment() {
-      router.visit("/dosen/assessment/projects-peer");
+      router.visit("/sispa/dosen/assessment/projects-peer");
     },
     isActive(route) {
       return this.$page.url === route;
     },
     goToKelolaProyek() {
-      router.visit("/dosen/kelola-proyek");
+      router.visit("/sispa/dosen/kelola-proyek");
     },
     goToKelolaKelompok() {
-      router.visit("/dosen/kelola-kelompok");
+      router.visit("/sispa/dosen/kelola-kelompok");
     },
     goToKelolaMahasiswa() {
-      router.visit("/dosen/manage-mahasiswa");
+      router.visit("/sispa/dosen/manage-mahasiswa");
     },
   },
 };

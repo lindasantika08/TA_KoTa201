@@ -120,7 +120,7 @@ export default {
   methods: {
     fetchProfile() {
       axios
-        .get(`/api/kelola-kelompok/get-profile/${this.user_id}`) // Endpoint API untuk mendapatkan data profil
+        .get(`/sispa/api/kelola-kelompok/get-profile/${this.user_id}`) // Endpoint API untuk mendapatkan data profil
         .then((response) => {
           // Set data yang didapat dari API
           const profileData = response.data;

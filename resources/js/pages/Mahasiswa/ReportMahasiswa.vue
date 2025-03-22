@@ -39,7 +39,7 @@ export default {
       this.error = null;
       
       try {
-        const response = await axios.get("/api/mahasiswa/projects");
+        const response = await axios.get("/sispa/api/mahasiswa/projects");
         if (response.data.success) {
           this.projectList = response.data.projects || [];
           this.updateStats();

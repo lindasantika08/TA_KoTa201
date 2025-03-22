@@ -171,16 +171,16 @@ export default {
             this.isUserOpen = !this.isUserOpen;
         },
         goToCreateMajor() {
-            router.visit("/admin/ManageMajor");
+            router.visit("/sispa/admin/ManageMajor");
         },
         goToCreateProdi() {
-            router.visit("/admin/ManageProdi");
+            router.visit("/sispa/admin/ManageProdi");
         },
         goToCreateDosen() {
-            router.visit("/admin/ManageDosen");
+            router.visit("/sispa/admin/ManageDosen");
         },
         goToCreateMahasiswa() {
-            router.visit("/admin/ManageMahasiswa");
+            router.visit("/sispa/admin/ManageMahasiswa");
         },
     },
 };

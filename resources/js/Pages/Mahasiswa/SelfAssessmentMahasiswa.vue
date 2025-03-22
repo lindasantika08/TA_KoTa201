@@ -103,7 +103,7 @@ export default {
                 console.log('Tahun Ajaran:', this.batch_year);
                 console.log('Nama Proyek:', this.project_name);
 
-                const response = await axios.get('/api/questions', {
+                const response = await axios.get('/sispa/api/questions', {
                     params: {
                         batch_year: this.batch_year,
                         project_name: this.project_name,
@@ -138,7 +138,7 @@ export default {
                 const batch_year = this.$page.props.batch_year || this.$route.query.batch_year;
                 const project_name = this.$page.props.project_name || this.$route.query.project_name;
 
-                const response = await axios.get('/api/user-info', {
+                const response = await axios.get('/sispa/api/user-info', {
                     params: {
                         batch_year: batch_year,
                         project_name: project_name
@@ -166,7 +166,7 @@ export default {
             }
 
             try {
-                const response = await axios.post('/api/save-answer-mhs', {
+                const response = await axios.post('/sispa/api/save-answer-mhs', {
                     answers: [{
                         question_id: this.currentQuestion.id,
                         answer: this.answer,
@@ -210,7 +210,7 @@ export default {
             if (!this.currentQuestion) return;
 
             try {
-                const response = await axios.get(`/api/get-answer-mhs/${this.currentQuestion.id}`);
+                const response = await axios.get(`/sispa/api/get-answer-mhs/${this.currentQuestion.id}`);
 
                 const tempAnswer = this.temporaryAnswers[this.currentQuestion.id];
                 if (tempAnswer) {
@@ -270,7 +270,7 @@ export default {
                     status: 'submitted'
                 }));
 
-                const response = await axios.post('/api/save-all-answers', { answers: allAnswers });
+                const response = await axios.post('/sispa/api/save-all-answers', { answers: allAnswers });
 
                 if (response.data.success) {
                     this.clearFormFields();

@@ -73,7 +73,7 @@ export default {
 
   },
   mounted() {
-    axios.get('/api/self-assessment')
+    axios.get('/sispa/api/self-assessment')
       .then(response => {
         this.items = response.data.assessments.map((item, index) => ({
           id: item.id,

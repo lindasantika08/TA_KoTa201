@@ -38,7 +38,7 @@ export default {
   methods: {
     async fetchUsers() {
       try {
-        const response = await axios.get("/api/get-dosen");
+        const response = await axios.get("/sispa/api/get-dosen");
         // Menambahkan nomor urut ke setiap item
         this.users = response.data.map((user, index) => ({
           ...user,
@@ -49,7 +49,7 @@ export default {
       }
     },
     inputDosen() {
-      router.visit("/dosen/manage-dosen/input");
+      router.visit("/sispa/dosen/manage-dosen/input");
     },
     detailUser(user_id) {
       router.visit(`/dosen/manage-dosen/detail?user_id=${user_id}`);

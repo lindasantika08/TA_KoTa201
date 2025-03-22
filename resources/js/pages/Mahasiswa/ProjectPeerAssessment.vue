@@ -66,7 +66,7 @@ export default {
 },
   },
   mounted() {
-    axios.get('/api/peer-assessment')
+    axios.get('/sispa/api/peer-assessment')
       .then(response => {
         console.log('API Response:', response.data);
         this.items = response.data.assessments.map((item, index) => ({

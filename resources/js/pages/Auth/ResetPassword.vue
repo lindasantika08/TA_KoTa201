@@ -77,14 +77,14 @@ export default {
   methods: {
     async resetPassword() {
       try {
-        const response = await axios.post('/api/reset-password', {
+        const response = await axios.post('/sispa/api/reset-password', {
           token: this.token,
           email: this.formData.email,
           password: this.formData.password,
           password_confirmation: this.formData.password_confirmation
         });
         alert(response.data.message);
-        window.location.href = '/login';
+        window.location.href = '/sispa/login';
       } catch (error) {
         alert(error.response.data.message);
       }

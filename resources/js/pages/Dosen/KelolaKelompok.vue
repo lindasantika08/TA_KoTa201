@@ -65,7 +65,7 @@ export default {
   methods: {
     async fetchProjects() {
       try {
-        const response = await axios.get("/api/project-dropdown");
+        const response = await axios.get("/sispa/api/project-dropdown");
         this.projects = response.data;
       } catch (error) {
         console.error("Error fetching projects:", error);
@@ -104,7 +104,7 @@ export default {
       this.$inertia.get(route("DetailKelompok", { id: kelompokId }));
     },
     createKelompok(url) {
-      router.visit("/dosen/kelola-kelompok/create");
+      router.visit("/sispa/dosen/kelola-kelompok/create");
     },
     goToProfile(user_id) {
       router.visit(`/dosen/kelola-kelompok/profile-mhs?user_id=${user_id}`);

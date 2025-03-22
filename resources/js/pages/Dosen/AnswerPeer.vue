@@ -115,7 +115,7 @@ export default {
                     assessment_order: this.assessment_order
                 };
 
-                const response = await axios.get('/api/questions-peer-dosen', { params });
+                const response = await axios.get('/sispa/api/questions-peer-dosen', { params });
 
                 console.log('API Response:', response);
 
@@ -139,7 +139,7 @@ export default {
 
         async fetchStudentsInfo() {
             try {
-                const response = await axios.get('/api/user-info-dosen');
+                const response = await axios.get('/sispa/api/user-info-dosen');
                 if (response.data) {
                     this.studentInfo = response.data;
                     console.log('Student Info:', this.studentInfo.id);
@@ -194,7 +194,7 @@ export default {
             }
 
             try {
-                const response = await axios.get(`/api/get-answer-peer-dosen/${this.currentQuestion.id}`, {
+                const response = await axios.get(`/sispa/api/get-answer-peer-dosen/${this.currentQuestion.id}`, {
                     params: {
                         dosen_id: this.studentInfo.id
                     }
@@ -238,7 +238,7 @@ export default {
                     throw new Error('Tidak ada jawaban yang dapat dikirim');
                 }
 
-                const response = await axios.post("/api/save-answer-peer-dosen", {
+                const response = await axios.post("/sispa/api/save-answer-peer-dosen", {
                     answers: answersToSubmit
                 });
 
@@ -296,7 +296,7 @@ export default {
                         dosen_id: this.studentInfo.id
                     }));
 
-                const response = await axios.post('/api/save-all-answers-peer-dosen', {
+                const response = await axios.post('/sispa/api/save-all-answers-peer-dosen', {
                     answers: projectAnswers
                 });
 
