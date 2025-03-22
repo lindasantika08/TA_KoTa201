@@ -28,11 +28,9 @@ use App\Http\Controllers\Mahasiswa\ProfileMahasiswa;
 use App\Http\Controllers\Mahasiswa\NotificationMahasiswa;
 
 use App\Http\Controllers\AuthController;
-use App\Http\Middleware\Authenticate;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
-Route::get('/sispa', function () {
+Route::get('/', function () {
     if (Auth::check()) {
         $user = Auth::user();
         return response()->json([
