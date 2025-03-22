@@ -83,7 +83,7 @@ export default {
 
                 // First try to get the blob
                 const response = await axios.get(
-                    "/admin/manage-mahasiswa/export",
+                    "/sispa/admin/manage-mahasiswa/export",
                     {
                         params: {
                             jurusan: selectedJurusan.value,

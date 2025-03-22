@@ -248,7 +248,7 @@ export default {
 
             try {
                 const token = localStorage.getItem("auth_token");
-                const response = await axios.get("/admin/manage-dosen/export", {
+                const response = await axios.get("/sispa/admin/manage-dosen/export", {
                     params: { jurusan: selectedJurusan.value },
                     headers: {
                         Authorization: `Bearer ${token}`,

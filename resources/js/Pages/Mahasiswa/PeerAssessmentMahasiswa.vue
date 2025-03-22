@@ -649,7 +649,7 @@ export default {
                 localStorage.removeItem("temporaryAnswers");
                 localStorage.removeItem("peerAssessmentState");
 
-                window.location.href = "/mahasiswa/assessment/peer";
+                window.location.href = "/sispa/mahasiswa/assessment/peer";
             } catch (error) {
                 console.error("Error submitting answers:", error);
                 alert(

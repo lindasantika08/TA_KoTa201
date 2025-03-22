@@ -70,7 +70,7 @@ export default {
 
       // Navigasi menggunakan Vue Router dari Inertia.js
       router.get(
-        "/mahasiswa/project-score-details",
+        "/sispa/mahasiswa/project-score-details",
         {
           tahun_ajaran: project.tahun_ajaran,
           nama_proyek: project.nama_proyek,
