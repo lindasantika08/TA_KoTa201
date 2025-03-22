@@ -169,7 +169,7 @@ export default {
       try {
         isUploading.value = true;
         const token = localStorage.getItem("auth_token");
-        await axios.post("/dosen/manage-mahasiswa/importDosen", formData, {
+        await axios.post("/sispa/dosen/manage-mahasiswa/importDosen", formData, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",

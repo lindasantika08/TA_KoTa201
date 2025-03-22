@@ -97,7 +97,7 @@ export default {
 
             try {
                 const token = localStorage.getItem("auth_token");
-                await axios.post("/dosen/manage-dosen/import", formData, {
+                await axios.post("/sispa/dosen/manage-dosen/import", formData, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                         "Content-Type": "multipart/form-data",

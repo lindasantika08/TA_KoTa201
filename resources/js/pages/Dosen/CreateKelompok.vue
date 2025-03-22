@@ -131,7 +131,7 @@ export default {
       try {
         isUploading.value = true;
         const token = localStorage.getItem("auth_token");
-        await axios.post("/dosen/kelola-kelompok/import", formData, {
+        await axios.post("/sispa/dosen/kelola-kelompok/import", formData, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",
