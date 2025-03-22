@@ -16,7 +16,7 @@ export default {
   data() {
     return {
       breadcrumbs: [
-        { text: "Create Assessment", href: "/dosen/assessment/create" },
+        { text: "Create Assessment", href: "/sispa/dosen/assessment/create" },
       ],
     };
   },

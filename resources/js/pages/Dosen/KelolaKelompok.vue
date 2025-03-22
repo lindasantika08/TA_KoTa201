@@ -24,7 +24,7 @@ export default {
   data() {
     return {
       breadcrumbs: [
-        { text: "Manage Group", href: "/dosen/kelola-kelompok" },
+        { text: "Manage Group", href: "/sispa/dosen/kelola-kelompok" },
       ],
       headers: [
         { label: "Tahun Ajaran", key: "batch_year" },

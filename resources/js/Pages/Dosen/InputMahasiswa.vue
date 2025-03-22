@@ -16,8 +16,8 @@ export default {
   data() {
     return {
       breadcrumbs: [
-        { text: "Manage Mahasiswa", href: "/dosen/manage-mahasiswa" },
-        { text: "Input", href: "/dosen/manage-mahasiswa/input" },
+        { text: "Manage Mahasiswa", href: "/sispa/dosen/manage-mahasiswa" },
+        { text: "Input", href: "/sispa/dosen/manage-mahasiswa/input" },
       ],
     };
   },

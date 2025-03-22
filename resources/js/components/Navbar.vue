@@ -133,9 +133,9 @@ export default {
         .then(response => {
           const role = response.data.role;
           if (role === 'mahasiswa') {
-            router.visit('/mahasiswa/notifications-mhs');
+            router.visit('/sispa/mahasiswa/notifications-mhs');
           } else if (role === 'dosen') {
-            router.visit('/dosen/notifications');
+            router.visit('/sispa/dosen/notifications');
           }
         })
         .catch(error => {
@@ -149,9 +149,9 @@ export default {
         .then(response => {
           const role = response.data.role;
           if (role === 'dosen') {
-            router.visit('/dosen/profile');
+            router.visit('/sispa/dosen/profile');
           } else if (role === 'mahasiswa') {
-            router.visit('/mahasiswa/profile');
+            router.visit('/sispa/mahasiswa/profile');
           } else {
             alert('Role tidak dikenali.');
           }

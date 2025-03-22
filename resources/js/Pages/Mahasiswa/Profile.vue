@@ -212,7 +212,7 @@ export default {
   },
   data() {
     return {
-      breadcrumbs: [{ text: "Profile", href: "/mahasiswa/profile" }],
+      breadcrumbs: [{ text: "Profile", href: "/sispa/mahasiswa/profile" }],
       isDropdownVisible: false,
       isEditMode: false,
       profileImage: "", // Ganti dengan URL gambar asli jika ada

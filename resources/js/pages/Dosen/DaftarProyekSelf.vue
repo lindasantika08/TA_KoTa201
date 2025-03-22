@@ -21,7 +21,7 @@ export default {
             breadcrumbs: [
                 {
                     text: "Self Assessment",
-                    href: "/dosen/assessment/projects-self",
+                    href: "/sispa/dosen/assessment/projects-self",
                 },
             ],
             headers: [

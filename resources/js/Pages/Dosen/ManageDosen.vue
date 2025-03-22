@@ -19,7 +19,7 @@ export default {
   data() {
     return {
       breadcrumbs: [
-        { text: "Manage Dosen", href: "/dosen/manage-dosen" },
+        { text: "Manage Dosen", href: "/sispa/dosen/manage-dosen" },
       ],
       users: [],
       headers: [

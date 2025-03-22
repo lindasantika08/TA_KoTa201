@@ -35,7 +35,7 @@ export default {
         const page = usePage();
 
         const breadcrumbs = [
-            { text: "Self Assessment", href: "/dosen/assessment/projects-self" },
+            { text: "Self Assessment", href: "/sispa/dosen/assessment/projects-self" },
             { text: "Detail", href: null },
         ];
 

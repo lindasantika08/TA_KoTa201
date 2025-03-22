@@ -6,7 +6,7 @@ import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
 import Breadcrumb from "@/Components/Breadcrumb.vue";
 
-const breadcrumbs = ref([{ text: "Report", href: "/dosen/report" }]);
+const breadcrumbs = ref([{ text: "Report", href: "/sispa/dosen/report" }]);
 const combinedOptions = ref([]);
 const selectedOption = ref(null);
 const kelompokList = ref([]);

@@ -20,7 +20,7 @@ export default {
       user_ids: "",
       answers: [],
       breadcrumbs: [
-        { text: "Peer Assessment", href: "/dosen/assessment/projects-peer" },
+        { text: "Peer Assessment", href: "/sispa/dosen/assessment/projects-peer" },
         { text: "List Answer", href: null },
       ],
       headers: [

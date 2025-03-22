@@ -19,7 +19,7 @@ export default {
     data() {
         return {
             breadcrumbs: [
-                { text: "Manage Mahasiswa", href: "/admin/manage-mahasiswa" },
+                { text: "Manage Mahasiswa", href: "/sispa/admin/manage-mahasiswa" },
             ],
             users: [],
             filteredUsers: [],

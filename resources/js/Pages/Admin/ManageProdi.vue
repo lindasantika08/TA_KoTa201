@@ -17,7 +17,7 @@ export default {
     data() {
         return {
             Breadcrumb: [
-                { text: "Dashboard", href: "/admin/dashboard" },
+                { text: "Dashboard", href: "/sispa/admin/dashboard" },
                 { text: "Prodi Management", href: "#" },
             ],
             headers: [

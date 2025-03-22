@@ -33,7 +33,7 @@ export default {
     data() {
         return {
             breadcrumbs: [
-                { text: "Assessment", href: "/mahasiswa/assessment/peer" },
+                { text: "Assessment", href: "/sispa/mahasiswa/assessment/peer" },
                 { text: "Peer Assessment", href: null },
             ],
             headers: [

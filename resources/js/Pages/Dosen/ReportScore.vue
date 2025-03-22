@@ -35,7 +35,7 @@ export default {
     },
     data() {
         return {
-            breadcrumbs: [{ text: "Laporan", href: "/dosen/laporan" }],
+            breadcrumbs: [{ text: "Laporan", href: "/sispa/dosen/laporan" }],
             userAnalysis: {},
             loading: false,
             error: null,

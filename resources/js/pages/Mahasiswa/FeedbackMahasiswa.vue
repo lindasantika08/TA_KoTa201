@@ -19,7 +19,7 @@ export default {
   data() {
     return {
       breadcrumbs: [
-        { text: "Dashboard", href: "/mahasiswa/dashboard" },
+        { text: "Dashboard", href: "/sispa/mahasiswa/dashboard" },
         { text: "Report", href: null },
       ],
       projectList: [],

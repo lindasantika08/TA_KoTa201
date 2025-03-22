@@ -17,7 +17,7 @@ export default {
   data() {
     return {
       breadcrumbs: [
-        { text: "Notifications", href: "/dosen/notifications" },
+        { text: "Notifications", href: "/sispa/dosen/notifications" },
       ],
     };
   },

@@ -201,7 +201,7 @@ export default {
   },
   data() {
     return {
-      breadcrumbs: [{ text: "Profile", href: "/dosen/profile" }],
+      breadcrumbs: [{ text: "Profile", href: "/sispa/dosen/profile" }],
       isDropdownVisible: false,
       profileImage: "",
       isEditMode: false,

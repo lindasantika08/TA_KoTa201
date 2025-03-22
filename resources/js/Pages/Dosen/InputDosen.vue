@@ -16,8 +16,8 @@ export default {
     data() {
         return {
             breadcrumbs: [
-                { text: "Manage Dosen", href: "/dosen/manage-dosen" },
-                { text: "Input", href: "/dosen/manage-dosen/input" },
+                { text: "Manage Dosen", href: "/sispa/dosen/manage-dosen" },
+                { text: "Input", href: "/sispa/dosen/manage-dosen/input" },
             ],
         };
     },
