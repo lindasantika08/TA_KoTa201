@@ -33,21 +33,21 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::prefix('sispa')->group(function () {
-    // Route::get('/', function () {
-    //     $user = Auth::user();
+    Route::get('/', function () {
+        $user = Auth::user();
     
-    //     if ($user->role == 'admin') {
-    //         return redirect()->route('dashboard.admin');
-    //     } elseif ($user->role == "dosen") {
-    //         return redirect()->route('dashboard');
-    //     } elseif ($user->role == "mahasiswa") {
-    //         return redirect()->route('mahasiswa.dashboard');
-    //     }
+        if ($user->role == 'admin') {
+            return redirect()->route('dashboard.admin');
+        } elseif ($user->role == "dosen") {
+            return redirect()->route('dashboard');
+        } elseif ($user->role == "mahasiswa") {
+            return redirect()->route('mahasiswa.dashboard');
+        }
         
-    // })->middleware('auth');
+    })->middleware('auth');
 
-    // Route::get('/login', [AuthController::class, 'index'])->name('login');
-    // Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
+    Route::get('/login', [AuthController::class, 'index'])->name('login');
+    Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
 
     Route::middleware('auth')->group(function () {
 
