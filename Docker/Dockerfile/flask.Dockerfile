@@ -18,4 +18,5 @@ RUN python -m spacy download en_core_web_sm
 EXPOSE 5000
 
 # Jalankan aplikasi Flask dengan virtual environment
-CMD ["gunicorn", "-b", "0.0.0.0:5000", "app:app"]
+# CMD ["gunicorn", "-b", "0.0.0.0:5000", "app:app"]
+CMD ["gunicorn", "-b", "0.0.0.0:5000", "-w", "2", "app:app"]
