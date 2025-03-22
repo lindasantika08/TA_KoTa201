@@ -15,8 +15,8 @@
             <ul class="flex flex-col space-y-4">
                 <li>
                     <a
-                        :href="'/admin/dashboard'"
-                        :class="{ 'bg-gray-200': isActive('/admin/dashboard') }"
+                        :href="'/sispa/admin/dashboard'"
+                        :class="{ 'bg-gray-200': isActive('/sispa/admin/dashboard') }"
                         class="block px-4 py-2 rounded hover:bg-gray-100 text-base font-medium"
                     >
                         <font-awesome-icon
