@@ -53,7 +53,7 @@ export default {
             );
         },
         handleListAnswer(item) {
-            router.get('/dosen/answers-self-assessment', {
+            router.get('/sispa/dosen/answers-self-assessment', {
                 batch_year: item.batch_year,
                 project_name: item.project_name,
                 assessment_order: item.assessment_order,

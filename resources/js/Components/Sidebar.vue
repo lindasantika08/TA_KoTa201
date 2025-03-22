@@ -29,8 +29,8 @@
             @click="toggleAssessmentMenu"
             :class="{
               'bg-white':
-                isActive('/dosen/assessment/projectsSelf') ||
-                isActive('/dosen/assessment/projectsPeer'),
+                isActive('/sispa/dosen/assessment/projectsSelf') ||
+                isActive('/sispa/dosen/assessment/projectsPeer'),
             }"
             class="w-full text-left px-4 py-2 rounded flex justify-start hover:bg-gray-100"
           >
@@ -47,7 +47,7 @@
               <a
                 @click="goToCreateAssessment"
                 :class="{
-                  'bg-gray-200': isActive('/dosen/assessment/create'),
+                  'bg-gray-200': isActive('/sispa/dosen/assessment/create'),
                 }"
                 class="block px-4 py-2 rounded cursor-pointer hover:bg-gray-100 text-sm"
               >
@@ -62,7 +62,7 @@
               <a
                 @click="goToSelfAssessment"
                 :class="{
-                  'bg-gray-200': isActive('/dosen/assessment/projects-self'),
+                  'bg-gray-200': isActive('/sispa/dosen/assessment/projects-self'),
                 }"
                 class="block px-4 py-2 rounded cursor-pointer hover:bg-gray-100 text-sm"
               >
@@ -74,7 +74,7 @@
               <a
                 @click="goToPeerAssessment"
                 :class="{
-                  'bg-gray-200': isActive('/dosen/assessment/projects-peer'),
+                  'bg-gray-200': isActive('/sispa/dosen/assessment/projects-peer'),
                 }"
                 class="block px-4 py-2 rounded cursor-pointer hover:bg-gray-100 text-sm"
               >

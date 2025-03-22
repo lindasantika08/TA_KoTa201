@@ -58,7 +58,7 @@ export default {
         });
 
         const changeOrder = (newOrder) => {
-            router.get('/dosen/assessment/data-with-bobot-self', {
+            router.get('/sispa/dosen/assessment/data-with-bobot-self', {
                 batch_year: props.batchYear,
                 project_name: props.projectName,
                 assessment_order: newOrder
