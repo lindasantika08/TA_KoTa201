@@ -28,9 +28,7 @@ use App\Http\Controllers\Mahasiswa\ProfileMahasiswa;
 use App\Http\Controllers\Mahasiswa\NotificationMahasiswa;
 
 use App\Http\Controllers\AuthController;
-use App\Http\Middleware\Authenticate;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 Route::prefix('sispa')->group(function () {
     Route::get('/', function () {
