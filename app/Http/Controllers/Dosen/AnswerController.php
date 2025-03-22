@@ -199,53 +199,33 @@ class AnswerController extends Controller
                 ], 404);
             }
 
-            // Get all groups for this specific project with their members and class information
-            $allGroups = Group::where('project_id', $project->id)
-                ->with(['mahasiswa.classRoom'])
-                ->select('id', 'group', 'project_id', 'mahasiswa_id')
-                ->get();
+            // Get all groups for this specific project
+            $groups = Group::where('project_id', $project->id)
+                ->select('id', 'group', 'project_id')
+                ->distinct('group')
+                ->get()
+                ->groupBy('group');
 
-            // Group the groups by group name AND class_id
-            $uniqueGroups = $allGroups->groupBy(function ($group) {
-                return $group->group . '_' . ($group->mahasiswa->class_id ?? 'unknown');
-            })->map(function ($groups) {
-                $firstMember = $groups->first()->mahasiswa;
-                return [
-                    'group_id' => $groups->first()->id,
-                    'group_name' => $groups->first()->group,
-                    'project_id' => $groups->first()->project_id,
-                    'class_id' => $firstMember ? $firstMember->class_id : null,
-                    'class_name' => $firstMember && $firstMember->classRoom ? $firstMember->classRoom->class_name : null
-                ];
-            })->values();
+            $groupStatistics = collect();
 
-            $groupStatistics = $uniqueGroups->map(function ($uniqueGroup) use ($project) {
-                // Find all members for this specific group and class
-                $groupMembers = Mahasiswa::whereHas('group', function ($query) use ($uniqueGroup, $project) {
+            foreach ($groups as $groupName => $groupEntries) {
+                // Find all members for this specific group regardless of class
+                $groupMembers = Mahasiswa::whereHas('group', function ($query) use ($groupName, $project) {
                     $query->where('project_id', $project->id)
-                        ->where('group', $uniqueGroup['group_name']);
+                        ->where('group', $groupName);
                 })
-                    ->where('class_id', $uniqueGroup['class_id'])
                     ->with('user', 'classRoom')
                     ->get();
 
                 // Log for debugging
                 Log::info('Group details', [
-                    'group_name' => $uniqueGroup['group_name'],
-                    'class_id' => $uniqueGroup['class_id'],
+                    'group_name' => $groupName,
                     'member_count' => $groupMembers->count()
                 ]);
 
-                // If no members found
+                // Skip if no members found
                 if ($groupMembers->isEmpty()) {
-                    return [
-                        'group_id' => $uniqueGroup['group_id'],
-                        'group_name' => $uniqueGroup['group_name'],
-                        'is_completed' => false,
-                        'total_members' => 0,
-                        'class_id' => $uniqueGroup['class_id'],
-                        'class_name' => $uniqueGroup['class_name']
-                    ];
+                    continue;
                 }
 
                 // Check if every member has completed peer assessments for every other member
@@ -263,38 +243,76 @@ class AnswerController extends Controller
                     });
                 });
 
-                return [
-                    'group_id' => $uniqueGroup['group_id'],
-                    'group_name' => $uniqueGroup['group_name'],
+                // Get all classes that have members in this group
+                $classesInGroup = $groupMembers->pluck('classRoom')
+                    ->filter()
+                    ->unique('id')
+                    ->values();
+
+                $groupStatInfo = [
+                    'group_id' => $groupEntries->first()->id,
+                    'group_name' => $groupName,
                     'is_completed' => $isGroupCompleted,
                     'total_members' => $groupMembers->count(),
-                    'class_id' => $uniqueGroup['class_id'],
-                    'class_name' => $uniqueGroup['class_name'],
+                    'classes' => $classesInGroup->map(function ($class) {
+                        return [
+                            'class_id' => $class->id,
+                            'class_name' => $class->class_name
+                        ];
+                    }),
                     'members' => $groupMembers->map(function ($member) {
                         return [
                             'id' => $member->id,
                             'nim' => $member->nim,
                             'name' => $member->user->name ?? null,
+                            'class_id' => $member->class_id,
                             'class_name' => $member->classRoom->class_name ?? null
                         ];
                     })
                 ];
-            });
 
-            // Group statistics by class for better organization
-            $statisticsByClass = $groupStatistics->groupBy('class_id')
-                ->map(function ($groups) {
-                    $totalGroups = $groups->count();
-                    $completedGroups = $groups->where('is_completed', true)->count();
+                $groupStatistics->push($groupStatInfo);
+            }
 
-                    return [
-                        'class_name' => $groups->first()['class_name'],
-                        'totalGroups' => $totalGroups,
-                        'completedGroups' => $completedGroups,
-                        'incompleteGroups' => $totalGroups - $completedGroups,
-                        'groups' => $groups
-                    ];
-                });
+            // Organize statistics by class (now a group can appear in multiple classes)
+            $classIds = $groupStatistics->pluck('members')
+                ->flatten(1)
+                ->pluck('class_id')
+                ->unique()
+                ->filter();
+
+            $statisticsByClass = collect();
+
+            foreach ($classIds as $classId) {
+                // Get class name from the first member we find with this class
+                $className = null;
+                foreach ($groupStatistics as $group) {
+                    foreach ($group['members'] as $member) {
+                        if ($member['class_id'] == $classId) {
+                            $className = $member['class_name'];
+                            break 2;
+                        }
+                    }
+                }
+
+                // Get groups that have at least one member in this class
+                $groupsInClass = $groupStatistics->filter(function ($group) use ($classId) {
+                    return $group['members']->contains(function ($member) use ($classId) {
+                        return $member['class_id'] == $classId;
+                    });
+                })->values();
+
+                $totalGroups = $groupsInClass->count();
+                $completedGroups = $groupsInClass->where('is_completed', true)->count();
+
+                $statisticsByClass->put($classId, [
+                    'class_name' => $className,
+                    'totalGroups' => $totalGroups,
+                    'completedGroups' => $completedGroups,
+                    'incompleteGroups' => $totalGroups - $completedGroups,
+                    'groups' => $groupsInClass
+                ]);
+            }
 
             // Calculate overall statistics
             $totalGroups = $groupStatistics->count();

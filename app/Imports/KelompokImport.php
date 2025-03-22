@@ -23,9 +23,9 @@ class KelompokImport implements ToModel, WithHeadingRow, SkipsOnError
         'nim',
         'angkatan',
         'proyek',
-        'kelas',
         'kode_dosen',
         'kelompok'
+        // Removed 'kelas' from required columns
     ];
 
     public function model(array $row)
@@ -65,15 +65,7 @@ class KelompokImport implements ToModel, WithHeadingRow, SkipsOnError
                 throw new \Exception("Angkatan tidak sesuai untuk mahasiswa dengan nim {$row['nim']}");
             }
 
-            // Validate class
-            if ($mahasiswa->classRoom->class_name != $row['kelas']) {
-                Log::warning('Class mismatch:', [
-                    'nim' => $row['nim'],
-                    'mahasiswa_class' => $mahasiswa->classRoom->class_name,
-                    'input_class' => $row['kelas']
-                ]);
-                throw new \Exception("Kelas tidak sesuai untuk mahasiswa dengan nim {$row['nim']}");
-            }
+            // Class validation removed - we no longer check if classes match
 
             if (!$mahasiswa->classRoom) {
                 Log::warning('Class not found for mahasiswa:', ['nim' => $row['nim']]);
