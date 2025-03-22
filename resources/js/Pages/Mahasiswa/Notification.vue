@@ -32,7 +32,7 @@ export default {
             maxReconnectAttempts: 5,
             reconnectInterval: 5000,
             breadcrumbs: [
-                { text: 'Home', href: '/sispa/mahasiswa' },
+                { text: 'Home', href: '/mahasiswa' },
                 { text: 'Notifications', href: '#' }
             ],
             localNotifications: [],
@@ -167,7 +167,7 @@ export default {
                     
                     const type = notification.type || (response.data.type || '');
                     
-                    let route = '/sispa/mahasiswa/assessment/';
+                    let route = '/mahasiswa/assessment/';
                     if (type.toLowerCase().includes('self')) {
                         route += 'self';
                     } else if (type.toLowerCase().includes('peer')) {

@@ -19,7 +19,7 @@ export default {
   data() {
     return {
       breadcrumbs: [
-        { text: "Manage Dosen", href: "/sispa/dosen/manage-dosen" },
+        { text: "Manage Dosen", href: "/dosen/manage-dosen" },
       ],
       users: [],
       headers: [
@@ -49,10 +49,10 @@ export default {
       }
     },
     inputDosen() {
-      router.visit("/sispa/dosen/manage-dosen/input");
+      router.visit("/dosen/manage-dosen/input");
     },
     detailUser(user_id) {
-      router.visit(`/sispa/dosen/manage-dosen/detail?user_id=${user_id}`);
+      router.visit(`/dosen/manage-dosen/detail?user_id=${user_id}`);
     },
   },
 };

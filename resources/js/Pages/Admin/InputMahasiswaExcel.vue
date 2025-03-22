@@ -16,8 +16,8 @@ export default {
     data() {
         return {
             breadcrumbs: [
-                { text: "Manage Mahasiswa", href: "/sispa/admin/ManageMahasiswa" },
-                { text: "Input", href: "/sispa/admin/manage-mahasiswa/input" },
+                { text: "Manage Mahasiswa", href: "/admin/ManageMahasiswa" },
+                { text: "Input", href: "/admin/manage-mahasiswa/input" },
             ],
         };
     },
@@ -83,7 +83,7 @@ export default {
 
                 // First try to get the blob
                 const response = await axios.get(
-                    "/sispa/admin/manage-mahasiswa/export",
+                    "/admin/manage-mahasiswa/export",
                     {
                         params: {
                             jurusan: selectedJurusan.value,
@@ -175,7 +175,7 @@ export default {
             try {
                 isUploading.value = true;
                 const token = localStorage.getItem("auth_token");
-                await axios.post("/sispa/admin/manage-mahasiswa/import", formData, {
+                await axios.post("/admin/manage-mahasiswa/import", formData, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                         "Content-Type": "multipart/form-data",

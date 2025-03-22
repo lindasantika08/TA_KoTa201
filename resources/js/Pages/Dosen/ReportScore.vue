@@ -35,7 +35,7 @@ export default {
     },
     data() {
         return {
-            breadcrumbs: [{ text: "Laporan", href: "/sispa/dosen/laporan" }],
+            breadcrumbs: [{ text: "Laporan", href: "/dosen/laporan" }],
             userAnalysis: {},
             loading: false,
             error: null,
@@ -579,7 +579,7 @@ export default {
                 <div class="mb-4">
                     <Breadcrumb
                         :items="[
-                            { text: 'Report', href: '/sispa/dosen/report' },
+                            { text: 'Report', href: '/dosen/report' },
                             { text: `${kelompok}`, href: '#' },
                         ]"
                     />

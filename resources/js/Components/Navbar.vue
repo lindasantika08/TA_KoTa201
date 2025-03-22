@@ -123,7 +123,7 @@ export default {
         this.disconnectWebSocket();
         localStorage.removeItem("auth_token");
         localStorage.removeItem("user_data");
-        router.visit("/sispa/login");
+        router.visit("/login");
         this.isLoggingOut = false;
       }
     },

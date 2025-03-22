@@ -27,7 +27,7 @@ export default {
     data() {
         return {
             breadcrumbs: [
-                { text: "Self Assessment", href: "/sispa/mahasiswa/assessment/self" },
+                { text: "Self Assessment", href: "/mahasiswa/assessment/self" },
                 { text: "Detail", href: null },
             ],
             headers: [

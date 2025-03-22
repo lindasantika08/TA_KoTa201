@@ -18,7 +18,7 @@ export default {
     data() {
         return {
             breadcrumbs: [
-                { text: "Manage Project", href: "/sispa/dosen/kelola-proyek" },
+                { text: "Manage Project", href: "/dosen/kelola-proyek" },
             ],
             isModalOpen: false,
             newProject: {

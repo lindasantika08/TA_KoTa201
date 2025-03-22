@@ -24,7 +24,7 @@ export default {
   data() {
     return {
       breadcrumbs: [
-        { text: "Manage Group", href: "/sispa/dosen/kelola-kelompok" },
+        { text: "Manage Group", href: "/dosen/kelola-kelompok" },
       ],
       headers: [
         { label: "Tahun Ajaran", key: "batch_year" },
@@ -104,10 +104,10 @@ export default {
       this.$inertia.get(route("DetailKelompok", { id: kelompokId }));
     },
     createKelompok(url) {
-      router.visit("/sispa/dosen/kelola-kelompok/create");
+      router.visit("/dosen/kelola-kelompok/create");
     },
     goToProfile(user_id) {
-      router.visit(`/sispa/dosen/kelola-kelompok/profile-mhs?user_id=${user_id}`);
+      router.visit(`/dosen/kelola-kelompok/profile-mhs?user_id=${user_id}`);
     }
   },
 };
@@ -164,7 +164,7 @@ export default {
           </DataTable>
         </Card>
 
-        <button @click="createKelompok('/sispa/dosen/kelola-kelompok/create')"
+        <button @click="createKelompok('/dosen/kelola-kelompok/create')"
         class="fixed bottom-8 right-8 flex items-center justify-center w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105">
           <font-awesome-icon :icon="['fas', 'plus']" />
         </button>

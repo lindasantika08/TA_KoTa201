@@ -19,7 +19,7 @@ export default {
   data() {
     return {
       breadcrumbs: [
-        { text: "Peer Assessment", href: "/sispa/dosen/assessment/projects-peer" }
+        { text: "Peer Assessment", href: "/dosen/assessment/projects-peer" }
       ],
       headers: [
         { key: 'no', label: 'No' },
@@ -36,7 +36,7 @@ export default {
   },
   methods: {
     handleDetail(item) {
-      router.get('/sispa/dosen/assessment/data-with-bobot-peer', {
+      router.get('/dosen/assessment/data-with-bobot-peer', {
         batch_year: item.batch_year,
         project_name: item.project_name,
         assessment_order: item.assessment_order
@@ -52,7 +52,7 @@ export default {
     },
 
     handleListAnswer(item) {
-      router.get('/sispa/dosen/answers-peer-assessment', {
+      router.get('/dosen/answers-peer-assessment', {
         batch_year: item.batch_year,
         project_name: item.project_name,
         assessment_order: item.assessment_order,

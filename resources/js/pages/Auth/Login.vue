@@ -63,11 +63,11 @@ export default {
 
                     setTimeout(() => {
                         if (role === "dosen") {
-                            router.visit("/sispa/dosen/dashboard");
+                            router.visit("/dosen/dashboard");
                         } else if (role === "mahasiswa") {
-                            router.visit("/sispa/mahasiswa/dashboard");
+                            router.visit("/mahasiswa/dashboard");
                         } else if (role === "admin") {
-                            router.visit("/sispa/admin/dashboard");
+                            router.visit("/admin/dashboard");
                         }
                     }, 1500);
                 }
@@ -102,7 +102,7 @@ export default {
 
         onMounted(() => {
             if (
-                window.location.pathname === "/sispa/login" &&
+                window.location.pathname === "/login" &&
                 localStorage.getItem("auth_token")
             ) {
                 checkAuthAndRedirect();

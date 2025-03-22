@@ -21,7 +21,7 @@ export default {
             breadcrumbs: [
                 {
                     text: "Self Assessment",
-                    href: "/sispa/dosen/assessment/projects-self",
+                    href: "/dosen/assessment/projects-self",
                 },
             ],
             headers: [
@@ -41,7 +41,7 @@ export default {
     methods: {
         handleDetail(item) {
             router.get(
-                "/sispa/dosen/assessment/data-with-bobot-self",
+                "/dosen/assessment/data-with-bobot-self",
                 {
                     batch_year: item.batch_year,
                     project_name: item.project_name,
@@ -53,7 +53,7 @@ export default {
             );
         },
         handleListAnswer(item) {
-            router.get('/sispa/dosen/answers-self-assessment', {
+            router.get('/dosen/answers-self-assessment', {
                 batch_year: item.batch_year,
                 project_name: item.project_name,
                 assessment_order: item.assessment_order,
