@@ -28,10 +28,11 @@ logging.basicConfig(
 logger = logging.getLogger('flask_app')
 
 # Download resources yang dibutuhkan
-nltk.download('averaged_perceptron_tagger', quiet=True)
-nltk.download('wordnet', quiet=True)
-nltk.download('sentiwordnet', quiet=True)
-nltk.download('punkt', quiet=True)
+nltk.data.path.append('/root/nltk_data')
+# nltk.download('averaged_perceptron_tagger', quiet=True)
+# nltk.download('wordnet', quiet=True)
+# nltk.download('sentiwordnet', quiet=True)
+# nltk.download('punkt', quiet=True)
 
 # Muat model spaCy
 nlp = spacy.load("en_core_web_sm")

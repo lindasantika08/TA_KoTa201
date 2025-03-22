@@ -12,6 +12,12 @@ RUN pip install --upgrade pip setuptools wheel gunicorn
 # Install dependencies dari `requirements.txt`
 RUN pip install --no-cache-dir -r /var/www/TA_201_Flask/requirements.txt
 
+RUN python -c "import nltk; \
+               nltk.download('averaged_perceptron_tagger'); \
+               nltk.download('wordnet'); \
+               nltk.download('sentiwordnet'); \
+               nltk.download('punkt')"
+
 # Download model Spacy
 RUN python -m spacy download en_core_web_sm
 
