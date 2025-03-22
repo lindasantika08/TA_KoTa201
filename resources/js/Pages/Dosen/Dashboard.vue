@@ -72,7 +72,7 @@ export default {
 
       if (needPasswordChange === "true") {
         console.log('Setting up password change notification from localStorage'); // Debug
-        this.showChangePasswordToast = true;
+        this.showChangePasswordToast = false;
         this.needPasswordChange = true;
 
         // Auto-hide toast after 10 seconds
@@ -101,7 +101,7 @@ export default {
 
           if (needPasswordChange) {
             console.log('User needs to change password');
-            this.showChangePasswordToast = true;
+            this.showChangePasswordToast = false;
             this.needPasswordChange = true;
 
             // Simpan ke localStorage agar tetap konsisten
