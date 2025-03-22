@@ -111,11 +111,11 @@ export default {
 
     handleProjectDetail(project) {
       // console.log('Handling project:', {
-        nama_proyek: project.nama_proyek,
-        nama_kelompok: project.nama_kelompok,
-        assessmentDetails: project.assessmentDetails,
-        isAssessmentCompleted: project.isAssessmentCompleted
-      });
+      //  nama_proyek: project.nama_proyek,
+      //  nama_kelompok: project.nama_kelompok,
+      //  assessmentDetails: project.assessmentDetails,
+      //  isAssessmentCompleted: project.isAssessmentCompleted
+      // });
 
       if (!project.isAssessmentCompleted) {
         alert("Assessments are not completed yet.");
