@@ -34,12 +34,6 @@ use Inertia\Inertia;
 
 Route::prefix('sispa')->group(function () {
     Route::get('/', function () {
-        return response()->json([
-            'url' => request()->fullUrl(),
-            'user' => Auth::user(),
-        ]);
-    });
-    Route::get('/', function () {
         $user = Auth::user();
     
         if ($user->role == 'admin') {
