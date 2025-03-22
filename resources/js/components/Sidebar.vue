@@ -15,8 +15,8 @@
       <ul class="flex flex-col space-y-4">
         <li>
           <a
-            :href="'/dosen/dashboard'"
-            :class="{ 'bg-gray-200': isActive('/dosen/dashboard') }"
+            :href="'/sispa/dosen/dashboard'"
+            :class="{ 'bg-gray-200': isActive('/sispa/dosen/dashboard') }"
             class="block px-4 py-2 rounded hover:bg-gray-100 text-base font-medium"
           >
             <font-awesome-icon icon="fa-solid fa-house" class="mr-4" />
@@ -89,8 +89,8 @@
             @click="toggleKelolaProyekMenu"
             :class="{
               'bg-white':
-                isActive('/dosen/kelola-proyek') ||
-                isActive('/dosen/kelola-kelompok'),
+                isActive('/sispa/dosen/kelola-proyek') ||
+                isActive('/sispa/dosen/kelola-kelompok'),
             }"
             class="w-full text-left px-4 py-2 rounded flex justify-start hover:bg-gray-100"
           >
@@ -107,7 +107,7 @@
               <a
                 @click="goToKelolaProyek"
                 :class="{
-                  'bg-gray-200': isActive('/dosen/kelola-proyek'),
+                  'bg-gray-200': isActive('/sispa/dosen/kelola-proyek'),
                 }"
                 class="block px-4 py-2 rounded cursor-pointer hover:bg-gray-100 text-sm"
               >
@@ -122,7 +122,7 @@
               <a
                 @click="goToKelolaKelompok"
                 :class="{
-                  'bg-gray-200': isActive('/dosen/kelola-kelompok'),
+                  'bg-gray-200': isActive('/sispa/dosen/kelola-kelompok'),
                 }"
                 class="block px-4 py-2 rounded cursor-pointer hover:bg-gray-100 text-sm"
               >
@@ -134,8 +134,8 @@
         </li>
         <li>
           <a
-            :href="'/dosen/report'"
-            :class="{ 'bg-gray-200': isActive('/dosen/report') }"
+            :href="'/sispa/dosen/report'"
+            :class="{ 'bg-gray-200': isActive('/sispa/dosen/report') }"
             class="block px-4 py-2 rounded hover:bg-gray-100 text-base font-medium"
           >
             <font-awesome-icon icon="fa-solid fa-chart-line" class="mr-4" />
@@ -145,8 +145,8 @@
 
         <li>
           <a
-            :href="'/dosen/feedback'"
-            :class="{ 'bg-gray-200': isActive('/dosen/feedback') }"
+            :href="'/sispa/dosen/feedback'"
+            :class="{ 'bg-gray-200': isActive('/sispa/dosen/feedback') }"
             class="block px-4 py-2 rounded hover:bg-gray-100 text-base font-medium"
           >
             <font-awesome-icon icon="fa-solid fa-comment-dots" class="mr-4" />
@@ -158,8 +158,8 @@
             @click="toggleKelolaSettingsMenu"
             :class="{
               'bg-white':
-                isActive('/dosen/manage-mahasiswa') ||
-                isActive('/dosen/manage-dosen'),
+                isActive('/sispa/dosen/manage-mahasiswa') ||
+                isActive('/sispa/dosen/manage-dosen'),
             }"
             class="w-full text-left px-4 py-2 rounded flex justify-start hover:bg-gray-100"
           >
@@ -176,7 +176,7 @@
               <a
                 @click="goToKelolaMahasiswa"
                 :class="{
-                  'bg-gray-200': isActive('/dosen/manage-mahasiswa'),
+                  'bg-gray-200': isActive('/sispa/dosen/manage-mahasiswa'),
                 }"
                 class="block px-4 py-2 rounded cursor-pointer hover:bg-gray-100 text-sm"
               >
@@ -211,14 +211,14 @@ export default {
   data() {
     return {
       isAssessmentOpen:
-        this.isActive("/dosen/assessment/projectsSelf") ||
-        this.isActive("/dosen/assessment/projectsPeer") ||
-        this.isActive("/dosen/assessment/create"),
+        this.isActive("/sispa/dosen/assessment/projectsSelf") ||
+        this.isActive("/sispa/dosen/assessment/projectsPeer") ||
+        this.isActive("/sispa/dosen/assessment/create"),
       isKelolaProyekOpen:
-        this.isActive("/dosen/kelola-proyek") ||
-        this.isActive("/dosen/kelola-kelompok"),
+        this.isActive("/sispa/dosen/kelola-proyek") ||
+        this.isActive("/sispa/dosen/kelola-kelompok"),
       isKelolaSettingsOpen:
-        this.isActive("/dosen/manage-mahasiswa"),
+        this.isActive("/sispa/dosen/manage-mahasiswa"),
     };
   },
   methods: {

@@ -164,7 +164,7 @@ export default {
           </DataTable>
         </Card>
 
-        <button @click="createKelompok('/dosen/kelola-kelompok/create')"
+        <button @click="createKelompok('/sispa/dosen/kelola-kelompok/create')"
         class="fixed bottom-8 right-8 flex items-center justify-center w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105">
           <font-awesome-icon :icon="['fas', 'plus']" />
         </button>

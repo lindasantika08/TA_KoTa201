@@ -579,7 +579,7 @@ export default {
                 <div class="mb-4">
                     <Breadcrumb
                         :items="[
-                            { text: 'Report', href: '/dosen/report' },
+                            { text: 'Report', href: '/sispa/dosen/report' },
                             { text: `${kelompok}`, href: '#' },
                         ]"
                     />

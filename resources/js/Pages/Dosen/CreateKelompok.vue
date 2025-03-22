@@ -53,7 +53,7 @@ export default {
       try {
         const token = localStorage.getItem("auth_token");
 
-        const response = await axios.get("/dosen/kelola-kelompok/export", {
+        const response = await axios.get("/sispa/dosen/kelola-kelompok/export", {
           params: {
             batch_year: selectedProject.value.batch_year,
             semester: selectedProject.value.semester,

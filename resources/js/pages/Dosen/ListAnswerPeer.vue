@@ -80,7 +80,7 @@ export default {
   },
 
     handleDetail(item) {
-      router.get("/dosen/answers-peer-assessment", {
+      router.get("/sispa/dosen/answers-peer-assessment", {
         tahun_ajaran: this.tahun_ajaran,
         nama_proyek: this.nama_proyek,
         kelompok: item.kelompok,
