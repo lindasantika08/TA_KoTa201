@@ -126,7 +126,7 @@ export default {
     async checkUserStatus() {
       console.log('Checking user status from API...'); // Debugging
       try {
-        const response = await axios.get("/sispa/api/user/status");
+        const response = await axios.get("/api/user/status");
         console.log('User status response:', response.data);
 
         // Pastikan properti change_password ada
@@ -162,7 +162,7 @@ export default {
     },
     fetchProjectData() {
       axios
-        .get("/sispa/api/projects-user")
+        .get("/api/projects-user")
         .then((response) => {
           this.projects = response.data.projects;
           if (this.projects.length > 0) {
@@ -175,7 +175,7 @@ export default {
     },
     fetchSelfAssessmentStatus(projectName) {
       axios
-        .get(`/sispa/api/assessment-status`, {
+        .get(`/api/assessment-status`, {
           params: { project: projectName },
         })
         .then((response) => {
@@ -195,7 +195,7 @@ export default {
     },
     fetchPeerAssessmentDetails(projectName) {
       axios
-        .get("/sispa/api/count-peer", {
+        .get("/api/count-peer", {
           params: { project: projectName },
         })
         .then((response) => {

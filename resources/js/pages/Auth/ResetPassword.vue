@@ -77,7 +77,7 @@ export default {
   methods: {
     async resetPassword() {
       try {
-        const response = await axios.post('/sispa/api/reset-password', {
+        const response = await axios.post('/api/reset-password', {
           token: this.token,
           email: this.formData.email,
           password: this.formData.password,

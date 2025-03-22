@@ -161,8 +161,8 @@ export default {
     onMounted(async () => {
       try {
         const [projectsResponse, angkatanResponse] = await Promise.all([
-          axios.get("/sispa/api/project-dropdown"),
-          axios.get("/sispa/api/get-angkatan"),
+          axios.get("/api/project-dropdown"),
+          axios.get("/api/get-angkatan"),
         ]);
 
         projects.value = projectsResponse.data;

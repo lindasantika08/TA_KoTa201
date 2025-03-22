@@ -160,7 +160,7 @@ export default {
         
         async markAsRead(notification) {
             try {
-                const response = await axios.post(`/sispa/api/notifications/${notification.id}/read`);
+                const response = await axios.post(`/api/notifications/${notification.id}/read`);
                 if (response.data.success) {
                     notification.read_at = new Date();
                     this.localUnreadCount = Math.max(0, this.localUnreadCount - 1);
@@ -186,7 +186,7 @@ export default {
 
         async markAllAsRead() {
             try {
-                const response = await axios.post('/sispa/api/notifications/read-all');
+                const response = await axios.post('/api/notifications/read-all');
                 if (response.data.success) {
                     this.localNotifications.forEach(notification => {
                         notification.read_at = new Date();
@@ -203,7 +203,7 @@ export default {
             
             try {
                 this.loading = true;
-                const response = await axios.get('/sispa/api/notifications/get');
+                const response = await axios.get('/api/notifications/get');
                 
                 if (response.data.success) {
                     this.localNotifications = this.processNotifications(response.data.data.notifications);

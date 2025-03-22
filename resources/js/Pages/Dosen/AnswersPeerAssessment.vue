@@ -1058,7 +1058,7 @@ export default {
             this.loading = true;
             this.error = null;
             try {
-                const response = await axios.get("/sispa/api/answersPeer/list", {
+                const response = await axios.get("/api/answersPeer/list", {
                     params: {
                         batch_year: this.batch_year,
                         project_name: this.project_name,

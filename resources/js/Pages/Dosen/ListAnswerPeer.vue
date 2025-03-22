@@ -47,7 +47,7 @@ export default {
   methods: {
     fetchAnswers() {
     axios
-      .get("/sispa/api/answersKelompokPeer/list", {
+      .get("/api/answersKelompokPeer/list", {
         params: {
           tahun_ajaran: this.tahun_ajaran,
           nama_proyek: this.nama_proyek,

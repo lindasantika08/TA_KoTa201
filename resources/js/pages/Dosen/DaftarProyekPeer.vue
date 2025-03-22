@@ -73,7 +73,7 @@ export default {
         return i;
       });
 
-      axios.post('/sispa/api/toggle-publish-assessment-peer', {
+      axios.post('/api/toggle-publish-assessment-peer', {
         project_id: item.id,
         batch_year: item.batch_year,
         project_name: item.project_name,
@@ -118,7 +118,7 @@ export default {
     }
   },
   mounted() {
-    axios.get('/sispa/api/proyek-Peer-assessment')
+    axios.get('/api/proyek-Peer-assessment')
       .then(response => {
         this.updateItems(response.data);
       })

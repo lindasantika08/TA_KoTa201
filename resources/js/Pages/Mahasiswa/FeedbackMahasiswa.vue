@@ -39,7 +39,7 @@ export default {
       this.error = null;
       
       try {
-        const response = await axios.get("/sispa/api/mahasiswa/projects");
+        const response = await axios.get("/api/mahasiswa/projects");
         console.log('Projects API response:', response.data);
         
         if (response.data.success) {
@@ -60,7 +60,7 @@ export default {
 
     async fetchAssessmentStatuses() {
       try {
-        const response = await axios.get("/sispa/api/mahasiswa/feedback");
+        const response = await axios.get("/api/mahasiswa/feedback");
         console.log('Feedback API response:', response.data);
         
         if (response.data.status === 'success' && response.data.projects) {

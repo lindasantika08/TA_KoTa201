@@ -55,7 +55,7 @@ export default {
     async fetchMajors() {
       this.isLoading = true;
       try {
-        const response = await axios.get("/sispa/api/get-major");
+        const response = await axios.get("/api/get-major");
         this.majors = response.data.map((item, index) => ({
           no: index + 1,
           major_name: item.major_name,
@@ -78,7 +78,7 @@ export default {
       }
       this.isLoading = true;
       try {
-        const response = await axios.post("/sispa/api/add-major", {
+        const response = await axios.post("/api/add-major", {
           major_name: this.newMajor,
         });
 
@@ -105,7 +105,7 @@ export default {
       }
       this.isLoading = true;
       try {
-        const response = await axios.post("/sispa/api/delete-major", {
+        const response = await axios.post("/api/delete-major", {
           major_name: majorName,
         });
 
@@ -132,7 +132,7 @@ export default {
       }
       this.isLoading = true;
       try {
-        const response = await axios.post("/sispa/api/edit-major", {
+        const response = await axios.post("/api/edit-major", {
           old_major_name: this.originalMajor,
           new_major_name: this.editedMajor,
         });

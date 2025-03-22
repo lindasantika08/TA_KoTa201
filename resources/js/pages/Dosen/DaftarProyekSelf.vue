@@ -72,7 +72,7 @@ export default {
                 return i;
             });
 
-            axios.post('/sispa/api/toggle-publish-assessment', {
+            axios.post('/api/toggle-publish-assessment', {
                 project_id: item.id,
                 batch_year: item.batch_year,
                 project_name: item.project_name,
@@ -117,7 +117,7 @@ export default {
 
         fetchData() {
             this.loading = true;
-            axios.get('/sispa/api/proyek-self-assessment')
+            axios.get('/api/proyek-self-assessment')
                 .then(response => {
                     console.log('Raw API response:', response.data);
                     this.updateItems(response.data);

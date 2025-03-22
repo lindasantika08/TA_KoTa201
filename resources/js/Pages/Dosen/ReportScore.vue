@@ -70,7 +70,7 @@ export default {
 
             try {
                 const response = await axios.get(
-                    "/sispa/api/report/kelompok/answers",
+                    "/api/report/kelompok/answers",
                     {
                         params: {
                             batch_year: this.batch_year,
@@ -89,7 +89,7 @@ export default {
 
         async fetchPeerQuestions() {
             try {
-                const response = await axios.get("/sispa/api/questions-peer-dosen", {
+                const response = await axios.get("/api/questions-peer-dosen", {
                     params: {
                         batch_year: this.batch_year,
                         project_name: this.project_name,

@@ -73,7 +73,7 @@ export default {
         fetchStatistics() {
             this.isLoading = true;
             axios
-                .get("/sispa/api/answers/statistics", {
+                .get("/api/answers/statistics", {
                     params: {
                         batch_year: this.batch_year,
                         project_id: this.project_id,
