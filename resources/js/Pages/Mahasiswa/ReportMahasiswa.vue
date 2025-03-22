@@ -64,9 +64,9 @@ export default {
 
     
     handleProjectDetail(project) {
-      console.log("Batch Year:", project.tahun_ajaran);
-      console.log("Project Name:", project.nama_proyek);
-      console.log("Group:", project.nama_kelompok);
+      // console.log("Batch Year:", project.tahun_ajaran);
+      // console.log("Project Name:", project.nama_proyek);
+      // console.log("Group:", project.nama_kelompok);
 
       // Navigasi menggunakan Vue Router dari Inertia.js
       router.get(

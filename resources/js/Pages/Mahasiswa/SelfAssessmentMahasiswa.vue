@@ -95,13 +95,13 @@ export default {
     methods: {
 
         async fetchQuestions() {
-            console.log('Fetching questions started');
+            // console.log('Fetching questions started');
             this.loading = true;
             this.error = null;
 
             try {
-                console.log('Tahun Ajaran:', this.batch_year);
-                console.log('Nama Proyek:', this.project_name);
+                // console.log('Tahun Ajaran:', this.batch_year);
+                // console.log('Nama Proyek:', this.project_name);
 
                 const response = await axios.get('/sispa/api/questions', {
                     params: {
@@ -111,11 +111,11 @@ export default {
                     }
                 });
 
-                console.log('API Response:', response);
+                // console.log('API Response:', response);
 
                 if (response.data && Array.isArray(response.data)) {
                     this.questions = response.data;
-                    console.log('Questions loaded:', this.questions.length);
+                    // console.log('Questions loaded:', this.questions.length);
                     this.loading = false;
                     await this.loadExistingAnswer();
                 } else {
@@ -154,7 +154,7 @@ export default {
         },
         setScore(value) {
             this.score = value;
-            console.log('Score set to:', value);
+            // console.log('Score set to:', value);
         },
 
         async submitAnswer() {

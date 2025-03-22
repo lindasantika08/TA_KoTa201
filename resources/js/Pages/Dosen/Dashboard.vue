@@ -64,20 +64,20 @@ export default {
   },
   methods: {
     checkPasswordChangeStatus() {
-      console.log('Checking password change status...'); // Debugging
+      // console.log('Checking password change status...'); // Debugging
 
       // Cek apakah need_password_change ada di localStorage
       const needPasswordChange = localStorage.getItem("need_password_change");
-      console.log('Need password change from localStorage:', needPasswordChange); // Debug
+      // console.log('Need password change from localStorage:', needPasswordChange); // Debug
 
       if (needPasswordChange === "true") {
-        console.log('Setting up password change notification from localStorage'); // Debug
+        // console.log('Setting up password change notification from localStorage'); // Debug
         this.showChangePasswordToast = false;
         this.needPasswordChange = true;
 
         // Auto-hide toast after 10 seconds
         this.toastTimeout = setTimeout(() => {
-          console.log('Hiding toast after timeout');
+          // console.log('Hiding toast after timeout');
           this.showChangePasswordToast = false;
         }, 10000);
       } else {
@@ -87,20 +87,20 @@ export default {
     },
 
     async checkUserStatus() {
-      console.log('Checking user status from API...'); // Debugging
+      // console.log('Checking user status from API...'); // Debugging
       try {
         const response = await axios.get("/sispa/api/user/status");
-        console.log('User status response:', response.data);
+        // console.log('User status response:', response.data);
 
         // Pastikan properti change_password ada
         if (response.data.hasOwnProperty('change_password')) {
-          console.log("Raw change_password value from API:", response.data.change_password);
+          // console.log("Raw change_password value from API:", response.data.change_password);
 
           // Perbaiki logika penentuan need_password_change
           const needPasswordChange = !response.data.change_password;
 
           if (needPasswordChange) {
-            console.log('User needs to change password');
+            // console.log('User needs to change password');
             this.showChangePasswordToast = false;
             this.needPasswordChange = true;
 
@@ -109,11 +109,11 @@ export default {
 
             // Auto-hide toast after 10 seconds
             this.toastTimeout = setTimeout(() => {
-              console.log('Hiding toast after timeout');
+              // console.log('Hiding toast after timeout');
               this.showChangePasswordToast = false;
             }, 10000);
           } else {
-            console.log('User does not need to change password');
+            // console.log('User does not need to change password');
             localStorage.removeItem("need_password_change");
           }
         } else {
@@ -183,20 +183,20 @@ export default {
           },
         })
         .then((response) => {
-          console.log("=== Peer Statistics Response ===");
-          console.log("Total Groups:", response.data.totalGroup);
-          console.log("Completed Groups:", response.data.groupSudahLengkap);
-          console.log("Incomplete Groups:", response.data.groupBelumLengkap);
-          console.log("Group Statistics:", response.data.groupStatistics);
-          console.log("Full Response:", response.data);
+          // console.log("=== Peer Statistics Response ===");
+          // console.log("Total Groups:", response.data.totalGroup);
+          // console.log("Completed Groups:", response.data.groupSudahLengkap);
+          // console.log("Incomplete Groups:", response.data.groupBelumLengkap);
+          // console.log("Group Statistics:", response.data.groupStatistics);
+          // console.log("Full Response:", response.data);
 
           // Detailed logging for each group
           response.data.groupStatistics.forEach((group, index) => {
-            console.log(`\nGroup ${index + 1} Details:`);
-            console.log("Group ID:", group.group_id);
-            console.log("Group Name:", group.group_name);
-            console.log("Is Completed:", group.is_completed);
-            console.log("Total Members:", group.total_members);
+            // console.log(`\nGroup ${index + 1} Details:`);
+            // console.log("Group ID:", group.group_id);
+            // console.log("Group Name:", group.group_name);
+            // console.log("Is Completed:", group.is_completed);
+            // console.log("Total Members:", group.total_members);
           });
 
           this.totalGroups = response.data.totalGroup;
@@ -283,7 +283,7 @@ export default {
       }
     },
     handleChangePassword() {
-      console.log('Handling password change...'); // Debug
+      // console.log('Handling password change...'); // Debug
       this.showChangePasswordToast = false;
       this.needPasswordChange = false;
       localStorage.removeItem("need_password_change");

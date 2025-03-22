@@ -68,7 +68,7 @@ export default {
   mounted() {
     axios.get('/sispa/api/peer-assessment')
       .then(response => {
-        console.log('API Response:', response.data);
+        // console.log('API Response:', response.data);
         this.items = response.data.assessments.map((item, index) => ({
           id: item.id,
           no: index + 1,
@@ -79,7 +79,7 @@ export default {
           date: dayjs(item.created_at).format('DD MMMM YYYY HH:mm'),
           total_questions: item.total_questions,
         }));
-        console.log('Mapped items:', this.items);
+        // console.log('Mapped items:', this.items);
       })
       .catch(error => {
         console.error('There was an error fetching data:', error);

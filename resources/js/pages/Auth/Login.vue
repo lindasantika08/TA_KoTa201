@@ -34,7 +34,7 @@ export default {
                 });
 
                 // Tambahkan log untuk memeriksa response
-                console.log("Response Login:", response.data);
+                // console.log("Response Login:", response.data);
 
                 if (response.data.token) {
                     // showSuccessMessage.value = true;
@@ -47,7 +47,7 @@ export default {
                     );
                     // Cek kondisi need_password_change dari response
                     if (response.data.need_password_change) {
-                        console.log("Setting need_password_change flag"); // Debug
+                        // console.log("Setting need_password_change flag"); // Debug
                         localStorage.setItem("need_password_change", "true");
                     } else {
                         // Pastikan untuk menghapus item jika tidak perlu ganti password

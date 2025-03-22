@@ -74,7 +74,7 @@ const fetchKelompok = async () => {
             kelompokList.value = response.data.kelompok || [];
         } else {
             kelompokList.value = [];
-            console.log(response.data.message);
+            // console.log(response.data.message);
         }
     } catch (error) {
         console.error("Error fetching kelompok data:", error);
@@ -108,7 +108,7 @@ const handleReportKelompokDetail = (kelompok) => {
     const firstMember = kelompok.anggota[0];
     const classId = firstMember?.class_id;
 
-    console.log("firstmember :", kelompok.anggota[0]);
+    // console.log("firstmember :", kelompok.anggota[0]);
     window.location.href = `/sispa/dosen/kelompok/report-detail?batch_year=${selectedOption.value.batch_year}&project_name=${selectedOption.value.project_name}&kelompok=${kelompok.nama_kelompok}&class_id=${classId}`;
 };
 

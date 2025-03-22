@@ -42,9 +42,9 @@ export default {
       const project_name = item.project_name;
       const assessment_order = item.assessment_order || '1'; 
 
-      console.log('Batch Year:', batch_year);
-      console.log('Project Name:', project_name);
-      console.log('Assessment Order:', assessment_order);
+      // console.log('Batch Year:', batch_year);
+      // console.log('Project Name:', project_name);
+      // console.log('Assessment Order:', assessment_order);
 
       router.visit(`/sispa/mahasiswa/assessment/self-assessment`, {
         method: 'get',

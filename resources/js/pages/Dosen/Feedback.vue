@@ -65,7 +65,7 @@ const fetchKelompok = async () => {
       kelompokList.value = response.data.kelompok || [];
     } else {
       kelompokList.value = [];
-      console.log(response.data.message);
+      // console.log(response.data.message);
     }
   } catch (error) {
     console.error("Error fetching kelompok data:", error);

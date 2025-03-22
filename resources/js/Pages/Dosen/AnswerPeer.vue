@@ -101,13 +101,13 @@ export default {
 
     methods: {
         async fetchQuestions() {
-            console.log('Fetching questions started');
+            // console.log('Fetching questions started');
             this.loading = true;
             this.error = null;
 
             try {
-                console.log('Tahun Ajaran:', this.tahunAjaran);
-                console.log('Nama Proyek:', this.namaProyek);
+                // console.log('Tahun Ajaran:', this.tahunAjaran);
+                // console.log('Nama Proyek:', this.namaProyek);
 
                 const params = {
                     batch_year: this.tahunAjaran,
@@ -117,11 +117,11 @@ export default {
 
                 const response = await axios.get('/sispa/api/questions-peer-dosen', { params });
 
-                console.log('API Response:', response);
+                // console.log('API Response:', response);
 
                 if (response.data && Array.isArray(response.data)) {
                     this.questions = response.data;
-                    console.log('Questions loaded:', this.questions.length);
+                    // console.log('Questions loaded:', this.questions.length);
                     this.loading = false;
                 } else {
                     throw new Error('Invalid response format');
@@ -142,7 +142,7 @@ export default {
                 const response = await axios.get('/sispa/api/user-info-dosen');
                 if (response.data) {
                     this.studentInfo = response.data;
-                    console.log('Student Info:', this.studentInfo.id);
+                    // console.log('Student Info:', this.studentInfo.id);
                     this.studentInfo.project = this.namaProyek;
                 }
             } catch (error) {
@@ -151,7 +151,7 @@ export default {
         },
         setScore(value) {
             this.score = value;
-            console.log('Score set to:', value);
+            // console.log('Score set to:', value);
         },
 
         loadSavedState() {
@@ -220,7 +220,7 @@ export default {
             try {
                 this.saveTemporaryAnswer();
 
-                console.log('Temporary Answers:', this.temporaryAnswers);
+                // console.log('Temporary Answers:', this.temporaryAnswers);
 
                 const answersToSubmit = Object.entries(this.temporaryAnswers)
                     .filter(([questionId, data]) => data.answer && data.score !== undefined)
@@ -232,7 +232,7 @@ export default {
                         status: "submitted"
                     }));
 
-                console.log('Answers to submit:', answersToSubmit);
+                // console.log('Answers to submit:', answersToSubmit);
 
                 if (answersToSubmit.length === 0) {
                     throw new Error('Tidak ada jawaban yang dapat dikirim');
