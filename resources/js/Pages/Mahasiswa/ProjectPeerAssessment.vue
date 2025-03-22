@@ -40,7 +40,7 @@ export default {
       const project_name = item.project_name;
       const assessment_order = item.assessment_order || '1';
 
-      router.visit(`/mahasiswa/assessment/peer-assessment`, {
+      router.visit(`/sispa/mahasiswa/assessment/peer-assessment`, {
         method: 'get',
         data: {
           batch_year: batch_year,
@@ -54,7 +54,7 @@ export default {
       });
     },
     handleDetail(item) {
-      router.visit(`/mahasiswa/peer-assessment/peer-detail`, {
+      router.visit(`/sispa/mahasiswa/peer-assessment/peer-detail`, {
         method: 'get',
         data: {
             batch_year: item.batch_year,

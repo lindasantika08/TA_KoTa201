@@ -165,6 +165,9 @@ export default {
                 return;
             }
 
+            // Save the current answer to temporary storage first
+            this.saveTemporaryAnswer();
+
             try {
                 const response = await axios.post('/sispa/api/save-answer-mhs', {
                     answers: [{
@@ -172,10 +175,12 @@ export default {
                         answer: this.answer,
                         score: this.score,
                         status: 'submitted'
-                    }]
+                    }],
+                    temporaryAnswers: this.temporaryAnswers // Send all temporary answers
                 });
 
                 if (response.data.message.includes('successfully')) {
+                    // Remove this answer from temporary storage as it's now saved
                     delete this.temporaryAnswers[this.currentQuestion.id];
                     localStorage.setItem('temporaryAnswers', JSON.stringify(this.temporaryAnswers));
 

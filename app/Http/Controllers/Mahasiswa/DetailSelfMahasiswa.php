@@ -52,7 +52,7 @@ class DetailSelfMahasiswa extends Controller
         $userInfo = [
             'nim' => $mahasiswa->nim,
             'name' => $user->name,
-            'class' => $mahasiswa->classRoom ? $mahasiswa->classRoom->name : '',
+            'class' => $mahasiswa->classRoom ? $mahasiswa->classRoom->class_name : '',
             'group' => $group->group,
             'project' => $group->project->project_name,
             'date' => now()->format('d F Y')
