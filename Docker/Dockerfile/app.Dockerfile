@@ -36,9 +36,6 @@ RUN apt-get update && apt-get install -y apache2
 
 RUN a2enmod rewrite headers
 
-# Copy Apache virtual host configuration
-COPY Docker/apache/apache.conf /etc/apache2/sites-available/000-default.conf
-
 # Install composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
@@ -54,6 +51,7 @@ RUN chown -R www-data:www-data /var/www
 RUN chown -R www-data:www-data /var/log/supervisor
 RUN chown -R www-data:www-data /var/log/apache2
 RUN chmod -R 755 /var/log/supervisor
+RUN chmod -R 755 /var/log/apache2
 RUN chmod +x /var/www/artisan
 
 # Install dependency
@@ -69,6 +67,9 @@ EXPOSE 80
 
 # Tambahkan konfigurasi supervisor
 COPY Docker/supervisor/ /etc/
+
+# Copy Apache virtual host configuration
+COPY Docker/apache/apache.conf /etc/apache2/sites-available/000-default.conf
 
 COPY prod-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/prod-entrypoint.sh
