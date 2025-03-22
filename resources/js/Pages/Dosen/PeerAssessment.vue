@@ -17,7 +17,7 @@ export default {
     data() {
         return {
             breadcrumbs: [
-                { text: "Peer Assessment", href: "/sispa/dosen/assessment/projectsPeer" },
+                { text: "Peer Assessment", href: "/dosen/assessment/projectsPeer" },
                 { text: "Detail", href: null }
             ],
         }

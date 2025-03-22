@@ -12,8 +12,8 @@ export default {
     data() {
         return {
             isAssessmentOpen:
-                this.isActive("/sispa/mahasiswa/self") || this.isActive("/sispa/mahasiswa/peer") || this.isActive("/sispa/mahasiswa/assessment/create"),
-            isKelolaProyekOpen: this.isActive("/sispa/mahasiswa/kelola-proyek") || this.isActive("/sispa/mahasiswa/kelola-kelompok"),
+                this.isActive("/mahasiswa/self") || this.isActive("/mahasiswa/peer") || this.isActive("/mahasiswa/assessment/create"),
+            isKelolaProyekOpen: this.isActive("/mahasiswa/kelola-proyek") || this.isActive("/mahasiswa/kelola-kelompok"),
         };
     },
     methods: {
@@ -53,7 +53,7 @@ export default {
             </div>
             <ul class="flex flex-col space-y-4">
                 <li>
-                    <a :href="'/sispa/mahasiswa/dashboard'" :class="{ 'bg-gray-200': isActive('/sispa/mahasiswa/dashboard') }"
+                    <a :href="'/mahasiswa/dashboard'" :class="{ 'bg-gray-200': isActive('/mahasiswa/dashboard') }"
                         class="block px-4 py-2 rounded hover:bg-gray-100 text-base font-medium">
                         <font-awesome-icon icon="fa-solid fa-house" class="mr-4" />
                         Dashboard
@@ -63,8 +63,8 @@ export default {
                 <li>
                     <button @click="toggleAssessmentMenu" :class="{
                         'bg-white':
-                            isActive('/sispa/mahasiswa/assessment/self') ||
-                            isActive('/sispa/mahasiswa/assessment/peer'),
+                            isActive('/mahasiswa/assessment/self') ||
+                            isActive('/mahasiswa/assessment/peer'),
                     }" class="w-full text-left px-4 py-2 rounded flex justify-start hover:bg-gray-100">
                         <font-awesome-icon icon="fa-solid fa-clipboard-list" class="mr-6" />
                         <span class="text-base font-medium">Assessment</span>
@@ -73,7 +73,7 @@ export default {
                     <ul v-if="isAssessmentOpen" class="pl-4 mt-2 space-y-2">
                         <li>
                             <a @click="goToSelfAssessment" :class="{
-                                'bg-gray-200': isActive('/sispa/mahasiswa/self-assessment'),
+                                'bg-gray-200': isActive('/mahasiswa/self-assessment'),
                             }" class="block px-4 py-2 rounded cursor-pointer hover:bg-gray-100 text-sm">
                                 <font-awesome-icon icon="fa-solid fa-user-check" class="mr-4" />
                                 Self Assessment
@@ -81,7 +81,7 @@ export default {
                         </li>
                         <li v-if="role === 'mahasiswa'">
                             <a @click="goToPeerAssessment" :class="{
-                                'bg-gray-200': isActive('/sispa/mahasiswa/peer'),
+                                'bg-gray-200': isActive('/mahasiswa/peer'),
                             }" class="block px-4 py-2 rounded cursor-pointer hover:bg-gray-100 text-sm">
                                 <font-awesome-icon icon="fa-solid fa-users" class="mr-4" />
                                 Peer Assessment
@@ -90,7 +90,7 @@ export default {
                     </ul>
                 </li>
                 <li>
-                    <a :href="'/sispa/mahasiswa/report'" :class="{ 'bg-gray-200': isActive('/sispa/mahasiswa/report') }"
+                    <a :href="'/mahasiswa/report'" :class="{ 'bg-gray-200': isActive('/mahasiswa/report') }"
                         class="block px-4 py-2 rounded hover:bg-gray-100 text-base font-medium">
                         <font-awesome-icon icon="fa-solid fa-chart-line" class="mr-4" />
                         Report
@@ -98,7 +98,7 @@ export default {
                 </li>
 
                 <li>
-                    <a :href="'/sispa/mahasiswa/feedback'" :class="{ 'bg-gray-200': isActive('/sispa/mahasiswa/feedback') }"
+                    <a :href="'/mahasiswa/feedback'" :class="{ 'bg-gray-200': isActive('/mahasiswa/feedback') }"
                         class="block px-4 py-2 rounded hover:bg-gray-100 text-base font-medium">
                         <font-awesome-icon icon="fa-solid fa-comment-dots" class="mr-4" />
                         Feedback

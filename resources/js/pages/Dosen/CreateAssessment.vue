@@ -16,7 +16,7 @@ export default {
   data() {
     return {
       breadcrumbs: [
-        { text: "Create Assessment", href: "/sispa/dosen/assessment/create" },
+        { text: "Create Assessment", href: "/dosen/assessment/create" },
       ],
     };
   },
@@ -101,7 +101,7 @@ export default {
 
       try {
         const token = localStorage.getItem("auth_token");
-        const response = await axios.post("/sispa/dosen/assessment/import", formData, {
+        const response = await axios.post("/dosen/assessment/import", formData, {
           headers: {
             "Content-Type": "multipart/form-data",
             "Authorization": `Bearer ${token}`

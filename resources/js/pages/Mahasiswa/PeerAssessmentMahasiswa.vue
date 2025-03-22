@@ -33,7 +33,7 @@ export default {
     data() {
         return {
             breadcrumbs: [
-                { text: "Assessment", href: "/sispa/mahasiswa/assessment/peer" },
+                { text: "Assessment", href: "/mahasiswa/assessment/peer" },
                 { text: "Peer Assessment", href: null },
             ],
             headers: [
@@ -649,7 +649,7 @@ export default {
                 localStorage.removeItem("temporaryAnswers");
                 localStorage.removeItem("peerAssessmentState");
 
-                window.location.href = "/sispa/mahasiswa/assessment/peer";
+                window.location.href = "/mahasiswa/assessment/peer";
             } catch (error) {
                 console.error("Error submitting answers:", error);
                 alert(

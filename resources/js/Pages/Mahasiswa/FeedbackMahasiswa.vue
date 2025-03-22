@@ -19,7 +19,7 @@ export default {
   data() {
     return {
       breadcrumbs: [
-        { text: "Dashboard", href: "/sispa/mahasiswa/dashboard" },
+        { text: "Dashboard", href: "/mahasiswa/dashboard" },
         { text: "Report", href: null },
       ],
       projectList: [],
@@ -123,7 +123,7 @@ export default {
       }
 
       router.get(
-        "/sispa/mahasiswa/feedback-details",
+        "/mahasiswa/feedback-details",
         {
           tahun_ajaran: project.tahun_ajaran,
           nama_proyek: project.nama_proyek,

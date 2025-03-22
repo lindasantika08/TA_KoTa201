@@ -45,7 +45,7 @@ export default {
     data() {
         return {
             breadcrumbs: [
-                { text: "Assessment", href: "/sispa/mahasiswa/assessment/self" },
+                { text: "Assessment", href: "/mahasiswa/assessment/self" },
                 { text: "Self Assessment", href: null }
             ],
             headers: [
@@ -275,7 +275,7 @@ export default {
                 if (response.data.success) {
                     this.clearFormFields();
                     alert('Semua jawaban berhasil disimpan!');
-                    this.$inertia.visit('/sispa/mahasiswa/assessment/self');
+                    this.$inertia.visit('/mahasiswa/assessment/self');
                 }
             } catch (error) {
                 console.error('Error submitting answers:', error);

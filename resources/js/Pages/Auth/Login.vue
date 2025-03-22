@@ -102,7 +102,7 @@ export default {
 
         onMounted(() => {
             if (
-                window.location.pathname === "/sispa/login" &&
+                window.location.pathname === "/login" &&
                 localStorage.getItem("auth_token")
             ) {
                 checkAuthAndRedirect();

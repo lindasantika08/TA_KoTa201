@@ -838,7 +838,7 @@ export default {
             breadcrumbs: [
                 {
                     text: "Peer Assessment",
-                    href: "/sispa/dosen/assessment/projects-peer",
+                    href: "/dosen/assessment/projects-peer",
                 },
                 { text: "List Answer", href: null },
             ],

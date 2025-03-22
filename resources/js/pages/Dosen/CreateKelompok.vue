@@ -16,8 +16,8 @@ export default {
   data() {
     return {
       breadcrumbs: [
-        { text: "Manage Group", href: "/sispa/dosen/kelola-kelompok" },
-        { text: "Create Group", href: "/sispa/dosen/kelola-kelompok/create" },
+        { text: "Manage Group", href: "/dosen/kelola-kelompok" },
+        { text: "Create Group", href: "/dosen/kelola-kelompok/create" },
       ],
     };
   },
@@ -53,7 +53,7 @@ export default {
       try {
         const token = localStorage.getItem("auth_token");
 
-        const response = await axios.get("/sispa/dosen/kelola-kelompok/export", {
+        const response = await axios.get("/dosen/kelola-kelompok/export", {
           params: {
             batch_year: selectedProject.value.batch_year,
             semester: selectedProject.value.semester,
@@ -131,7 +131,7 @@ export default {
       try {
         isUploading.value = true;
         const token = localStorage.getItem("auth_token");
-        await axios.post("/sispa/dosen/kelola-kelompok/import", formData, {
+        await axios.post("/dosen/kelola-kelompok/import", formData, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",

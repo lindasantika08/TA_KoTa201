@@ -45,7 +45,7 @@ export default {
     data() {
         return {
             breadcrumbs: [
-                { text: "Assessment", href: "/sispa/dosen/assessment/projectsSelf" },
+                { text: "Assessment", href: "/dosen/assessment/projectsSelf" },
                 { text: "Self Assessment", href: null }
             ],
             headers: [
@@ -279,7 +279,7 @@ export default {
                 if (response.data.success) {
                     this.clearFormFields();
                     alert('Semua jawaban berhasil disimpan!');
-                    this.$inertia.visit('/sispa/dosen/assessment/projectsSelf');
+                    this.$inertia.visit('/dosen/assessment/projectsSelf');
                 }
             } catch (error) {
                 console.error('Error submitting answers:', error);

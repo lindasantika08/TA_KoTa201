@@ -29,7 +29,7 @@ export default {
     data() {
         return {
             breadcrumbs: [
-                { text: "Peer Assessment", href: '/sispa/mahasiswa/assessment/peer' },
+                { text: "Peer Assessment", href: '/mahasiswa/assessment/peer' },
                 { text: "Detail", href: null },
             ],
             headers: [

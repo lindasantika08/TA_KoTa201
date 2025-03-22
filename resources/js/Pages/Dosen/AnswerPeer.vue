@@ -45,8 +45,8 @@ export default {
     data() {
         return {
             breadcrumbs: [
-                { text: "Peer Assessment", href: "/sispa/dosen/assessment/projectsPeer" },
-                { text: "Detail", href: "/sispa/dosen/assessment/data-with-bobot-peer" },
+                { text: "Peer Assessment", href: "/dosen/assessment/projectsPeer" },
+                { text: "Detail", href: "/dosen/assessment/data-with-bobot-peer" },
                 { text: "Attempt", href: null }
             ],
             headers: [
@@ -305,7 +305,7 @@ export default {
                         .filter(([questionId]) => !this.questions.find(q => q.id === questionId));
                     this.temporaryAnswers = Object.fromEntries(otherProjectAnswers);
                     localStorage.setItem('temporaryAnswers', JSON.stringify(this.temporaryAnswers));
-                    this.$inertia.visit('/sispa/dosen/assessment/projectsPeer');
+                    this.$inertia.visit('/dosen/assessment/projectsPeer');
                 }
             } catch (error) {
                 console.error('Error submitting answers:', error);

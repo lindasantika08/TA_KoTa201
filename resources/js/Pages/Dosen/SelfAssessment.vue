@@ -35,7 +35,7 @@ export default {
         const page = usePage();
 
         const breadcrumbs = [
-            { text: "Self Assessment", href: "/sispa/dosen/assessment/projects-self" },
+            { text: "Self Assessment", href: "/dosen/assessment/projects-self" },
             { text: "Detail", href: null },
         ];
 
@@ -58,7 +58,7 @@ export default {
         });
 
         const changeOrder = (newOrder) => {
-            router.get('/sispa/dosen/assessment/data-with-bobot-self', {
+            router.get('/dosen/assessment/data-with-bobot-self', {
                 batch_year: props.batchYear,
                 project_name: props.projectName,
                 assessment_order: newOrder

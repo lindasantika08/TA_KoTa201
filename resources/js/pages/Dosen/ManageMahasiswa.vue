@@ -153,7 +153,7 @@ export default {
     data() {
         return {
             breadcrumbs: [
-                { text: "Manage Mahasiswa", href: "/sispa/dosen/manage-mahasiswa" },
+                { text: "Manage Mahasiswa", href: "/dosen/manage-mahasiswa" },
             ],
             users: [],
             headers: [
@@ -270,7 +270,7 @@ export default {
         },
 
         detailUser(user_id) {
-            router.visit(`/sispa/dosen/manage-mahasiswa/detail?user_id=${user_id}`);
+            router.visit(`/dosen/manage-mahasiswa/detail?user_id=${user_id}`);
         },
     },
 };
