@@ -33,6 +33,12 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::prefix('sispa')->group(function () {
+    Route::get('/debug', function () {
+        return response()->json([
+            'url' => request()->fullUrl(),
+            'user' => Auth::user(),
+        ]);
+    });
     // Route::get('/', function () {
     //     $user = Auth::user();
     
