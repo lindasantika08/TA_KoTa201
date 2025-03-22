@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Routing\UrlGenerator;
 use App\Models\Assessment;
@@ -21,10 +22,10 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Bootstrap any application services.
      */
-    public function boot(UrlGenerator $url): void
+    public function boot(): void
     {
         If(env('APP_ENV') !== 'local') { 
-            $url->forceScheme('https'); 
+            URL::forceScheme('https');
         }
 
         Assessment::observe(AssessmentObserver::class);
