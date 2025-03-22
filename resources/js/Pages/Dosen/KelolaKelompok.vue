@@ -41,12 +41,12 @@ export default {
     };
   },
   mounted() {
-    console.log("Data Kelompok:", this.kelompok);
+    // console.log("Data Kelompok:", this.kelompok);
     this.fetchProjects();
     // Check if angkatan exists in the raw data
   this.kelompok.forEach(dosenGroup => {
     dosenGroup.projects.forEach(project => {
-      console.log("Project Angkatan:", project.classroom?.angkatan);
+      // console.log("Project Angkatan:", project.classroom?.angkatan);
     });
   });
 
@@ -60,7 +60,7 @@ export default {
        class: project.class || "-"
       }))
     );
-     console.log("Filtered Kelompok:", this.filteredKelompok);
+     // console.log("Filtered Kelompok:", this.filteredKelompok);
   },
   methods: {
     async fetchProjects() {
@@ -100,7 +100,7 @@ export default {
       );
     },
     showDetail(kelompokId) {
-      console.log(`Show detail for kelompok with ID: ${kelompokId}`);
+      // console.log(`Show detail for kelompok with ID: ${kelompokId}`);
       this.$inertia.get(route("DetailKelompok", { id: kelompokId }));
     },
     createKelompok(url) {

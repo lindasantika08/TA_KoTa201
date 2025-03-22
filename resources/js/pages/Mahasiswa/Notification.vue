@@ -64,7 +64,7 @@ export default {
                 this.socket = new WebSocket(`${wsProtocol}//${wsHost}/ws/notifications`);
                 
                 this.socket.onopen = () => {
-                    console.log('WebSocket connected');
+                    // console.log('WebSocket connected');
                     this.reconnectAttempts = 0; // Reset reconnect attempts on successful connection
                 };
 
@@ -86,7 +86,7 @@ export default {
                 };
 
                 this.socket.onclose = () => {
-                    console.log('WebSocket disconnected');
+                    // console.log('WebSocket disconnected');
                     this.handleReconnect();
                 };
 
@@ -103,12 +103,12 @@ export default {
         handleReconnect() {
             if (this.reconnectAttempts < this.maxReconnectAttempts) {
                 this.reconnectAttempts++;
-                console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
+                // console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
                 setTimeout(() => {
                     this.initializeWebSocket();
                 }, this.reconnectInterval);
             } else {
-                console.log('Max reconnection attempts reached');
+                // console.log('Max reconnection attempts reached');
             }
         },
 

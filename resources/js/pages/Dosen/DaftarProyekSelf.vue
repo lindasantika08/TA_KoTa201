@@ -80,7 +80,7 @@ export default {
                 is_published: newStatus
             })
                 .then(response => {
-                    console.log('Publish status updated successfully');
+                    // console.log('Publish status updated successfully');
                 })
                 .catch(error => {
                     console.error('Error toggling publish status:', error);
@@ -119,7 +119,7 @@ export default {
             this.loading = true;
             axios.get('/sispa/api/proyek-self-assessment')
                 .then(response => {
-                    console.log('Raw API response:', response.data);
+                    // console.log('Raw API response:', response.data);
                     this.updateItems(response.data);
                 })
                 .catch(error => {

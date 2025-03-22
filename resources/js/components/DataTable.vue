@@ -12,9 +12,9 @@ export default {
     }
   },
   mounted() {
-    console.log('DataTable mounted')
-    console.log('Headers:', this.headers)
-    console.log('Items:', this.items)
+    // console.log('DataTable mounted')
+    // console.log('Headers:', this.headers)
+    // console.log('Items:', this.items)
   },
   methods: {
     getNestedValue(item, key) {

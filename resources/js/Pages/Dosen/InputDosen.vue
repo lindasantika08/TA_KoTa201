@@ -41,7 +41,7 @@ export default {
                 });
                 // Langsung assign response.data karena sudah berupa array
                 jurusanList.value = response.data;
-                console.log('Jurusan list:', jurusanList.value);
+                // console.log('Jurusan list:', jurusanList.value);
             } catch (error) {
                 console.error("Error mengambil data jurusan:", error);
                 errorMessage.value = "Gagal memuat data jurusan. Silakan coba lagi.";

@@ -44,7 +44,7 @@ export default {
         preserveState: true
       })
         .then(response => {
-          console.log('Response received:', response);
+          // console.log('Response received:', response);
         })
         .catch(error => {
           console.error('Error occurred while fetching data:', error);
@@ -81,7 +81,7 @@ export default {
         is_published: newStatus
       })
         .then(response => {
-          console.log('Publish status updated successfully');
+          // console.log('Publish status updated successfully');
         })
         .catch(error => {
           console.error('Error toggling publish status:', error);

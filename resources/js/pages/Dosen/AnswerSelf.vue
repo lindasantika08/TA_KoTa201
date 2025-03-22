@@ -91,7 +91,7 @@ export default {
 
     methods: {
         async fetchQuestions() {
-            console.log('Fetching questions started');
+            // console.log('Fetching questions started');
             this.loading = true;
             this.error = null;
 
@@ -102,10 +102,10 @@ export default {
                     assessment_order: this.assessment_order
                 };
 
-                console.log('Request params:', params);
+                // console.log('Request params:', params);
 
                 const response = await axios.get('/sispa/api/questions-dosen', { params });
-                console.log('Raw API Response:', response.data);
+                // console.log('Raw API Response:', response.data);
 
                 if (response.data && Array.isArray(response.data)) {
                     this.questions = response.data.map(question => ({
@@ -120,7 +120,7 @@ export default {
                         bobot_4: question.bobot_4 || '',
                         bobot_5: question.bobot_5 || '',
                     }));
-                    console.log('Processed questions:', this.questions);
+                    // console.log('Processed questions:', this.questions);
                 } else {
                     throw new Error('Invalid response format - expected array');
                 }
@@ -155,7 +155,7 @@ export default {
 
         setScore(value) {
             this.score = value;
-            console.log('Score set to:', value);
+            // console.log('Score set to:', value);
         },
 
         async submitAnswer() {

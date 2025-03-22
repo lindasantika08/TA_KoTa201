@@ -40,7 +40,7 @@ export default {
       
       try {
         const response = await axios.get("/sispa/api/mahasiswa/projects");
-        console.log('Projects API response:', response.data);
+        // console.log('Projects API response:', response.data);
         
         if (response.data.success) {
           this.projectList = response.data.projects || [];
@@ -61,12 +61,12 @@ export default {
     async fetchAssessmentStatuses() {
       try {
         const response = await axios.get("/sispa/api/mahasiswa/feedback");
-        console.log('Feedback API response:', response.data);
+        // console.log('Feedback API response:', response.data);
         
         if (response.data.status === 'success' && response.data.projects) {
           const assessmentStatuses = response.data.projects;
           
-          console.log('Assessment Statuses:', assessmentStatuses);
+          // console.log('Assessment Statuses:', assessmentStatuses);
           
           this.projectList = this.projectList.map(project => {
             // Find matching assessment using project_name and group_name
@@ -75,8 +75,8 @@ export default {
                        assess.group_name === project.nama_kelompok
             );
             
-            console.log(`Looking for project: ${project.nama_proyek}, group: ${project.nama_kelompok}`);
-            console.log('Found assessment:', assessment);
+            // console.log(`Looking for project: ${project.nama_proyek}, group: ${project.nama_kelompok}`);
+            // console.log('Found assessment:', assessment);
             
             // If assessment is found, use its status, otherwise default to pending
             const isAssessmentCompleted = assessment ? 
@@ -92,7 +92,7 @@ export default {
             };
           });
 
-          console.log('Updated Project List:', this.projectList);
+          // console.log('Updated Project List:', this.projectList);
         } else {
           console.error("Failed to fetch assessment statuses:", response.data.message);
         }
@@ -110,7 +110,7 @@ export default {
     },
 
     handleProjectDetail(project) {
-      console.log('Handling project:', {
+      // console.log('Handling project:', {
         nama_proyek: project.nama_proyek,
         nama_kelompok: project.nama_kelompok,
         assessmentDetails: project.assessmentDetails,

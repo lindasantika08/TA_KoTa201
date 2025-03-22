@@ -35,8 +35,8 @@ export default {
     this.tahun_ajaran = query.get("tahun_ajaran");
     this.nama_proyek = query.get("nama_proyek");
 
-    console.log("tahun_ajaran:", this.tahun_ajaran);
-    console.log("nama_proyek:", this.nama_proyek);
+    // console.log("tahun_ajaran:", this.tahun_ajaran);
+    // console.log("nama_proyek:", this.nama_proyek);
 
     if (this.tahun_ajaran && this.nama_proyek) {
       this.fetchAnswers();

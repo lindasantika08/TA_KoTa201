@@ -90,8 +90,8 @@ export default {
             );
         },
         availableMembers() {
-            console.log("Kelompok:", this.kelompok);
-            console.log("Answered Peers:", this.answeredPeers);
+            // console.log("Kelompok:", this.kelompok);
+            // console.log("Answered Peers:", this.answeredPeers);
 
             if (!this.kelompok || !this.answeredPeers) return [];
 
@@ -99,7 +99,7 @@ export default {
                 (member) => !this.answeredPeers.includes(member.mahasiswa_id)
             );
 
-            console.log("Available Members:", filtered);
+            // console.log("Available Members:", filtered);
             return filtered;
         },
     },
@@ -108,7 +108,7 @@ export default {
         kelompok: {
             immediate: true,
             handler(newVal) {
-                console.log("Kelompok updated:", newVal);
+                // console.log("Kelompok updated:", newVal);
             },
         },
         selectedMember: {
@@ -158,8 +158,8 @@ export default {
 
                 this.assessment_order = assessment_order;
 
-                console.log('Batch Year:', batch_year);
-                console.log('Project Name:', project_name);
+                // console.log('Batch Year:', batch_year);
+                // console.log('Project Name:', project_name);
 
                 const userInfoResponse = await axios.get(
                     "/sispa/api/user-info-peer",
@@ -174,7 +174,7 @@ export default {
 
                 const userInfo = userInfoResponse.data;
 
-                console.log("User info received:", userInfo);
+                // console.log("User info received:", userInfo);
 
                 this.currentUserId = userInfo.id;
                 this.studentInfo = {
@@ -188,8 +188,8 @@ export default {
 
                 this.batch_year = userInfo.batch_year;
 
-                console.log("Student info set:", this.studentInfo);
-                console.log("Batch year set:", this.batch_year);
+                // console.log("Student info set:", this.studentInfo);
+                // console.log("Batch year set:", this.batch_year);
 
                 if (this.batch_year && this.studentInfo.project_name) {
                     const kelompokResponse = await axios.get("/sispa/api/groups", {
@@ -201,7 +201,7 @@ export default {
 
                     if (kelompokResponse.data) {
                         this.kelompok = kelompokResponse.data;
-                        console.log("Kelompok data:", this.kelompok);
+                        // console.log("Kelompok data:", this.kelompok);
                     }
                 } else {
                     console.error("Missing batch_year or project_name:", {
@@ -230,7 +230,7 @@ export default {
         async loadQuestions(retryCount = 3) {
             for (let i = 0; i < retryCount; i++) {
                 try {
-                    console.log("Loading questions with params:", {
+                    // console.log("Loading questions with params:", {
                         batch_year: this.batch_year,
                         project_name: this.studentInfo.project_name,
                         assessment_order: this.assessment_order,
@@ -244,7 +244,7 @@ export default {
                         },
                     });
 
-                    console.log("Raw API response:", response.data);
+                    // console.log("Raw API response:", response.data);
 
                     if (!response.data || !response.data.data) {
                         console.error(
@@ -291,9 +291,9 @@ export default {
                         }
                     }
 
-                    console.log("Processed questions:", this.questions);
-                    console.log("Group members:", this.groupMembers);
-                    console.log("Project details:", this.projectDetails);
+                    // console.log("Processed questions:", this.questions);
+                    // console.log("Group members:", this.groupMembers);
+                    // console.log("Project details:", this.projectDetails);
 
                     return;
                 } catch (error) {
@@ -450,7 +450,7 @@ export default {
                     },
                 });
 
-                console.log("Check Existing Answer Response:", response.data);
+                // console.log("Check Existing Answer Response:", response.data);
 
                 if (response.data && response.data.length > 0) {
                     const existingAnswer = response.data[0];
@@ -668,7 +668,7 @@ export default {
                     },
                 });
                 this.answeredPeers = response.data.answered_peers;
-                console.log("Answered Peers:", this.answeredPeers);
+                // console.log("Answered Peers:", this.answeredPeers);
             } catch (error) {
                 console.error("Error fetching answered peers:", error);
             }
@@ -684,7 +684,7 @@ export default {
     },
 };
 
-// console.log(currentQuestion.skill_type)
+// // console.log(currentQuestion.skill_type)
 </script>
 
 <template>

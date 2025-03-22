@@ -94,7 +94,7 @@ export default {
                 assessment_order: props.assessmentOrder
             };
 
-            console.log("Data yang akan dikirim:", requestData);
+            // console.log("Data yang akan dikirim:", requestData);
 
             router.visit("/sispa/dosen/AnswerPeer", {
                 method: "get",
