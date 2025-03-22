@@ -29,72 +29,72 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
     }
 
     public function collection()
-    {
-        try {
-            // First get the project details including prodi_id
-            $project = DB::table('project')
-                ->where('batch_year', $this->tahunAjaran)
-                ->where('project_name', $this->namaProyek)
-                ->first();
+{
+    try {
+        // First get the project details including prodi_id
+        $project = DB::table('project')
+            ->where('batch_year', $this->tahunAjaran)
+            ->where('project_name', $this->namaProyek)
+            ->first();
 
-            if (!$project) {
-                Log::error('Project not found', [
-                    'tahun_ajaran' => $this->tahunAjaran,
-                    'nama_proyek' => $this->namaProyek
-                ]);
-                throw new \Exception('Project not found');
-            }
-
-            // Get the major_id through prodi
-            $majorId = DB::table('prodi')
-                ->where('id', $project->prodi_id)
-                ->value('major_id');
-            
-            // Initialize the row number counter
-            DB::statement('SET @row_number = 0');
-            
-            // Build the query properly without using from() with raw expression
-            $mahasiswaQuery = DB::table('mahasiswa')
-                ->select(
-                    DB::raw('@row_number := @row_number + 1 AS no'),
-                    DB::raw("'{$this->tahunAjaran}' as batch_year"),
-                    DB::raw("'{$this->namaProyek}' as project_name"),
-                    DB::raw("'{$this->angkatan}' as angkatan"),
-                    'users.name as mahasiswa_name',
-                    'mahasiswa.nim',
-                    'class_room.class_name as class',
-                    'dosen.kode_dosen as dosen_manajer',
-                    DB::raw("COALESCE(`groups`.`group_field`, '') as kelompok")
-                )
-                ->join('users', 'mahasiswa.user_id', '=', 'users.id')
-                ->join('class_room', 'mahasiswa.class_id', '=', 'class_room.id')
-                ->join('prodi', 'class_room.prodi_id', '=', 'prodi.id')
-                ->leftJoin('groups', function ($join) use ($project) {
-                    $join->on('groups.mahasiswa_id', '=', 'mahasiswa.id')
-                        ->whereExists(function ($query) use ($project) {
-                            $query->select(DB::raw(1))
-                                ->from('project')
-                                ->whereRaw('project.id = groups.project_id')
-                                ->where('project.id', '=', $project->id);
-                        });
-                })
-                ->leftJoin('dosen', function ($join) use ($majorId) {
-                    $join->on('groups.dosen_id', '=', 'dosen.id')
-                        ->where('dosen.major_id', '=', $majorId);
-                })
-                ->where('prodi.id', '=', $project->prodi_id)
-                ->where('class_room.angkatan', '=', $this->angkatan)
-                ->get();
-
-            return $mahasiswaQuery;
-        } catch (\Exception $e) {
-            Log::error('Error in KelompokExport:', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+        if (!$project) {
+            Log::error('Project not found', [
+                'tahun_ajaran' => $this->tahunAjaran,
+                'nama_proyek' => $this->namaProyek
             ]);
-            throw $e;
+            throw new \Exception('Project not found');
         }
+
+        // Get the major_id through prodi
+        $majorId = DB::table('prodi')
+            ->where('id', $project->prodi_id)
+            ->value('major_id');
+        
+        // Initialize the row number counter
+        DB::statement('SET @row_number = 0');
+        
+        // Build the query properly
+        $mahasiswaQuery = DB::table('mahasiswa')
+            ->select(
+                DB::raw('@row_number := @row_number + 1 AS no'),
+                DB::raw("'{$this->tahunAjaran}' as batch_year"),
+                DB::raw("'{$this->namaProyek}' as project_name"),
+                DB::raw("'{$this->angkatan}' as angkatan"),
+                'users.name as mahasiswa_name',
+                'mahasiswa.nim',
+                'class_room.class_name as class',
+                'dosen.kode_dosen as dosen_manajer',
+                DB::raw("COALESCE(`groups`.`group`, '') as kelompok")
+            )
+            ->join('users', 'mahasiswa.user_id', '=', 'users.id')
+            ->join('class_room', 'mahasiswa.class_id', '=', 'class_room.id')
+            ->join('prodi', 'class_room.prodi_id', '=', 'prodi.id')
+            ->leftJoin('groups', function ($join) use ($project) {
+                $join->on('groups.mahasiswa_id', '=', 'mahasiswa.id')
+                    ->whereExists(function ($query) use ($project) {
+                        $query->select(DB::raw(1))
+                            ->from('project')
+                            ->whereRaw('project.id = groups.project_id')
+                            ->where('project.id', '=', $project->id);
+                    });
+            })
+            ->leftJoin('dosen', function ($join) use ($majorId) {
+                $join->on('groups.dosen_id', '=', 'dosen.id')
+                    ->where('dosen.major_id', '=', $majorId);
+            })
+            ->where('prodi.id', '=', $project->prodi_id)
+            ->where('class_room.angkatan', '=', $this->angkatan)
+            ->get();
+
+        return $mahasiswaQuery;
+    } catch (\Exception $e) {
+        Log::error('Error in KelompokExport:', [
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        throw $e;
     }
+}
 
     public function headings(): array
     {
