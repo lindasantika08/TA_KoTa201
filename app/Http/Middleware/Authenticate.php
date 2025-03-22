@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\Auth;
 
@@ -18,7 +19,7 @@ class Authenticate
     {
 
         if (!Auth::check()) {
-            return redirect()->route('login');
+            Inertia::location(route('login'));
         }
 
         return $next($request);
