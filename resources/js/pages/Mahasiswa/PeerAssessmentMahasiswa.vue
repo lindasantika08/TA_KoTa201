@@ -854,7 +854,7 @@ export default {
                                     </label>
                                     <textarea id="answer" v-model="answer" rows="4"
                                         class="block w-full rounded-md border border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
-                                        placeholder="Berikan alasan..." required></textarea>
+                                        placeholder="Berikan contoh atau penjelasan sesuai rubrik..." required></textarea>
                                 </div>
 
                                 <div class="flex justify-between items-center pt-4">
