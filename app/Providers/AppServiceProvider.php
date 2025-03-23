@@ -28,7 +28,7 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
         }
 
-        URL::forceRootUrl(config('app.url'));
+        // URL::forceRootUrl(config('app.url'));
 
         Assessment::observe(AssessmentObserver::class);
     }
