@@ -19,9 +19,7 @@ use Illuminate\Support\Facades\Log;
 
 class PeerAssessmentDosen extends Controller
 {
-    public function index() {
-
-    }
+    public function index() {}
 
     public function getAssessmentsWithBobotPeer(Request $request)
     {
@@ -38,7 +36,7 @@ class PeerAssessmentDosen extends Controller
                 'assessment.project_id',
                 'assessment.assessment_order'
             )
-            ->whereHas('project', function($query) use ($namaProyek) {
+            ->whereHas('project', function ($query) use ($namaProyek) {
                 $query->where('project_name', $namaProyek);
             })
             ->when($tahunAjaran, function ($query, $tahunAjaran) {
@@ -47,7 +45,7 @@ class PeerAssessmentDosen extends Controller
             ->where('type', 'peerAssessment')
             ->where('assessment_order', $assessmentOrder)
             ->get()
-            ->map(function($assessment) {
+            ->map(function ($assessment) {
                 return [
                     'id' => $assessment->id,
                     'type' => $assessment->type,
@@ -112,7 +110,7 @@ class PeerAssessmentDosen extends Controller
         try {
             $user = Auth::user();
             $dosen = Dosen::where('user_id', $user->id)->first();
-            
+
             $request->validate([
                 'answers' => 'required|array',
                 'answers.*.question_id' => 'required|uuid|exists:assessment,id',
@@ -120,7 +118,7 @@ class PeerAssessmentDosen extends Controller
                 'answers.*.score' => 'required|integer',
                 'answers.*.status' => 'required|string'
             ]);
-    
+
             $savedAnswers = [];
             foreach ($request->input('answers') as $answerData) {
                 $answer = AnswersPeer::updateOrCreate(
@@ -136,13 +134,12 @@ class PeerAssessmentDosen extends Controller
                 );
                 $savedAnswers[] = $answer;
             }
-    
+
             DB::commit();
             return response()->json([
                 'success' => true,
                 'answers' => $savedAnswers
             ]);
-    
         } catch (ValidationException $e) {
             DB::rollBack();
             return response()->json([
@@ -172,7 +169,7 @@ class PeerAssessmentDosen extends Controller
 
             $user = Auth::user();
             $dosen = Dosen::where('user_id', $user->id)->first();
-            
+
             if (!$dosen) {
                 throw new \Exception('dosen tidak ditemukan');
             }
@@ -200,7 +197,6 @@ class PeerAssessmentDosen extends Controller
                 'message' => 'All answers saved successfully',
                 'answers' => $savedAnswers
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error in saveAllAnswersPeerDosen:', [
@@ -228,7 +224,6 @@ class PeerAssessmentDosen extends Controller
             ])->first();
 
             return response()->json($answer);
-
         } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,

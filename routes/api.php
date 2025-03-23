@@ -113,7 +113,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/get-majors', [UserManagementController::class, 'getMajor']);
 
     Route::get('/assessment/projects', [ProjectController::class, 'getProjectsWithAssessments']);
-    Route::get('/proyek-self-assessment', [ProjectController::class, 'getDataSelf']); 
+    Route::get('/proyek-self-assessment', [ProjectController::class, 'getDataSelf']);
     Route::get('/proyek-self-assessment-grouped', [ProjectController::class, 'getDataSelfGrouped']);
     Route::post('/save-all-answers', [AssessmentController::class, 'saveAllAnswers']);
 
@@ -130,6 +130,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/report/kelompok/answers', [ReportController::class, 'getKelompokAnswers']);
     Route::post('/report/storeReport', [ReportController::class, 'storeReport']);
     Route::get('/student-peer-data', [ReportController::class, 'getStudentPeerData']);
+    Route::get('/questions-peer-dosen-report', [ReportController::class, 'getQuestionsByProjectPeerReport']);
 
     //Dosen Feedback
     Route::get('/feedbacks-get-answer', [FeedbackController::class, 'getFeedbackAnswer']);
