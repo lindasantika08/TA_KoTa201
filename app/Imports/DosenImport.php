@@ -80,7 +80,7 @@ class DosenImport implements ToModel, WithHeadingRow, WithBatchInserts, OnEachRo
                             'id' => Str::uuid(),
                             'name' => $row['name'],
                             'email' => $row['email'],
-                            'password' => bcrypt($password),
+                            'password' => $password,
                             'role' => 'dosen'
                         ]);
                     }
