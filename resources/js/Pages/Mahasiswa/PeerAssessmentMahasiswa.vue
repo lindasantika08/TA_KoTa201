@@ -231,10 +231,10 @@ export default {
             for (let i = 0; i < retryCount; i++) {
                 try {
                     // console.log("Loading questions with params:", {
-                        batch_year: this.batch_year,
-                        project_name: this.studentInfo.project_name,
-                        assessment_order: this.assessment_order,
-                    });
+                    //    batch_year: this.batch_year,
+                    //    project_name: this.studentInfo.project_name,
+                    //    assessment_order: this.assessment_order,
+                    // });
 
                     const response = await axios.get("/sispa/api/questions-peer", {
                         params: {
