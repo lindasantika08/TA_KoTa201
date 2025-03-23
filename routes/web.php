@@ -30,7 +30,6 @@ use App\Http\Controllers\Mahasiswa\NotificationMahasiswa;
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
-// prefix
 Route::prefix('sispa')->group(function () {
     Route::get('/', function () {
         $user = Auth::user();
