@@ -89,8 +89,8 @@ class UserAdminController extends Controller
 
         Excel::import(new DosenImport, $request->file('file'));
 
-        // return redirect()->route('/sispa/admin/ManageDosen')->with('success', 'Data dosen berhasil diimpor!');
-        return redirect('/sispa/admin/ManageDosen')->with('success', 'Data dosen berhasil diimpor!');
+        return redirect()->route('admin.manage-dosen')->with('success', 'Data dosen berhasil diimpor!');
+        // return redirect('/admin/ManageDosen')->with('success', 'Data dosen berhasil diimpor!');
     }
 
     public function InputMahasiswa()
@@ -141,7 +141,7 @@ class UserAdminController extends Controller
 
         Excel::import(new MahasiswaImport, $request->file('file'));
 
-        return redirect()->route('ManageMahasiswa')->with('success', 'Data mahasiswa berhasil diimpor!');
+        return redirect()->route('admin.ManageMahasiswa')->with('success', 'Data mahasiswa berhasil diimpor!');
     }
 
     public function deleteDosen(Request $request)

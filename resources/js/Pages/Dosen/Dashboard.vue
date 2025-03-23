@@ -430,8 +430,8 @@ export default {
                     class="flex items-center justify-between w-full text-sm font-medium text-gray-700 hover:bg-gray-50 p-2 rounded-lg">
                     <span>Group Details</span>
                     <font-awesome-icon :icon="showGroupDetails
-                        ? 'fa-solid fa-chevron-up'
-                        : 'fa-solid fa-chevron-down'
+                      ? 'fa-solid fa-chevron-up'
+                      : 'fa-solid fa-chevron-down'
                       " class="text-gray-500 transition-transform duration-200" />
                   </button>
 
@@ -459,8 +459,8 @@ export default {
                                 : 'bg-yellow-100 text-yellow-800',
                             ]">
                               <font-awesome-icon :icon="group.is_completed
-                                  ? 'fa-check-circle'
-                                  : 'fa-hourglass-half'
+                                ? 'fa-check-circle'
+                                : 'fa-hourglass-half'
                                 " class="text-xs" />
                               {{
                                 group.is_completed ? "Completed" : "In Progress"

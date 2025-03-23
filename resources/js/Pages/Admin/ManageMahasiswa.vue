@@ -8,7 +8,7 @@ import DataTable from "@/Components/DataTable.vue";
 import Breadcrumb from "@/Components/Breadcrumb.vue";
 
 export default {
-    name: "ManageMahasiswa",
+    name: "admin.ManageMahasiswa",
     components: {
         Sidebar,
         Navbar,

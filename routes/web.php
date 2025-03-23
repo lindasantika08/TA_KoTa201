@@ -179,7 +179,7 @@ Route::prefix('sispa')->group(function () {
             Route::get('/ManageProdi', [MajorAdminController::class, 'showManageProdi']);
 
             //admin manage user
-            Route::get('/ManageDosen', [UserAdminController::class, 'showManageDosen']);
+            Route::get('/ManageDosen', [UserAdminController::class, 'showManageDosen'])->name('admin.manage-dosen');
             Route::get('/ManageMahasiswa', [UserAdminController::class, 'showManageMahasiswa'])->name('admin.ManageMahasiswa');
             Route::get('/manage-dosen/input', [UserAdminController::class, 'InputDosen'])->name('admin.InputDosen');
             Route::get('/manage-dosen/export', [UserAdminController::class, 'ExportDosen']);
