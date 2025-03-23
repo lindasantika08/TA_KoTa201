@@ -26,36 +26,40 @@ class AuthController extends Controller
     }
 
     public function login(Request $request)
-    {
-        $credentials = $request->validate([
-            'email' => ['required', 'email'],
-            'password' => ['required'],
-        ]);
+{
+    $credentials = $request->validate([
+        'email' => ['required', 'email'],
+        'password' => ['required'],
+    ]);
 
-        if (Auth::attempt($credentials)) {
-            $user = Auth::user();
-            $token = $user->createToken('auth_token')->plainTextToken;
+    // Cari user berdasarkan email
+    $user = User::where('email', $credentials['email'])->first();
+    
+    // Jika user ditemukan dan password sama persis (plaintext)
+    if ($user && $credentials['password'] === $user->password) {
+        Auth::login($user);
+        $token = $user->createToken('auth_token')->plainTextToken;
 
-            // Cek apakah user sudah mengganti password
-            $needPasswordChange = !$user->change_password;
-
-            return response()->json([
-                'token' => $token,
-                'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'role' => $user->role
-                ],
-                'need_password_change' => $needPasswordChange,
-                'message' => 'Login berhasil'
-            ]);
-        }
+        // Cek apakah user sudah mengganti password
+        $needPasswordChange = !$user->change_password;
 
         return response()->json([
-            'message' => 'Email atau password salah'
-        ], 401);
+            'token' => $token,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role
+            ],
+            'need_password_change' => $needPasswordChange,
+            'message' => 'Login berhasil'
+        ]);
     }
+
+    return response()->json([
+        'message' => 'Email atau password salah'
+    ], 401);
+}
 
     public function getStatus()
     {
