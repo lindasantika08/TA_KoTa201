@@ -1071,7 +1071,6 @@ export default {
                         </div>
 
                         <!-- Analysis Score Section -->
-                        <!-- Analysis Score Section -->
                         <div class="mt-6">
                             <div
                                 class="bg-white rounded-lg shadow-sm overflow-hidden"
