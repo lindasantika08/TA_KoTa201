@@ -54,7 +54,7 @@ class DosenImport implements ToModel, WithHeadingRow, WithBatchInserts, OnEachRo
             DB::beginTransaction();
             try {
                 // Generate password
-                $password = Str::random(8);
+                // $password = Str::random(8);
                 // Cari dosen berdasarkan kode_dosen (sebagai identifier unik)
                 $existingDosen = Dosen::where('kode_dosen', $row['kode_dosen'])->first();
 
