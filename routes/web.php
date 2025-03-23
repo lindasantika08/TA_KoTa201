@@ -33,10 +33,6 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('sispa')->group(function () {
     Route::get('/', function () {
         $user = Auth::user();
-        
-        if (!$user) {
-            return redirect()->route('login');
-        }
     
         if ($user->role == 'admin') {
             return redirect()->route('dashboard.admin');
@@ -45,6 +41,8 @@ Route::prefix('sispa')->group(function () {
         } elseif ($user->role == "mahasiswa") {
             return redirect()->route('mahasiswa.dashboard');
         }
+
+        return redirect()->route('login');
     });
 
     Route::get('/login', [AuthController::class, 'index'])->name('login');
