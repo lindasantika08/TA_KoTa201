@@ -328,8 +328,6 @@ export default {
                             (progressEvent.loaded * 100) / progressEvent.total
                         );
                     },
-                }).then((response)=>{
-                    console.log(response);
                 });
                 alert("Data dosen berhasil diimpor.");
                 selectedFile.value = null;
