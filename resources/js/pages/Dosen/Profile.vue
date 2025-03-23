@@ -143,19 +143,15 @@
       <form @submit.prevent="changePassword">
         <div class="mb-4">
           <label class="block text-sm font-medium text-gray-700">Old Password</label>
-          <input v-model="passwordForm.oldPassword" type="password" 
-            class="w-full px-3 py-2 border rounded-md bg-white"
-            :class="errors.oldPassword ? 'border-red-500' : 'border-gray-300'" 
-            required />
+          <input v-model="passwordForm.oldPassword" type="password" class="w-full px-3 py-2 border rounded-md bg-white"
+            :class="errors.oldPassword ? 'border-red-500' : 'border-gray-300'" required />
           <p v-if="errors.oldPassword" class="mt-1 text-sm text-red-500">{{ errors.oldPassword }}</p>
         </div>
 
         <div class="mb-4">
           <label class="block text-sm font-medium text-gray-700">New Password</label>
-          <input v-model="passwordForm.newPassword" type="password" 
-            class="w-full px-3 py-2 border rounded-md bg-white"
-            :class="errors.newPassword ? 'border-red-500' : 'border-gray-300'" 
-            required />
+          <input v-model="passwordForm.newPassword" type="password" class="w-full px-3 py-2 border rounded-md bg-white"
+            :class="errors.newPassword ? 'border-red-500' : 'border-gray-300'" required />
           <p v-if="errors.newPassword" class="mt-1 text-sm text-red-500">{{ errors.newPassword }}</p>
           <p class="mt-1 text-sm text-gray-500">Password minimal 8 karakter</p>
         </div>
@@ -164,18 +160,15 @@
           <label class="block text-sm font-medium text-gray-700">Confirm New Password</label>
           <input v-model="passwordForm.confirmPassword" type="password"
             class="w-full px-3 py-2 border rounded-md bg-white"
-            :class="errors.confirmPassword ? 'border-red-500' : 'border-gray-300'" 
-            required />
+            :class="errors.confirmPassword ? 'border-red-500' : 'border-gray-300'" required />
           <p v-if="errors.confirmPassword" class="mt-1 text-sm text-red-500">{{ errors.confirmPassword }}</p>
         </div>
 
         <div class="flex justify-end">
-          <button type="button" @click="closeModal" 
-            class="px-4 py-2 bg-gray-500 text-white rounded-lg mr-2">
+          <button type="button" @click="closeModal" class="px-4 py-2 bg-gray-500 text-white rounded-lg mr-2">
             Cancel
           </button>
-          <button type="submit" 
-            class="px-4 py-2 bg-blue-500 text-white rounded-lg">
+          <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg">
             Change Password
           </button>
         </div>
@@ -303,6 +296,21 @@ export default {
     handleFileUpload(event) {
       const file = event.target.files[0];
       if (file) {
+        // Check file type
+        const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+        if (!validTypes.includes(file.type)) {
+          alert('Please upload a JPG, PNG, or GIF image.');
+          return;
+        }
+
+        // Check file size (2MB limit example)
+        const maxSize = 2 * 1024 * 1024; // 2MB
+        if (file.size > maxSize) {
+          alert('File size should be less than 2MB.');
+          return;
+        }
+
+        // Continue with upload...
         const formData = new FormData();
         formData.append("photo", file);
 
@@ -319,8 +327,14 @@ export default {
             alert("Foto profil berhasil diupload!");
           })
           .catch((error) => {
-            alert("Gagal mengupload foto. Silakan coba lagi.");
-            console.error("Error upload foto:", error);
+            if (error.response && error.response.data) {
+              // Show more detailed error information
+              console.error("Error details:", error.response.data);
+              alert(`Upload failed: ${error.response.data.message || 'Unknown error'}`);
+            } else {
+              alert("Gagal mengupload foto. Silakan coba lagi.");
+              console.error("Error upload foto:", error);
+            }
           });
       }
     },

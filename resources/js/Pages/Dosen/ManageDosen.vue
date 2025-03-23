@@ -52,7 +52,7 @@ export default {
       router.visit("/sispa/dosen/manage-dosen/input");
     },
     detailUser(user_id) {
-      router.visit(`/dosen/manage-dosen/detail?user_id=${user_id}`);
+      router.visit(`/sispa/dosen/manage-dosen/detail?user_id=${user_id}`);
     },
   },
 };

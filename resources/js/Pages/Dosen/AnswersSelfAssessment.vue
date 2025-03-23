@@ -120,7 +120,7 @@ export default {
                 this.assessment_order
             ) {
                 // Encode parameter URL untuk menghindari masalah karakter khusus
-                const url = `/dosen/answers/details?mahasiswaId=${encodeURIComponent(
+                const url = `/sispa/dosen/answers/details?mahasiswaId=${encodeURIComponent(
                     mahasiswaId
                 )}&batch_year=${encodeURIComponent(
                     this.batch_year
