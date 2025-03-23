@@ -32,7 +32,7 @@ class ProfileController extends Controller
         }
 
         // Periksa apakah Dosen memiliki foto dan buat URL dengan asset()
-        $photoUrl = $dosen->user->photo ? asset('storage/' . $dosen->user->photo) : null;
+        $photoUrl = $dosen->user->photo ? url('sispa/storage/' . $dosen->user->photo) : null;
 
         // Kembalikan data Dosen dengan relasi terkait
         return response()->json([
