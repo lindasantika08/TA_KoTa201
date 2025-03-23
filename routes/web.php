@@ -42,8 +42,7 @@ Route::prefix('sispa')->group(function () {
             return redirect()->route('mahasiswa.dashboard');
         }
 
-        return redirect()->route('login');
-    });
+    })->middleware('auth');
 
     Route::get('/login', [AuthController::class, 'index'])->name('login');
     Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
