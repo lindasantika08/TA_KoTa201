@@ -5,7 +5,7 @@ on:
     branches:
       - linda_v2
     paths-ignore:
-      # - '.github/workflows/**'
+      - '.github/workflows/**'
       - 'README.md'
 
 jobs:
