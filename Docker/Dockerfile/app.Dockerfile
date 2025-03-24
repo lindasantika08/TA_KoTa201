@@ -32,9 +32,9 @@ RUN pecl install -o -f redis &&  rm -rf /tmp/pear && docker-php-ext-enable redis
 # Install net-tools for netstat
 RUN apt-get update && apt-get install -y net-tools && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# RUN apt-get update && apt-get install -y apache2
+RUN apt-get update && apt-get install -y apache2
 
-# RUN a2enmod rewrite headers
+RUN a2enmod rewrite headers
 
 # Install composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
@@ -49,9 +49,9 @@ COPY --chown=www-data:www-data . /var/www/
 # Set permissions
 RUN chown -R www-data:www-data /var/www
 RUN chown -R www-data:www-data /var/log/supervisor
-# RUN chown -R www-data:www-data /var/log/apache2
+RUN chown -R www-data:www-data /var/log/apache2
 RUN chmod -R 755 /var/log/supervisor
-# RUN chmod -R 755 /var/log/apache2
+RUN chmod -R 755 /var/log/apache2
 RUN chmod +x /var/www/artisan
 
 # Install dependency
@@ -63,19 +63,19 @@ RUN php artisan config:clear
 RUN npm run build
 
 # Expose port
-# EXPOSE 80
+EXPOSE 80
 
 # Tambahkan konfigurasi supervisor
 COPY Docker/supervisor/ /etc/
 
 # Copy Apache virtual host configuration
-# COPY Docker/apache/apache.conf /etc/apache2/sites-available/000-default.conf
+COPY Docker/apache/apache.conf /etc/apache2/sites-available/000-default.conf
 
 COPY prod-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/prod-entrypoint.sh
 
 
-EXPOSE 9000
+# EXPOSE 9000
 # Override PHP-FPM configuration
 # COPY Docker/www/www.conf /usr/local/etc/php-fpm.d/www.conf
 # COPY Docker/www//zz-docker.conf /usr/local/etc/php-fpm.d//zz-docker.conf
