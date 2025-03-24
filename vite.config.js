@@ -4,7 +4,7 @@ import vue from '@vitejs/plugin-vue';
 import path from 'path';
 
 export default defineConfig({
-    base: '/sispa/build/',
+    base: '/sispa/',
     plugins: [
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.js'],
