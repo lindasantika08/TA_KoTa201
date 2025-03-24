@@ -19,4 +19,4 @@ RUN python -m spacy download en_core_web_sm
 EXPOSE 5000
 
 # Jalankan aplikasi Flask dengan virtual environment
-CMD ["python", "/var/www/TA_201_Flask/app.py"]
+CMD ["python", "app.py"]
