@@ -105,4 +105,67 @@ class KelolaProyekController extends Controller
             ], 500);
         }
     }
+
+    public function deleteProject(Request $request)
+    {
+        try {
+            $validatedData = $request->validate([
+                'project_id' => 'required|exists:project,id'
+            ]);
+
+            $project = Project::findOrFail($validatedData['project_id']);
+
+            $project->forceDelete();
+
+            return response()->json([
+                'message' => 'Proyek berhasil dihapus!',
+                'data' => $project
+            ], 200);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'error' => 'Validasi gagal',
+                'message' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            // Handle other potential errors
+            return response()->json([
+                'error' => 'Terjadi kesalahan saat menghapus proyek',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function updateProject(Request $request, $id)
+    {
+        try {
+            $validatedData = $request->validate([
+                'semester' => 'required|in:Ganjil,Genap',
+                'batch_year' => 'required|string',
+                'project_name' => 'required|string|max:255',
+                'prodi_id' => 'required|exists:prodi,id',
+                'start_date' => 'required|date',
+                'end_date' => 'required|date|after:start_date',
+                'status' => 'in:Active,NonActive'
+            ]);
+
+            $project = Project::findOrFail($id);
+
+            $project->update($validatedData);
+
+            return response()->json([
+                'message' => 'Proyek berhasil diperbarui!',
+                'data' => $project
+            ], 200);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'error' => 'Validasi gagal',
+                'message' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Terjadi kesalahan saat memperbarui proyek',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

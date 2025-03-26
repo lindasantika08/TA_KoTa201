@@ -7,6 +7,7 @@ import Card from "@/Components/Card.vue";
 import DataTable from "@/Components/DataTable.vue";
 import Breadcrumb from "@/Components/Breadcrumb.vue";
 import Dropdown from "@/Components/Dropdown.vue";
+import Swal from "sweetalert2";
 
 export default {
     name: "KelolaKelompok",
@@ -33,6 +34,7 @@ export default {
                 { label: "Kelompok", key: "group" },
                 { label: "Manager Dosen", key: "dosen" },
                 { label: "Anggota Kelompok", key: "anggota" },
+                { label: "Action", key: "delete" },
             ],
             projects: [],
             selectedProject: "",
@@ -54,21 +56,19 @@ export default {
             }
         },
         processGroupData() {
-            // First, flatten the nested structure
             const flatGroups = this.kelompok.flatMap((dosenGroup) =>
                 dosenGroup.projects.map((project) => ({
                     ...project,
                     dosen: dosenGroup.dosen_name,
                     angkatan: project.angkatan || "-",
                     dosen_id: dosenGroup.dosen_id,
+                    project_id: project.project_id || project.id || null
                 }))
             );
 
-            // Create a map to consolidate groups with the same project and group number
             const groupMap = {};
 
             flatGroups.forEach((group) => {
-                // Create a unique key for each group based on project and group number
                 const key = `${group.project_id}_${group.batch_year}_${group.project_name}_${group.group}`;
 
                 if (!groupMap[key]) {
@@ -85,13 +85,11 @@ export default {
                         anggota: [...(group.anggota || [])],
                     };
                 } else {
-                    // Merge the anggota from the same group
                     groupMap[key].anggota = [
                         ...groupMap[key].anggota,
                         ...(group.anggota || []),
                     ];
 
-                    // Add the class if it's not already included
                     if (
                         group.class &&
                         !groupMap[key].classes.includes(group.class)
@@ -101,16 +99,14 @@ export default {
                 }
             });
 
-            // Convert the map back to an array and store in filteredKelompok
             this.filteredKelompok = Object.values(groupMap);
             console.log("Consolidated Kelompok:", this.filteredKelompok);
         },
         applyFilter() {
-            // Reset the data first
             this.processGroupData();
 
             if (!this.selectedProject) {
-                return; // Already reset with processGroupData
+                return;
             }
 
             const [batch_year, project_name] =
@@ -133,11 +129,104 @@ export default {
                 `/sispa/dosen/kelola-kelompok/profile-mhs?user_id=${user_id}`
             );
         },
-        // Format classes for display, e.g., "A, B"
         formatClasses(classes) {
             return classes && classes.length > 0 ? classes.join(", ") : "";
         },
-    },
+
+        async confirmDelete(item) {
+
+            const projectId = item.project_id || item.id;
+
+            if (!projectId) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid Project',
+                    text: 'No project ID found for this group'
+                });
+                return;
+            }
+
+            try {
+                const response = await axios.get('/sispa/api/check-group-deletion', {
+                    params: {
+                        project_id: projectId,
+                        group_name: item.group
+                    }
+                });
+
+                if (response.data.requires_confirmation === false) {
+                    Swal.fire({
+                        title: 'Delete Group',
+                        text: `Are you sure you want to delete the group "${item.group}"?`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: 'Yes, delete it!'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            this.performGroupDeletion(item);
+                        }
+                    });
+                } else if (response.data.requires_confirmation === true) {
+                    Swal.fire({
+                        title: 'Warning! Peer Answer Data Exists',
+                        html: response.data.warning || 'This group has related assessment entries.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: 'Force Delete',
+                        cancelButtonText: 'Cancel'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            this.performGroupDeletion(item, true);
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Deletion check error:', {
+                    response: error.response?.data,
+                    item: item
+                });
+
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error.response?.data?.message || 'Failed to check group deletion'
+                });
+            }
+        },
+
+        async performGroupDeletion(item, force = false) {
+            try {
+                const response = await axios.delete('/sispa/api/delete-group', {
+                    data: {
+                        project_id: item.project_id,
+                        group_name: item.group,
+                        force: force
+                    }
+                });
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Deleted!',
+                    text: response.data.message
+                });
+
+                this.filteredKelompok = this.filteredKelompok.filter(
+                    group => !(group.project_id === item.project_id && group.group === item.group)
+                );
+            } catch (error) {
+                console.error('Deletion error:', error.response?.data);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Deletion Error',
+                    text: error.response?.data?.message || 'Failed to delete group'
+                });
+            }
+        }
+    }
 };
 </script>
 
@@ -154,25 +243,17 @@ export default {
                 <Card title="Kelola Kelompok">
                     <div class="flex justify-between mb-4 items-center">
                         <div class="ml-4">
-                            <span class="text-lg font-semibold text-black"
-                                >Daftar Kelompok</span
-                            >
+                            <span class="text-lg font-semibold text-black">Daftar Kelompok</span>
                         </div>
                         <div class="flex-1 max-w-xs">
-                            <select
-                                id="projectDropdown"
-                                v-model="selectedProject"
-                                class="py-2 px-2 border border-gray-300 rounded w-full"
-                                @change="applyFilter"
-                            >
+                            <select id="projectDropdown" v-model="selectedProject"
+                                class="py-2 px-2 border border-gray-300 rounded w-full" @change="applyFilter">
                                 <option value="" disabled>
                                     Pilih Tahun Ajaran - Proyek
                                 </option>
-                                <option
-                                    v-for="project in projects"
+                                <option v-for="project in projects"
                                     :key="`${project.batch_year}-${project.project_name}`"
-                                    :value="`${project.batch_year} - ${project.project_name}`"
-                                >
+                                    :value="`${project.batch_year} - ${project.project_name}`">
                                     {{ project.batch_year }} -
                                     {{ project.project_name }}
                                 </option>
@@ -187,50 +268,41 @@ export default {
 
                         <template v-slot:column-anggota="{ item }">
                             <div>
-                                <!-- Show class information if available -->
-                                <div
-                                    v-if="
-                                        item.classes && item.classes.length > 0
-                                    "
-                                    class="text-xs font-medium text-gray-500 mb-1"
-                                >
+                                <div v-if="
+                                    item.classes && item.classes.length > 0
+                                " class="text-xs font-medium text-gray-500 mb-1">
                                     Kelas: {{ formatClasses(item.classes) }}
                                 </div>
-                                <div
-                                    v-else
-                                    class="text-xs font-medium text-gray-500 mb-1"
-                                >
+                                <div v-else class="text-xs font-medium text-gray-500 mb-1">
                                     Tidak Ada Kelas
                                 </div>
 
-                                <!-- List all students in the group -->
                                 <ul>
-                                    <li
-                                        v-for="(anggota, index) in item.anggota"
-                                        :key="index"
-                                        class="flex items-center space-x-2"
-                                    >
+                                    <li v-for="(anggota, index) in item.anggota" :key="index"
+                                        class="flex items-center space-x-2">
                                         <span class="text-gray-400">•</span>
-                                        <a
-                                            href="#"
-                                            @click.prevent="
-                                                goToProfile(anggota.user_id)
+                                        <a href="#" @click.prevent="
+                                            goToProfile(anggota.user_id)
                                             "
-                                            class="text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200"
-                                        >
+                                            class="text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200">
                                             {{ anggota.name }}
                                         </a>
                                     </li>
                                 </ul>
                             </div>
                         </template>
+                        <template v-slot:column-delete="{ item }">
+                            <button @click="confirmDelete(item)" class="flex items-center justify-center px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 
+               focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 w-10 h-10">
+                                <font-awesome-icon icon="fa-solid fa-trash" />
+                            </button>
+                        </template>
+
                     </DataTable>
                 </Card>
 
-                <button
-                    @click="createKelompok('/sispa/dosen/kelola-kelompok/create')"
-                    class="fixed bottom-8 right-8 flex items-center justify-center w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105"
-                >
+                <button @click="createKelompok('/sispa/dosen/kelola-kelompok/create')"
+                    class="fixed bottom-8 right-8 flex items-center justify-center w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105">
                     <font-awesome-icon :icon="['fas', 'plus']" />
                 </button>
             </main>

@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Support\Facades\Validator;
 
 class KelolaKelompokController extends Controller
 {
@@ -63,49 +63,52 @@ class KelolaKelompokController extends Controller
         ->whereHas('project', function ($query) {
             $query->where('status', 'active'); 
         })
-            ->get()
-            ->groupBy('project_id')
-            ->map(function ($projectGroups) {
-                return $projectGroups->groupBy(function ($item) {
-                    return optional($item->mahasiswa->classRoom)->class_name . '-' . $item->group;
-                })
-                    ->sortKeys()
-                    ->map(function ($sameGroupItems) {
-                        $firstGroup = $sameGroupItems->first();
-                        $members = $sameGroupItems->map(function ($group) {
-                            return [
-                                'name' => optional($group->mahasiswa->user)->name ?? 'Unnamed',
-                                'nim' => optional($group->mahasiswa)->nim ?? 'N/A',
-                                'user_id' => optional($group->mahasiswa->user)->id ?? null,
-                                'class' => optional($group->mahasiswa->classRoom)->class_name ?? 'N/A'
-                            ];
-                        })->unique('nim')->values();
-
-                        // Ambil angkatan dari classroom mahasiswa di group
-                        $angkatan = optional($firstGroup->mahasiswa->classRoom)->angkatan ?? 'N/A';
-                        $class = optional($firstGroup->mahasiswa->classRoom)->class_name ?? 'N/A';
-
-                        return [
-                            'dosen_name' => optional($firstGroup->dosen->user)->name ?? 'Unnamed Dosen',
-                            'projects' => [[
-                                'project_name' => optional($firstGroup->project)->project_name ?? 'N/A',
-                                'batch_year' => optional($firstGroup->project)->batch_year ?? 'N/A',
-                                'group' => $firstGroup->group,
-                                'anggota' => $members,
-                                'angkatan' => $angkatan,
-                                'class' => $class,
-                                'classroom' => [
-                                    'angkatan' => $angkatan,
-                                    'class_name' => $class
-                                ]
-                            ]]
-                        ];
-                    })
-                    ->values();
+        ->get()
+        ->groupBy('project_id')
+        ->map(function ($projectGroups) {
+            return $projectGroups->groupBy(function ($item) {
+                return optional($item->mahasiswa->classRoom)->class_name . '-' . $item->group;
             })
-            ->flatten(1)
-            ->filter()
+            ->sortKeys()
+            ->map(function ($sameGroupItems) {
+                $firstGroup = $sameGroupItems->first();
+                $members = $sameGroupItems->map(function ($group) {
+                    return [
+                        'name' => optional($group->mahasiswa->user)->name ?? 'Unnamed',
+                        'nim' => optional($group->mahasiswa)->nim ?? 'N/A',
+                        'user_id' => optional($group->mahasiswa->user)->id ?? null,
+                        'class' => optional($group->mahasiswa->classRoom)->class_name ?? 'N/A'
+                    ];
+                })->unique('nim')->values();
+        
+                // Ambil angkatan dari classroom mahasiswa di group
+                $angkatan = optional($firstGroup->mahasiswa->classRoom)->angkatan ?? 'N/A';
+                $class = optional($firstGroup->mahasiswa->classRoom)->class_name ?? 'N/A';
+                $project = $firstGroup->project;
+        
+                return [
+                    'dosen_name' => optional($firstGroup->dosen->user)->name ?? 'Unnamed Dosen',
+                    'projects' => [[
+                        'id' => $project->id ?? null, // Add this line
+                        'project_id' => $project->id ?? null, // Add this line to ensure project_id is set
+                        'project_name' => $project->project_name ?? 'N/A',
+                        'batch_year' => $project->batch_year ?? 'N/A',
+                        'group' => $firstGroup->group,
+                        'anggota' => $members,
+                        'angkatan' => $angkatan,
+                        'class' => $class,
+                        'classroom' => [
+                            'angkatan' => $angkatan,
+                            'class_name' => $class
+                        ]
+                    ]]
+                ];
+            })
             ->values();
+        })
+        ->flatten(1)
+        ->filter()
+        ->values();
 
         return Inertia::render('Dosen/KelolaKelompok', [
             'kelompok' => $kelompokData,
@@ -137,36 +140,32 @@ class KelolaKelompokController extends Controller
 
     public function getProfile($user_id)
     {
-        // Ambil data mahasiswa berdasarkan user_id yang diterima dari parameter
         $mahasiswa = Mahasiswa::with([
-            'user',          // Relasi dengan tabel user
-            'classRoom.prodi.major', // Relasi dengan class room dan prodi serta major
+            'user',          
+            'classRoom.prodi.major', 
         ])
-            ->where('user_id', $user_id) // Mengambil data mahasiswa berdasarkan user_id yang diterima
-            ->first(); // Ambil hanya satu data mahasiswa (karena user hanya punya satu mahasiswa)
+            ->where('user_id', $user_id) 
+            ->first();
 
         if (!$mahasiswa) {
             return response()->json(['message' => 'Data mahasiswa tidak ditemukan.'], 404);
         }
 
-        // Periksa apakah mahasiswa memiliki foto dan buat URL dengan asset()
         $photoUrl = $mahasiswa->user->photo ? asset('storage/' . $mahasiswa->user->photo) : null;
 
-        // Kembalikan data mahasiswa dengan relasi terkait
         return response()->json([
             'nama' => $mahasiswa->user->name,
             'nim' => $mahasiswa->nim,
             'prodi' => $mahasiswa->classRoom->prodi->prodi_name,
             'jurusan' => $mahasiswa->classRoom->prodi->major->major_name,
             'email' => $mahasiswa->user->email,
-            'telepon' => $mahasiswa->user->phone, // Misalkan ada kolom telepon di tabel user
-            // 'photo' => $mahasiswa->user->photo, // Misalkan ada kolom photo di tabel user
+            'telepon' => $mahasiswa->user->phone, 
+            // 'photo' => $mahasiswa->user->photo,
             'photo' => $photoUrl,
         ]);
     }
 
 
-    // Mendapatkan foto profil mahasiswa
     public function getProfilePhoto()
     {
         $user = Auth::user();
@@ -176,7 +175,6 @@ class KelolaKelompokController extends Controller
             return response()->json(['message' => 'Foto profil tidak ditemukan.'], 404);
         }
 
-        // Mendapatkan URL untuk file foto profil
         $photoUrl = Storage::url($mahasiswa->user->photo);
 
         return response()->json(['photo_url' => $photoUrl]);
@@ -249,7 +247,6 @@ class KelolaKelompokController extends Controller
         try {
             Log::info('File uploaded', ['file_name' => $file->getClientOriginalName()]);
     
-            // Log the file contents or data being imported
             Log::info('File contents', ['contents' => file_get_contents($file->getRealPath())]);
     
             Excel::import(new KelompokImport, $file);
@@ -258,6 +255,181 @@ class KelolaKelompokController extends Controller
         } catch (\Exception $e) {
             Log::error('Import error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             return response()->json(['error' => 'Terjadi kesalahan saat mengimpor data', 'details' => $e->getMessage()], 500);
+        }
+    }
+
+    public function checkGroupDeletion(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'project_id' => [
+                'required', 
+                'string', 
+                function($attribute, $value, $fail) {
+                    if (!$value) {
+                        $fail('The project ID cannot be empty.');
+                    }
+                    
+                    $projectExists = DB::table('groups')
+                        ->where('project_id', $value)
+                        ->exists();
+                    
+                    if (!$projectExists) {
+                        $fail('The selected project does not exist.');
+                    }
+                }
+            ],
+            'group_name' => 'required|string'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'errors' => $validator->errors(),
+                'message' => 'Validation failed',
+                'request_data' => $request->all()
+            ], 422);
+        }
+
+        $validated = $validator->validated();
+
+        $relatedAnswersPeer = DB::table('answers_peer')
+            ->join('mahasiswa', 'answers_peer.mahasiswa_id', '=', 'mahasiswa.id')
+            ->join('groups', 'mahasiswa.id', '=', 'groups.mahasiswa_id')
+            ->where('groups.project_id', $validated['project_id'])
+            ->where('groups.group', $validated['group_name'])
+            ->exists();
+
+        if ($relatedAnswersPeer) {
+            return response()->json([
+                'warning' => 'This group has related peer assessment answers. Deleting the group will remove all associated assessment data.',
+                'requires_confirmation' => true
+            ]);
+        }
+
+        return response()->json(['requires_confirmation' => false]);
+    }
+
+    public function deleteGroup(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'project_id' => ['required', 'string', 'exists:groups,project_id'],
+            'group_name' => 'required|string',
+            'force' => 'sometimes|boolean'
+        ]);
+
+        if ($validator->fails()) {
+            \Log::error('Validation Failed:', [
+                'errors' => $validator->errors(),
+                'input' => $request->all()
+            ]);
+            return response()->json([
+                'errors' => $validator->errors(),
+                'message' => 'Validation failed'
+            ], 422);
+        }
+
+        $validated = $validator->validated();
+
+        DB::beginTransaction();
+
+        try {
+            // Fetch the groups to delete
+            $groupsToDelete = Group::where('project_id', $validated['project_id'])
+                                    ->where('group', $validated['group_name'])
+                                    ->get();
+
+            if ($groupsToDelete->isEmpty()) {
+                \Log::warning('No Groups Found:', [
+                    'project_id' => $validated['project_id'],
+                    'group_name' => $validated['group_name']
+                ]);
+                return response()->json(['error' => 'No groups found'], 404);
+            }
+
+            \Log::info('Groups Found for Deletion:', [
+                'count' => $groupsToDelete->count(),
+                'group_ids' => $groupsToDelete->pluck('id')->toArray()
+            ]);
+
+            // Variable to track total deletions
+            $totalAnswersDeleted = 0;
+            $totalGroupMembersDeleted = 0;
+
+            if ($request->input('force', false)) {
+                foreach ($groupsToDelete as $group) {
+                    // Delete associated answers
+                    $answersDeleted = DB::table('answers_peer')
+                        ->join('mahasiswa', 'answers_peer.mahasiswa_id', '=', 'mahasiswa.id')
+                        ->join('groups', 'mahasiswa.id', '=', 'groups.mahasiswa_id')
+                        ->where('groups.id', $group->id)
+                        ->delete();
+                    
+                    // Delete associated answers where the peer is in this group
+                    $peerAnswersDeleted = DB::table('answers_peer')
+                        ->join('mahasiswa', 'answers_peer.peer_id', '=', 'mahasiswa.id')
+                        ->join('groups', 'mahasiswa.id', '=', 'groups.mahasiswa_id')
+                        ->where('groups.id', $group->id)
+                        ->delete();
+
+                    // Force delete group members and the group itself
+                    $membersDeleted = Group::where('id', $group->id)->forceDelete();
+                    $group->forceDelete();
+
+                    $totalAnswersDeleted += ($answersDeleted + $peerAnswersDeleted);
+                    $totalGroupMembersDeleted += $membersDeleted;
+
+                    \Log::info('Individual Group Deletion:', [
+                        'group_id' => $group->id,
+                        'answers_peer_deleted' => $answersDeleted,
+                        'peer_answers_deleted' => $peerAnswersDeleted,
+                        'group_members_deleted' => $membersDeleted
+                    ]);
+                }
+            } else {
+                // Check for related answers before deletion
+                $relatedAnswersPeer = DB::table('answers_peer')
+                    ->join('mahasiswa', 'answers_peer.mahasiswa_id', '=', 'mahasiswa.id')
+                    ->join('groups', 'mahasiswa.id', '=', 'groups.mahasiswa_id')
+                    ->where('groups.project_id', $validated['project_id'])
+                    ->where('groups.group', $validated['group_name'])
+                    ->exists();
+
+                if ($relatedAnswersPeer) {
+                    \Log::warning('Deletion Blocked - Related Entries Exist', [
+                        'project_id' => $validated['project_id'],
+                        'group_name' => $validated['group_name']
+                    ]);
+
+                    return response()->json([
+                        'error' => 'Group has related assessment entries. Use force delete.',
+                        'requires_confirmation' => true
+                    ], 400);
+                }
+
+                $deletedCount = $groupsToDelete->each->forceDelete();
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Group deleted successfully',
+                'deleted_group_count' => $groupsToDelete->count(),
+                'deleted_answers_count' => $totalAnswersDeleted,
+                'deleted_group_members_count' => $totalGroupMembersDeleted
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            \Log::error('Group Deletion Error:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'input' => $request->all()
+            ]);
+
+            return response()->json([
+                'error' => 'Failed to delete group',
+                'details' => $e->getMessage()
+            ], 500);
         }
     }
     

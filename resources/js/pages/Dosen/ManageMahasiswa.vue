@@ -7,6 +7,7 @@ import Card from "@/Components/Card.vue";
 import DataTable from "@/Components/DataTable.vue";
 import Breadcrumb from "@/Components/Breadcrumb.vue";
 import { debounce } from "lodash";
+import Swal from "sweetalert2";
 
 export default {
     name: "ManageMahasiswa",
@@ -139,6 +140,110 @@ export default {
         detailUser(user_id) {
             router.visit(`/sispa/dosen/manage-mahasiswa/detail?user_id=${user_id}`);
         },
+
+        async deleteUser(userId) {
+            try {
+                const response = await axios.delete(`/sispa/api/delete-mhs/${userId}`);
+                this.fetchUsers();
+            } catch (error) {
+                if (error.response.data.requires_action) {
+                    alert('Tidak dapat menghapus mahasiswa yang memiliki group');
+                } else {
+                    console.error("Error deleting user:", error);
+                }
+            }
+        },
+
+        confirmDelete(user) {
+            if (confirm(`Apakah Anda yakin ingin menghapus mahasiswa ${user.user.name}?`)) {
+                this.deleteUser(user.user_id);
+            }
+        },
+
+        detailUser(user_id) {
+            router.visit(`/sispa/dosen/manage-mahasiswa/detail?user_id=${user_id}`);
+        },
+
+        async confirmDeleteMahasiswa(item) {
+            // Ensure we're passing the correct user ID
+            const userId = item.user_id || (item.user && item.user.id) || item;
+
+            try {
+                // First, check if the user belongs to any groups
+                const response = await axios.get(`/sispa/api/check-mahasiswa-groups/${userId}`);
+
+                if (response.data.has_groups) {
+                    // If user belongs to groups, show a warning
+                    Swal.fire({
+                        title: 'Warning: User Belongs to Groups',
+                        html: `
+                <p>This user is a member of the following groups:</p>
+                <ul class="list-disc list-inside text-left mt-2">
+                    ${response.data.groups.map(group =>
+                            `<li>${group.project_name} - Group ${group.group_name}</li>`
+                        ).join('')}
+                </ul>
+                <p class="mt-3 text-red-600">Please remove the user from the groups first.</p>
+                `,
+                        icon: 'warning',
+                        confirmButtonColor: '#3085d6',
+                        confirmButtonText: 'OK'
+                    });
+                } else {
+                    // If no groups, directly confirm deletion
+                    Swal.fire({
+                        title: 'Delete User',
+                        text: 'Are you sure you want to delete this user?',
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: 'Yes, delete user',
+                        cancelButtonText: 'Cancel'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            this.performMahasiswaDeletion(userId);
+                        }
+                    });
+                }
+            } catch (error) {
+                // Handle specific error cases
+                if (error.response?.data?.error === "Mahasiswa tidak ditemukan") {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'User Not Found',
+                        text: 'The specified user could not be found in the system.'
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Failed to check user groups: ' + (error.response?.data?.message || error.message)
+                    });
+                }
+            }
+        },
+
+        async performMahasiswaDeletion(userId) {
+            try {
+                const response = await axios.delete(`/sispa/api/delete-mhs/${userId}`);
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'User Deleted',
+                    text: response.data.message
+                });
+
+                // Refresh the user list
+                this.fetchUsers();
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Deletion Error',
+                    text: error.response?.data?.message || 'Failed to delete user'
+                });
+            }
+        }
     },
 };
 </script>
@@ -158,23 +263,13 @@ export default {
                         <div class="grid grid-cols-5 gap-4 mb-6">
                             <!-- Dropdown Angkatan -->
                             <div>
-                                <label
-                                    for="angkatan-select"
-                                    class="block text-sm font-medium text-gray-700"
-                                >
+                                <label for="angkatan-select" class="block text-sm font-medium text-gray-700">
                                     Filter Angkatan
                                 </label>
-                                <select
-                                    id="angkatan-select"
-                                    v-model="selectedAngkatan"
-                                    class="mt-2 p-2 border border-gray-300 rounded w-full"
-                                >
+                                <select id="angkatan-select" v-model="selectedAngkatan"
+                                    class="mt-2 p-2 border border-gray-300 rounded w-full">
                                     <option value="">Semua Angkatan</option>
-                                    <option
-                                        v-for="angkatan in angkatanList"
-                                        :key="angkatan"
-                                        :value="angkatan"
-                                    >
+                                    <option v-for="angkatan in angkatanList" :key="angkatan" :value="angkatan">
                                         {{ angkatan }}
                                     </option>
                                 </select>
@@ -182,23 +277,13 @@ export default {
 
                             <!-- Dropdown Kelas -->
                             <div>
-                                <label
-                                    for="class-select"
-                                    class="block text-sm font-medium text-gray-700"
-                                >
+                                <label for="class-select" class="block text-sm font-medium text-gray-700">
                                     Filter Kelas
                                 </label>
-                                <select
-                                    id="class-select"
-                                    v-model="selectedClass"
-                                    class="mt-2 p-2 border border-gray-300 rounded w-full"
-                                >
+                                <select id="class-select" v-model="selectedClass"
+                                    class="mt-2 p-2 border border-gray-300 rounded w-full">
                                     <option value="">Semua Kelas</option>
-                                    <option
-                                        v-for="classItem in classList"
-                                        :key="classItem"
-                                        :value="classItem"
-                                    >
+                                    <option v-for="classItem in classList" :key="classItem" :value="classItem">
                                         {{ classItem }}
                                     </option>
                                 </select>
@@ -206,40 +291,33 @@ export default {
 
                             <!-- Search Input -->
                             <div class="col-span-2">
-                                <label
-                                    for="search"
-                                    class="block text-sm font-medium text-gray-700"
-                                >
+                                <label for="search" class="block text-sm font-medium text-gray-700">
                                     Cari (Nama/NIM)
                                 </label>
-                                <input
-                                    type="text"
-                                    id="search"
-                                    v-model="searchQuery"
+                                <input type="text" id="search" v-model="searchQuery"
                                     placeholder="Cari berdasarkan nama atau NIM..."
-                                    class="mt-2 p-2 border border-gray-300 rounded w-full"
-                                />
+                                    class="mt-2 p-2 border border-gray-300 rounded w-full" />
                             </div>
                         </div>
 
                         <!-- Data Table -->
-                        <DataTable
-                            :headers="headers"
-                            :items="filteredUsers"
-                            class="mt-10"
-                        >
+                        <DataTable :headers="headers" :items="filteredUsers" class="mt-10">
                             <template #column-actions="{ item }">
-                                <button
-                                    @click="detailUser(item.user_id)"
-                                    class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                                >
-                                    <font-awesome-icon
-                                        icon="fa-solid fa-eye"
-                                        class="mr-2"
-                                    />
-                                    Detail
-                                </button>
+                                <div class="flex space-x-2">
+                                    <!-- Tombol Detail -->
+                                    <button @click="detailUser(item.user_id)"
+                                        class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                        <font-awesome-icon icon="fa-solid fa-eye" />
+                                    </button>
+
+                                    <!-- Tombol Delete -->
+                                    <button @click="confirmDeleteMahasiswa(item)"
+                                        class="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                                        <font-awesome-icon icon="fa-solid fa-trash" />
+                                    </button>
+                                </div>
                             </template>
+
 
                             <template #column-angkatan="{ item }">
                                 {{ item.class_room.angkatan }}
@@ -260,19 +338,16 @@ export default {
                             <template #column-email="{ item }">
                                 {{ item.user.email }}
                             </template>
+
                         </DataTable>
                     </template>
                 </Card>
 
-                <button
-                    @click="inputMahasiswa"
-                    class="fixed bottom-8 right-8 flex items-center justify-center w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105"
-                >
+                <button @click="inputMahasiswa"
+                    class="fixed bottom-8 right-8 flex items-center justify-center w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105">
                     <font-awesome-icon :icon="['fas', 'plus']" />
                 </button>
             </main>
         </div>
     </div>
 </template>
-
-
