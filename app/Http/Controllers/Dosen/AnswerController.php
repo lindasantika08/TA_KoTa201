@@ -98,11 +98,13 @@ class AnswerController extends Controller
         $validated = $request->validate([
             'batch_year' => 'required|string',
             'project_name' => 'required|string',
+            'assessment_order' => 'required|integer',
         ]);
 
         $assessment = Assessment::join('project', 'assessment.project_id', '=', 'project.id')
             ->where('assessment.batch_year', $validated['batch_year'])
             ->where('project.project_name', $validated['project_name'])
+            ->where('assessment.assessment_order', $validate['assessment_order'])
             ->where('assessment.type', 'selfAssessment')
             ->select('assessment.id')
             ->first();
