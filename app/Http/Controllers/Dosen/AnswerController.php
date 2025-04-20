@@ -104,7 +104,7 @@ class AnswerController extends Controller
         $assessment = Assessment::join('project', 'assessment.project_id', '=', 'project.id')
             ->where('assessment.batch_year', $validated['batch_year'])
             ->where('project.project_name', $validated['project_name'])
-            ->where('assessment.assessment_order', $validate['assessment_order'])
+            ->where('assessment.assessment_order', $validated['assessment_order'])
             ->where('assessment.type', 'selfAssessment')
             ->select('assessment.id')
             ->first();
