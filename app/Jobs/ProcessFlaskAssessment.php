@@ -71,7 +71,7 @@ class ProcessFlaskAssessment implements ShouldQueue
 
             if ($flaskResponse->successful()) {
                 $flaskResult = $flaskResponse->json();
-                dd($flaskResult);
+                // dd($flaskResult);
 
                 // Update jawaban dengan hasil dari Flask
                 $answer->update([
