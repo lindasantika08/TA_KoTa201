@@ -8,6 +8,7 @@ use App\Models\Dosen;
 use App\Models\Major;
 use App\Models\Prodi;
 use App\Models\ClassRoom;
+use App\Models\Group;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\MahasiswaExport;
@@ -19,6 +20,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\DB;
+
 
 
 class UserManagementController extends Controller
@@ -147,7 +150,6 @@ class UserManagementController extends Controller
 
         Excel::import(new MahasiswaImport, $request->file('file'));
 
-        // return Redirect::route('dosen/manage-mahasiswa')->with('success', 'Data mahasiswa berhasil diimpor!');
         return redirect()->route('dosen.manage-mahasiswa')->with('success', 'Data mahasiswa berhasil diimpor!');
     }
 
@@ -177,48 +179,41 @@ class UserManagementController extends Controller
     public function getProfileDosen($user_id)
     {
 
-        // Ambil data Dosen yang terkait dengan user
         $dosen = Dosen::with([
-            'user',          // Relasi dengan tabel user
-            'major', // Relasi dengan major
+            'user',
+            'major',
         ])
-            ->where('user_id', $user_id) // Pastikan hanya mengambil data Dosen yang sesuai dengan user yang sedang login
-            ->first(); // Ambil hanya satu data Dosen (karena user hanya punya satu Dosen)
+            ->where('user_id', $user_id)
+            ->first();
 
         if (!$dosen) {
             return response()->json(['message' => 'Data Dosen tidak ditemukan.'], 404);
         }
 
-        // Periksa apakah Dosen memiliki foto dan buat URL dengan asset()
         $photoUrl = $dosen->user->photo ? asset('storage/' . $dosen->user->photo) : null;
 
-        // Kembalikan data Dosen dengan relasi terkait
         return response()->json([
             'nama' => $dosen->user->name,
             'nip' => $dosen->nip,
             'jurusan' => $dosen->major->major_name,
             'email' => $dosen->user->email,
-            'telepon' => $dosen->phone, // Misalkan ada kolom telepon di tabel user
-            'photo' => $photoUrl, // Menambahkan URL foto
+            'telepon' => $dosen->phone,
+            'photo' => $photoUrl,
         ]);
     }
 
 
     public function getDosen(Request $request)
     {
-        // Mulai query untuk mengambil data mahasiswa
         $query = Dosen::with(relations: ['user']);
 
-        // Ambil data dosen
         $dosen = $query->get();
 
-        // Format data agar sesuai dengan yang dibutuhkan (misalnya menambahkan nomor urut)
         $dosen = $dosen->map(function ($item, $index) {
             $item->no = $index + 1;
             return $item;
         });
 
-        // Kirim data ke frontend
         return response()->json($dosen);
     }
 
@@ -231,7 +226,6 @@ class UserManagementController extends Controller
     public function ExportDosen(Request $request)
     {
         try {
-            // Validate request
             $validator = Validator::make($request->all(), [
                 'jurusan' => 'required|exists:major,id',
             ]);
@@ -243,10 +237,8 @@ class UserManagementController extends Controller
                 ], 422);
             }
 
-            // Get the major_id from the validated request
             $majorId = $request->input('jurusan');
 
-            // Generate Excel file
             return Excel::download(new DosenExport($majorId), 'Data_Dosen.xlsx');
         } catch (\Exception $e) {
             return response()->json([
@@ -366,4 +358,123 @@ class UserManagementController extends Controller
             ], 500);
         }
     }
+
+    public function checkMahasiswaGroups($id)
+{
+    // Try to find the mahasiswa using both id and user_id
+    $mahasiswa = Mahasiswa::with('user')
+        ->where('id', $id)
+        ->orWhere('user_id', $id)
+        ->first();
+
+    if (!$mahasiswa) {
+        return response()->json([
+            'error' => 'Mahasiswa tidak ditemukan'
+        ], 404);
+    }
+
+    // Find groups the mahasiswa belongs to BEFORE deletion
+    $groups = Group::where('mahasiswa_id', $mahasiswa->id)
+        ->join('project', 'groups.project_id', '=', 'project.id')
+        ->select('project.project_name', 'groups.group as group_name')
+        ->get();
+
+    return response()->json([
+        'has_groups' => $groups->isNotEmpty(),
+        'groups' => $groups,
+        'mahasiswa_id' => $mahasiswa->id,
+        'user_id' => $mahasiswa->user_id
+    ]);
+}
+
+public function deleteMhs(Request $request, $id) {
+    // Validasi input
+    $validator = Validator::make($request->all(), [
+        'force' => 'sometimes|boolean'
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'errors' => $validator->errors(),
+            'message' => 'Validation failed'
+        ], 422);
+    }
+
+    $forceDelete = $request->input('force', false);
+
+    DB::beginTransaction();
+
+    try {
+        // Cari mahasiswa berdasarkan user_id atau id mahasiswa
+        $mahasiswa = Mahasiswa::where('id', $id)
+            ->orWhere('user_id', $id)
+            ->first();
+
+        // Jika mahasiswa tidak ditemukan, coba cari di users
+        if (!$mahasiswa) {
+            $user = User::findOrFail($id);
+            
+            // Cari mahasiswa terkait dengan user
+            $mahasiswa = Mahasiswa::where('user_id', $user->id)->first();
+            
+            if (!$mahasiswa) {
+                return response()->json([
+                    'error' => 'Mahasiswa tidak ditemukan',
+                    'details' => 'Tidak ada data mahasiswa terkait dengan user ini'
+                ], 404);
+            }
+        }
+
+        // Cek relasi yang mungkin menghalangi penghapusan
+        $groupsCount = DB::table('groups')
+            ->where('mahasiswa_id', $mahasiswa->id)
+            ->count();
+
+        // Jika ada data groups dan bukan force delete, kembalikan peringatan
+        if ($groupsCount > 0 && !$forceDelete) {
+            return response()->json([
+                'error' => 'Mahasiswa memiliki data group yang mencegah penghapusan.',
+                'details' => [
+                    'groups_count' => $groupsCount
+                ],
+                'requires_confirmation' => true
+            ], 400);
+        }
+
+        // Jika force delete, hapus data terkait
+        if ($forceDelete) {
+            // Hapus groups terkait
+            DB::table('groups')
+                ->where('mahasiswa_id', $mahasiswa->id)
+                ->delete();
+        }
+
+        // Simpan ID user untuk dihapus
+        $userId = $mahasiswa->user_id;
+
+        // Hapus data mahasiswa
+        $mahasiswa->forceDelete();
+
+        // Hapus user terkait
+        User::where('id', $userId)->forceDelete();
+
+        DB::commit();
+
+        return response()->json([
+            'message' => 'Mahasiswa berhasil dihapus',
+            'deleted_mahasiswa_id' => $mahasiswa->id,
+            'deleted_user_id' => $userId,
+            'deleted_groups_count' => $groupsCount
+        ]);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+
+        return response()->json([
+            'error' => 'Gagal menghapus mahasiswa',
+            'details' => $e->getMessage()
+        ], 500);
+    }
+}
+    
 }

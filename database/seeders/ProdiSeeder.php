@@ -39,7 +39,7 @@ class ProdiSeeder extends Seeder
             ],
             'Teknik Komputer dan Informatika' => [
                 ['id' => '5a5e8c63-1234-4abc-89de-56789abcdef0', 'prodi_name' => 'D3 Teknik Informatika'], // ID ditentukan
-                ['id' => Str::uuid(), 'prodi_name' => 'D4 Teknik Informatika'],
+                ['id' => '6a5e8c64-1234-4xyt-79de-56789abcdef9', 'prodi_name' => 'D4 Teknik Informatika'],
             ],
             'Teknik Refrigerasi dan Tata Udara' => [
                 ['id' => Str::uuid(), 'prodi_name' => 'D3 Teknik Pendingin dan Tata Udara'],

@@ -216,6 +216,7 @@ class SelfAssessment extends Controller
                 'answers.*.answer' => 'required|string',
                 'answers.*.score' => 'required|integer|between:1,5',
                 'answers.*.status' => 'required|string',
+                'temporaryAnswers' => 'sometimes|array'
             ]);
             
             $user = Auth::user();
@@ -252,6 +253,44 @@ class SelfAssessment extends Controller
                 
                 ProcessFlaskAssessment::dispatch($simpleAnswerData, $answer->id)
                     ->onQueue('flask-processing');
+            }
+            
+            // Next, save all temporary answers if provided
+            if (isset($validated['temporaryAnswers']) && !empty($validated['temporaryAnswers'])) {
+                foreach ($validated['temporaryAnswers'] as $questionId => $tempAnswer) {
+                    // Skip questions that were just saved in the first loop
+                    if (in_array($questionId, array_column($validated['answers'], 'question_id'))) {
+                        continue;
+                    }
+                    
+                    // Ensure the temporary answer has the required fields
+                    if (isset($tempAnswer['answer']) && isset($tempAnswer['score'])) {
+                        $answer = Answers::updateOrCreate(
+                            [
+                                'question_id' => $questionId,
+                                'mahasiswa_id' => $mahasiswa->id
+                            ],
+                            [
+                                'question_id' => $questionId,
+                                'mahasiswa_id' => $mahasiswa->id,
+                                'answer' => $tempAnswer['answer'],
+                                'score' => $tempAnswer['score'],
+                                'status' => $request->input('answers.0.status', 'submitted') // Use the same status as main answers
+                            ]
+                        );
+                        
+                        $savedAnswers[] = $answer;
+                        
+                        $simpleAnswerData = [
+                            'question_id' => $questionId,
+                            'answer' => $tempAnswer['answer'],
+                            'score' => $tempAnswer['score']
+                        ];
+                        
+                        ProcessFlaskAssessment::dispatch($simpleAnswerData, $answer->id)
+                            ->onQueue('flask-processing');
+                    }
+                }
             }
             
             DB::commit();
