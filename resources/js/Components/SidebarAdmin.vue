@@ -15,8 +15,8 @@
             <ul class="flex flex-col space-y-4">
                 <li>
                     <a
-                        :href="'/admin/dashboard'"
-                        :class="{ 'bg-gray-200': isActive('/admin/dashboard') }"
+                        :href="'/sispa/admin/dashboard'"
+                        :class="{ 'bg-gray-200': isActive('/sispa/admin/dashboard') }"
                         class="block px-4 py-2 rounded hover:bg-gray-100 text-base font-medium"
                     >
                         <font-awesome-icon
@@ -26,14 +26,13 @@
                         Dashboard
                     </a>
                 </li>
-
                 <li>
                     <button
                         @click="toggleMajorMenu"
                         :class="{
                             'bg-white':
-                                isActive('/admin/ManageMajor') ||
-                                isActive('/admin/ManageProdi'),
+                                isActive('/sispa/admin/ManageMajor') ||
+                                isActive('/sispa/admin/ManageProdi'),
                         }"
                         class="w-full text-left px-4 py-2 rounded flex justify-start hover:bg-gray-100"
                     >
@@ -41,7 +40,7 @@
                             icon="fa-solid fa-school"
                             class="mr-6"
                         />
-                        <span class="text-base font-medium">Manage Major</span>
+                        <span class="text-base font-medium">Manage Major & Prodi</span>
                         <span
                             :class="{ 'rotate-180': isMajorOpen }"
                             class="transform transition-all ml-2"
@@ -54,7 +53,7 @@
                                 @click="goToCreateMajor"
                                 :class="{
                                     'bg-gray-200':
-                                        isActive('/admin/ManageMajor'),
+                                        isActive('/sispa/admin/ManageMajor'),
                                 }"
                                 class="block px-4 py-2 rounded cursor-pointer hover:bg-gray-100 text-sm"
                             >
@@ -62,13 +61,13 @@
                                     :icon="['fas', 'graduation-cap']"
                                     class="mr-4"
                                 />
-                                Create Major
+                                Manage Major
                             </a>
                             <a
                                 @click="goToCreateProdi"
                                 :class="{
                                     'bg-gray-200':
-                                        isActive('/admin/ManageProdi'),
+                                        isActive('/sispa/admin/ManageProdi'),
                                 }"
                                 class="block px-4 py-2 rounded cursor-pointer hover:bg-gray-100 text-sm"
                             >
@@ -76,7 +75,7 @@
                                     :icon="['fas', 'graduation-cap']"
                                     class="mr-4"
                                 />
-                                Create Prodi
+                                Manage Prodi
                             </a>
                         </li>
                     </ul>
@@ -86,7 +85,7 @@
                     <button
                         @click="toggleUserMenu"
                         :class="{
-                            'bg-white': isActive('/admin/ManageDosen'),
+                            'bg-white': isActive('/sispa/admin/ManageDosen'),
                         }"
                         class="w-full text-left px-4 py-2 rounded flex justify-start hover:bg-gray-100"
                     >
@@ -107,7 +106,7 @@
                                 @click="goToCreateDosen"
                                 :class="{
                                     'bg-gray-200':
-                                        isActive('/admin/ManageDosen'),
+                                        isActive('/sispa/admin/ManageDosen'),
                                 }"
                                 class="block px-4 py-2 rounded cursor-pointer hover:bg-gray-100 text-sm"
                             >
@@ -121,7 +120,7 @@
                                 @click="goToCreateMahasiswa"
                                 :class="{
                                     'bg-gray-200': isActive(
-                                        '/admin/ManageMahasiswa'
+                                        '/sispa/admin/ManageMahasiswa'
                                     ),
                                 }"
                                 class="block px-4 py-2 rounded cursor-pointer hover:bg-gray-100 text-sm"
@@ -154,11 +153,11 @@ export default {
     data() {
         return {
             isMajorOpen:
-                this.isActive("/admin/ManageMajor") ||
-                this.isActive("/admin/ManageProdi"),
+                this.isActive("/sispa/admin/ManageMajor") ||
+                this.isActive("/sispa/admin/ManageProdi"),
             isUserOpen:
-                this.isActive("/admin/ManageDosen") ||
-                this.isActive("/admin/ManageMahasiswa"),
+                this.isActive("/sispa/admin/ManageDosen") ||
+                this.isActive("/sispa/admin/ManageMahasiswa"),
         };
     },
     methods: {
@@ -172,16 +171,16 @@ export default {
             this.isUserOpen = !this.isUserOpen;
         },
         goToCreateMajor() {
-            router.visit("/admin/ManageMajor");
+            router.visit("/sispa/admin/ManageMajor");
         },
         goToCreateProdi() {
-            router.visit("/admin/ManageProdi");
+            router.visit("/sispa/admin/ManageProdi");
         },
         goToCreateDosen() {
-            router.visit("/admin/ManageDosen");
+            router.visit("/sispa/admin/ManageDosen");
         },
         goToCreateMahasiswa() {
-            router.visit("/admin/ManageMahasiswa");
+            router.visit("/sispa/admin/ManageMahasiswa");
         },
     },
 };
