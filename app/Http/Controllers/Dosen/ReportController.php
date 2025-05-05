@@ -295,7 +295,8 @@ class ReportController extends Controller
                     'assessment.question',
                     'type_criteria.aspect',
                     'type_criteria.criteria',
-                    'type_criteria.id as typeCriteria_id'
+                    'type_criteria.id as typeCriteria_id',
+                    'answers_peer.score_SLA',
                 )
                     ->join('assessment', 'answers_peer.question_id', '=', 'assessment.id')
                     ->join('type_criteria', 'assessment.criteria_id', '=', 'type_criteria.id')
@@ -366,6 +367,7 @@ class ReportController extends Controller
                                     'question_id' => $answer->assessment_id,
                                     'pertanyaan' => $answer->question,
                                     'score' => $answer->score,
+                                    'score_SLA' => $answer->score_SLA,
                                     'answer' => $answer->answer
                                 ];
                             })->values()
@@ -425,6 +427,7 @@ class ReportController extends Controller
                 'aspek' => $groupAssessments->first()->typeCriteria->aspect,
                 'kriteria' => $groupAssessments->first()->typeCriteria->criteria,
                 'total_score' => $answers->avg('score'),
+                'total_score_SLA' => $answers->avg('score_SLA'),
                 'total_answers' => $answers->count(),
                 'questions' => $groupAssessments->map(function ($assessment) use ($answers) {
                     $relatedAnswer = $answers->where('question_id', $assessment->id)->first();
@@ -432,6 +435,7 @@ class ReportController extends Controller
                         'question_id' => $assessment->id,
                         'pertanyaan' => $assessment->question,
                         'score' => $relatedAnswer ? $relatedAnswer->score : null,
+                        'score_SLA' => $relatedAnswer ? $relatedAnswer->score_SLA : null,
                         'answer' => $relatedAnswer ? $relatedAnswer->answer : null
                     ];
                 })
@@ -671,6 +675,7 @@ class ReportController extends Controller
                 'aspek' => $groupAssessments->first()->typeCriteria->aspect,
                 'kriteria' => $groupAssessments->first()->typeCriteria->criteria,
                 'total_score' => $answers->avg('score'),
+                'total_score_SLA' => $answers->avg('score_SLA'),
                 'total_answers' => $answers->count(),
                 'questions' => $groupAssessments->map(function ($assessment) use ($answers) {
                     $relatedAnswer = $answers->where('question_id', $assessment->id)->first();
@@ -678,6 +683,7 @@ class ReportController extends Controller
                         'question_id' => $assessment->id,
                         'pertanyaan' => $assessment->question,
                         'score' => $relatedAnswer ? $relatedAnswer->score : null,
+                        'score_SLA' => $relatedAnswer ? $relatedAnswer->score_SLA : null,
                         'answer' => $relatedAnswer ? $relatedAnswer->answer : null
                     ];
                 })
