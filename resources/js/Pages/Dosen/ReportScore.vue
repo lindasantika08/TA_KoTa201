@@ -35,7 +35,7 @@ export default {
     },
     data() {
         return {
-            breadcrumbs: [{ text: "Laporan", href: "/dosen/laporan" }],
+            breadcrumbs: [{ text: "Laporan", href: "/sispa/dosen/laporan" }],
             userAnalysis: {},
             loading: false,
             error: null,
@@ -70,7 +70,7 @@ export default {
 
             try {
                 const response = await axios.get(
-                    "/api/report/kelompok/answers",
+                    "/sispa/api/report/kelompok/answers",
                     {
                         params: {
                             batch_year: this.batch_year,
@@ -89,7 +89,7 @@ export default {
 
         async fetchPeerQuestions() {
             try {
-                const response = await axios.get("/api/questions-peer-dosen", {
+                const response = await axios.get("/sispa/api/questions-peer-dosen", {
                     params: {
                         batch_year: this.batch_year,
                         project_name: this.project_name,
@@ -579,7 +579,7 @@ export default {
                 <div class="mb-4">
                     <Breadcrumb
                         :items="[
-                            { text: 'Report', href: '/dosen/report' },
+                            { text: 'Report', href: '/sispa/dosen/report' },
                             { text: `${kelompok}`, href: '#' },
                         ]"
                     />
@@ -761,6 +761,10 @@ export default {
                                                                 Skor
                                                             </th>
                                                             <th
+                                                                class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24"
+                                                            >
+                                                                Skor SLA
+                                                            </th>                                                            <th
                                                                 class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                                                             >
                                                                 Jawaban
@@ -808,6 +812,33 @@ export default {
                                                                 >
                                                                     {{
                                                                         pertanyaan.score ||
+                                                                        "N/A"
+                                                                    }}
+                                                                </span>
+                                                            </td>
+                                                            <td
+                                                                class="px-4 py-3 text-center"
+                                                            >
+                                                                <span
+                                                                    class="inline-flex items-center justify-center px-3py-1 rounded-full text-xs font-medium"
+                                                                    :class="{
+                                                                        'bg-green-100 text-green-800':
+                                                                            pertanyaan.score_SLA >=
+                                                                            4,
+                                                                        'bg-yellow-100 text-yellow-800':
+                                                                            pertanyaan.score_SLA >=
+                                                                                3 &&
+                                                                            pertanyaan.score_SLA <
+                                                                                4,
+                                                                        'bg-red-100 text-red-800':
+                                                                            pertanyaan.score_SLA <
+                                                                            2.5,
+                                                                        'bg-gray-100 text-gray-800':
+                                                                            !pertanyaan.score_SLA,
+                                                                    }"
+                                                                >
+                                                                    {{
+                                                                        pertanyaan.score_SLA ||
                                                                         "N/A"
                                                                     }}
                                                                 </span>
@@ -976,6 +1007,11 @@ export default {
                                                                     Skor
                                                                 </th>
                                                                 <th
+                                                                    class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24"
+                                                                >
+                                                                    Skor SLA
+                                                                </th>
+                                                                <th
                                                                     class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                                                                 >
                                                                     Jawaban
@@ -1042,6 +1078,33 @@ export default {
                                                                     </span>
                                                                 </td>
                                                                 <td
+                                                                    class="px-4 py-3 text-center"
+                                                                >
+                                                                    <span
+                                                                        class="inline-flex items-center justify-center px-3py-1 rounded-full text-xs font-medium"
+                                                                        :class="{
+                                                                            'bg-green-100 text-green-800':
+                                                                                answer.score_SLA >=
+                                                                                4,
+                                                                            'bg-yellow-100 text-yellow-800':
+                                                                                answer.score_SLA >=
+                                                                                    3 &&
+                                                                                answer.score_SLA <
+                                                                                    4,
+                                                                            'bg-red-100 text-red-800':
+                                                                                answer.score_SLA <
+                                                                                2.5,
+                                                                            'bg-gray-100 text-gray-800':
+                                                                                !answer.score_SLA,
+                                                                        }"
+                                                                    >
+                                                                        {{
+                                                                            answer.score_SLA ||
+                                                                            "N/A"
+                                                                        }}
+                                                                    </span>
+                                                                </td>
+                                                                <td
                                                                     class="px-4 py-3"
                                                                 >
                                                                     <div
@@ -1070,7 +1133,6 @@ export default {
                             </div>
                         </div>
 
-                        <!-- Analysis Score Section -->
                         <!-- Analysis Score Section -->
                         <div class="mt-6">
                             <div

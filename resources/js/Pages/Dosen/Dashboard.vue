@@ -64,20 +64,20 @@ export default {
   },
   methods: {
     checkPasswordChangeStatus() {
-      console.log('Checking password change status...'); // Debugging
+      // console.log('Checking password change status...'); // Debugging
 
       // Cek apakah need_password_change ada di localStorage
       const needPasswordChange = localStorage.getItem("need_password_change");
-      console.log('Need password change from localStorage:', needPasswordChange); // Debug
+      // console.log('Need password change from localStorage:', needPasswordChange); // Debug
 
       if (needPasswordChange === "true") {
-        console.log('Setting up password change notification from localStorage'); // Debug
-        this.showChangePasswordToast = true;
+        // console.log('Setting up password change notification from localStorage'); // Debug
+        this.showChangePasswordToast = false;
         this.needPasswordChange = true;
 
         // Auto-hide toast after 10 seconds
         this.toastTimeout = setTimeout(() => {
-          console.log('Hiding toast after timeout');
+          // console.log('Hiding toast after timeout');
           this.showChangePasswordToast = false;
         }, 10000);
       } else {
@@ -87,21 +87,21 @@ export default {
     },
 
     async checkUserStatus() {
-      console.log('Checking user status from API...'); // Debugging
+      // console.log('Checking user status from API...'); // Debugging
       try {
-        const response = await axios.get("/api/user/status");
-        console.log('User status response:', response.data);
+        const response = await axios.get("/sispa/api/user/status");
+        // console.log('User status response:', response.data);
 
         // Pastikan properti change_password ada
         if (response.data.hasOwnProperty('change_password')) {
-          console.log("Raw change_password value from API:", response.data.change_password);
+          // console.log("Raw change_password value from API:", response.data.change_password);
 
           // Perbaiki logika penentuan need_password_change
           const needPasswordChange = !response.data.change_password;
 
           if (needPasswordChange) {
-            console.log('User needs to change password');
-            this.showChangePasswordToast = true;
+            // console.log('User needs to change password');
+            this.showChangePasswordToast = false;
             this.needPasswordChange = true;
 
             // Simpan ke localStorage agar tetap konsisten
@@ -109,11 +109,11 @@ export default {
 
             // Auto-hide toast after 10 seconds
             this.toastTimeout = setTimeout(() => {
-              console.log('Hiding toast after timeout');
+              // console.log('Hiding toast after timeout');
               this.showChangePasswordToast = false;
             }, 10000);
           } else {
-            console.log('User does not need to change password');
+            // console.log('User does not need to change password');
             localStorage.removeItem("need_password_change");
           }
         } else {
@@ -141,7 +141,7 @@ export default {
     },
     async fetchDropdownOptions() {
       try {
-        const response = await axios.get("/api/dropdown-options");
+        const response = await axios.get("/sispa/api/dropdown-options");
         this.combinedOptions = response.data.options || [];
 
         const storedOption = localStorage.getItem("selectedOption");
@@ -176,27 +176,27 @@ export default {
       if (!this.selectedProject) return;
 
       axios
-        .get("/api/answers/statistics-peer", {
+        .get("/sispa/api/answers/statistics-peer", {
           params: {
             batch_year: this.selectedProject.batch_year,
             project_name: this.selectedProject.project_name,
           },
         })
         .then((response) => {
-          console.log("=== Peer Statistics Response ===");
-          console.log("Total Groups:", response.data.totalGroup);
-          console.log("Completed Groups:", response.data.groupSudahLengkap);
-          console.log("Incomplete Groups:", response.data.groupBelumLengkap);
-          console.log("Group Statistics:", response.data.groupStatistics);
-          console.log("Full Response:", response.data);
+          // console.log("=== Peer Statistics Response ===");
+          // console.log("Total Groups:", response.data.totalGroup);
+          // console.log("Completed Groups:", response.data.groupSudahLengkap);
+          // console.log("Incomplete Groups:", response.data.groupBelumLengkap);
+          // console.log("Group Statistics:", response.data.groupStatistics);
+          // console.log("Full Response:", response.data);
 
           // Detailed logging for each group
           response.data.groupStatistics.forEach((group, index) => {
-            console.log(`\nGroup ${index + 1} Details:`);
-            console.log("Group ID:", group.group_id);
-            console.log("Group Name:", group.group_name);
-            console.log("Is Completed:", group.is_completed);
-            console.log("Total Members:", group.total_members);
+            // console.log(`\nGroup ${index + 1} Details:`);
+            // console.log("Group ID:", group.group_id);
+            // console.log("Group Name:", group.group_name);
+            // console.log("Is Completed:", group.is_completed);
+            // console.log("Total Members:", group.total_members);
           });
 
           this.totalGroups = response.data.totalGroup;
@@ -215,7 +215,7 @@ export default {
       if (!this.selectedProject) return;
 
       axios
-        .get("/api/answers/statistics-dashboard", {
+        .get("/sispa/api/answers/statistics-dashboard", {
           params: {
             batch_year: this.selectedProject.batch_year,
             project_name: this.selectedProject.project_name,
@@ -257,7 +257,7 @@ export default {
     handleListAnswer() {
       if (this.selectedProject) {
         router.get(
-          "/dosen/answers-self-assessment",
+          "/sispa/dosen/answers-self-assessment",
           {
             batch_year: this.selectedProject.batch_year,
             project_name: this.selectedProject.project_name,
@@ -271,7 +271,7 @@ export default {
     handleListAnswerPeer() {
       if (this.selectedProject) {
         router.get(
-          "/dosen/answers-peer-assessment",
+          "/sispa/dosen/answers-peer-assessment",
           {
             batch_year: this.selectedProject.batch_year,
             project_name: this.selectedProject.project_name,
@@ -283,11 +283,11 @@ export default {
       }
     },
     handleChangePassword() {
-      console.log('Handling password change...'); // Debug
+      // console.log('Handling password change...'); // Debug
       this.showChangePasswordToast = false;
       this.needPasswordChange = false;
       localStorage.removeItem("need_password_change");
-      router.visit("/dosen/profile");
+      router.visit("/sispa/dosen/profile");
     },
   },
 };
@@ -336,7 +336,7 @@ export default {
         <!-- Project Selection Header -->
         <div class="mb-8">
           <h1 class="text-2xl font-bold text-gray-800 mb-4">
-            Assessment Dashboard
+            Dashboard Dosen
           </h1>
           <div class="bg-white rounded-lg shadow p-4">
             <label for="combinedDropdown" class="block text-sm font-medium text-gray-700 mb-2">
@@ -359,7 +359,7 @@ export default {
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <!-- Self Assessment Card -->
           <div @click="handleListAnswer()"
-            class="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer overflow-hidden">
+          class="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500 cursor-pointer transition-all duration-200">
             <div class="p-6">
               <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-semibold text-gray-800">
@@ -395,7 +395,7 @@ export default {
           </div>
 
           <!-- Peer Assessment Card -->
-          <div class="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
+          <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500 cursor-pointer transition-all duration-200">
             <div class="p-6">
               <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-semibold text-gray-800">
@@ -430,8 +430,8 @@ export default {
                     class="flex items-center justify-between w-full text-sm font-medium text-gray-700 hover:bg-gray-50 p-2 rounded-lg">
                     <span>Group Details</span>
                     <font-awesome-icon :icon="showGroupDetails
-                        ? 'fa-solid fa-chevron-up'
-                        : 'fa-solid fa-chevron-down'
+                      ? 'fa-solid fa-chevron-up'
+                      : 'fa-solid fa-chevron-down'
                       " class="text-gray-500 transition-transform duration-200" />
                   </button>
 
@@ -459,8 +459,8 @@ export default {
                                 : 'bg-yellow-100 text-yellow-800',
                             ]">
                               <font-awesome-icon :icon="group.is_completed
-                                  ? 'fa-check-circle'
-                                  : 'fa-hourglass-half'
+                                ? 'fa-check-circle'
+                                : 'fa-hourglass-half'
                                 " class="text-xs" />
                               {{
                                 group.is_completed ? "Completed" : "In Progress"
@@ -485,7 +485,7 @@ export default {
           </div>
 
           <!-- Project Summary Card -->
-          <div class="bg-white rounded-lg shadow-sm p-6">
+          <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-purple-500 cursor-pointer transition-all duration-200">
             <div class="flex items-center justify-between mb-4">
               <h3 class="text-lg font-semibold text-gray-800">
                 Project Summary
