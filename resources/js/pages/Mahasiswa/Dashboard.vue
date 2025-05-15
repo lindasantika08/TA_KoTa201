@@ -84,7 +84,7 @@ export default {
     this.fetchProjectData();
     this.fetchSelfAssessmentStatus();
     this.fetchPeerAssessmentDetails();
-    // this.checkPasswordChangeStatus();
+    this.checkPasswordChangeStatus();
   },
   beforeUnmount() {
     if (this.toastTimeout) {
