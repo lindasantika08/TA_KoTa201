@@ -336,7 +336,7 @@ export default {
         <!-- Project Selection Header -->
         <div class="mb-8">
           <h1 class="text-2xl font-bold text-gray-800 mb-4">
-            Assessment Dashboard
+            Dashboard Dosen
           </h1>
           <div class="bg-white rounded-lg shadow p-4">
             <label for="combinedDropdown" class="block text-sm font-medium text-gray-700 mb-2">
@@ -359,7 +359,7 @@ export default {
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <!-- Self Assessment Card -->
           <div @click="handleListAnswer()"
-            class="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer overflow-hidden">
+          class="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500 cursor-pointer transition-all duration-200">
             <div class="p-6">
               <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-semibold text-gray-800">
@@ -395,7 +395,7 @@ export default {
           </div>
 
           <!-- Peer Assessment Card -->
-          <div class="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
+          <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500 cursor-pointer transition-all duration-200">
             <div class="p-6">
               <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-semibold text-gray-800">
@@ -485,7 +485,7 @@ export default {
           </div>
 
           <!-- Project Summary Card -->
-          <div class="bg-white rounded-lg shadow-sm p-6">
+          <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-purple-500 cursor-pointer transition-all duration-200">
             <div class="flex items-center justify-between mb-4">
               <h3 class="text-lg font-semibold text-gray-800">
                 Project Summary

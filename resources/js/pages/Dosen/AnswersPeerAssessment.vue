@@ -432,28 +432,32 @@
                                             Semua
                                         </button>
                                         <button
-                                            @click="toggleStatusFilter('aktif')"
+                                            @click="
+                                                toggleStatusFilter(
+                                                    'unsubmitted'
+                                                )
+                                            "
                                             :class="[
                                                 'px-3 py-1 rounded-full text-sm transition duration-150',
-                                                filters.status === 'aktif'
+                                                filters.status === 'unsubmitted'
                                                     ? 'bg-red-500 text-white shadow-md'
                                                     : 'bg-red-100 text-red-800 hover:bg-red-200',
                                             ]"
                                         >
-                                            Aktif
+                                            Unsubmitted
                                         </button>
                                         <button
                                             @click="
-                                                toggleStatusFilter('selesai')
+                                                toggleStatusFilter('submitted')
                                             "
                                             :class="[
                                                 'px-3 py-1 rounded-full text-sm transition duration-150',
-                                                filters.status === 'selesai'
+                                                filters.status === 'submitted'
                                                     ? 'bg-green-500 text-white shadow-md'
                                                     : 'bg-green-100 text-green-800 hover:bg-green-200',
                                             ]"
                                         >
-                                            Selesai
+                                            submitted
                                         </button>
                                     </div>
                                 </div>
@@ -659,7 +663,6 @@
                     </div>
                 </div>
 
-                <!-- Assessment Cards - Now Grouped by Assessor/Peer with Minimize Option -->
                 <div
                     v-if="!loading && !error && filteredGroups.length > 0"
                     class="space-y-6"
@@ -692,8 +695,10 @@
                                 <span
                                     :class="[
                                         'px-2 py-1 rounded-full text-xs font-medium',
-                                        group.status === 'aktif'
+                                        group.status === 'unsubmitted'
                                             ? 'bg-red-100 text-red-800'
+                                            : group.status === 'on progress'
+                                            ? 'bg-yellow-100 text-yellow-800'
                                             : 'bg-green-100 text-green-800',
                                     ]"
                                 >
@@ -733,7 +738,41 @@
                             <!-- Question-Answer Pairs -->
                             <div class="p-4">
                                 <div class="space-y-6">
+                                    <!-- For unsubmitted status, show a special message -->
                                     <div
+                                        v-if="group.status === 'unsubmitted'"
+                                        class="flex items-center justify-center p-6"
+                                    >
+                                        <div class="text-center">
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                class="h-12 w-12 mx-auto text-red-400 mb-4"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                stroke="currentColor"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                                                />
+                                            </svg>
+                                            <h3
+                                                class="text-lg font-medium text-gray-900 mb-2"
+                                            >
+                                                Penilaian Belum Dikumpulkan
+                                            </h3>
+                                            <p class="text-gray-600">
+                                                Mahasiswa belum menyelesaikan
+                                                penilaian peer ini.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <!-- For submitted status, show normal QA items -->
+                                    <div
+                                        v-else
                                         v-for="(qa, qaIndex) in group.qaItems"
                                         :key="`qa-${qaIndex}`"
                                         class="border-b border-gray-200 pb-4 last:border-0 last:pb-0"
@@ -1058,32 +1097,94 @@ export default {
             this.loading = true;
             this.error = null;
             try {
-                const response = await axios.get("/sispa/api/answersPeer/list", {
-                    params: {
-                        batch_year: this.batch_year,
-                        project_name: this.project_name,
-                    },
-                });
+                const response = await axios.get(
+                    "/sispa/api/answersPeer/list",
+                    {
+                        params: {
+                            batch_year: this.batch_year,
+                            project_name: this.project_name,
+                            include_unsubmitted: true, // This parameter ensures we get unsubmitted assessments
+                        },
+                    }
+                );
 
                 if (response.data.success) {
-                    this.answers = response.data.data
-                        .map((item) => ({
-                            ...item,
-                            nama_pengguna: item.user?.name || "-",
-                            nama_rekan: item.peer?.name || "-",
-                            skor: item.score,
-                            score_SLA: item.score_SLA,
-                            similarity: item.similarity,
-                            jawaban: item.answer,
-                            pertanyaan: item.pertanyaan || "-",
-                            status: item.status,
-                            kelompok: item.kelompok,
-                        }))
-                        .sort((a, b) => {
-                            if (a.nama_pengguna < b.nama_pengguna) return -1;
-                            if (a.nama_pengguna > b.nama_pengguna) return 1;
-                            return 0;
-                        });
+                    // Process submitted answers - make sure they have proper data
+                    let processedAnswers = response.data.data.map((item) => ({
+                        ...item,
+                        nama_pengguna: item.user?.name || "-",
+                        nama_rekan: item.peer?.name || "-",
+                        skor: item.score || 0,
+                        score_SLA: item.score_SLA || 0,
+                        similarity: item.similarity || 0,
+                        jawaban: item.answer || "-",
+                        pertanyaan: item.pertanyaan || "-",
+                        // Only mark as submitted if there's an actual answer that's not just a dash
+                        status:
+                            item.answer && item.answer !== "-"
+                                ? "submitted"
+                                : "unsubmitted",
+                        kelompok: item.kelompok,
+                    }));
+
+                    // Process unsubmitted assessments - making sure they're being handled
+                    if (
+                        response.data.unsubmitted &&
+                        response.data.unsubmitted.length > 0
+                    ) {
+                        console.log(
+                            "Found unsubmitted assessments:",
+                            response.data.unsubmitted.length
+                        );
+                        const unsubmittedAnswers =
+                            response.data.unsubmitted.map((item) => ({
+                                ...item,
+                                nama_pengguna: item.user?.name || "-",
+                                nama_rekan: item.peer?.name || "-",
+                                skor: 0,
+                                score_SLA: 0,
+                                similarity: 0,
+                                jawaban: "-", // Empty jawaban for unsubmitted
+                                pertanyaan: item.pertanyaan || "-",
+                                status: "unsubmitted", // Mark as unsubmitted
+                                kelompok: item.kelompok,
+                            }));
+
+                        // Combine both arrays
+                        this.answers = [
+                            ...processedAnswers,
+                            ...unsubmittedAnswers,
+                        ];
+                    } else {
+                        this.answers = processedAnswers;
+                    }
+
+                    // Double check that any items with a dash or empty answer are marked as unsubmitted
+                    this.answers = this.answers.map((answer) => ({
+                        ...answer,
+                        status:
+                            !answer.jawaban || answer.jawaban === "-"
+                                ? "unsubmitted"
+                                : "submitted",
+                    }));
+
+                    // Sort the combined list
+                    this.answers = this.answers.sort((a, b) => {
+                        if (a.nama_pengguna < b.nama_pengguna) return -1;
+                        if (a.nama_pengguna > b.nama_pengguna) return 1;
+                        return 0;
+                    });
+
+                    console.log(
+                        "Total answers after processing:",
+                        this.answers.length
+                    );
+                    console.log(
+                        "Unsubmitted answers:",
+                        this.answers.filter((a) => a.status === "unsubmitted")
+                            .length
+                    );
+
                     this.groups = response.data.groups || [];
                     this.noDataMessage = "";
                 } else {

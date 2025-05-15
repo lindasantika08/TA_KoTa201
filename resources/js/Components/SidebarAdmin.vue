@@ -40,7 +40,7 @@
                             icon="fa-solid fa-school"
                             class="mr-6"
                         />
-                        <span class="text-base font-medium">Manage Major</span>
+                        <span class="text-base font-medium">Manage Major & Prodi</span>
                         <span
                             :class="{ 'rotate-180': isMajorOpen }"
                             class="transform transition-all ml-2"
@@ -61,7 +61,7 @@
                                     :icon="['fas', 'graduation-cap']"
                                     class="mr-4"
                                 />
-                                Create Major
+                                Manage Major
                             </a>
                             <a
                                 @click="goToCreateProdi"
@@ -75,7 +75,7 @@
                                     :icon="['fas', 'graduation-cap']"
                                     class="mr-4"
                                 />
-                                Create Prodi
+                                Manage Prodi
                             </a>
                         </li>
                     </ul>
