@@ -17,6 +17,7 @@ use App\Http\Controllers\Dosen\SelfAssessmentDosen;
 use App\Http\Controllers\Dosen\PeerAssessmentDosen;
 use App\Http\Controllers\Dosen\ProfileController;
 use App\Http\Controllers\Dosen\FeedbackController;
+use App\Http\Controllers\Dosen\RefleksiController;
 
 use App\Http\Controllers\Mahasiswa\AssessmentMahasiswa;
 use App\Http\Controllers\Mahasiswa\DashboardMahasiswa;
@@ -28,6 +29,7 @@ use App\Http\Controllers\Mahasiswa\FeedbackMahasiswa;
 use App\Http\Controllers\Mahasiswa\ReportMahasiswa;
 use App\Http\Controllers\Mahasiswa\ProfileMahasiswa;
 use App\Http\Controllers\Mahasiswa\NotificationMahasiswa;
+use App\Http\Controllers\Mahasiswa\RefleksiMahasiswa;
 use Illuminate\Support\Facades\Auth;
 // use SebastianBergmann\CodeCoverage\Report\Html\Dashboard;
 
@@ -70,7 +72,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/toggle-publish-assessment', [ProjectController::class, 'togglePublishAssessment']);
     Route::post('/toggle-publish-assessment-peer', [ProjectController::class, 'togglePublishAssessmentPeer']);
     Route::get('/projects/active', [DashboardDosen::class, 'getActiveProjects']);
-    
+
 
     Route::get('/data-with-bobot-self', [AssessmentController::class, 'getAssessmentsWithBobotSelf']);
 
@@ -87,6 +89,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/save-answer-peer-dosen', [PeerAssessmentDosen::class, 'saveAnswerPeer']);
     Route::post('/save-all-answers-peer-dosen', [PeerAssessmentDosen::class, 'saveAllAnswersPeerDosen']);
     Route::get('/get-answer-peer-dosen/{questionId}', [PeerAssessmentDosen::class, 'getAnswerPeer']);
+
+    //Reflective Assessment Dosen
+    Route::get('/export-reflective-assessment', [RefleksiController::class, 'exportExcel']);
+    Route::get('/reflective-assessment-list', [RefleksiController::class, 'getReflectiveAssessmentList']);
+    Route::post('/toggle-publish-reflective-assessment', [RefleksiController::class, 'togglePublish']);
+    Route::delete('/reflective-assessment', [RefleksiController::class, 'deleteReflectiveAssessment']);
+    Route::get('/get-reflective-answer', [RefleksiController::class, 'getAnswerReflectiveAssessment']);
+    Route::get('/reflective-assessment-answer-details', [RefleksiController::class, 'getViewDetailsAnswer']);
+    Route::get('/answers/get-details-answer-reflective', [RefleksiController::class, 'getDetailsAnswerReflective']);
 
     // Manage Group
     Route::get('/kelola-kelompok/export', [KelolaKelompokController::class, 'exportTemplate']);
@@ -180,6 +191,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/groups', [PeerAssessment::class, 'getPeerByGroup']);
     Route::get('/users/search', [PeerAssessment::class, 'searchByNim']);
     Route::get('/user-info-peer', [PeerAssessment::class, 'getUserInfo']);
+
+    // reflective Assessment
+    Route::get('/reflective-assessment', [RefleksiMahasiswa::class, 'getDataReflective']);
+    Route::get('/reflective-questions', [RefleksiMahasiswa::class, 'getReflectiveQuestions']);
+    Route::post('/save-all-reflective-answers', [RefleksiMahasiswa::class, 'saveReflectiveAllAnswer']);
+    Route::post('/save-answer-reflective', [RefleksiMahasiswa::class, 'saveReflectiveAnswer']);
+    Route::get('/get-answer-reflective/{questionId}', [RefleksiMahasiswa::class, 'getAnswer']);
+    Route::get('/detail-answer-reflective', [RefleksiMahasiswa::class, 'getAnswerReflective']);
+
 
     // detail assessment
     Route::get('/user-detail-answer', [DetailSelfMahasiswa::class, 'getUserInfo']);

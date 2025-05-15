@@ -119,14 +119,6 @@ export default {
                                 </p>
                             </div>
                         </div>
-                        <div
-                            class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center"
-                        >
-                            <p class="text-sm text-gray-600">Rata-rata Skor</p>
-                            <p class="text-2xl font-bold text-blue-600">
-                                {{ averageScore }}
-                            </p>
-                        </div>
                     </div>
 
                     <div v-if="loading" class="text-center py-6 text-gray-500">
