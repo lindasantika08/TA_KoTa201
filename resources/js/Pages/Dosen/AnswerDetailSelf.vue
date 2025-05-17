@@ -66,7 +66,7 @@ export default {
             this.loading = true;
             this.error = null;
             axios
-                .get("/api/answers/get-details", {
+                .get("/sispa/api/answers/get-details", {
                     params: {
                         mahasiswaId: this.mahasiswaId, // Make sure this is the actual ID
                         batch_year: this.batch_year,

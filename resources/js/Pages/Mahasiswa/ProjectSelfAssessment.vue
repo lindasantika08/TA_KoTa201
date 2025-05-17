@@ -21,7 +21,7 @@ export default {
   data() {
     return {
       breadcrumbs: [
-        { text: "Assessment", href: "/mahasiswa/assessment/self" },
+        { text: "Assessment", href: "/sispa/mahasiswa/assessment/self" },
         { text: "Self Assessment", href: null }
       ],
       headers: [
@@ -42,11 +42,11 @@ export default {
       const project_name = item.project_name;
       const assessment_order = item.assessment_order || '1'; 
 
-      console.log('Batch Year:', batch_year);
-      console.log('Project Name:', project_name);
-      console.log('Assessment Order:', assessment_order);
+      // console.log('Batch Year:', batch_year);
+      // console.log('Project Name:', project_name);
+      // console.log('Assessment Order:', assessment_order);
 
-      router.visit(`/mahasiswa/assessment/self-assessment`, {
+      router.visit(`/sispa/mahasiswa/assessment/self-assessment`, {
         method: 'get',
         data: {
           batch_year: batch_year,
@@ -61,7 +61,7 @@ export default {
     },
 
     handleDetail(item) {
-      router.visit(`/mahasiswa/peer-assessment/self-detail`, {
+      router.visit(`/sispa/mahasiswa/peer-assessment/self-detail`, {
         method: 'get',
         data: {
           batch_year: item.batch_year,
@@ -73,7 +73,7 @@ export default {
 
   },
   mounted() {
-    axios.get('/api/self-assessment')
+    axios.get('/sispa/api/self-assessment')
       .then(response => {
         this.items = response.data.assessments.map((item, index) => ({
           id: item.id,

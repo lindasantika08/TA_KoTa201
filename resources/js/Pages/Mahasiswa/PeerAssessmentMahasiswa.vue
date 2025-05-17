@@ -4,9 +4,9 @@ import axios from "axios";
 import DataTable from "@/Components/DataTable.vue";
 import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
-import SidebarMahasiswa from "../../Components/SidebarMahasiswa.vue";
+import SidebarMahasiswa from "@/Components/SidebarMahasiswa.vue";
 import Breadcrumb from "@/Components/Breadcrumb.vue";
-import ConfirmModal from "../../Components/ConfirmModal.vue";
+import ConfirmModal from "@/Components/ConfirmModal.vue";
 
 export default {
     components: {
@@ -33,7 +33,7 @@ export default {
     data() {
         return {
             breadcrumbs: [
-                { text: "Assessment", href: "/mahasiswa/assessment/peer" },
+                { text: "Assessment", href: "/sispa/mahasiswa/assessment/peer" },
                 { text: "Peer Assessment", href: null },
             ],
             headers: [
@@ -90,8 +90,8 @@ export default {
             );
         },
         availableMembers() {
-            console.log("Kelompok:", this.kelompok);
-            console.log("Answered Peers:", this.answeredPeers);
+            // console.log("Kelompok:", this.kelompok);
+            // console.log("Answered Peers:", this.answeredPeers);
 
             if (!this.kelompok || !this.answeredPeers) return [];
 
@@ -99,7 +99,7 @@ export default {
                 (member) => !this.answeredPeers.includes(member.mahasiswa_id)
             );
 
-            console.log("Available Members:", filtered);
+            // console.log("Available Members:", filtered);
             return filtered;
         },
     },
@@ -108,7 +108,7 @@ export default {
         kelompok: {
             immediate: true,
             handler(newVal) {
-                console.log("Kelompok updated:", newVal);
+                // console.log("Kelompok updated:", newVal);
             },
         },
         selectedMember: {
@@ -158,11 +158,11 @@ export default {
 
                 this.assessment_order = assessment_order;
 
-                console.log('Batch Year:', batch_year);
-                console.log('Project Name:', project_name);
+                // console.log('Batch Year:', batch_year);
+                // console.log('Project Name:', project_name);
 
                 const userInfoResponse = await axios.get(
-                    "/api/user-info-peer",
+                    "/sispa/api/user-info-peer",
                     {
                         params: {
                             batch_year: batch_year,
@@ -174,7 +174,7 @@ export default {
 
                 const userInfo = userInfoResponse.data;
 
-                console.log("User info received:", userInfo);
+                // console.log("User info received:", userInfo);
 
                 this.currentUserId = userInfo.id;
                 this.studentInfo = {
@@ -188,11 +188,11 @@ export default {
 
                 this.batch_year = userInfo.batch_year;
 
-                console.log("Student info set:", this.studentInfo);
-                console.log("Batch year set:", this.batch_year);
+                // console.log("Student info set:", this.studentInfo);
+                // console.log("Batch year set:", this.batch_year);
 
                 if (this.batch_year && this.studentInfo.project_name) {
-                    const kelompokResponse = await axios.get("/api/groups", {
+                    const kelompokResponse = await axios.get("/sispa/api/groups", {
                         params: {
                             batch_year: this.batch_year,
                             project_name: this.studentInfo.project_name,
@@ -201,7 +201,7 @@ export default {
 
                     if (kelompokResponse.data) {
                         this.kelompok = kelompokResponse.data;
-                        console.log("Kelompok data:", this.kelompok);
+                        // console.log("Kelompok data:", this.kelompok);
                     }
                 } else {
                     console.error("Missing batch_year or project_name:", {
@@ -230,13 +230,13 @@ export default {
         async loadQuestions(retryCount = 3) {
             for (let i = 0; i < retryCount; i++) {
                 try {
-                    console.log("Loading questions with params:", {
-                        batch_year: this.batch_year,
-                        project_name: this.studentInfo.project_name,
-                        assessment_order: this.assessment_order,
-                    });
+                    // console.log("Loading questions with params:", {
+                    //    batch_year: this.batch_year,
+                    //    project_name: this.studentInfo.project_name,
+                    //    assessment_order: this.assessment_order,
+                    // });
 
-                    const response = await axios.get("/api/questions-peer", {
+                    const response = await axios.get("/sispa/api/questions-peer", {
                         params: {
                             batch_year: this.batch_year,
                             project_name: this.studentInfo.project_name,
@@ -244,7 +244,7 @@ export default {
                         },
                     });
 
-                    console.log("Raw API response:", response.data);
+                    // console.log("Raw API response:", response.data);
 
                     if (!response.data || !response.data.data) {
                         console.error(
@@ -291,9 +291,9 @@ export default {
                         }
                     }
 
-                    console.log("Processed questions:", this.questions);
-                    console.log("Group members:", this.groupMembers);
-                    console.log("Project details:", this.projectDetails);
+                    // console.log("Processed questions:", this.questions);
+                    // console.log("Group members:", this.groupMembers);
+                    // console.log("Project details:", this.projectDetails);
 
                     return;
                 } catch (error) {
@@ -348,7 +348,7 @@ export default {
 
                 const responses = await Promise.all(
                     answersToSubmit.map((answer) =>
-                        axios.post("/api/save-answer-peer", answer)
+                        axios.post("/sispa/api/save-answer-peer", answer)
                     )
                 );
 
@@ -379,7 +379,7 @@ export default {
         async fetchUserIdByNim(nim) {
             try {
                 const response = await axios.get(
-                    `/api/users/search?nim=${nim}`
+                    `/sispa/api/users/search?nim=${nim}`
                 );
                 return response.data;
             } catch (error) {
@@ -442,7 +442,7 @@ export default {
                     return;
                 }
 
-                const response = await axios.get("/api/existing-peer-answers", {
+                const response = await axios.get("/sispa/api/existing-peer-answers", {
                     params: {
                         mahasiswa_id: mahasiswaData.mahasiswa_id,
                         peer_id: this.selectedMember,
@@ -450,7 +450,7 @@ export default {
                     },
                 });
 
-                console.log("Check Existing Answer Response:", response.data);
+                // console.log("Check Existing Answer Response:", response.data);
 
                 if (response.data && response.data.length > 0) {
                     const existingAnswer = response.data[0];
@@ -554,7 +554,7 @@ export default {
                 }
 
                 const response = await axios.get(
-                    `/api/get-answer-peer/${this.currentQuestion.id}`,
+                    `/sispa/api/get-answer-peer/${this.currentQuestion.id}`,
                     {
                         params: {
                             mahasiswa_id: mahasiswaData.mahasiswa_id,
@@ -642,14 +642,14 @@ export default {
                     };
                 });
 
-                await axios.post("/api/save-all-answers-peer", {
+                await axios.post("/sispa/api/save-all-answers-peer", {
                     answers: answers,
                 });
 
                 localStorage.removeItem("temporaryAnswers");
                 localStorage.removeItem("peerAssessmentState");
 
-                window.location.href = "/mahasiswa/assessment/peer";
+                window.location.href = "/sispa/mahasiswa/assessment/peer";
             } catch (error) {
                 console.error("Error submitting answers:", error);
                 alert(
@@ -662,13 +662,13 @@ export default {
         },
         async fetchAnsweredPeers() {
             try {
-                const response = await axios.get("/api/answered-peers", {
+                const response = await axios.get("/sispa/api/answered-peers", {
                     params: {
                         project_id: this.namaProyek,
                     },
                 });
                 this.answeredPeers = response.data.answered_peers;
-                console.log("Answered Peers:", this.answeredPeers);
+                // console.log("Answered Peers:", this.answeredPeers);
             } catch (error) {
                 console.error("Error fetching answered peers:", error);
             }
@@ -684,7 +684,7 @@ export default {
     },
 };
 
-// console.log(currentQuestion.skill_type)
+// // console.log(currentQuestion.skill_type)
 </script>
 
 <template>
@@ -854,7 +854,7 @@ export default {
                                     </label>
                                     <textarea id="answer" v-model="answer" rows="4"
                                         class="block w-full rounded-md border border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
-                                        placeholder="Berikan alasan..." required></textarea>
+                                        placeholder="Berikan contoh atau penjelasan sesuai rubrik..." required></textarea>
                                 </div>
 
                                 <div class="flex justify-between items-center pt-4">

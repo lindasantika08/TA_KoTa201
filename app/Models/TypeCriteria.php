@@ -24,6 +24,7 @@ class TypeCriteria extends Model
      * @var array
      */
     protected $fillable = [
+        'id',
         'aspect',
         'criteria',
         'bobot_1',

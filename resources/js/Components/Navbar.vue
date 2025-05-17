@@ -28,8 +28,6 @@ export default {
   mounted() {
     this.fetchUserName();
     this.fetchNotificationsCount();
-    // this.initializeSSE();
-    // this.initializeWebSocket();
   },
   beforeUnmount() {
     this.disconnectWebSocket();
@@ -72,7 +70,7 @@ export default {
       try {
         const token = localStorage.getItem("auth_token");
         if (token) {
-          const response = await axios.get("/api/user", {
+          const response = await axios.get("/sispa/api/user", {
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -87,7 +85,7 @@ export default {
     async fetchNotificationsCount() {
       try {
         const token = localStorage.getItem("auth_token");
-        const response = await axios.post('/api/notifications/count', {}, {
+        const response = await axios.post('/sispa/api/notifications/count', {}, {
           headers: {
             Authorization: `Bearer ${token}`,
           }
@@ -109,7 +107,7 @@ export default {
         const token = localStorage.getItem("auth_token");
         if (token) {
           await axios.put(
-            "/api/logout",
+            "/sispa/api/logout",
             {},
             {
               headers: {
@@ -125,19 +123,19 @@ export default {
         this.disconnectWebSocket();
         localStorage.removeItem("auth_token");
         localStorage.removeItem("user_data");
-        router.visit("/login");
+        router.visit("/sispa/login");
         this.isLoggingOut = false;
       }
     },
 
     goToNotifications() {
-      axios.get('/api/user-role')
+      axios.get('/sispa/api/user-role')
         .then(response => {
           const role = response.data.role;
           if (role === 'mahasiswa') {
-            router.visit('/mahasiswa/notifications-mhs');
+            router.visit('/sispa/mahasiswa/notifications-mhs');
           } else if (role === 'dosen') {
-            router.visit('/dosen/notifications');
+            router.visit('/sispa/dosen/notifications');
           }
         })
         .catch(error => {
@@ -147,13 +145,13 @@ export default {
     },
 
     goToProfile() {
-      axios.get('/api/user-role')
+      axios.get('/sispa/api/user-role')
         .then(response => {
           const role = response.data.role;
           if (role === 'dosen') {
-            router.visit('/dosen/profile');
+            router.visit('/sispa/dosen/profile');
           } else if (role === 'mahasiswa') {
-            router.visit('/mahasiswa/profile');
+            router.visit('/sispa/mahasiswa/profile');
           } else {
             alert('Role tidak dikenali.');
           }

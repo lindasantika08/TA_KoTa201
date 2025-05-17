@@ -19,7 +19,7 @@ export default {
   data() {
     return {
       breadcrumbs: [
-        { text: "Assessment", href: "/mahasiswa/assessment/peer" },
+        { text: "Assessment", href: "/sispa/mahasiswa/assessment/peer" },
         { text: "Peer Assessment", href: null }
       ],
       headers: [
@@ -40,7 +40,7 @@ export default {
       const project_name = item.project_name;
       const assessment_order = item.assessment_order || '1';
 
-      router.visit(`/mahasiswa/assessment/peer-assessment`, {
+      router.visit(`/sispa/mahasiswa/assessment/peer-assessment`, {
         method: 'get',
         data: {
           batch_year: batch_year,
@@ -54,7 +54,7 @@ export default {
       });
     },
     handleDetail(item) {
-      router.visit(`/mahasiswa/peer-assessment/peer-detail`, {
+      router.visit(`/sispa/mahasiswa/peer-assessment/peer-detail`, {
         method: 'get',
         data: {
             batch_year: item.batch_year,
@@ -66,9 +66,9 @@ export default {
 },
   },
   mounted() {
-    axios.get('/api/peer-assessment')
+    axios.get('/sispa/api/peer-assessment')
       .then(response => {
-        console.log('API Response:', response.data);
+        // console.log('API Response:', response.data);
         this.items = response.data.assessments.map((item, index) => ({
           id: item.id,
           no: index + 1,
@@ -79,7 +79,7 @@ export default {
           date: dayjs(item.created_at).format('DD MMMM YYYY HH:mm'),
           total_questions: item.total_questions,
         }));
-        console.log('Mapped items:', this.items);
+        // console.log('Mapped items:', this.items);
       })
       .catch(error => {
         console.error('There was an error fetching data:', error);

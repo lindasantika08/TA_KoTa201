@@ -20,7 +20,7 @@ export default {
       user_ids: "",
       answers: [],
       breadcrumbs: [
-        { text: "Peer Assessment", href: "/dosen/assessment/projectsPeer" },
+        { text: "Peer Assessment", href: "/sispa/dosen/assessment/projects-peer" },
         { text: "List Answer", href: null },
       ],
       headers: [
@@ -35,8 +35,8 @@ export default {
     this.tahun_ajaran = query.get("tahun_ajaran");
     this.nama_proyek = query.get("nama_proyek");
 
-    console.log("tahun_ajaran:", this.tahun_ajaran);
-    console.log("nama_proyek:", this.nama_proyek);
+    // console.log("tahun_ajaran:", this.tahun_ajaran);
+    // console.log("nama_proyek:", this.nama_proyek);
 
     if (this.tahun_ajaran && this.nama_proyek) {
       this.fetchAnswers();
@@ -47,7 +47,7 @@ export default {
   methods: {
     fetchAnswers() {
     axios
-      .get("/api/answersKelompokPeer/list", {
+      .get("/sispa/api/answersKelompokPeer/list", {
         params: {
           tahun_ajaran: this.tahun_ajaran,
           nama_proyek: this.nama_proyek,
@@ -80,7 +80,7 @@ export default {
   },
 
     handleDetail(item) {
-      router.get("/dosen/answers-peer-assessment", {
+      router.get("/sispa/dosen/answers-peer-assessment", {
         tahun_ajaran: this.tahun_ajaran,
         nama_proyek: this.nama_proyek,
         kelompok: item.kelompok,

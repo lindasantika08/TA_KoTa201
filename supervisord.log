@@ -1,0 +1,1199 @@
+2025-03-15 05:48:59,758 WARN For [program:laravel-scheduler], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:48:59,761 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:48:59,765 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:48:59,778 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:48:59,780 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:48:59,781 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:48:59,781 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:48:59,782 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:48:59,782 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:48:59,787 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:48:59,787 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:48:59,788 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:48:59,789 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:48:59,790 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:48:59,790 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:48:59,791 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:48:59,792 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:48:59,795 INFO Included extra file "/etc/supervisord.d/laravel-scheduler.conf" during parsing
+2025-03-15 05:48:59,795 INFO Included extra file "/etc/supervisord.d/laravel-worker.conf" during parsing
+2025-03-15 05:48:59,797 INFO Included extra file "/etc/supervisord.d/php-fpm.conf" during parsing
+2025-03-15 05:48:59,813 INFO RPC interface 'supervisor' initialized
+2025-03-15 05:48:59,813 CRIT Server 'inet_http_server' running without any HTTP authentication checking
+2025-03-15 05:48:59,822 INFO supervisord started with pid 1
+2025-03-15 05:49:00,863 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 05:49:00,864 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 05:49:00,864 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 05:49:00,865 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 05:49:00,865 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 05:49:00,866 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 05:49:00,867 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 05:49:00,867 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 05:49:00,867 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 05:49:00,868 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 05:49:00,868 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 05:49:00,868 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 05:49:00,869 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 05:49:00,869 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 05:49:00,869 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 05:49:00,870 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 05:49:00,870 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 05:49:01,872 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 05:49:01,873 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 05:49:01,873 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 05:49:01,874 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 05:49:01,874 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 05:49:01,875 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 05:49:01,875 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 05:49:01,876 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 05:49:01,876 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 05:49:01,877 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 05:49:01,877 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 05:49:01,877 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 05:49:01,878 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 05:49:01,878 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 05:49:01,879 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 05:49:01,882 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 05:49:01,883 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 05:49:03,886 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 05:49:03,906 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 05:49:03,907 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 05:49:03,907 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 05:49:03,910 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 05:49:03,915 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 05:49:03,921 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 05:49:03,922 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 05:49:03,923 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 05:49:03,924 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 05:49:03,924 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 05:49:03,925 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 05:49:03,927 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 05:49:03,934 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 05:49:03,935 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 05:49:03,936 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 05:49:03,941 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 05:49:06,946 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 05:49:06,947 INFO gave up: laravel-scheduler_00 entered FATAL state, too many start retries too quickly
+2025-03-15 05:49:06,948 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 05:49:06,948 INFO gave up: laravel-worker_00 entered FATAL state, too many start retries too quickly
+2025-03-15 05:49:06,949 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 05:49:06,950 INFO gave up: laravel-worker_01 entered FATAL state, too many start retries too quickly
+2025-03-15 05:49:06,952 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 05:49:06,954 INFO gave up: laravel-worker_02 entered FATAL state, too many start retries too quickly
+2025-03-15 05:49:06,955 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 05:49:06,956 INFO gave up: laravel-worker_03 entered FATAL state, too many start retries too quickly
+2025-03-15 05:49:06,956 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 05:49:06,957 INFO gave up: laravel-worker_04 entered FATAL state, too many start retries too quickly
+2025-03-15 05:49:06,957 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 05:49:06,958 INFO gave up: laravel-worker_05 entered FATAL state, too many start retries too quickly
+2025-03-15 05:49:06,958 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 05:49:06,959 INFO gave up: laravel-worker_06 entered FATAL state, too many start retries too quickly
+2025-03-15 05:49:06,959 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 05:49:06,960 INFO gave up: laravel-worker_07 entered FATAL state, too many start retries too quickly
+2025-03-15 05:49:06,960 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 05:49:06,961 INFO gave up: php-fpm_00 entered FATAL state, too many start retries too quickly
+2025-03-15 05:49:06,961 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 05:49:06,962 INFO gave up: php-fpm_01 entered FATAL state, too many start retries too quickly
+2025-03-15 05:49:06,962 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 05:49:06,963 INFO gave up: php-fpm_02 entered FATAL state, too many start retries too quickly
+2025-03-15 05:49:06,963 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 05:49:06,964 INFO gave up: php-fpm_03 entered FATAL state, too many start retries too quickly
+2025-03-15 05:49:06,966 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 05:49:06,969 INFO gave up: php-fpm_04 entered FATAL state, too many start retries too quickly
+2025-03-15 05:49:06,972 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 05:49:06,972 INFO gave up: php-fpm_05 entered FATAL state, too many start retries too quickly
+2025-03-15 05:49:06,973 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 05:49:06,973 INFO gave up: php-fpm_06 entered FATAL state, too many start retries too quickly
+2025-03-15 05:49:06,974 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 05:49:06,975 INFO gave up: php-fpm_07 entered FATAL state, too many start retries too quickly
+2025-03-15 05:54:06,720 WARN received SIGQUIT indicating exit request
+2025-03-15 05:54:24,624 WARN For [program:laravel-scheduler], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:54:24,625 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:54:24,625 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:54:24,625 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:54:24,625 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:54:24,625 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:54:24,626 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:54:24,626 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:54:24,626 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:54:24,626 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:54:24,627 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:54:24,627 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:54:24,627 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:54:24,627 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:54:24,627 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:54:24,628 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:54:24,632 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:54:24,632 INFO Included extra file "/etc/supervisord.d/laravel-scheduler.conf" during parsing
+2025-03-15 05:54:24,632 INFO Included extra file "/etc/supervisord.d/laravel-worker.conf" during parsing
+2025-03-15 05:54:24,632 INFO Included extra file "/etc/supervisord.d/php-fpm.conf" during parsing
+2025-03-15 05:54:24,638 INFO RPC interface 'supervisor' initialized
+2025-03-15 05:54:24,639 CRIT Server 'inet_http_server' running without any HTTP authentication checking
+2025-03-15 05:54:24,641 INFO supervisord started with pid 1
+2025-03-15 05:54:25,642 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 05:54:25,643 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 05:54:25,644 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 05:54:25,644 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 05:54:25,645 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 05:54:25,645 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 05:54:25,646 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 05:54:25,646 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 05:54:25,647 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 05:54:25,647 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 05:54:25,647 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 05:54:25,648 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 05:54:25,648 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 05:54:25,649 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 05:54:25,649 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 05:54:25,649 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 05:54:25,650 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 05:54:26,653 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 05:54:26,655 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 05:54:26,659 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 05:54:26,661 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 05:54:26,662 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 05:54:26,662 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 05:54:26,663 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 05:54:26,666 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 05:54:26,667 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 05:54:26,672 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 05:54:26,673 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 05:54:26,673 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 05:54:26,674 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 05:54:26,674 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 05:54:26,674 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 05:54:26,675 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 05:54:26,675 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 05:54:28,688 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 05:54:28,689 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 05:54:28,690 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 05:54:28,690 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 05:54:28,691 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 05:54:28,691 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 05:54:28,691 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 05:54:28,692 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 05:54:28,693 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 05:54:28,693 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 05:54:28,694 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 05:54:28,694 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 05:54:28,694 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 05:54:28,695 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 05:54:28,695 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 05:54:28,696 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 05:54:28,696 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 05:54:31,747 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 05:54:31,747 INFO gave up: laravel-scheduler_00 entered FATAL state, too many start retries too quickly
+2025-03-15 05:54:31,748 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 05:54:31,748 INFO gave up: laravel-worker_00 entered FATAL state, too many start retries too quickly
+2025-03-15 05:54:31,749 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 05:54:31,749 INFO gave up: laravel-worker_01 entered FATAL state, too many start retries too quickly
+2025-03-15 05:54:31,750 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 05:54:31,750 INFO gave up: laravel-worker_02 entered FATAL state, too many start retries too quickly
+2025-03-15 05:54:31,751 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 05:54:31,751 INFO gave up: laravel-worker_03 entered FATAL state, too many start retries too quickly
+2025-03-15 05:54:31,752 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 05:54:31,752 INFO gave up: laravel-worker_04 entered FATAL state, too many start retries too quickly
+2025-03-15 05:54:31,753 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 05:54:31,753 INFO gave up: laravel-worker_05 entered FATAL state, too many start retries too quickly
+2025-03-15 05:54:31,754 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 05:54:31,754 INFO gave up: laravel-worker_06 entered FATAL state, too many start retries too quickly
+2025-03-15 05:54:31,755 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 05:54:31,755 INFO gave up: laravel-worker_07 entered FATAL state, too many start retries too quickly
+2025-03-15 05:54:31,755 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 05:54:31,756 INFO gave up: php-fpm_00 entered FATAL state, too many start retries too quickly
+2025-03-15 05:54:31,756 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 05:54:31,756 INFO gave up: php-fpm_01 entered FATAL state, too many start retries too quickly
+2025-03-15 05:54:31,757 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 05:54:31,758 INFO gave up: php-fpm_02 entered FATAL state, too many start retries too quickly
+2025-03-15 05:54:31,761 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 05:54:31,761 INFO gave up: php-fpm_03 entered FATAL state, too many start retries too quickly
+2025-03-15 05:54:31,761 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 05:54:31,762 INFO gave up: php-fpm_04 entered FATAL state, too many start retries too quickly
+2025-03-15 05:54:31,762 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 05:54:31,763 INFO gave up: php-fpm_05 entered FATAL state, too many start retries too quickly
+2025-03-15 05:54:31,764 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 05:54:31,764 INFO gave up: php-fpm_06 entered FATAL state, too many start retries too quickly
+2025-03-15 05:54:31,765 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 05:54:31,766 INFO gave up: php-fpm_07 entered FATAL state, too many start retries too quickly
+2025-03-15 05:55:17,879 WARN received SIGQUIT indicating exit request
+2025-03-15 05:57:22,212 WARN For [program:laravel-scheduler], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:57:22,213 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:57:22,213 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:57:22,213 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:57:22,214 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:57:22,214 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:57:22,214 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:57:22,214 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:57:22,215 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:57:22,215 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:57:22,215 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:57:22,216 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:57:22,216 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:57:22,216 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:57:22,216 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:57:22,216 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:57:22,217 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 05:57:22,217 INFO Included extra file "/etc/supervisord.d/laravel-scheduler.conf" during parsing
+2025-03-15 05:57:22,217 INFO Included extra file "/etc/supervisord.d/laravel-worker.conf" during parsing
+2025-03-15 05:57:22,217 INFO Included extra file "/etc/supervisord.d/php-fpm.conf" during parsing
+2025-03-15 05:57:22,224 INFO RPC interface 'supervisor' initialized
+2025-03-15 05:57:22,224 CRIT Server 'inet_http_server' running without any HTTP authentication checking
+2025-03-15 05:57:22,227 INFO supervisord started with pid 1
+2025-03-15 05:57:23,228 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 05:57:23,229 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 05:57:23,230 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 05:57:23,230 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 05:57:23,231 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 05:57:23,231 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 05:57:23,232 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 05:57:23,232 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 05:57:23,232 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 05:57:23,233 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 05:57:23,233 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 05:57:23,233 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 05:57:23,234 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 05:57:23,234 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 05:57:23,234 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 05:57:23,235 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 05:57:23,235 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 05:57:24,236 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 05:57:24,242 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 05:57:24,245 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 05:57:24,250 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 05:57:24,268 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 05:57:24,268 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 05:57:24,269 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 05:57:24,269 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 05:57:24,270 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 05:57:24,270 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 05:57:24,271 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 05:57:24,271 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 05:57:24,272 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 05:57:24,272 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 05:57:24,272 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 05:57:24,273 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 05:57:24,273 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 05:57:26,289 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 05:57:26,290 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 05:57:26,292 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 05:57:26,293 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 05:57:26,294 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 05:57:26,294 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 05:57:26,295 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 05:57:26,296 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 05:57:26,297 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 05:57:26,302 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 05:57:26,305 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 05:57:26,306 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 05:57:26,307 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 05:57:26,308 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 05:57:26,309 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 05:57:26,309 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 05:57:26,310 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 05:57:29,314 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 05:57:29,315 INFO gave up: laravel-scheduler_00 entered FATAL state, too many start retries too quickly
+2025-03-15 05:57:29,315 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 05:57:29,316 INFO gave up: laravel-worker_00 entered FATAL state, too many start retries too quickly
+2025-03-15 05:57:29,316 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 05:57:29,316 INFO gave up: laravel-worker_01 entered FATAL state, too many start retries too quickly
+2025-03-15 05:57:29,317 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 05:57:29,317 INFO gave up: laravel-worker_02 entered FATAL state, too many start retries too quickly
+2025-03-15 05:57:29,317 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 05:57:29,318 INFO gave up: laravel-worker_03 entered FATAL state, too many start retries too quickly
+2025-03-15 05:57:29,318 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 05:57:29,318 INFO gave up: laravel-worker_04 entered FATAL state, too many start retries too quickly
+2025-03-15 05:57:29,318 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 05:57:29,319 INFO gave up: laravel-worker_05 entered FATAL state, too many start retries too quickly
+2025-03-15 05:57:29,319 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 05:57:29,319 INFO gave up: laravel-worker_06 entered FATAL state, too many start retries too quickly
+2025-03-15 05:57:29,320 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 05:57:29,321 INFO gave up: laravel-worker_07 entered FATAL state, too many start retries too quickly
+2025-03-15 05:57:29,321 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 05:57:29,324 INFO gave up: php-fpm_00 entered FATAL state, too many start retries too quickly
+2025-03-15 05:57:29,325 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 05:57:29,326 INFO gave up: php-fpm_01 entered FATAL state, too many start retries too quickly
+2025-03-15 05:57:29,326 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 05:57:29,327 INFO gave up: php-fpm_02 entered FATAL state, too many start retries too quickly
+2025-03-15 05:57:29,327 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 05:57:29,328 INFO gave up: php-fpm_03 entered FATAL state, too many start retries too quickly
+2025-03-15 05:57:29,328 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 05:57:29,328 INFO gave up: php-fpm_04 entered FATAL state, too many start retries too quickly
+2025-03-15 05:57:29,329 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 05:57:29,329 INFO gave up: php-fpm_05 entered FATAL state, too many start retries too quickly
+2025-03-15 05:57:29,330 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 05:57:29,330 INFO gave up: php-fpm_06 entered FATAL state, too many start retries too quickly
+2025-03-15 05:57:29,330 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 05:57:29,330 INFO gave up: php-fpm_07 entered FATAL state, too many start retries too quickly
+2025-03-15 05:57:44,400 WARN received SIGQUIT indicating exit request
+2025-03-15 06:04:16,034 WARN For [program:laravel-scheduler], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:04:16,035 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:04:16,035 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:04:16,035 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:04:16,035 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:04:16,036 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:04:16,037 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:04:16,037 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:04:16,038 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:04:16,038 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:04:16,039 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:04:16,039 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:04:16,039 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:04:16,040 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:04:16,040 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:04:16,040 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:04:16,041 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:04:16,041 INFO Included extra file "/etc/supervisord.d/laravel-scheduler.conf" during parsing
+2025-03-15 06:04:16,041 INFO Included extra file "/etc/supervisord.d/laravel-worker.conf" during parsing
+2025-03-15 06:04:16,041 INFO Included extra file "/etc/supervisord.d/php-fpm.conf" during parsing
+2025-03-15 06:04:16,050 INFO RPC interface 'supervisor' initialized
+2025-03-15 06:04:16,051 CRIT Server 'inet_http_server' running without any HTTP authentication checking
+2025-03-15 06:04:16,055 INFO supervisord started with pid 1
+2025-03-15 06:04:17,065 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 06:04:17,071 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 06:04:17,073 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 06:04:17,076 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 06:04:17,078 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 06:04:17,081 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 06:04:17,082 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 06:04:17,094 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 06:04:17,095 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 06:04:17,096 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 06:04:17,096 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 06:04:17,097 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 06:04:17,097 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 06:04:17,098 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 06:04:17,099 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 06:04:17,104 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 06:04:17,105 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 06:04:18,106 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 06:04:18,107 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 06:04:18,108 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 06:04:18,108 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 06:04:18,109 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 06:04:18,109 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 06:04:18,110 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 06:04:18,110 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 06:04:18,110 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 06:04:18,111 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 06:04:18,111 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 06:04:18,111 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 06:04:18,112 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 06:04:18,112 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 06:04:18,115 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 06:04:18,115 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 06:04:18,116 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 06:04:20,118 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 06:04:20,118 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 06:04:20,119 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 06:04:20,120 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 06:04:20,120 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 06:04:20,122 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 06:04:20,122 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 06:04:20,123 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 06:04:20,123 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 06:04:20,123 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 06:04:20,124 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 06:04:20,124 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 06:04:20,125 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 06:04:20,126 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 06:04:20,127 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 06:04:20,127 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 06:04:20,128 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 06:04:23,132 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 06:04:23,133 INFO gave up: laravel-scheduler_00 entered FATAL state, too many start retries too quickly
+2025-03-15 06:04:23,133 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 06:04:23,133 INFO gave up: laravel-worker_00 entered FATAL state, too many start retries too quickly
+2025-03-15 06:04:23,134 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 06:04:23,134 INFO gave up: laravel-worker_01 entered FATAL state, too many start retries too quickly
+2025-03-15 06:04:23,134 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 06:04:23,134 INFO gave up: laravel-worker_02 entered FATAL state, too many start retries too quickly
+2025-03-15 06:04:23,135 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 06:04:23,135 INFO gave up: laravel-worker_03 entered FATAL state, too many start retries too quickly
+2025-03-15 06:04:23,135 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 06:04:23,136 INFO gave up: laravel-worker_04 entered FATAL state, too many start retries too quickly
+2025-03-15 06:04:23,136 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 06:04:23,136 INFO gave up: laravel-worker_05 entered FATAL state, too many start retries too quickly
+2025-03-15 06:04:23,137 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 06:04:23,137 INFO gave up: laravel-worker_06 entered FATAL state, too many start retries too quickly
+2025-03-15 06:04:23,137 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 06:04:23,138 INFO gave up: laravel-worker_07 entered FATAL state, too many start retries too quickly
+2025-03-15 06:04:23,138 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 06:04:23,139 INFO gave up: php-fpm_00 entered FATAL state, too many start retries too quickly
+2025-03-15 06:04:23,140 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 06:04:23,140 INFO gave up: php-fpm_01 entered FATAL state, too many start retries too quickly
+2025-03-15 06:04:23,141 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 06:04:23,142 INFO gave up: php-fpm_02 entered FATAL state, too many start retries too quickly
+2025-03-15 06:04:23,143 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 06:04:23,143 INFO gave up: php-fpm_03 entered FATAL state, too many start retries too quickly
+2025-03-15 06:04:23,144 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 06:04:23,144 INFO gave up: php-fpm_04 entered FATAL state, too many start retries too quickly
+2025-03-15 06:04:23,145 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 06:04:23,145 INFO gave up: php-fpm_05 entered FATAL state, too many start retries too quickly
+2025-03-15 06:04:23,146 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 06:04:23,146 INFO gave up: php-fpm_06 entered FATAL state, too many start retries too quickly
+2025-03-15 06:04:23,147 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 06:04:23,147 INFO gave up: php-fpm_07 entered FATAL state, too many start retries too quickly
+2025-03-15 06:07:29,696 WARN received SIGQUIT indicating exit request
+2025-03-15 06:08:39,072 WARN For [program:laravel-scheduler], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:08:39,072 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:08:39,077 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:08:39,078 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:08:39,079 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:08:39,079 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:08:39,080 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:08:39,080 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:08:39,081 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:08:39,081 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:08:39,081 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:08:39,081 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:08:39,082 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:08:39,082 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:08:39,082 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:08:39,082 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:08:39,083 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:08:39,085 INFO Included extra file "/etc/supervisord.d/laravel-scheduler.conf" during parsing
+2025-03-15 06:08:39,085 INFO Included extra file "/etc/supervisord.d/laravel-worker.conf" during parsing
+2025-03-15 06:08:39,085 INFO Included extra file "/etc/supervisord.d/php-fpm.conf" during parsing
+2025-03-15 06:08:39,094 INFO RPC interface 'supervisor' initialized
+2025-03-15 06:08:39,094 CRIT Server 'inet_http_server' running without any HTTP authentication checking
+2025-03-15 06:08:39,109 INFO supervisord started with pid 1
+2025-03-15 06:08:40,111 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 06:08:40,114 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 06:08:40,116 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 06:08:40,118 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 06:08:40,119 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 06:08:40,120 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 06:08:40,122 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 06:08:40,123 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 06:08:40,126 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 06:08:40,127 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 06:08:40,128 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 06:08:40,128 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 06:08:40,129 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 06:08:40,129 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 06:08:40,130 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 06:08:40,130 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 06:08:40,131 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 06:08:41,132 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 06:08:41,132 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 06:08:41,133 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 06:08:41,133 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 06:08:41,134 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 06:08:41,134 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 06:08:41,135 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 06:08:41,135 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 06:08:41,136 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 06:08:41,137 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 06:08:41,138 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 06:08:41,138 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 06:08:41,139 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 06:08:41,139 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 06:08:41,140 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 06:08:41,140 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 06:08:41,142 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 06:08:43,152 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 06:08:43,152 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 06:08:43,154 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 06:08:43,157 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 06:08:43,158 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 06:08:43,158 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 06:08:43,159 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 06:08:43,159 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 06:08:43,159 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 06:08:43,163 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 06:08:43,164 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 06:08:43,165 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 06:08:43,165 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 06:08:43,166 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 06:08:43,166 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 06:08:43,167 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 06:08:43,167 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 06:08:46,171 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 06:08:46,171 INFO gave up: laravel-scheduler_00 entered FATAL state, too many start retries too quickly
+2025-03-15 06:08:46,172 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 06:08:46,173 INFO gave up: laravel-worker_00 entered FATAL state, too many start retries too quickly
+2025-03-15 06:08:46,173 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 06:08:46,174 INFO gave up: laravel-worker_01 entered FATAL state, too many start retries too quickly
+2025-03-15 06:08:46,174 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 06:08:46,174 INFO gave up: laravel-worker_02 entered FATAL state, too many start retries too quickly
+2025-03-15 06:08:46,175 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 06:08:46,175 INFO gave up: laravel-worker_03 entered FATAL state, too many start retries too quickly
+2025-03-15 06:08:46,176 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 06:08:46,176 INFO gave up: laravel-worker_04 entered FATAL state, too many start retries too quickly
+2025-03-15 06:08:46,176 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 06:08:46,177 INFO gave up: laravel-worker_05 entered FATAL state, too many start retries too quickly
+2025-03-15 06:08:46,177 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 06:08:46,177 INFO gave up: laravel-worker_06 entered FATAL state, too many start retries too quickly
+2025-03-15 06:08:46,178 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 06:08:46,178 INFO gave up: laravel-worker_07 entered FATAL state, too many start retries too quickly
+2025-03-15 06:08:46,178 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 06:08:46,179 INFO gave up: php-fpm_00 entered FATAL state, too many start retries too quickly
+2025-03-15 06:08:46,179 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 06:08:46,180 INFO gave up: php-fpm_01 entered FATAL state, too many start retries too quickly
+2025-03-15 06:08:46,180 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 06:08:46,180 INFO gave up: php-fpm_02 entered FATAL state, too many start retries too quickly
+2025-03-15 06:08:46,181 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 06:08:46,181 INFO gave up: php-fpm_03 entered FATAL state, too many start retries too quickly
+2025-03-15 06:08:46,181 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 06:08:46,181 INFO gave up: php-fpm_04 entered FATAL state, too many start retries too quickly
+2025-03-15 06:08:46,182 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 06:08:46,182 INFO gave up: php-fpm_05 entered FATAL state, too many start retries too quickly
+2025-03-15 06:08:46,182 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 06:08:46,183 INFO gave up: php-fpm_06 entered FATAL state, too many start retries too quickly
+2025-03-15 06:08:46,183 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 06:08:46,183 INFO gave up: php-fpm_07 entered FATAL state, too many start retries too quickly
+2025-03-15 06:10:24,423 WARN received SIGQUIT indicating exit request
+2025-03-15 06:10:38,243 WARN For [program:laravel-scheduler], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:10:38,244 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:10:38,244 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:10:38,245 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:10:38,245 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:10:38,245 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:10:38,245 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:10:38,245 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:10:38,246 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:10:38,246 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:10:38,246 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:10:38,247 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:10:38,247 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:10:38,248 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:10:38,248 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:10:38,249 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:10:38,249 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:10:38,249 INFO Included extra file "/etc/supervisord.d/laravel-scheduler.conf" during parsing
+2025-03-15 06:10:38,250 INFO Included extra file "/etc/supervisord.d/laravel-worker.conf" during parsing
+2025-03-15 06:10:38,250 INFO Included extra file "/etc/supervisord.d/php-fpm.conf" during parsing
+2025-03-15 06:10:38,258 INFO RPC interface 'supervisor' initialized
+2025-03-15 06:10:38,259 CRIT Server 'inet_http_server' running without any HTTP authentication checking
+2025-03-15 06:10:38,265 INFO supervisord started with pid 1
+2025-03-15 06:10:39,268 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 06:10:39,273 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 06:10:39,275 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 06:10:39,276 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 06:10:39,277 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 06:10:39,277 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 06:10:39,278 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 06:10:39,278 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 06:10:39,279 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 06:10:39,280 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 06:10:39,284 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 06:10:39,288 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 06:10:39,290 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 06:10:39,291 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 06:10:39,291 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 06:10:39,292 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 06:10:39,292 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 06:10:40,301 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 06:10:40,302 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 06:10:40,307 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 06:10:40,316 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 06:10:40,317 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 06:10:40,318 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 06:10:40,319 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 06:10:40,320 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 06:10:40,320 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 06:10:40,326 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 06:10:40,327 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 06:10:40,327 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 06:10:40,327 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 06:10:40,328 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 06:10:40,328 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 06:10:40,329 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 06:10:40,330 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 06:10:42,333 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 06:10:42,334 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 06:10:42,334 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 06:10:42,335 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 06:10:42,335 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 06:10:42,335 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 06:10:42,336 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 06:10:42,337 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 06:10:42,337 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 06:10:42,337 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 06:10:42,338 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 06:10:42,338 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 06:10:42,339 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 06:10:42,339 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 06:10:42,339 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 06:10:42,340 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 06:10:42,340 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 06:10:45,343 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 06:10:45,345 INFO gave up: laravel-scheduler_00 entered FATAL state, too many start retries too quickly
+2025-03-15 06:10:45,346 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 06:10:45,347 INFO gave up: laravel-worker_00 entered FATAL state, too many start retries too quickly
+2025-03-15 06:10:45,347 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 06:10:45,348 INFO gave up: laravel-worker_01 entered FATAL state, too many start retries too quickly
+2025-03-15 06:10:45,349 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 06:10:45,350 INFO gave up: laravel-worker_02 entered FATAL state, too many start retries too quickly
+2025-03-15 06:10:45,352 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 06:10:45,355 INFO gave up: laravel-worker_03 entered FATAL state, too many start retries too quickly
+2025-03-15 06:10:45,360 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 06:10:45,361 INFO gave up: laravel-worker_04 entered FATAL state, too many start retries too quickly
+2025-03-15 06:10:45,362 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 06:10:45,363 INFO gave up: laravel-worker_05 entered FATAL state, too many start retries too quickly
+2025-03-15 06:10:45,364 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 06:10:45,364 INFO gave up: laravel-worker_06 entered FATAL state, too many start retries too quickly
+2025-03-15 06:10:45,365 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 06:10:45,366 INFO gave up: laravel-worker_07 entered FATAL state, too many start retries too quickly
+2025-03-15 06:10:45,366 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 06:10:45,366 INFO gave up: php-fpm_00 entered FATAL state, too many start retries too quickly
+2025-03-15 06:10:45,367 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 06:10:45,367 INFO gave up: php-fpm_01 entered FATAL state, too many start retries too quickly
+2025-03-15 06:10:45,368 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 06:10:45,368 INFO gave up: php-fpm_02 entered FATAL state, too many start retries too quickly
+2025-03-15 06:10:45,368 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 06:10:45,369 INFO gave up: php-fpm_03 entered FATAL state, too many start retries too quickly
+2025-03-15 06:10:45,369 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 06:10:45,369 INFO gave up: php-fpm_04 entered FATAL state, too many start retries too quickly
+2025-03-15 06:10:45,370 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 06:10:45,370 INFO gave up: php-fpm_05 entered FATAL state, too many start retries too quickly
+2025-03-15 06:10:45,371 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 06:10:45,371 INFO gave up: php-fpm_06 entered FATAL state, too many start retries too quickly
+2025-03-15 06:10:45,371 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 06:10:45,372 INFO gave up: php-fpm_07 entered FATAL state, too many start retries too quickly
+2025-03-15 06:11:16,459 WARN received SIGQUIT indicating exit request
+2025-03-15 06:17:26,713 WARN For [program:laravel-scheduler], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:17:26,714 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:17:26,714 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:17:26,715 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:17:26,715 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:17:26,715 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:17:26,716 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:17:26,716 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:17:26,716 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:17:26,716 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:17:26,717 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:17:26,717 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:17:26,718 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:17:26,718 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:17:26,718 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:17:26,719 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:17:26,721 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:17:26,722 INFO Included extra file "/etc/supervisord.d/laravel-scheduler.conf" during parsing
+2025-03-15 06:17:26,722 INFO Included extra file "/etc/supervisord.d/laravel-worker.conf" during parsing
+2025-03-15 06:17:26,723 INFO Included extra file "/etc/supervisord.d/php-fpm.conf" during parsing
+2025-03-15 06:17:26,738 INFO RPC interface 'supervisor' initialized
+2025-03-15 06:17:26,739 CRIT Server 'inet_http_server' running without any HTTP authentication checking
+2025-03-15 06:17:26,741 INFO supervisord started with pid 1
+2025-03-15 06:17:27,744 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 06:17:27,752 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 06:17:27,753 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 06:17:27,754 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 06:17:27,754 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 06:17:27,756 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 06:17:27,771 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 06:17:27,774 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 06:17:27,776 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 06:17:27,777 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 06:17:27,777 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 06:17:27,787 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 06:17:27,792 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 06:17:27,793 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 06:17:27,800 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 06:17:27,811 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 06:17:27,823 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 06:17:28,839 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 06:17:28,851 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 06:17:28,854 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 06:17:28,856 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 06:17:28,856 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 06:17:28,867 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 06:17:28,869 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 06:17:28,872 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 06:17:28,873 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 06:17:28,876 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 06:17:28,881 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 06:17:28,888 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 06:17:28,890 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 06:17:28,895 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 06:17:28,896 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 06:17:28,897 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 06:17:28,897 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 06:17:30,901 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 06:17:30,901 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 06:17:30,902 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 06:17:30,903 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 06:17:30,903 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 06:17:30,903 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 06:17:30,904 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 06:17:30,904 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 06:17:30,906 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 06:17:30,907 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 06:17:30,907 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 06:17:30,908 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 06:17:30,908 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 06:17:30,908 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 06:17:30,909 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 06:17:30,909 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 06:17:30,910 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 06:17:33,914 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 06:17:33,914 INFO gave up: laravel-scheduler_00 entered FATAL state, too many start retries too quickly
+2025-03-15 06:17:33,915 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 06:17:33,915 INFO gave up: laravel-worker_00 entered FATAL state, too many start retries too quickly
+2025-03-15 06:17:33,916 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 06:17:33,916 INFO gave up: laravel-worker_01 entered FATAL state, too many start retries too quickly
+2025-03-15 06:17:33,917 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 06:17:33,917 INFO gave up: laravel-worker_02 entered FATAL state, too many start retries too quickly
+2025-03-15 06:17:33,918 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 06:17:33,918 INFO gave up: laravel-worker_03 entered FATAL state, too many start retries too quickly
+2025-03-15 06:17:33,918 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 06:17:33,919 INFO gave up: laravel-worker_04 entered FATAL state, too many start retries too quickly
+2025-03-15 06:17:33,919 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 06:17:33,919 INFO gave up: laravel-worker_05 entered FATAL state, too many start retries too quickly
+2025-03-15 06:17:33,920 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 06:17:33,920 INFO gave up: laravel-worker_06 entered FATAL state, too many start retries too quickly
+2025-03-15 06:17:33,921 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 06:17:33,922 INFO gave up: laravel-worker_07 entered FATAL state, too many start retries too quickly
+2025-03-15 06:17:33,923 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 06:17:33,923 INFO gave up: php-fpm_00 entered FATAL state, too many start retries too quickly
+2025-03-15 06:17:33,924 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 06:17:33,928 INFO gave up: php-fpm_01 entered FATAL state, too many start retries too quickly
+2025-03-15 06:17:33,929 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 06:17:33,930 INFO gave up: php-fpm_02 entered FATAL state, too many start retries too quickly
+2025-03-15 06:17:33,930 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 06:17:33,931 INFO gave up: php-fpm_03 entered FATAL state, too many start retries too quickly
+2025-03-15 06:17:33,931 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 06:17:33,932 INFO gave up: php-fpm_04 entered FATAL state, too many start retries too quickly
+2025-03-15 06:17:33,932 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 06:17:33,933 INFO gave up: php-fpm_05 entered FATAL state, too many start retries too quickly
+2025-03-15 06:17:33,934 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 06:17:33,934 INFO gave up: php-fpm_06 entered FATAL state, too many start retries too quickly
+2025-03-15 06:17:33,934 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 06:17:33,935 INFO gave up: php-fpm_07 entered FATAL state, too many start retries too quickly
+2025-03-15 06:18:14,049 WARN received SIGQUIT indicating exit request
+2025-03-15 06:18:18,441 WARN For [program:laravel-scheduler], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:18:18,442 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:18:18,442 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:18:18,442 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:18:18,442 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:18:18,443 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:18:18,443 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:18:18,475 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:18:18,478 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:18:18,478 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:18:18,479 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:18:18,492 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:18:18,510 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:18:18,513 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:18:18,514 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:18:18,515 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:18:18,515 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:18:18,515 INFO Included extra file "/etc/supervisord.d/laravel-scheduler.conf" during parsing
+2025-03-15 06:18:18,515 INFO Included extra file "/etc/supervisord.d/laravel-worker.conf" during parsing
+2025-03-15 06:18:18,515 INFO Included extra file "/etc/supervisord.d/php-fpm.conf" during parsing
+2025-03-15 06:18:18,523 INFO RPC interface 'supervisor' initialized
+2025-03-15 06:18:18,535 CRIT Server 'inet_http_server' running without any HTTP authentication checking
+2025-03-15 06:18:18,543 INFO supervisord started with pid 1
+2025-03-15 06:18:19,544 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 06:18:19,545 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 06:18:19,546 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 06:18:19,546 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 06:18:19,547 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 06:18:19,547 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 06:18:19,547 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 06:18:19,548 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 06:18:19,548 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 06:18:19,549 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 06:18:19,549 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 06:18:19,550 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 06:18:19,550 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 06:18:19,551 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 06:18:19,551 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 06:18:19,551 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 06:18:19,551 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 06:18:20,553 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 06:18:20,554 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 06:18:20,556 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 06:18:20,556 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 06:18:20,556 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 06:18:20,557 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 06:18:20,557 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 06:18:20,557 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 06:18:20,558 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 06:18:20,558 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 06:18:20,559 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 06:18:20,559 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 06:18:20,559 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 06:18:20,560 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 06:18:20,560 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 06:18:20,560 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 06:18:20,561 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 06:18:22,578 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 06:18:22,586 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 06:18:22,589 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 06:18:22,595 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 06:18:22,597 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 06:18:22,601 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 06:18:22,602 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 06:18:22,610 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 06:18:22,611 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 06:18:22,612 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 06:18:22,613 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 06:18:22,613 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 06:18:22,614 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 06:18:22,614 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 06:18:22,615 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 06:18:22,616 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 06:18:22,616 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 06:18:25,635 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 06:18:25,636 INFO gave up: laravel-scheduler_00 entered FATAL state, too many start retries too quickly
+2025-03-15 06:18:25,636 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 06:18:25,637 INFO gave up: laravel-worker_00 entered FATAL state, too many start retries too quickly
+2025-03-15 06:18:25,637 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 06:18:25,637 INFO gave up: laravel-worker_01 entered FATAL state, too many start retries too quickly
+2025-03-15 06:18:25,638 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 06:18:25,638 INFO gave up: laravel-worker_02 entered FATAL state, too many start retries too quickly
+2025-03-15 06:18:25,638 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 06:18:25,639 INFO gave up: laravel-worker_03 entered FATAL state, too many start retries too quickly
+2025-03-15 06:18:25,639 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 06:18:25,639 INFO gave up: laravel-worker_04 entered FATAL state, too many start retries too quickly
+2025-03-15 06:18:25,640 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 06:18:25,640 INFO gave up: laravel-worker_05 entered FATAL state, too many start retries too quickly
+2025-03-15 06:18:25,641 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 06:18:25,641 INFO gave up: laravel-worker_06 entered FATAL state, too many start retries too quickly
+2025-03-15 06:18:25,641 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 06:18:25,642 INFO gave up: laravel-worker_07 entered FATAL state, too many start retries too quickly
+2025-03-15 06:18:25,642 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 06:18:25,642 INFO gave up: php-fpm_00 entered FATAL state, too many start retries too quickly
+2025-03-15 06:18:25,643 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 06:18:25,643 INFO gave up: php-fpm_01 entered FATAL state, too many start retries too quickly
+2025-03-15 06:18:25,643 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 06:18:25,644 INFO gave up: php-fpm_02 entered FATAL state, too many start retries too quickly
+2025-03-15 06:18:25,644 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 06:18:25,644 INFO gave up: php-fpm_03 entered FATAL state, too many start retries too quickly
+2025-03-15 06:18:25,645 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 06:18:25,645 INFO gave up: php-fpm_04 entered FATAL state, too many start retries too quickly
+2025-03-15 06:18:25,645 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 06:18:25,645 INFO gave up: php-fpm_05 entered FATAL state, too many start retries too quickly
+2025-03-15 06:18:25,646 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 06:18:25,646 INFO gave up: php-fpm_06 entered FATAL state, too many start retries too quickly
+2025-03-15 06:18:25,646 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 06:18:25,646 INFO gave up: php-fpm_07 entered FATAL state, too many start retries too quickly
+2025-03-15 06:22:34,289 WARN received SIGQUIT indicating exit request
+2025-03-15 06:22:36,600 WARN For [program:laravel-scheduler], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:22:36,600 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:22:36,600 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:22:36,601 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:22:36,601 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:22:36,601 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:22:36,601 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:22:36,601 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:22:36,602 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:22:36,602 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:22:36,602 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:22:36,602 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:22:36,602 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:22:36,603 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:22:36,603 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:22:36,603 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:22:36,603 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:22:36,604 INFO Included extra file "/etc/supervisord.d/laravel-scheduler.conf" during parsing
+2025-03-15 06:22:36,604 INFO Included extra file "/etc/supervisord.d/laravel-worker.conf" during parsing
+2025-03-15 06:22:36,605 INFO Included extra file "/etc/supervisord.d/php-fpm.conf" during parsing
+2025-03-15 06:22:36,623 INFO RPC interface 'supervisor' initialized
+2025-03-15 06:22:36,624 CRIT Server 'inet_http_server' running without any HTTP authentication checking
+2025-03-15 06:22:36,653 INFO supervisord started with pid 1
+2025-03-15 06:22:37,674 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 06:22:37,676 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 06:22:37,677 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 06:22:37,677 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 06:22:37,678 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 06:22:37,678 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 06:22:37,679 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 06:22:37,679 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 06:22:37,679 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 06:22:37,680 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 06:22:37,680 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 06:22:37,680 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 06:22:37,681 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 06:22:37,682 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 06:22:37,682 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 06:22:37,684 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 06:22:37,684 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 06:22:38,685 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 06:22:38,748 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 06:22:38,794 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 06:22:38,816 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 06:22:38,822 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 06:22:38,823 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 06:22:38,827 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 06:22:38,830 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 06:22:38,832 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 06:22:38,833 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 06:22:38,836 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 06:22:38,838 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 06:22:38,840 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 06:22:38,843 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 06:22:38,847 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 06:22:38,849 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 06:22:38,851 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 06:22:40,864 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 06:22:40,865 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 06:22:40,866 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 06:22:40,866 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 06:22:40,867 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 06:22:40,867 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 06:22:40,867 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 06:22:40,867 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 06:22:40,868 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 06:22:40,868 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 06:22:40,868 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 06:22:40,869 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 06:22:40,869 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 06:22:40,869 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 06:22:40,870 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 06:22:40,870 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 06:22:40,871 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 06:22:43,875 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 06:22:43,875 INFO gave up: laravel-scheduler_00 entered FATAL state, too many start retries too quickly
+2025-03-15 06:22:43,876 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 06:22:43,876 INFO gave up: laravel-worker_00 entered FATAL state, too many start retries too quickly
+2025-03-15 06:22:43,877 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 06:22:43,877 INFO gave up: laravel-worker_01 entered FATAL state, too many start retries too quickly
+2025-03-15 06:22:43,878 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 06:22:43,879 INFO gave up: laravel-worker_02 entered FATAL state, too many start retries too quickly
+2025-03-15 06:22:43,879 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 06:22:43,880 INFO gave up: laravel-worker_03 entered FATAL state, too many start retries too quickly
+2025-03-15 06:22:43,880 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 06:22:43,881 INFO gave up: laravel-worker_04 entered FATAL state, too many start retries too quickly
+2025-03-15 06:22:43,881 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 06:22:43,882 INFO gave up: laravel-worker_05 entered FATAL state, too many start retries too quickly
+2025-03-15 06:22:43,882 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 06:22:43,883 INFO gave up: laravel-worker_06 entered FATAL state, too many start retries too quickly
+2025-03-15 06:22:43,883 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 06:22:43,884 INFO gave up: laravel-worker_07 entered FATAL state, too many start retries too quickly
+2025-03-15 06:22:43,884 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 06:22:43,884 INFO gave up: php-fpm_00 entered FATAL state, too many start retries too quickly
+2025-03-15 06:22:43,885 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 06:22:43,885 INFO gave up: php-fpm_01 entered FATAL state, too many start retries too quickly
+2025-03-15 06:22:43,886 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 06:22:43,886 INFO gave up: php-fpm_02 entered FATAL state, too many start retries too quickly
+2025-03-15 06:22:43,887 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 06:22:43,888 INFO gave up: php-fpm_03 entered FATAL state, too many start retries too quickly
+2025-03-15 06:22:43,888 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 06:22:43,888 INFO gave up: php-fpm_04 entered FATAL state, too many start retries too quickly
+2025-03-15 06:22:43,889 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 06:22:43,889 INFO gave up: php-fpm_05 entered FATAL state, too many start retries too quickly
+2025-03-15 06:22:43,890 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 06:22:43,890 INFO gave up: php-fpm_06 entered FATAL state, too many start retries too quickly
+2025-03-15 06:22:43,891 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 06:22:43,891 INFO gave up: php-fpm_07 entered FATAL state, too many start retries too quickly
+2025-03-15 06:29:10,905 WARN received SIGQUIT indicating exit request
+2025-03-15 06:51:40,811 WARN For [program:laravel-scheduler], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:51:40,811 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:51:40,812 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:51:40,812 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:51:40,812 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:51:40,812 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:51:40,813 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:51:40,813 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:51:40,813 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:51:40,813 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:51:40,813 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:51:40,814 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:51:40,814 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:51:40,814 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:51:40,814 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:51:40,814 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:51:40,815 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:51:40,815 INFO Included extra file "/etc/supervisord.d/laravel-scheduler.conf" during parsing
+2025-03-15 06:51:40,815 INFO Included extra file "/etc/supervisord.d/laravel-worker.conf" during parsing
+2025-03-15 06:51:40,815 INFO Included extra file "/etc/supervisord.d/php-fpm.conf" during parsing
+2025-03-15 06:51:40,835 INFO RPC interface 'supervisor' initialized
+2025-03-15 06:51:40,845 CRIT Server 'inet_http_server' running without any HTTP authentication checking
+2025-03-15 06:51:40,849 INFO supervisord started with pid 1
+2025-03-15 06:51:41,853 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 06:51:41,854 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 06:51:41,854 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 06:51:41,854 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 06:51:41,855 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 06:51:41,855 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 06:51:41,856 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 06:51:41,856 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 06:51:41,857 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 06:51:41,857 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 06:51:41,857 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 06:51:41,858 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 06:51:41,858 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 06:51:41,858 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 06:51:41,859 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 06:51:41,859 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 06:51:41,859 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 06:51:42,861 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 06:51:42,862 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 06:51:42,863 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 06:51:42,863 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 06:51:42,864 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 06:51:42,865 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 06:51:42,866 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 06:51:42,868 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 06:51:42,869 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 06:51:42,869 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 06:51:42,870 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 06:51:42,871 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 06:51:42,873 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 06:51:42,874 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 06:51:42,874 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 06:51:42,875 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 06:51:42,876 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 06:51:44,879 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 06:51:44,879 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 06:51:44,880 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 06:51:44,880 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 06:51:44,881 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 06:51:44,881 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 06:51:44,882 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 06:51:44,882 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 06:51:44,882 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 06:51:44,883 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 06:51:44,883 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 06:51:44,883 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 06:51:44,884 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 06:51:44,884 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 06:51:44,884 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 06:51:44,884 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 06:51:44,885 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 06:51:47,889 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 06:51:47,889 INFO gave up: laravel-scheduler_00 entered FATAL state, too many start retries too quickly
+2025-03-15 06:51:47,890 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 06:51:47,890 INFO gave up: laravel-worker_00 entered FATAL state, too many start retries too quickly
+2025-03-15 06:51:47,890 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 06:51:47,891 INFO gave up: laravel-worker_01 entered FATAL state, too many start retries too quickly
+2025-03-15 06:51:47,891 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 06:51:47,892 INFO gave up: laravel-worker_02 entered FATAL state, too many start retries too quickly
+2025-03-15 06:51:47,892 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 06:51:47,892 INFO gave up: laravel-worker_03 entered FATAL state, too many start retries too quickly
+2025-03-15 06:51:47,892 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 06:51:47,893 INFO gave up: laravel-worker_04 entered FATAL state, too many start retries too quickly
+2025-03-15 06:51:47,893 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 06:51:47,893 INFO gave up: laravel-worker_05 entered FATAL state, too many start retries too quickly
+2025-03-15 06:51:47,893 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 06:51:47,894 INFO gave up: laravel-worker_06 entered FATAL state, too many start retries too quickly
+2025-03-15 06:51:47,894 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 06:51:47,894 INFO gave up: laravel-worker_07 entered FATAL state, too many start retries too quickly
+2025-03-15 06:51:47,894 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 06:51:47,895 INFO gave up: php-fpm_00 entered FATAL state, too many start retries too quickly
+2025-03-15 06:51:47,895 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 06:51:47,895 INFO gave up: php-fpm_01 entered FATAL state, too many start retries too quickly
+2025-03-15 06:51:47,895 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 06:51:47,896 INFO gave up: php-fpm_02 entered FATAL state, too many start retries too quickly
+2025-03-15 06:51:47,896 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 06:51:47,896 INFO gave up: php-fpm_03 entered FATAL state, too many start retries too quickly
+2025-03-15 06:51:47,896 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 06:51:47,897 INFO gave up: php-fpm_04 entered FATAL state, too many start retries too quickly
+2025-03-15 06:51:47,897 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 06:51:47,897 INFO gave up: php-fpm_05 entered FATAL state, too many start retries too quickly
+2025-03-15 06:51:47,897 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 06:51:47,898 INFO gave up: php-fpm_06 entered FATAL state, too many start retries too quickly
+2025-03-15 06:51:47,898 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 06:51:47,898 INFO gave up: php-fpm_07 entered FATAL state, too many start retries too quickly
+2025-03-15 06:53:39,124 WARN received SIGQUIT indicating exit request
+2025-03-15 06:53:42,288 WARN For [program:laravel-scheduler], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:53:42,289 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:53:42,289 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:53:42,289 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:53:42,289 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:53:42,290 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:53:42,290 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:53:42,290 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:53:42,290 WARN For [program:laravel-worker], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:53:42,290 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:53:42,291 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:53:42,291 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:53:42,291 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:53:42,291 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:53:42,292 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:53:42,292 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:53:42,292 WARN For [program:php-fpm], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2025-03-15 06:53:42,292 INFO Included extra file "/etc/supervisord.d/laravel-scheduler.conf" during parsing
+2025-03-15 06:53:42,292 INFO Included extra file "/etc/supervisord.d/laravel-worker.conf" during parsing
+2025-03-15 06:53:42,293 INFO Included extra file "/etc/supervisord.d/php-fpm.conf" during parsing
+2025-03-15 06:53:42,302 INFO RPC interface 'supervisor' initialized
+2025-03-15 06:53:42,302 CRIT Server 'inet_http_server' running without any HTTP authentication checking
+2025-03-15 06:53:42,306 INFO supervisord started with pid 1
+2025-03-15 06:53:43,308 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 06:53:43,308 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 06:53:43,309 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 06:53:43,309 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 06:53:43,310 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 06:53:43,310 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 06:53:43,311 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 06:53:43,312 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 06:53:43,313 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 06:53:43,314 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 06:53:43,315 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 06:53:43,316 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 06:53:43,316 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 06:53:43,317 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 06:53:43,317 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 06:53:43,317 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 06:53:43,318 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 06:53:44,320 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 06:53:44,320 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 06:53:44,321 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 06:53:44,321 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 06:53:44,322 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 06:53:44,322 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 06:53:44,322 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 06:53:44,323 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 06:53:44,323 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 06:53:44,323 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 06:53:44,324 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 06:53:44,324 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 06:53:44,324 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 06:53:44,324 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 06:53:44,325 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 06:53:44,325 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 06:53:44,325 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 06:53:46,328 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 06:53:46,329 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 06:53:46,330 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 06:53:46,330 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 06:53:46,331 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 06:53:46,332 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 06:53:46,333 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 06:53:46,333 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 06:53:46,334 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 06:53:46,335 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 06:53:46,335 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 06:53:46,335 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 06:53:46,336 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 06:53:46,336 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 06:53:46,337 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 06:53:46,337 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 06:53:46,337 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 06:53:49,342 INFO spawnerr: unknown error making dispatchers for 'laravel-scheduler_00': EACCES
+2025-03-15 06:53:49,342 INFO gave up: laravel-scheduler_00 entered FATAL state, too many start retries too quickly
+2025-03-15 06:53:49,343 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_00': EACCES
+2025-03-15 06:53:49,343 INFO gave up: laravel-worker_00 entered FATAL state, too many start retries too quickly
+2025-03-15 06:53:49,343 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_01': EACCES
+2025-03-15 06:53:49,344 INFO gave up: laravel-worker_01 entered FATAL state, too many start retries too quickly
+2025-03-15 06:53:49,344 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_02': EACCES
+2025-03-15 06:53:49,344 INFO gave up: laravel-worker_02 entered FATAL state, too many start retries too quickly
+2025-03-15 06:53:49,344 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_03': EACCES
+2025-03-15 06:53:49,345 INFO gave up: laravel-worker_03 entered FATAL state, too many start retries too quickly
+2025-03-15 06:53:49,345 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_04': EACCES
+2025-03-15 06:53:49,346 INFO gave up: laravel-worker_04 entered FATAL state, too many start retries too quickly
+2025-03-15 06:53:49,346 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_05': EACCES
+2025-03-15 06:53:49,346 INFO gave up: laravel-worker_05 entered FATAL state, too many start retries too quickly
+2025-03-15 06:53:49,346 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_06': EACCES
+2025-03-15 06:53:49,347 INFO gave up: laravel-worker_06 entered FATAL state, too many start retries too quickly
+2025-03-15 06:53:49,347 INFO spawnerr: unknown error making dispatchers for 'laravel-worker_07': EACCES
+2025-03-15 06:53:49,347 INFO gave up: laravel-worker_07 entered FATAL state, too many start retries too quickly
+2025-03-15 06:53:49,347 INFO spawnerr: unknown error making dispatchers for 'php-fpm_00': EACCES
+2025-03-15 06:53:49,348 INFO gave up: php-fpm_00 entered FATAL state, too many start retries too quickly
+2025-03-15 06:53:49,348 INFO spawnerr: unknown error making dispatchers for 'php-fpm_01': EACCES
+2025-03-15 06:53:49,348 INFO gave up: php-fpm_01 entered FATAL state, too many start retries too quickly
+2025-03-15 06:53:49,349 INFO spawnerr: unknown error making dispatchers for 'php-fpm_02': EACCES
+2025-03-15 06:53:49,349 INFO gave up: php-fpm_02 entered FATAL state, too many start retries too quickly
+2025-03-15 06:53:49,349 INFO spawnerr: unknown error making dispatchers for 'php-fpm_03': EACCES
+2025-03-15 06:53:49,349 INFO gave up: php-fpm_03 entered FATAL state, too many start retries too quickly
+2025-03-15 06:53:49,350 INFO spawnerr: unknown error making dispatchers for 'php-fpm_04': EACCES
+2025-03-15 06:53:49,350 INFO gave up: php-fpm_04 entered FATAL state, too many start retries too quickly
+2025-03-15 06:53:49,350 INFO spawnerr: unknown error making dispatchers for 'php-fpm_05': EACCES
+2025-03-15 06:53:49,350 INFO gave up: php-fpm_05 entered FATAL state, too many start retries too quickly
+2025-03-15 06:53:49,351 INFO spawnerr: unknown error making dispatchers for 'php-fpm_06': EACCES
+2025-03-15 06:53:49,351 INFO gave up: php-fpm_06 entered FATAL state, too many start retries too quickly
+2025-03-15 06:53:49,351 INFO spawnerr: unknown error making dispatchers for 'php-fpm_07': EACCES
+2025-03-15 06:53:49,352 INFO gave up: php-fpm_07 entered FATAL state, too many start retries too quickly
+2025-03-15 06:55:38,484 WARN received SIGQUIT indicating exit request

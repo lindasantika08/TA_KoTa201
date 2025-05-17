@@ -3,9 +3,9 @@ import axios from 'axios';
 import DataTable from "@/Components/DataTable.vue";
 import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
-import Sidebar from '../../Components/Sidebar.vue';
+import Sidebar from '@/Components/Sidebar.vue';
 import Breadcrumb from "@/Components/Breadcrumb.vue";
-import ConfirmModal from '../../Components/ConfirmModal.vue';
+import ConfirmModal from '@/Components/ConfirmModal.vue';
 
 export default {
     components: {
@@ -45,8 +45,8 @@ export default {
     data() {
         return {
             breadcrumbs: [
-                { text: "Peer Assessment", href: "/dosen/assessment/projectsPeer" },
-                { text: "Detail", href: "/dosen/assessment/data-with-bobot-peer" },
+                { text: "Peer Assessment", href: "/sispa/dosen/assessment/projectsPeer" },
+                { text: "Detail", href: "/sispa/dosen/assessment/data-with-bobot-peer" },
                 { text: "Attempt", href: null }
             ],
             headers: [
@@ -101,13 +101,13 @@ export default {
 
     methods: {
         async fetchQuestions() {
-            console.log('Fetching questions started');
+            // console.log('Fetching questions started');
             this.loading = true;
             this.error = null;
 
             try {
-                console.log('Tahun Ajaran:', this.tahunAjaran);
-                console.log('Nama Proyek:', this.namaProyek);
+                // console.log('Tahun Ajaran:', this.tahunAjaran);
+                // console.log('Nama Proyek:', this.namaProyek);
 
                 const params = {
                     batch_year: this.tahunAjaran,
@@ -115,13 +115,13 @@ export default {
                     assessment_order: this.assessment_order
                 };
 
-                const response = await axios.get('/api/questions-peer-dosen', { params });
+                const response = await axios.get('/sispa/api/questions-peer-dosen', { params });
 
-                console.log('API Response:', response);
+                // console.log('API Response:', response);
 
                 if (response.data && Array.isArray(response.data)) {
                     this.questions = response.data;
-                    console.log('Questions loaded:', this.questions.length);
+                    // console.log('Questions loaded:', this.questions.length);
                     this.loading = false;
                 } else {
                     throw new Error('Invalid response format');
@@ -139,10 +139,10 @@ export default {
 
         async fetchStudentsInfo() {
             try {
-                const response = await axios.get('/api/user-info-dosen');
+                const response = await axios.get('/sispa/api/user-info-dosen');
                 if (response.data) {
                     this.studentInfo = response.data;
-                    console.log('Student Info:', this.studentInfo.id);
+                    // console.log('Student Info:', this.studentInfo.id);
                     this.studentInfo.project = this.namaProyek;
                 }
             } catch (error) {
@@ -151,7 +151,7 @@ export default {
         },
         setScore(value) {
             this.score = value;
-            console.log('Score set to:', value);
+            // console.log('Score set to:', value);
         },
 
         loadSavedState() {
@@ -194,7 +194,7 @@ export default {
             }
 
             try {
-                const response = await axios.get(`/api/get-answer-peer-dosen/${this.currentQuestion.id}`, {
+                const response = await axios.get(`/sispa/api/get-answer-peer-dosen/${this.currentQuestion.id}`, {
                     params: {
                         dosen_id: this.studentInfo.id
                     }
@@ -220,7 +220,7 @@ export default {
             try {
                 this.saveTemporaryAnswer();
 
-                console.log('Temporary Answers:', this.temporaryAnswers);
+                // console.log('Temporary Answers:', this.temporaryAnswers);
 
                 const answersToSubmit = Object.entries(this.temporaryAnswers)
                     .filter(([questionId, data]) => data.answer && data.score !== undefined)
@@ -232,13 +232,13 @@ export default {
                         status: "submitted"
                     }));
 
-                console.log('Answers to submit:', answersToSubmit);
+                // console.log('Answers to submit:', answersToSubmit);
 
                 if (answersToSubmit.length === 0) {
                     throw new Error('Tidak ada jawaban yang dapat dikirim');
                 }
 
-                const response = await axios.post("/api/save-answer-peer-dosen", {
+                const response = await axios.post("/sispa/api/save-answer-peer-dosen", {
                     answers: answersToSubmit
                 });
 
@@ -296,7 +296,7 @@ export default {
                         dosen_id: this.studentInfo.id
                     }));
 
-                const response = await axios.post('/api/save-all-answers-peer-dosen', {
+                const response = await axios.post('/sispa/api/save-all-answers-peer-dosen', {
                     answers: projectAnswers
                 });
 
@@ -305,7 +305,7 @@ export default {
                         .filter(([questionId]) => !this.questions.find(q => q.id === questionId));
                     this.temporaryAnswers = Object.fromEntries(otherProjectAnswers);
                     localStorage.setItem('temporaryAnswers', JSON.stringify(this.temporaryAnswers));
-                    this.$inertia.visit('/dosen/assessment/projectsPeer');
+                    this.$inertia.visit('/sispa/dosen/assessment/projects-peer');
                 }
             } catch (error) {
                 console.error('Error submitting answers:', error);
@@ -434,7 +434,7 @@ export default {
                                 <div>
                                     <textarea id="answer" v-model="answer" rows="4"
                                         class="block w-full rounded-md border border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
-                                        placeholder="Berikan alasannya... (Apakah Anda menghadapi kesulitan atau kemudahan dalam mengumpulkan iklan)"
+                                        placeholder="Berikan contoh atau penjelasan sesuai rubrik..."
                                         required></textarea>
                                 </div>
 

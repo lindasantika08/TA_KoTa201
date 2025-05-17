@@ -3,7 +3,7 @@
         <Sidebar role="admin" />
 
         <div class="flex-1">
-            <Navbar userName="Admin" />
+            <NavbarAdmin userName="Admin" />
             <main class="p-6">
                 <div class="mb-4">
                     <Breadcrumb :items="breadcrumbs" />
@@ -185,22 +185,22 @@
 import { ref, onMounted } from "vue";
 import axios from "axios";
 import Sidebar from "@/Components/SidebarAdmin.vue";
-import Navbar from "@/Components/Navbar.vue";
+import NavbarAdmin from "@/Components/NavbarAdmin.vue";
 import Card from "@/Components/Card.vue";
 import Breadcrumb from "@/Components/Breadcrumb.vue";
 
 export default {
     components: {
         Sidebar,
-        Navbar,
+        NavbarAdmin,
         Card,
         Breadcrumb,
     },
     data() {
         return {
             breadcrumbs: [
-                { text: "Manage Dosen", href: "/admin/ManageDosen" },
-                { text: "Input", href: "/admin/manage-dosen/input" },
+                { text: "Manage Dosen", href: "/sispa/admin/ManageDosen" },
+                { text: "Input", href: "/sispa/admin/manage-dosen/input" },
             ],
         };
     },
@@ -221,7 +221,7 @@ export default {
             try {
                 isLoading.value = true;
                 const token = localStorage.getItem("auth_token");
-                const response = await axios.get("/api/majors", {
+                const response = await axios.get("/sispa/api/majors", {
                     headers: {
                         Authorization: `Bearer ${token}`,
                         Accept: "application/json",
@@ -248,7 +248,7 @@ export default {
 
             try {
                 const token = localStorage.getItem("auth_token");
-                const response = await axios.get("/admin/manage-dosen/export", {
+                const response = await axios.get("/sispa/admin/manage-dosen/export", {
                     params: { jurusan: selectedJurusan.value },
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -318,7 +318,7 @@ export default {
             try {
                 isUploading.value = true;
                 const token = localStorage.getItem("auth_token");
-                await axios.post("/admin/manage-dosen/import", formData, {
+                await axios.post("/sispa/admin/manage-dosen/import", formData, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                         "Content-Type": "multipart/form-data",
@@ -328,6 +328,8 @@ export default {
                             (progressEvent.loaded * 100) / progressEvent.total
                         );
                     },
+                }).then((response)=>{
+                    console.log(response);
                 });
                 alert("Data dosen berhasil diimpor.");
                 selectedFile.value = null;

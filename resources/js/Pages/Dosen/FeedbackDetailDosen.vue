@@ -68,14 +68,14 @@ const submitFeedbackDosen = async () => {
     student_id: selectedStudent.value.mahasiswa.id,
   };
 
-  console.log("Submitting feedback with payload:", payload);
+  // console.log("Submitting feedback with payload:", payload);
   try {
     // Get CSRF token from meta tag
     const csrfToken = document
       .querySelector('meta[name="csrf-token"]')
       ?.getAttribute("content");
 
-    const response = await fetch("/dosen/feedbacks-store-dosen", {
+    const response = await fetch("/sispa/dosen/feedbacks-store-dosen", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -115,7 +115,7 @@ const fetchFeedbackSummary = async (forceRegenerate = false) => {
       force_regenerate: forceRegenerate ? "1" : "0",
     });
 
-    const response = await fetch(`/api/feedback-summary?${queryParams}`, {
+    const response = await fetch(`/sispa/api/feedback-summary?${queryParams}`, {
       method: "GET",
       headers: {
         Accept: "application/json",
@@ -141,10 +141,10 @@ const fetchFeedbackSummary = async (forceRegenerate = false) => {
 const refreshSummary = async () => {
   summaryLoading.value = true;
   summaryError.value = null;
-  console.log("Refreshing summary with force regenerate");
+  // console.log("Refreshing summary with force regenerate");
   try {
     await fetchFeedbackSummary(true);
-    console.log("Summary refresh completed");
+    // console.log("Summary refresh completed");
   } catch (error) {
     console.error("Summary refresh error:", error);
   }
@@ -166,11 +166,11 @@ const fetchFeedbacks = async () => {
       kelompok: props.kelompok,
     });
 
-    const response = await fetch(`/api/feedbacks-get-answer?${queryParams}`);
+    const response = await fetch(`/sispa/api/feedbacks-get-answer?${queryParams}`);
 
     if (response.ok) {
       const result = await response.json();
-      console.log("Fetched feedbacks:", result.data); // Debug log
+      // console.log("Fetched feedbacks:", result.data); // Debug log
       feedbacks.value = result.data || [];
     } else {
       throw new Error("Gagal mengambil feedback");
@@ -213,25 +213,25 @@ const canSubmitFeedback = computed(() => {
 });
 
 const dosenFeedbacks = computed(() => {
-  console.log("Processing dosen feedbacks", feedbacks.value);
+  // console.log("Processing dosen feedbacks", feedbacks.value);
   return feedbacks.value
     .filter((feedback) => {
       // Changed the condition to properly identify dosen feedback
       const isDosenFeedback = feedback.dosen_id != null;
-      console.log(
-        `Feedback ${feedback.id}: isDosenFeedback=${isDosenFeedback}, dosen_id=${feedback.dosen_id}`
-      );
+      //console.log(
+      //  `Feedback ${feedback.id}: isDosenFeedback=${isDosenFeedback}, dosen_id=${feedback.dosen_id}`
+      //);
       return isDosenFeedback;
     })
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 });
 
 const peerFeedbacks = computed(() => {
-  console.log("Processing peer feedbacks", feedbacks.value); // Debug log
+  // console.log("Processing peer feedbacks", feedbacks.value); // Debug log
   return feedbacks.value.filter((feedback) => {
     // Only include feedback that has peer_id and NO dosen_id
     const isPeerFeedback = feedback.peer_id && !feedback.dosen_id;
-    console.log(`Feedback ${feedback.id}: isPeerFeedback=${isPeerFeedback}`); // Debug log
+    // console.log(`Feedback ${feedback.id}: isPeerFeedback=${isPeerFeedback}`); // Debug log
     return isPeerFeedback;
   });
 });

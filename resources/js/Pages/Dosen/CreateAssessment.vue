@@ -16,7 +16,7 @@ export default {
   data() {
     return {
       breadcrumbs: [
-        { text: "Create Assessment", href: "/dosen/assessment/create" },
+        { text: "Create Assessment", href: "/sispa/dosen/assessment/create" },
       ],
     };
   },
@@ -58,7 +58,7 @@ export default {
     const downloadTemplate = async (project, type) => {
       try {
         const token = localStorage.getItem("auth_token");
-        const response = await axios.get("/api/export-self-assessment", {
+        const response = await axios.get("/sispa/api/export-self-assessment", {
           params: {
             batch_year: project.batch_year,
             project_name: project.project_name,
@@ -101,7 +101,7 @@ export default {
 
       try {
         const token = localStorage.getItem("auth_token");
-        const response = await axios.post("/dosen/assessment/import", formData, {
+        const response = await axios.post("/sispa/dosen/assessment/import", formData, {
           headers: {
             "Content-Type": "multipart/form-data",
             "Authorization": `Bearer ${token}`
@@ -118,7 +118,7 @@ export default {
 
     onMounted(async () => {
       try {
-        const response = await axios.get("/api/projects");
+        const response = await axios.get("/sispa/api/projects");
         projects.value = response.data;
       } catch (error) {
         console.error("Error fetching projects:", error);

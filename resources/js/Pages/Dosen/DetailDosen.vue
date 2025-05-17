@@ -89,8 +89,8 @@ export default {
   data() {
     return {
       breadcrumbs: [
-        { text: "Manage Dosen", href: "/dosen/manage-dosen" },
-        { text: "Detail", href: "/dosen/manage-dosen/detail" },
+        { text: "Manage Dosen", href: "/sispa/dosen/manage-dosen" },
+        { text: "Detail", href: "/sispa/dosen/manage-dosen/detail" },
       ],
       profileImage: "", // Ganti dengan URL gambar asli jika ada
       namaDosen: "",
@@ -106,7 +106,7 @@ export default {
   methods: {
     fetchProfile() {
       axios
-        .get(`/api/get-dosen/detail/${this.user_id}`) // Endpoint API untuk mendapatkan data profil
+        .get(`/sispa/api/get-dosen/detail/${this.user_id}`) // Endpoint API untuk mendapatkan data profil
         .then((response) => {
           // Set data yang didapat dari API
           const profileData = response.data;

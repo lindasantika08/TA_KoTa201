@@ -3,9 +3,9 @@ import axios from 'axios';
 import DataTable from "@/Components/DataTable.vue";
 import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
-import SidebarMahasiswa from '../../Components/SidebarMahasiswa.vue';
+import SidebarMahasiswa from '@/Components/SidebarMahasiswa.vue';
 import Breadcrumb from "@/Components/Breadcrumb.vue";
-import ConfirmModal from '../../Components/ConfirmModal.vue';
+import ConfirmModal from '@/Components/ConfirmModal.vue';
 
 export default {
     components: {
@@ -45,7 +45,7 @@ export default {
     data() {
         return {
             breadcrumbs: [
-                { text: "Assessment", href: "/mahasiswa/assessment/self" },
+                { text: "Assessment", href: "/sispa/mahasiswa/assessment/self" },
                 { text: "Self Assessment", href: null }
             ],
             headers: [
@@ -95,15 +95,15 @@ export default {
     methods: {
 
         async fetchQuestions() {
-            console.log('Fetching questions started');
+            // console.log('Fetching questions started');
             this.loading = true;
             this.error = null;
 
             try {
-                console.log('Tahun Ajaran:', this.batch_year);
-                console.log('Nama Proyek:', this.project_name);
+                // console.log('Tahun Ajaran:', this.batch_year);
+                // console.log('Nama Proyek:', this.project_name);
 
-                const response = await axios.get('/api/questions', {
+                const response = await axios.get('/sispa/api/questions', {
                     params: {
                         batch_year: this.batch_year,
                         project_name: this.project_name,
@@ -111,11 +111,11 @@ export default {
                     }
                 });
 
-                console.log('API Response:', response);
+                // console.log('API Response:', response);
 
                 if (response.data && Array.isArray(response.data)) {
                     this.questions = response.data;
-                    console.log('Questions loaded:', this.questions.length);
+                    // console.log('Questions loaded:', this.questions.length);
                     this.loading = false;
                     await this.loadExistingAnswer();
                 } else {
@@ -138,7 +138,7 @@ export default {
                 const batch_year = this.$page.props.batch_year || this.$route.query.batch_year;
                 const project_name = this.$page.props.project_name || this.$route.query.project_name;
 
-                const response = await axios.get('/api/user-info', {
+                const response = await axios.get('/sispa/api/user-info', {
                     params: {
                         batch_year: batch_year,
                         project_name: project_name
@@ -154,7 +154,7 @@ export default {
         },
         setScore(value) {
             this.score = value;
-            console.log('Score set to:', value);
+            // console.log('Score set to:', value);
         },
 
         async submitAnswer() {
@@ -165,17 +165,22 @@ export default {
                 return;
             }
 
+            // Save the current answer to temporary storage first
+            this.saveTemporaryAnswer();
+
             try {
-                const response = await axios.post('/api/save-answer-mhs', {
+                const response = await axios.post('/sispa/api/save-answer-mhs', {
                     answers: [{
                         question_id: this.currentQuestion.id,
                         answer: this.answer,
                         score: this.score,
                         status: 'submitted'
-                    }]
+                    }],
+                    temporaryAnswers: this.temporaryAnswers // Send all temporary answers
                 });
 
                 if (response.data.message.includes('successfully')) {
+                    // Remove this answer from temporary storage as it's now saved
                     delete this.temporaryAnswers[this.currentQuestion.id];
                     localStorage.setItem('temporaryAnswers', JSON.stringify(this.temporaryAnswers));
 
@@ -210,7 +215,7 @@ export default {
             if (!this.currentQuestion) return;
 
             try {
-                const response = await axios.get(`/api/get-answer-mhs/${this.currentQuestion.id}`);
+                const response = await axios.get(`/sispa/api/get-answer-mhs/${this.currentQuestion.id}`);
 
                 const tempAnswer = this.temporaryAnswers[this.currentQuestion.id];
                 if (tempAnswer) {
@@ -270,12 +275,12 @@ export default {
                     status: 'submitted'
                 }));
 
-                const response = await axios.post('/api/save-all-answers', { answers: allAnswers });
+                const response = await axios.post('/sispa/api/save-all-answers', { answers: allAnswers });
 
                 if (response.data.success) {
                     this.clearFormFields();
                     alert('Semua jawaban berhasil disimpan!');
-                    this.$inertia.visit('/mahasiswa/assessment/self');
+                    this.$inertia.visit('/sispa/mahasiswa/assessment/self');
                 }
             } catch (error) {
                 console.error('Error submitting answers:', error);
@@ -414,7 +419,7 @@ export default {
                                 <div>
                                     <textarea id="answer" v-model="answer" rows="4"
                                         class="block w-full rounded-md border border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
-                                        placeholder="Berikan alasannya... (Apakah Anda menghadapi kesulitan atau kemudahan dalam mengumpulkan iklan)"
+                                        placeholder="Berikan contoh atau penjelasan sesuai rubrik..."
                                         required></textarea>
                                 </div>
 

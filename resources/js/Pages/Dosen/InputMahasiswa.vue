@@ -16,8 +16,8 @@ export default {
   data() {
     return {
       breadcrumbs: [
-        { text: "Manage Mahasiswa", href: "/dosen/manage-mahasiswa" },
-        { text: "Input", href: "/dosen/manage-mahasiswa/input" },
+        { text: "Manage Mahasiswa", href: "/sispa/dosen/manage-mahasiswa" },
+        { text: "Input", href: "/sispa/dosen/manage-mahasiswa/input" },
       ],
     };
   },
@@ -44,7 +44,7 @@ export default {
 
       try {
         const response = await axios.get(
-          `/api/get-prodi/${selectedJurusan.value}`
+          `/sispa/api/get-prodi/${selectedJurusan.value}`
         );
         if (response.data.status === "success") {
           filteredProdi.value = response.data.data;
@@ -80,7 +80,7 @@ export default {
         const token = localStorage.getItem("auth_token");
 
         // First try to get the blob
-        const response = await axios.get("/dosen/manage-mahasiswa/export", {
+        const response = await axios.get("/sispa/dosen/manage-mahasiswa/export", {
           params: {
             jurusan: selectedJurusan.value,
             prodi: selectedProdi.value,
@@ -169,7 +169,7 @@ export default {
       try {
         isUploading.value = true;
         const token = localStorage.getItem("auth_token");
-        await axios.post("/dosen/manage-mahasiswa/importDosen", formData, {
+        await axios.post("/sispa/dosen/manage-mahasiswa/importDosen", formData, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",
@@ -200,7 +200,7 @@ export default {
       generateAngkatanOptions();
 
       try {
-        const response = await axios.get("/api/get-jurusan");
+        const response = await axios.get("/sispa/api/get-jurusan");
         if (response.data.status === "success") {
           jurusanList.value = response.data.data;
         } else {

@@ -19,7 +19,7 @@ export default {
   data() {
     return {
       breadcrumbs: [
-        { text: "Peer Assessment", href: "/dosen/assessment/projectsPeer" }
+        { text: "Peer Assessment", href: "/sispa/dosen/assessment/projects-peer" }
       ],
       headers: [
         { key: 'no', label: 'No' },
@@ -36,7 +36,7 @@ export default {
   },
   methods: {
     handleDetail(item) {
-      router.get('/dosen/assessment/data-with-bobot-peer', {
+      router.get('/sispa/dosen/assessment/data-with-bobot-peer', {
         batch_year: item.batch_year,
         project_name: item.project_name,
         assessment_order: item.assessment_order
@@ -44,7 +44,7 @@ export default {
         preserveState: true
       })
         .then(response => {
-          console.log('Response received:', response);
+          // console.log('Response received:', response);
         })
         .catch(error => {
           console.error('Error occurred while fetching data:', error);
@@ -52,7 +52,7 @@ export default {
     },
 
     handleListAnswer(item) {
-      router.get('/dosen/answers-peer-assessment', {
+      router.get('/sispa/dosen/answers-peer-assessment', {
         batch_year: item.batch_year,
         project_name: item.project_name,
         assessment_order: item.assessment_order,
@@ -62,45 +62,63 @@ export default {
     },
 
     handleTogglePublish(item) {
-      axios.post('/api/toggle-publish-assessment-peer', {
+      const newStatus = !item.is_published;
+
+      this.items = this.items.map(i => {
+        if (i.batch_year === item.batch_year &&
+          i.project_name === item.project_name &&
+          i.assessment_order === item.assessment_order) {
+          return { ...i, is_published: newStatus };
+        }
+        return i;
+      });
+
+      axios.post('/sispa/api/toggle-publish-assessment-peer', {
+        project_id: item.id,
         batch_year: item.batch_year,
         project_name: item.project_name,
         assessment_order: item.assessment_order,
-        is_published: !item.is_published
+        is_published: newStatus
       })
         .then(response => {
-          const updatedItem = { ...item, is_published: !item.is_published };
-          
-          const index = this.items.findIndex(i => 
-            i.batch_year === item.batch_year && 
-            i.project_name === item.project_name && 
-            i.assessment_order === item.assessment_order
-          );
-          
-          if (index !== -1) {
-            this.items[index] = updatedItem;
-            this.items = [...this.items];
-          }
+          // console.log('Publish status updated successfully');
         })
         .catch(error => {
           console.error('Error toggling publish status:', error);
+
+          this.items = this.items.map(i => {
+            if (i.batch_year === item.batch_year &&
+              i.project_name === item.project_name &&
+              i.assessment_order === item.assessment_order) {
+              return { ...i, is_published: !newStatus };
+            }
+            return i;
+          });
+
+          if (this.$toast) {
+            this.$toast.error("Gagal memperbarui status publikasi");
+          } else {
+            console.error("Gagal memperbarui status publikasi");
+          }
         });
     },
 
     updateItems(data) {
       this.items = data.map((item, index) => ({
         no: index + 1,
+        id: item.id,
         batch_year: item.batch_year,
         project_name: item.project_name,
         assessment_order: item.assessment_order,
         status: item.status,
         is_published: item.is_published == 1,
         date: dayjs(item.created_at).format('DD MMMM YYYY'),
+        unique_key: item.unique_key || `${item.id}-${item.assessment_order}`
       }));
     }
   },
   mounted() {
-    axios.get('/api/proyek-Peer-assessment')
+    axios.get('/sispa/api/proyek-Peer-assessment')
       .then(response => {
         this.updateItems(response.data);
       })

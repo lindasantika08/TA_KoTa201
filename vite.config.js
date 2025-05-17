@@ -4,6 +4,7 @@ import vue from '@vitejs/plugin-vue';
 import path from 'path';
 
 export default defineConfig({
+    base: '/sispa/build/',
     plugins: [
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.js'],
@@ -13,9 +14,16 @@ export default defineConfig({
     ],
     resolve: {
         alias: {
-            '@': path.resolve(__dirname, 'resources/js'),
+            '@': path.resolve(__dirname, './resources/js'),
             ziggy: path.resolve('vendor/tightenco/ziggy/dist/vue.m.js'),
             '@ziggy': path.resolve('vendor/tightenco/ziggy/dist'),
+        },
+    },
+    server: {
+        host: '0.0.0.0',
+        port: 5173,
+        hmr: {
+            host: '127.0.0.1',
         },
     },
 });

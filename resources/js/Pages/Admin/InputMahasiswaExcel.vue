@@ -2,22 +2,22 @@
 import { ref, onMounted } from "vue";
 import axios from "axios";
 import Sidebar from "@/Components/SidebarAdmin.vue";
-import Navbar from "@/Components/Navbar.vue";
+import NavbarAdmin from "@/Components/NavbarAdmin.vue";
 import Card from "@/Components/Card.vue";
 import Breadcrumb from "@/Components/Breadcrumb.vue";
 
 export default {
     components: {
         Sidebar,
-        Navbar,
+        NavbarAdmin,
         Card,
         Breadcrumb,
     },
     data() {
         return {
             breadcrumbs: [
-                { text: "Manage Mahasiswa", href: "/admin/ManageMahasiswa" },
-                { text: "Input", href: "/admin/manage-mahasiswa/input" },
+                { text: "Manage Mahasiswa", href: "/sispa/admin/ManageMahasiswa" },
+                { text: "Input", href: "/sispa/admin/manage-mahasiswa/input" },
             ],
         };
     },
@@ -44,7 +44,7 @@ export default {
 
             try {
                 const response = await axios.get(
-                    `/api/get-prodi/${selectedJurusan.value}`
+                    `/sispa/api/get-prodi/${selectedJurusan.value}`
                 );
                 if (response.data.status === "success") {
                     filteredProdi.value = response.data.data;
@@ -83,7 +83,7 @@ export default {
 
                 // First try to get the blob
                 const response = await axios.get(
-                    "/admin/manage-mahasiswa/export",
+                    "/sispa/admin/manage-mahasiswa/export",
                     {
                         params: {
                             jurusan: selectedJurusan.value,
@@ -175,7 +175,7 @@ export default {
             try {
                 isUploading.value = true;
                 const token = localStorage.getItem("auth_token");
-                await axios.post("/admin/manage-mahasiswa/import", formData, {
+                await axios.post("/sispa/admin/manage-mahasiswa/import", formData, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                         "Content-Type": "multipart/form-data",
@@ -206,7 +206,7 @@ export default {
             generateAngkatanOptions();
 
             try {
-                const response = await axios.get("/api/get-jurusan");
+                const response = await axios.get("/sispa/api/get-jurusan");
                 if (response.data.status === "success") {
                     jurusanList.value = response.data.data;
                 } else {
@@ -253,7 +253,7 @@ export default {
         <Sidebar role="admin" />
 
         <div class="flex-1">
-            <Navbar userName="Admin" />
+            <NavbarAdmin userName="Admin" />
             <main class="p-6">
                 <div class="mb-4">
                     <Breadcrumb :items="breadcrumbs" />

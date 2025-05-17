@@ -3,9 +3,9 @@ import axios from 'axios';
 import DataTable from "@/Components/DataTable.vue";
 import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
-import Sidebar from '../../Components/Sidebar.vue';
+import Sidebar from '@/Components/Sidebar.vue';
 import Breadcrumb from "@/Components/Breadcrumb.vue";
-import ConfirmModal from '../../Components/ConfirmModal.vue';
+import ConfirmModal from '@/Components/ConfirmModal.vue';
 
 export default {
     components: {
@@ -45,7 +45,7 @@ export default {
     data() {
         return {
             breadcrumbs: [
-                { text: "Assessment", href: "/dosen/assessment/projectsSelf" },
+                { text: "Assessment", href: "/sispa/dosen/assessment/projectsSelf" },
                 { text: "Self Assessment", href: null }
             ],
             headers: [
@@ -91,7 +91,7 @@ export default {
 
     methods: {
         async fetchQuestions() {
-            console.log('Fetching questions started');
+            // console.log('Fetching questions started');
             this.loading = true;
             this.error = null;
 
@@ -102,10 +102,10 @@ export default {
                     assessment_order: this.assessment_order
                 };
 
-                console.log('Request params:', params);
+                // console.log('Request params:', params);
 
-                const response = await axios.get('/api/questions-dosen', { params });
-                console.log('Raw API Response:', response.data);
+                const response = await axios.get('/sispa/api/questions-dosen', { params });
+                // console.log('Raw API Response:', response.data);
 
                 if (response.data && Array.isArray(response.data)) {
                     this.questions = response.data.map(question => ({
@@ -120,7 +120,7 @@ export default {
                         bobot_4: question.bobot_4 || '',
                         bobot_5: question.bobot_5 || '',
                     }));
-                    console.log('Processed questions:', this.questions);
+                    // console.log('Processed questions:', this.questions);
                 } else {
                     throw new Error('Invalid response format - expected array');
                 }
@@ -143,7 +143,7 @@ export default {
 
         async fetchStudentsInfo() {
             try {
-                const response = await axios.get('/api/user-info-dosen');
+                const response = await axios.get('/sispa/api/user-info-dosen');
                 if (response.data) {
                     this.studentInfo = response.data;
                     this.studentInfo.project = this.project_name;
@@ -155,7 +155,7 @@ export default {
 
         setScore(value) {
             this.score = value;
-            console.log('Score set to:', value);
+            // console.log('Score set to:', value);
         },
 
         async submitAnswer() {
@@ -167,7 +167,7 @@ export default {
             }
 
             try {
-                const response = await axios.post('/api/save-answer', {
+                const response = await axios.post('/sispa/api/save-answer', {
                     answers: [{
                         question_id: this.currentQuestion.id,
                         answer: this.answer,
@@ -213,7 +213,7 @@ export default {
             if (!this.currentQuestion) return;
 
             try {
-                const response = await axios.get(`/api/get-answer/${this.currentQuestion.id}`);
+                const response = await axios.get(`/sispa/api/get-answer/${this.currentQuestion.id}`);
 
                 const tempAnswer = this.temporaryAnswers[this.currentQuestion.id];
                 if (tempAnswer) {
@@ -274,12 +274,12 @@ export default {
                     status: 'submitted'
                 }));
 
-                const response = await axios.post('/api/save-all-answers-dosen', { answers: allAnswers });
+                const response = await axios.post('/sispa/api/save-all-answers-dosen', { answers: allAnswers });
 
                 if (response.data.success) {
                     this.clearFormFields();
                     alert('Semua jawaban berhasil disimpan!');
-                    this.$inertia.visit('/dosen/assessment/projectsSelf');
+                    this.$inertia.visit('/sispa/dosen/assessment/projects-self');
                 }
             } catch (error) {
                 console.error('Error submitting answers:', error);
@@ -413,7 +413,7 @@ export default {
                                 <div>
                                     <textarea id="answer" v-model="answer" rows="4"
                                         class="block w-full rounded-md border border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
-                                        placeholder="Berikan alasannya... (Apakah Anda menghadapi kesulitan atau kemudahan dalam mengumpulkan iklan)"
+                                        placeholder="Berikan contoh atau penjelasan sesuai rubrik..."
                                         required></textarea>
                                 </div>
 

@@ -32,7 +32,7 @@ export default {
             maxReconnectAttempts: 5,
             reconnectInterval: 5000,
             breadcrumbs: [
-                { text: 'Home', href: '/mahasiswa' },
+                { text: 'Home', href: '/sispa/mahasiswa' },
                 { text: 'Notifications', href: '#' }
             ],
             localNotifications: [],
@@ -64,7 +64,7 @@ export default {
                 this.socket = new WebSocket(`${wsProtocol}//${wsHost}/ws/notifications`);
                 
                 this.socket.onopen = () => {
-                    console.log('WebSocket connected');
+                    // console.log('WebSocket connected');
                     this.reconnectAttempts = 0; // Reset reconnect attempts on successful connection
                 };
 
@@ -86,7 +86,7 @@ export default {
                 };
 
                 this.socket.onclose = () => {
-                    console.log('WebSocket disconnected');
+                    // console.log('WebSocket disconnected');
                     this.handleReconnect();
                 };
 
@@ -103,12 +103,12 @@ export default {
         handleReconnect() {
             if (this.reconnectAttempts < this.maxReconnectAttempts) {
                 this.reconnectAttempts++;
-                console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
+                // console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
                 setTimeout(() => {
                     this.initializeWebSocket();
                 }, this.reconnectInterval);
             } else {
-                console.log('Max reconnection attempts reached');
+                // console.log('Max reconnection attempts reached');
             }
         },
 
@@ -160,14 +160,14 @@ export default {
         
         async markAsRead(notification) {
             try {
-                const response = await axios.post(`/api/notifications/${notification.id}/read`);
+                const response = await axios.post(`/sispa/api/notifications/${notification.id}/read`);
                 if (response.data.success) {
                     notification.read_at = new Date();
                     this.localUnreadCount = Math.max(0, this.localUnreadCount - 1);
                     
                     const type = notification.type || (response.data.type || '');
                     
-                    let route = '/mahasiswa/assessment/';
+                    let route = '/sispa/mahasiswa/assessment/';
                     if (type.toLowerCase().includes('self')) {
                         route += 'self';
                     } else if (type.toLowerCase().includes('peer')) {
@@ -186,7 +186,7 @@ export default {
 
         async markAllAsRead() {
             try {
-                const response = await axios.post('/api/notifications/read-all');
+                const response = await axios.post('/sispa/api/notifications/read-all');
                 if (response.data.success) {
                     this.localNotifications.forEach(notification => {
                         notification.read_at = new Date();
@@ -203,7 +203,7 @@ export default {
             
             try {
                 this.loading = true;
-                const response = await axios.get('/api/notifications/get');
+                const response = await axios.get('/sispa/api/notifications/get');
                 
                 if (response.data.success) {
                     this.localNotifications = this.processNotifications(response.data.data.notifications);
