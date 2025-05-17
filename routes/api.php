@@ -55,8 +55,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/project', [KelolaProyekController::class, 'AddProyek']);
     Route::get('/majors', [KelolaProyekController::class, 'getMajors']);
     Route::get('/prodis-by-major', [KelolaProyekController::class, 'getProdisByMajor']);
-
     Route::get('/projects', [KelolaProyekController::class, 'getProjects']);
+    Route::delete('/projects/{id}', [KelolaProyekController::class, 'deleteProject']);
+    Route::put('/projects/{id}', [KelolaProyekController::class, 'updateProject']);
+
     Route::get('/project-dropdown', [ProjectController::class, 'index']);
     Route::get('/get-question-id', [AnswerController::class, 'getQuestionId']);
     Route::get('/answers/list', [AnswerController::class, 'getListAnswers']);
@@ -68,6 +70,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/toggle-publish-assessment', [ProjectController::class, 'togglePublishAssessment']);
     Route::post('/toggle-publish-assessment-peer', [ProjectController::class, 'togglePublishAssessmentPeer']);
     Route::get('/projects/active', [DashboardDosen::class, 'getActiveProjects']);
+    
 
     Route::get('/data-with-bobot-self', [AssessmentController::class, 'getAssessmentsWithBobotSelf']);
 
@@ -90,6 +93,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/kelola-kelompok/import', [KelolaKelompokController::class, 'importData']);
     Route::get('/kelola-kelompok/get-profile/{user_id}', [KelolaKelompokController::class, 'getProfile']);
     Route::get('/kelola-kelompok/get-angkatan', [KelolaKelompokController::class, 'getAngkatan']);
+    Route::delete('/delete-group/{projectId}/{groupName}', [KelolaKelompokController::class, 'deleteGroup']);
+    Route::delete('/kelompok/{id}/force-delete', [KelolaKelompokController::class, 'forceDeleteWithRelated']);
+    Route::get('/check-group-deletion', [KelolaKelompokController::class, 'checkGroupDeletion']);
+    Route::delete('/delete-group', [KelolaKelompokController::class, 'deleteGroup']);
 
     Route::get('/users/search', [AnswerController::class, 'searchByNip']);
     Route::get('/kelompok-dosen', [AnswerController::class, 'getKelompokDosen']);
@@ -111,9 +118,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/get-angkatan', [UserManagementController::class, 'getAngkatan']);
     Route::get('/get-class', [UserManagementController::class, 'getClass']);
     Route::get('/get-majors', [UserManagementController::class, 'getMajor']);
+    Route::delete('/delete-mhs/{id}', [UserManagementController::class, 'deleteMhs']);
+    Route::get('/check-mahasiswa-groups/{id}', [UserManagementController::class, 'checkMahasiswaGroups']);
 
     Route::get('/assessment/projects', [ProjectController::class, 'getProjectsWithAssessments']);
-    Route::get('/proyek-self-assessment', [ProjectController::class, 'getDataSelf']); 
+    Route::get('/proyek-self-assessment', [ProjectController::class, 'getDataSelf']);
     Route::get('/proyek-self-assessment-grouped', [ProjectController::class, 'getDataSelfGrouped']);
     Route::post('/save-all-answers', [AssessmentController::class, 'saveAllAnswers']);
 
@@ -125,11 +134,14 @@ Route::middleware('auth:sanctum')->group(function () {
 
     //Dosen Report
     Route::get('/dropdown-options', [ReportController::class, 'getDropdownOptions']);
-    Route::get('/kelompok/report', [ReportController::class, 'getKelompokReport']);
-    Route::get('/kelompok/report-detail', [ReportController::class, 'getScoreKelompok']);
-    Route::get('/report/kelompok/answers', [ReportController::class, 'getKelompokAnswers']);
-    Route::post('/report/storeReport', [ReportController::class, 'storeReport']);
-    Route::get('/student-peer-data', [ReportController::class, 'getStudentPeerData']);
+    Route::get('/kelompok/report', [ReportController::class, 'getKelompokReport']); 
+    Route::get('/kelompok/report-detail', [ReportController::class, 'getScoreKelompok']); 
+    Route::get('/report/kelompok/answers', [ReportController::class, 'getKelompokAnswers']); 
+    Route::post('/report/storeReport', [ReportController::class, 'storeReport']); 
+    Route::get('/student-peer-data', [ReportController::class, 'getStudentPeerData']); 
+    Route::get('/questions-peer-dosen-report', [ReportController::class, 'getQuestionsByProjectPeerReport']); 
+    Route::post('/report/save-final-scores-self', [ReportController::class, 'saveFinalScoresSelf']); 
+    Route::post('/report/save-final-scores-peer', [ReportController::class, 'saveFinalScoresPeer']); 
 
     //Dosen Feedback
     Route::get('/feedbacks-get-answer', [FeedbackController::class, 'getFeedbackAnswer']);

@@ -19,7 +19,7 @@ export default {
   data() {
     return {
       breadcrumbs: [
-        { text: "Dashboard", href: "/mahasiswa/dashboard" },
+        { text: "Dashboard", href: "/sispa/mahasiswa/dashboard" },
         { text: "Report", href: null },
       ],
       projectList: [],
@@ -39,7 +39,7 @@ export default {
       this.error = null;
       
       try {
-        const response = await axios.get("/api/mahasiswa/projects");
+        const response = await axios.get("/sispa/api/mahasiswa/projects");
         if (response.data.success) {
           this.projectList = response.data.projects || [];
           this.updateStats();
@@ -64,13 +64,13 @@ export default {
 
     
     handleProjectDetail(project) {
-      console.log("Batch Year:", project.tahun_ajaran);
-      console.log("Project Name:", project.nama_proyek);
-      console.log("Group:", project.nama_kelompok);
+      // console.log("Batch Year:", project.tahun_ajaran);
+      // console.log("Project Name:", project.nama_proyek);
+      // console.log("Group:", project.nama_kelompok);
 
       // Navigasi menggunakan Vue Router dari Inertia.js
       router.get(
-        "/mahasiswa/project-score-details",
+        "/sispa/mahasiswa/project-score-details",
         {
           tahun_ajaran: project.tahun_ajaran,
           nama_proyek: project.nama_proyek,
