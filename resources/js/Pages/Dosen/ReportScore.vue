@@ -1183,31 +1183,17 @@ export default {
               </p>
             </div>
             <!-- Chart Container - Flex Layout -->
-            <div class="p-4 flex flex-wrap gap-4 justify-between">
-              <div class="flex-1 min-w-[300px] max-w-[48%]">
-                <ApexChart
-                  type="radar"
-                  height="400"
-                  :series="
-                    preparePeerComparisonChartData(selectedUserData).series
-                  "
-                  :options="
-                    preparePeerComparisonChartData(selectedUserData).options
-                  "
-                />
-              </div>
-              <div class="flex-1 min-w-[300px] max-w-[48%]">
-                <ApexChart
-                  type="radar"
-                  height="400"
-                  :series="
-                    preparePeerComparisonChartData(selectedUserData).series
-                  "
-                  :options="
-                    preparePeerComparisonChartData(selectedUserData).options
-                  "
-                />
-              </div>
+            <div class="p-4">
+                    <ApexChart
+                    type="radar"
+                    height="400"
+                    :series="
+                        preparePeerComparisonChartData(selectedUserData).series
+                    "
+                    :options="
+                        preparePeerComparisonChartData(selectedUserData).options
+                    "
+                    />
             </div>
           </Card>
 
