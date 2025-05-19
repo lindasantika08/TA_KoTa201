@@ -8,11 +8,14 @@ use App\Models\Reflective;
 use App\Models\ReflectiveRubric;
 use App\Exports\ReflectiveAssessmentExport;
 use App\Models\ReflectiveAnswer;
+use App\Models\reflective_ai;
 use App\Models\Mahasiswa;
 use App\Models\Group;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -518,5 +521,224 @@ class RefleksiController extends Controller
         return response()->json([
             'answers' => $formattedAnswers,
         ]);
+    }
+
+    protected $geminiService;
+
+    /**
+     * Constructor
+     */
+    public function __construct()
+    {
+        // You can inject GeminiService here if needed
+    }
+
+    /**
+     * Get reflective summary for a student and project
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getReflectiveSummary(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'mahasiswa_id' => 'required|string',
+                'project_name' => 'required|string',
+                'batch_year' => 'required|string',
+                'force_regenerate' => 'sometimes|boolean'
+            ]);
+
+            $mahasiswa = Mahasiswa::with('user')->find($validated['mahasiswa_id']);
+            if (!$mahasiswa) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Mahasiswa tidak ditemukan.",
+                ], 404);
+            }
+
+            // Find project by project_name and batch_year
+            $project = Project::where('project_name', $validated['project_name'])
+                ->where('batch_year', $validated['batch_year'])
+                ->first();
+
+            if (!$project) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Proyek tidak ditemukan dengan nama dan tahun yang diberikan.",
+                ], 404);
+            }
+
+            // Check if summary already exists
+            $existingSummary = reflective_ai::where([
+                'mahasiswa_id' => $validated['mahasiswa_id'],
+                'project_id' => $project->id
+            ])->first();
+
+            // Return existing summary if available and not forced to regenerate
+            if ($existingSummary && !($validated['force_regenerate'] ?? false)) {
+                return response()->json([
+                    'success' => true,
+                    'data' => [
+                        'mahasiswa_id' => $mahasiswa->id,
+                        'mahasiswa_name' => $mahasiswa->user->name,
+                        'mahasiswa_nim' => $mahasiswa->nim,
+                        'project_id' => $project->id,
+                        'project_name' => $project->project_name,
+                        'batch_year' => $project->batch_year,
+                        'summary' => $existingSummary->summary,
+                        'source' => 'database'
+                    ]
+                ]);
+            }
+
+            // Get reflective questions for this project
+            $questions = Reflective::where('project_id', $project->id)->get();
+            if ($questions->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Tidak ada pertanyaan reflektif untuk proyek ini.",
+                ], 404);
+            }
+
+            // Get answers for these questions
+            $allAnswers = [];
+            foreach ($questions as $question) {
+                $answer = ReflectiveAnswer::where([
+                    'mahasiswa_id' => $validated['mahasiswa_id'],
+                    'question_id' => $question->id
+                ])->first();
+
+                if ($answer) {
+                    $allAnswers[] = [
+                        'question' => $question->question,
+                        'answer' => $answer->answer
+                    ];
+                }
+            }
+
+            if (empty($allAnswers)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Mahasiswa belum menjawab pertanyaan reflektif untuk proyek ini.",
+                ], 404);
+            }
+
+            // Generate summary
+            try {
+                // Format questions and answers for the prompt
+                $qaText = '';
+                foreach ($allAnswers as $qa) {
+                    $qaText .= "Pertanyaan: {$qa['question']}\n";
+                    $qaText .= "Jawaban: {$qa['answer']}\n\n";
+                }
+
+                // Create the prompt for Gemini
+                $prompt = "Analisis Reflektif Mahasiswa: {$mahasiswa->user->name} (NIM: {$mahasiswa->nim})
+Proyek: {$project->project_name}
+
+Berikut ini adalah jawaban mahasiswa untuk penilaian reflektif:
+
+{$qaText}
+
+Instruksi untuk Pembuatan Ringkasan:
+1. Buat ringkasan deskriptif yang menjelaskan:
+   - Pemahaman mahasiswa terhadap materi/proyek
+   - Kemampuan mahasiswa untuk melakukan refleksi diri
+   - Wawasan penting dari jawaban reflektif mahasiswa
+   - Pola pikir dan pendekatan mahasiswa dalam menyelesaikan masalah
+
+2. Ringkasan harus:
+   - Objektif dan berdasarkan jawaban yang diberikan
+   - Konstruktif dan berfokus pada pengembangan
+   - Terstruktur dengan paragraf yang kohesif
+   - Bersifat deskriptif, bukan dalam format poin per poin
+
+3. Hindari:
+   - Penilaian yang terlalu kritis
+   - Pernyataan yang bersifat menghakimi
+   - Kesimpulan yang tidak didukung oleh jawaban mahasiswa
+
+Hasilkan ringkasan yang komprehensif, profesional, dan bermanfaat untuk penilaian akademik.";
+
+                // Call Gemini API to generate summary
+                $summary = $this->callGeminiWithErrorHandling($prompt);
+
+                // Delete existing summary if forced to regenerate
+                if ($existingSummary) {
+                    $existingSummary->delete();
+                }
+
+                // Save new summary
+                $newSummary = reflective_ai::create([
+                    'mahasiswa_id' => $validated['mahasiswa_id'],
+                    'project_id' => $project->id,
+                    'summary' => Str::limit($summary, 65535, '...')
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'data' => [
+                        'mahasiswa_id' => $mahasiswa->id,
+                        'mahasiswa_name' => $mahasiswa->user->name,
+                        'mahasiswa_nim' => $mahasiswa->nim,
+                        'project_id' => $project->id,
+                        'project_name' => $project->project_name,
+                        'batch_year' => $project->batch_year,
+                        'summary' => $summary,
+                        'source' => 'gemini'
+                    ]
+                ]);
+            } catch (\Exception $e) {
+                Log::error("Gemini API Error", [
+                    'message' => $e->getMessage(),
+                    'mahasiswa_name' => $mahasiswa->user->name,
+                    'mahasiswa_nim' => $mahasiswa->nim,
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => "Gagal menghasilkan ringkasan.",
+                    'error' => $e->getMessage()
+                ], 500);
+            }
+        } catch (\Exception $e) {
+            Log::error("Kesalahan Umum di getReflectiveSummary", [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => "Terjadi kesalahan pada server.",
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+    /**
+     * Call Gemini API with error handling
+     *
+     * @param string $prompt
+     * @return string
+     * @throws \Exception
+     */
+    private function callGeminiWithErrorHandling($prompt)
+    {
+        $apiKey = config('services.gemini.api_key');
+
+        $response = Http::withHeaders([
+            'Content-Type' => 'application/json',
+        ])->post("https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={$apiKey}", [
+            'contents' => [
+                ['role' => 'user', 'parts' => [['text' => $prompt]]]
+            ]
+        ]);
+
+        if (!$response->successful()) {
+            throw new \Exception("API request failed: " . $response->body());
+        }
+
+        $data = $response->json();
+        return $data['candidates'][0]['content']['parts'][0]['text'] ?? "Gagal menghasilkan ringkasan.";
     }
 }

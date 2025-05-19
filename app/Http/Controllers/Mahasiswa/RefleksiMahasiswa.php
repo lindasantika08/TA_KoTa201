@@ -11,10 +11,13 @@ use App\Models\Group;
 use App\Models\Reflective;
 use App\Models\ReflectiveAnswer;
 use App\Models\ReflectiveRubric;
+use App\Models\reflective_ai;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
 
 class RefleksiMahasiswa extends Controller
@@ -188,6 +191,8 @@ class RefleksiMahasiswa extends Controller
             }
 
             $savedAnswers = [];
+            $projectId = null;
+            $allAnswers = [];
 
             foreach ($validated['answers'] as $answer) {
                 $reflectiveAnswer = ReflectiveAnswer::updateOrCreate(
@@ -203,7 +208,24 @@ class RefleksiMahasiswa extends Controller
                     ]
                 );
 
+                // Get the question to determine project_id
+                $question = Reflective::find($answer['question_id']);
+                if ($question) {
+                    $projectId = $question->project_id;
+
+                    // Store question and answer for summary
+                    $allAnswers[] = [
+                        'question' => $question->question,
+                        'answer' => $answer['answer']
+                    ];
+                }
+
                 $savedAnswers[] = $reflectiveAnswer;
+            }
+
+            // Generate and save AI summary if we have a project ID
+            if ($projectId && !empty($allAnswers)) {
+                $this->generateAndSaveReflectiveSummary($mahasiswa->id, $projectId, $allAnswers);
             }
 
             DB::commit();
@@ -226,6 +248,109 @@ class RefleksiMahasiswa extends Controller
                 'error' => 'Failed to save answers: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Generate a summary of reflective answers using Gemini AI and save to database
+     *
+     * @param string $mahasiswaId
+     * @param string $projectId
+     * @param array $answers
+     * @return void
+     */
+    private function generateAndSaveReflectiveSummary($mahasiswaId, $projectId, $answers)
+    {
+        try {
+            // Format questions and answers for the prompt
+            $qaText = '';
+            foreach ($answers as $qa) {
+                $qaText .= "Pertanyaan: {$qa['question']}\n";
+                $qaText .= "Jawaban: {$qa['answer']}\n\n";
+            }
+
+            // Get student information for more context
+            $mahasiswa = Mahasiswa::with('user')->find($mahasiswaId);
+            $project = Project::find($projectId);
+
+            // Create the prompt for Gemini
+            $prompt = "Analisis Reflektif Mahasiswa: {$mahasiswa->user->name} (NIM: {$mahasiswa->nim})
+Proyek: {$project->project_name}
+
+Berikut ini adalah jawaban mahasiswa untuk penilaian reflektif:
+
+{$qaText}
+
+Instruksi untuk Pembuatan Ringkasan:
+1. Buat ringkasan deskriptif yang menjelaskan:
+   - Pemahaman mahasiswa terhadap materi/proyek
+   - Kemampuan mahasiswa untuk melakukan refleksi diri
+   - Wawasan penting dari jawaban reflektif mahasiswa
+   - Pola pikir dan pendekatan mahasiswa dalam menyelesaikan masalah
+
+2. Ringkasan harus:
+   - Objektif dan berdasarkan jawaban yang diberikan
+   - Konstruktif dan berfokus pada pengembangan
+   - Terstruktur dengan paragraf yang kohesif
+   - Bersifat deskriptif, bukan dalam format poin per poin
+
+3. Hindari:
+   - Penilaian yang terlalu kritis
+   - Pernyataan yang bersifat menghakimi
+   - Kesimpulan yang tidak didukung oleh jawaban mahasiswa
+
+Hasilkan ringkasan yang komprehensif, profesional, dan bermanfaat untuk penilaian akademik.";
+
+            // Call Gemini API to generate summary
+            $summary = $this->callGeminiWithErrorHandling($prompt);
+
+            // Save or update the reflective_ai entry
+            reflective_ai::updateOrCreate(
+                [
+                    'mahasiswa_id' => $mahasiswaId,
+                    'project_id' => $projectId,
+                ],
+                [
+                    'mahasiswa_id' => $mahasiswaId,
+                    'project_id' => $projectId,
+                    'summary' => Str::limit($summary, 65535, '...')
+                ]
+            );
+
+            Log::info('Reflective summary generated successfully', [
+                'mahasiswa_id' => $mahasiswaId,
+                'project_id' => $projectId
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error generating reflective summary', [
+                'mahasiswa_id' => $mahasiswaId,
+                'project_id' => $projectId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            // Continue execution even if summary generation fails
+            // This ensures the main functionality of saving answers still works
+        }
+    }
+
+    private function callGeminiWithErrorHandling($prompt)
+    {
+        $apiKey = config('services.gemini.api_key');
+
+        $response = Http::withHeaders([
+            'Content-Type' => 'application/json',
+        ])->post("https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={$apiKey}", [
+            'contents' => [
+                ['role' => 'user', 'parts' => [['text' => $prompt]]]
+            ]
+        ]);
+
+        if (!$response->successful()) {
+            throw new \Exception("API request failed: " . $response->body());
+        }
+
+        $data = $response->json();
+        return $data['candidates'][0]['content']['parts'][0]['text'] ?? "Gagal menghasilkan ringkasan.";
     }
 
     public function saveReflectiveAnswer(Request $request)

@@ -10,12 +10,12 @@ export default {
     props: {
         batchYear: {
             type: String,
-            required: true
+            required: true,
         },
         projectName: {
             type: String,
-            required: true
-        }
+            required: true,
+        },
     },
     components: {
         SidebarMahasiswa,
@@ -27,7 +27,10 @@ export default {
     data() {
         return {
             breadcrumbs: [
-                { text: "Self Assessment", href: "/sispa/mahasiswa/assessment/self" },
+                {
+                    text: "Self Assessment",
+                    href: "/sispa/mahasiswa/assessment/self",
+                },
                 { text: "Detail", href: null },
             ],
             headers: [
@@ -44,145 +47,244 @@ export default {
                 project: "",
                 date: "",
             },
-            groupedAnswers: {}
+            groupedAnswers: {},
         };
     },
     methods: {
         async fetchUserInfo() {
             try {
-                const response = await axios.get("/sispa/api/user-detail-answer", {
-                    params: {
-                        batch_year: this.batchYear,
-                        project_name: this.projectName,
+                const response = await axios.get(
+                    "/sispa/api/user-detail-answer",
+                    {
+                        params: {
+                            batch_year: this.batchYear,
+                            project_name: this.projectName,
+                        },
                     }
-                });
+                );
                 this.studentInfo = response.data;
             } catch (error) {
                 console.error("Error fetching user info:", error);
             }
         },
         async fetchAnswerSelf() {
-    try {
-        const response = await axios.get("/sispa/api/detail-answer-self", {
-            params: {
-                batch_year: this.batchYear,
-                project_name: this.projectName
+            try {
+                const response = await axios.get(
+                    "/sispa/api/detail-answer-self",
+                    {
+                        params: {
+                            batch_year: this.batchYear,
+                            project_name: this.projectName,
+                        },
+                    }
+                );
+                this.groupedAnswers = response.data.answers.reduce(
+                    (acc, aspect) => {
+                        acc[aspect.aspect] = aspect;
+                        return acc;
+                    },
+                    {}
+                );
+            } catch (error) {
+                console.error("Error fetching answers:", error);
             }
-        });
-        this.groupedAnswers = response.data.answers.reduce((acc, aspect) => {
-            acc[aspect.aspect] = aspect;
-            return acc;
-        }, {});
-    } catch (error) {
-        console.error("Error fetching answers:", error);
-    }
-},
-getScaleColor(scale) {
+        },
+        getScaleColor(scale) {
             const scaleNum = parseInt(scale);
-            if (scaleNum >= 4) return 'bg-green-100 text-green-800';
-            if (scaleNum >= 3) return 'bg-blue-100 text-blue-800';
-            if (scaleNum >= 2) return 'bg-yellow-100 text-yellow-800';
-            return 'bg-red-100 text-red-800';
+            if (scaleNum >= 4) return "bg-green-100 text-green-800";
+            if (scaleNum >= 3) return "bg-blue-100 text-blue-800";
+            if (scaleNum >= 2) return "bg-yellow-100 text-yellow-800";
+            return "bg-red-100 text-red-800";
         },
     },
     created() {
         this.fetchUserInfo();
         this.fetchAnswerSelf();
-    }
+    },
 };
 </script>
 
-
 <template>
     <div class="flex min-h-screen bg-gray-50">
+        <!-- Sidebar -->
         <SidebarMahasiswa role="mahasiswa" />
 
         <div class="flex-1">
+            <!-- Navbar -->
             <Navbar userName="Mahasiswa" />
+
+            <!-- Main Content -->
             <main class="p-6">
+                <!-- Breadcrumb Navigation -->
                 <div class="mb-4">
                     <Breadcrumb :items="breadcrumbs" />
                 </div>
-                
-                <!-- Main Card -->
+
+                <!-- Main Container Card -->
                 <Card class="shadow-lg">
+                    <!-- Card Title -->
                     <template #title>
                         <div class="flex items-center space-x-2 text-blue-700">
-                            <h1 class="text-2xl font-bold">HASIL PENGISIAN SELF ASSESSMENT</h1>
+                            <h1 class="text-2xl font-bold">
+                                HASIL PENGISIAN SELF ASSESSMENT
+                            </h1>
                         </div>
                     </template>
 
-                    <!-- Student Info Section -->
+                    <!-- Student Information Section -->
                     <div class="bg-white rounded-lg p-6 mb-6 shadow-sm">
-                        <h2 class="text-lg font-semibold text-gray-700 mb-4 border-b pb-2">Informasi Mahasiswa</h2>
-                        <div class="grid grid-cols-2 gap-8">
+                        <h2
+                            class="text-lg font-semibold text-gray-700 mb-4 border-b pb-2"
+                        >
+                            Informasi Mahasiswa
+                        </h2>
+                        <div
+                            class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8"
+                        >
+                            <!-- Left Column -->
                             <div class="space-y-3">
                                 <div class="flex items-center">
-                                    <span class="text-gray-600 font-medium w-32">NIM</span>
-                                    <span class="text-gray-800">: {{ studentInfo.nim }}</span>
+                                    <span class="text-gray-600 font-medium w-32"
+                                        >NIM</span
+                                    >
+                                    <span class="text-gray-800"
+                                        >: {{ studentInfo.nim }}</span
+                                    >
                                 </div>
                                 <div class="flex items-center">
-                                    <span class="text-gray-600 font-medium w-32">Nama Lengkap</span>
-                                    <span class="text-gray-800">: {{ studentInfo.name }}</span>
+                                    <span class="text-gray-600 font-medium w-32"
+                                        >Nama Lengkap</span
+                                    >
+                                    <span class="text-gray-800"
+                                        >: {{ studentInfo.name }}</span
+                                    >
                                 </div>
                                 <div class="flex items-center">
-                                    <span class="text-gray-600 font-medium w-32">Kelas</span>
-                                    <span class="text-gray-800">: {{ studentInfo.class }}</span>
+                                    <span class="text-gray-600 font-medium w-32"
+                                        >Kelas</span
+                                    >
+                                    <span class="text-gray-800"
+                                        >: {{ studentInfo.class }}</span
+                                    >
                                 </div>
                             </div>
+
+                            <!-- Right Column -->
                             <div class="space-y-3">
                                 <div class="flex items-center">
-                                    <span class="text-gray-600 font-medium w-32">Kelompok</span>
-                                    <span class="text-gray-800">: {{ studentInfo.group }}</span>
+                                    <span class="text-gray-600 font-medium w-32"
+                                        >Kelompok</span
+                                    >
+                                    <span class="text-gray-800"
+                                        >: {{ studentInfo.group }}</span
+                                    >
                                 </div>
                                 <div class="flex items-center">
-                                    <span class="text-gray-600 font-medium w-32">Proyek</span>
-                                    <span class="text-gray-800">: {{ studentInfo.project }}</span>
+                                    <span class="text-gray-600 font-medium w-32"
+                                        >Proyek</span
+                                    >
+                                    <span class="text-gray-800"
+                                        >: {{ studentInfo.project }}</span
+                                    >
                                 </div>
                                 <div class="flex items-center">
-                                    <span class="text-gray-600 font-medium w-32">Tanggal</span>
-                                    <span class="text-gray-800">: {{ studentInfo.date }}</span>
+                                    <span class="text-gray-600 font-medium w-32"
+                                        >Tanggal</span
+                                    >
+                                    <span class="text-gray-800"
+                                        >: {{ studentInfo.date }}</span
+                                    >
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Assessment Results Section -->
-                    <div v-for="(aspectData, aspectName) in groupedAnswers" 
-                         :key="aspectName" 
-                         class="mb-6 bg-white rounded-lg shadow-sm">
+                    <!-- Assessment Results By Aspect -->
+                    <div
+                        v-for="(aspectData, aspectName) in groupedAnswers"
+                        :key="aspectName"
+                        class="mb-6 bg-white rounded-lg shadow-sm overflow-hidden"
+                    >
                         <Card class="border-none shadow-none">
+                            <!-- Aspect Title -->
                             <template #title>
-                                <div class="flex items-center space-x-2 bg-blue-50 p-3 rounded-t-lg border-b">
-                                    <h2 class="text-lg font-semibold text-blue-700">
+                                <div
+                                    class="flex items-center p-4 bg-blue-50 rounded-t-lg border-b"
+                                >
+                                    <h2
+                                        class="text-lg font-semibold text-blue-700"
+                                    >
                                         Aspek: {{ aspectName }}
                                     </h2>
                                 </div>
                             </template>
-                            
+
+                            <!-- Answers Table -->
                             <div class="overflow-x-auto">
-                                <table class="min-w-full">
+                                <table
+                                    class="min-w-full divide-y divide-gray-200"
+                                >
                                     <thead>
                                         <tr class="bg-gray-50">
-                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600 w-16">No</th>
-                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Pertanyaan</th>
-                                            <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600 w-24">Skala</th>
-                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Alasan</th>
+                                            <th
+                                                class="px-4 py-3 text-left text-sm font-semibold text-gray-600 w-16"
+                                            >
+                                                No
+                                            </th>
+                                            <th
+                                                class="px-4 py-3 text-left text-sm font-semibold text-gray-600"
+                                            >
+                                                Pertanyaan
+                                            </th>
+                                            <th
+                                                class="px-4 py-3 text-center text-sm font-semibold text-gray-600 w-24"
+                                            >
+                                                Skala
+                                            </th>
+                                            <th
+                                                class="px-4 py-3 text-left text-sm font-semibold text-gray-600"
+                                            >
+                                                Alasan
+                                            </th>
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        <tr v-for="(answer, index) in aspectData.answers" 
+                                    <tbody
+                                        class="bg-white divide-y divide-gray-100"
+                                    >
+                                        <tr
+                                            v-for="(
+                                                answer, index
+                                            ) in aspectData.answers"
                                             :key="index"
-                                            class="border-t hover:bg-gray-50">
-                                            <td class="px-4 py-3 text-gray-600">{{ index + 1 }}</td>
-                                            <td class="px-4 py-3 text-gray-800">{{ answer.question }}</td>
+                                            class="hover:bg-gray-50 transition-colors duration-150"
+                                        >
+                                            <td
+                                                class="px-4 py-3 text-sm text-gray-600"
+                                            >
+                                                {{ index + 1 }}
+                                            </td>
+                                            <td
+                                                class="px-4 py-3 text-sm text-gray-800"
+                                            >
+                                                {{ answer.question }}
+                                            </td>
                                             <td class="px-4 py-3 text-center">
-                                                <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full text-sm font-medium"
-                                                      :class="getScaleColor(answer.scale)">
+                                                <span
+                                                    class="inline-flex items-center justify-center px-2.5 py-1 rounded-full text-sm font-medium"
+                                                    :class="
+                                                        getScaleColor(
+                                                            answer.scale
+                                                        )
+                                                    "
+                                                >
                                                     {{ answer.scale }}
                                                 </span>
                                             </td>
-                                            <td class="px-4 py-3 text-gray-700">{{ answer.reason }}</td>
+                                            <td
+                                                class="px-4 py-3 text-sm text-gray-700"
+                                            >
+                                                {{ answer.reason }}
+                                            </td>
                                         </tr>
                                     </tbody>
                                 </table>
