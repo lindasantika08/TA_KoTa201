@@ -46,6 +46,7 @@ class ProcessFlaskPeerAssessment implements ShouldQueue
      */
     public function handle()
     {
+        Log::info('HANDLE() DIPANGGIL', ['peer_answer_id' => $this->answerId]);
         try {
             // Start with detailed logging
             Log::info('Starting ProcessFlaskPeerAssessment job', [
@@ -62,6 +63,20 @@ class ProcessFlaskPeerAssessment implements ShouldQueue
                 ]);
                 return;
             }
+
+            if (is_null($answerRecord->score_SLA) || is_null($answerRecord->similarity)) {
+                Log::info('Peer answer needs to be reassessed', [
+                    'peer_answer_id' => $this->answerId
+                ]);
+                
+                // Lanjutkan untuk mengirimkan data ke Flask
+            } else {
+                Log::info('Peer answer already assessed', [
+                    'peer_answer_id' => $this->answerId
+                ]);
+                return; // Jangan lanjutkan jika sudah ada nilainya
+            }
+            
 
             // Prepare data for Flask - only send question_id, answer, and score
             $flaskData = [

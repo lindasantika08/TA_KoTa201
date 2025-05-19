@@ -98,14 +98,19 @@ class AnswerController extends Controller
         $validated = $request->validate([
             'batch_year' => 'required|string',
             'project_name' => 'required|string',
+            'assessment_order' => 'required|integer',
         ]);
 
-        $assessment = Assessment::join('project', 'assessment.project_id', '=', 'project.id')
+        $query = Assessment::join('project', 'assessment.project_id', '=', 'project.id')
             ->where('assessment.batch_year', $validated['batch_year'])
             ->where('project.project_name', $validated['project_name'])
-            ->where('assessment.type', 'selfAssessment')
-            ->select('assessment.id')
-            ->first();
+            ->where('assessment.assessment_order', $validated['assessment_order']);
+        
+        if ($request->has('type')) {
+            $query->where('assessment.type', $request->type);
+        }
+        
+        $assessment = $query->select('assessment.id')->first();
 
         if (!$assessment) {
             return response()->json(['message' => 'Assessment not found'], 404);
@@ -199,53 +204,33 @@ class AnswerController extends Controller
                 ], 404);
             }
 
-            // Get all groups for this specific project with their members and class information
-            $allGroups = Group::where('project_id', $project->id)
-                ->with(['mahasiswa.classRoom'])
-                ->select('id', 'group', 'project_id', 'mahasiswa_id')
-                ->get();
+            // Get all groups for this specific project
+            $groups = Group::where('project_id', $project->id)
+                ->select('id', 'group', 'project_id')
+                ->distinct('group')
+                ->get()
+                ->groupBy('group');
 
-            // Group the groups by group name AND class_id
-            $uniqueGroups = $allGroups->groupBy(function ($group) {
-                return $group->group . '_' . ($group->mahasiswa->class_id ?? 'unknown');
-            })->map(function ($groups) {
-                $firstMember = $groups->first()->mahasiswa;
-                return [
-                    'group_id' => $groups->first()->id,
-                    'group_name' => $groups->first()->group,
-                    'project_id' => $groups->first()->project_id,
-                    'class_id' => $firstMember ? $firstMember->class_id : null,
-                    'class_name' => $firstMember && $firstMember->classRoom ? $firstMember->classRoom->class_name : null
-                ];
-            })->values();
+            $groupStatistics = collect();
 
-            $groupStatistics = $uniqueGroups->map(function ($uniqueGroup) use ($project) {
-                // Find all members for this specific group and class
-                $groupMembers = Mahasiswa::whereHas('group', function ($query) use ($uniqueGroup, $project) {
+            foreach ($groups as $groupName => $groupEntries) {
+                // Find all members for this specific group regardless of class
+                $groupMembers = Mahasiswa::whereHas('group', function ($query) use ($groupName, $project) {
                     $query->where('project_id', $project->id)
-                        ->where('group', $uniqueGroup['group_name']);
+                        ->where('group', $groupName);
                 })
-                    ->where('class_id', $uniqueGroup['class_id'])
                     ->with('user', 'classRoom')
                     ->get();
 
                 // Log for debugging
                 Log::info('Group details', [
-                    'group_name' => $uniqueGroup['group_name'],
-                    'class_id' => $uniqueGroup['class_id'],
+                    'group_name' => $groupName,
                     'member_count' => $groupMembers->count()
                 ]);
 
-                // If no members found
+                // Skip if no members found
                 if ($groupMembers->isEmpty()) {
-                    return [
-                        'group_id' => $uniqueGroup['group_id'],
-                        'group_name' => $uniqueGroup['group_name'],
-                        'is_completed' => false,
-                        'total_members' => 0,
-                        'class_id' => $uniqueGroup['class_id'],
-                        'class_name' => $uniqueGroup['class_name']
-                    ];
+                    continue;
                 }
 
                 // Check if every member has completed peer assessments for every other member
@@ -263,38 +248,76 @@ class AnswerController extends Controller
                     });
                 });
 
-                return [
-                    'group_id' => $uniqueGroup['group_id'],
-                    'group_name' => $uniqueGroup['group_name'],
+                // Get all classes that have members in this group
+                $classesInGroup = $groupMembers->pluck('classRoom')
+                    ->filter()
+                    ->unique('id')
+                    ->values();
+
+                $groupStatInfo = [
+                    'group_id' => $groupEntries->first()->id,
+                    'group_name' => $groupName,
                     'is_completed' => $isGroupCompleted,
                     'total_members' => $groupMembers->count(),
-                    'class_id' => $uniqueGroup['class_id'],
-                    'class_name' => $uniqueGroup['class_name'],
+                    'classes' => $classesInGroup->map(function ($class) {
+                        return [
+                            'class_id' => $class->id,
+                            'class_name' => $class->class_name
+                        ];
+                    }),
                     'members' => $groupMembers->map(function ($member) {
                         return [
                             'id' => $member->id,
                             'nim' => $member->nim,
                             'name' => $member->user->name ?? null,
+                            'class_id' => $member->class_id,
                             'class_name' => $member->classRoom->class_name ?? null
                         ];
                     })
                 ];
-            });
 
-            // Group statistics by class for better organization
-            $statisticsByClass = $groupStatistics->groupBy('class_id')
-                ->map(function ($groups) {
-                    $totalGroups = $groups->count();
-                    $completedGroups = $groups->where('is_completed', true)->count();
+                $groupStatistics->push($groupStatInfo);
+            }
 
-                    return [
-                        'class_name' => $groups->first()['class_name'],
-                        'totalGroups' => $totalGroups,
-                        'completedGroups' => $completedGroups,
-                        'incompleteGroups' => $totalGroups - $completedGroups,
-                        'groups' => $groups
-                    ];
-                });
+            // Organize statistics by class (now a group can appear in multiple classes)
+            $classIds = $groupStatistics->pluck('members')
+                ->flatten(1)
+                ->pluck('class_id')
+                ->unique()
+                ->filter();
+
+            $statisticsByClass = collect();
+
+            foreach ($classIds as $classId) {
+                // Get class name from the first member we find with this class
+                $className = null;
+                foreach ($groupStatistics as $group) {
+                    foreach ($group['members'] as $member) {
+                        if ($member['class_id'] == $classId) {
+                            $className = $member['class_name'];
+                            break 2;
+                        }
+                    }
+                }
+
+                // Get groups that have at least one member in this class
+                $groupsInClass = $groupStatistics->filter(function ($group) use ($classId) {
+                    return $group['members']->contains(function ($member) use ($classId) {
+                        return $member['class_id'] == $classId;
+                    });
+                })->values();
+
+                $totalGroups = $groupsInClass->count();
+                $completedGroups = $groupsInClass->where('is_completed', true)->count();
+
+                $statisticsByClass->put($classId, [
+                    'class_name' => $className,
+                    'totalGroups' => $totalGroups,
+                    'completedGroups' => $completedGroups,
+                    'incompleteGroups' => $totalGroups - $completedGroups,
+                    'groups' => $groupsInClass
+                ]);
+            }
 
             // Calculate overall statistics
             $totalGroups = $groupStatistics->count();
@@ -344,72 +367,161 @@ class AnswerController extends Controller
         }
 
         try {
+            // Get the project
             $project = Project::where('project_name', $namaProyek)
                 ->where('batch_year', $tahunAjaran)
-                ->with(['groups' => function ($query) {
-                    $query->select('id', 'project_id', 'group')
-                        ->distinct('group');
-                }])
                 ->firstOrFail();
 
-            $groups = $project->groups->pluck('group')->unique()->values();
-
-            $answers = AnswersPeer::whereHas('question', function ($query) use ($tahunAjaran) {
-                $query->where('batch_year', $tahunAjaran);
-            })
-                ->whereHas('mahasiswa.group.project', function ($query) use ($namaProyek) {
-                    $query->where('project_name', $namaProyek);
-                })
-                ->with([
-                    'mahasiswa' => function ($query) {
-                        $query->with(['user' => function ($q) {
-                            $q->select('id', 'name', 'email');
-                        }]);
-                    },
-                    'peer' => function ($query) {
-                        $query->with(['user' => function ($q) {
-                            $q->select('id', 'name', 'email');
-                        }]);
-                    },
-                    'question' => function ($query) {
-                        $query->select('id', 'question');
-                    }
-                ])
+            // Get all questions for this project's peer assessment
+            $questions = Assessment::where('batch_year', $tahunAjaran)
+                ->where('project_id', $project->id)
+                ->where('type', 'peerAssessment')
                 ->get();
 
-            $transformedAnswers = $answers->map(function ($answer) {
-                $group = Group::where('mahasiswa_id', $answer->mahasiswa_id)
-                    ->value('group');
-                try {
-                    return [
-                        'id' => $answer->id,
-                        'user' => $answer->mahasiswa->user ? [
-                            'id' => $answer->mahasiswa->user->id,
-                            'name' => $answer->mahasiswa->user->name,
-                            'email' => $answer->mahasiswa->user->email,
-                        ] : null,
-                        'peer' => $answer->peer->user ? [
-                            'id' => $answer->peer->user->id,
-                            'name' => $answer->peer->user->name,
-                            'email' => $answer->peer->user->email,
-                        ] : null,
-                        'pertanyaan' => optional($answer->question)->question,
-                        'answer' => $answer->answer,
-                        'score' => $answer->score,
-                        'score_SLA' => $answer->score_SLA,
-                        'similarity' => $answer->similarity,
-                        'status' => $answer->status,
-                        'kelompok' => $group ?? '-'
-                    ];
-                } catch (\Exception $e) {
-                    Log::error('Error transforming answer: ' . $e->getMessage(), [
-                        'answer_id' => $answer->id
-                    ]);
-                    return null;
-                }
-            })->filter()->values();
+            $totalQuestions = $questions->count();
 
-            if ($transformedAnswers->isEmpty()) {
+            if ($totalQuestions === 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tidak ada pertanyaan peer assessment untuk project ini.',
+                ], 404);
+            }
+
+            // Get all groups and their students for this project
+            $groups = Group::where('project_id', $project->id)
+                ->where('batch_year', $tahunAjaran)
+                ->with(['mahasiswa.user' => function ($query) {
+                    $query->select('id', 'name', 'email');
+                }])
+                ->get()
+                ->groupBy('group');
+
+            $result = [];
+
+            // For each group
+            foreach ($groups as $groupNumber => $studentsInGroup) {
+                $mahasiswaIds = $studentsInGroup->pluck('mahasiswa_id')->filter()->values()->toArray();
+
+                // For each student in the group (as evaluator)
+                foreach ($mahasiswaIds as $mahasiswaId) {
+                    $mahasiswa = Mahasiswa::with(['user' => function ($q) {
+                        $q->select('id', 'name', 'email');
+                    }])->find($mahasiswaId);
+
+                    if (!$mahasiswa || !$mahasiswa->user) {
+                        continue;
+                    }
+
+                    // For each peer to be evaluated
+                    foreach ($mahasiswaIds as $peerId) {
+                        // Skip self-assessment
+                        if ($mahasiswaId === $peerId) {
+                            continue;
+                        }
+
+                        $peer = Mahasiswa::with(['user' => function ($q) {
+                            $q->select('id', 'name', 'email');
+                        }])->find($peerId);
+
+                        if (!$peer || !$peer->user) {
+                            continue;
+                        }
+
+                        // Check existing answers for this mahasiswa-peer pair
+                        $answers = AnswersPeer::where('mahasiswa_id', $mahasiswaId)
+                            ->where('peer_id', $peerId)
+                            ->whereIn('question_id', $questions->pluck('id'))
+                            ->with(['question' => function ($q) {
+                                $q->select('id', 'question');
+                            }])
+                            ->get();
+
+                        // Debug
+                        Log::info('Checking answers', [
+                            'mahasiswa' => $mahasiswaId,
+                            'peer' => $peerId,
+                            'answer_count' => $answers->count(),
+                            'answers' => $answers->toArray()
+                        ]);
+
+                        // Count answers that actually have content
+                        $validAnswerCount = $answers->filter(function ($answer) {
+                            // Check if answer has real content
+                            return !empty($answer->answer) && $answer->answer !== '-' && trim($answer->answer) !== '';
+                        })->count();
+
+                        // Determine status based on valid answers
+                        if ($validAnswerCount === 0) {
+                            $status = 'unsubmitted';
+                        } elseif ($validAnswerCount < $totalQuestions) {
+                            $status = 'on progress';
+                        } else {
+                            $status = 'submitted';
+                        }
+
+                        Log::info('Status determined', [
+                            'mahasiswa' => $mahasiswaId,
+                            'peer' => $peerId,
+                            'validAnswerCount' => $validAnswerCount,
+                            'totalQuestions' => $totalQuestions,
+                            'status' => $status
+                        ]);
+
+                        // If there are answers, include each one
+                        if ($answers->count() > 0) {
+                            foreach ($answers as $answer) {
+                                $result[] = [
+                                    'id' => $answer->id,
+                                    'user' => [
+                                        'id' => $mahasiswa->user->id,
+                                        'name' => $mahasiswa->user->name,
+                                        'email' => $mahasiswa->user->email,
+                                    ],
+                                    'peer' => [
+                                        'id' => $peer->user->id,
+                                        'name' => $peer->user->name,
+                                        'email' => $peer->user->email,
+                                    ],
+                                    'pertanyaan' => optional($answer->question)->question,
+                                    'answer' => $answer->answer,
+                                    'score' => $answer->score,
+                                    'score_SLA' => $answer->score_SLA,
+                                    'similarity' => $answer->similarity,
+                                    'status' => !empty($answer->answer) && $answer->answer !== '-' && trim($answer->answer) !== '' ? $status : 'unsubmitted',
+                                    'kelompok' => $groupNumber
+                                ];
+                            }
+                        } else {
+                            // Add a placeholder for unsubmitted assessment
+                            $result[] = [
+                                'id' => null,
+                                'user' => [
+                                    'id' => $mahasiswa->user->id,
+                                    'name' => $mahasiswa->user->name,
+                                    'email' => $mahasiswa->user->email,
+                                ],
+                                'peer' => [
+                                    'id' => $peer->user->id,
+                                    'name' => $peer->user->name,
+                                    'email' => $peer->user->email,
+                                ],
+                                'pertanyaan' => null,
+                                'answer' => null,
+                                'score' => null,
+                                'score_SLA' => null,
+                                'similarity' => null,
+                                'status' => 'unsubmitted',
+                                'kelompok' => $groupNumber
+                            ];
+                        }
+                    }
+                }
+            }
+
+            // Extract unique group numbers
+            $uniqueGroups = $groups->keys()->values();
+
+            if (empty($result)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Tidak ada data ditemukan.',
@@ -418,8 +530,8 @@ class AnswerController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $transformedAnswers,
-                'groups' => $groups
+                'data' => $result,
+                'groups' => $uniqueGroups
             ]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             Log::error('Project not found: ' . $e->getMessage());
@@ -428,7 +540,9 @@ class AnswerController extends Controller
                 'message' => 'Project tidak ditemukan.',
             ], 404);
         } catch (\Exception $e) {
-            Log::error('Error fetching answers: ' . $e->getMessage());
+            Log::error('Error fetching answers: ' . $e->getMessage(), [
+                'exception' => $e
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan saat mengambil data.',

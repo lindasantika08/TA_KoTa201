@@ -16,33 +16,32 @@ class ProfileController extends Controller
 
     public function getProfile()
     {
-        // Ambil data Dosen berdasarkan user yang sedang login
-        $user = Auth::user(); // Ambil user yang sedang login
+        $user = Auth::user();
 
-        // Ambil data Dosen yang terkait dengan user
         $dosen = Dosen::with([
-            'user',          // Relasi dengan tabel user
-            'major', // Relasi dengan major
+            'user',
+            'major',
         ])
-            ->where('user_id', $user->id) // Pastikan hanya mengambil data Dosen yang sesuai dengan user yang sedang login
-            ->first(); // Ambil hanya satu data Dosen (karena user hanya punya satu Dosen)
+            ->where('user_id', $user->id)
+            ->first();
 
         if (!$dosen) {
             return response()->json(['message' => 'Data Dosen tidak ditemukan.'], 404);
         }
 
-        // Periksa apakah Dosen memiliki foto dan buat URL dengan asset()
-        $photoUrl = $dosen->user->photo ? asset('storage/' . $dosen->user->photo) : null;
+        $photoUrl = $dosen->user->photo 
+            ? asset('storage/' . $dosen->user->photo)
+            : null;
 
-        // Kembalikan data Dosen dengan relasi terkait
+
         return response()->json([
             'nama' => $dosen->user->name,
             'nip' => $dosen->nip,
             'kode_dosen' => $dosen->kode_dosen,
             'jurusan' => $dosen->major->major_name,
             'email' => $dosen->user->email,
-            'telepon' => $dosen->phone, // Misalkan ada kolom telepon di tabel user
-            'photo' => $photoUrl, // Menambahkan URL foto
+            'telepon' => $dosen->phone,
+            'photo' => $photoUrl, 
         ]);
     }
 

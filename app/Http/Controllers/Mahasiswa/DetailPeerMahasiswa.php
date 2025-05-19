@@ -5,11 +5,11 @@ namespace App\Http\Controllers\Mahasiswa;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use App\models\Mahasiswa;
-use App\models\AnswersPeer;
-use App\models\Group;
-use App\models\Project;
-use App\models\Assessment;
+use App\Models\Mahasiswa;
+use App\Models\AnswersPeer;
+use App\Models\Group;
+use App\Models\Project;
+use App\Models\Assessment;
 use Illuminate\Support\Facades\Auth;
 
 class DetailPeerMahasiswa extends Controller

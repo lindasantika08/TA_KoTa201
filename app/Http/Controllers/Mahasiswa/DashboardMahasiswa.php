@@ -11,6 +11,9 @@ use App\Models\Answers;
 use App\Models\AnswersPeer;
 use App\Models\Assessment;
 use App\Models\Mahasiswa;
+use App\Models\User;
+use App\Models\Feedback;
+use App\Models\feedback_ai;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
@@ -89,10 +92,12 @@ class DashboardMahasiswa extends Controller
 
             $selfAssessmentQuestions = Assessment::where('type', 'selfAssessment')
                 ->where('project_id', $project->id)
+                ->where('is_published', true)
                 ->count();
 
             $peerAssessmentQuestions = Assessment::where('type', 'peerAssessment')
                 ->where('project_id', $project->id)
+                ->where('is_published', true)
                 ->count();
 
             $groupPeers = Group::where('project_id', $project->id)
@@ -102,7 +107,8 @@ class DashboardMahasiswa extends Controller
 
             $selfAssessmentCount = Answers::whereHas('question', function ($query) use ($project) {
                 $query->where('type', 'selfAssessment')
-                    ->where('project_id', $project->id);
+                    ->where('project_id', $project->id)
+                    ->where('is_published', true);
             })
                 ->where('mahasiswa_id', $mahasiswa->id)
                 ->count();
@@ -112,9 +118,22 @@ class DashboardMahasiswa extends Controller
             $peerAssessmentCount = Answers::where('mahasiswa_id', $mahasiswa->id)
                 ->whereHas('question', function ($query) use ($project) {
                     $query->where('type', 'peerAssessment')
-                        ->where('project_id', $project->id);
+                        ->where('project_id', $project->id)
+                        ->where('is_published', true);
                 })
                 ->count();
+
+            $latestSelfAssessment = Assessment::where('type', 'selfAssessment')
+                ->where('project_id', $project->id)
+                ->where('is_published', true)
+                ->orderBy('assessment_order', 'desc')
+                ->first();
+
+            $latestPeerAssessment = Assessment::where('type', 'peerAssessment')
+                ->where('project_id', $project->id)
+                ->where('is_published', true)
+                ->orderBy('assessment_order', 'desc')
+                ->first();
 
             $selfAssessmentStatus = $selfAssessmentCount == 0
                 ? 'Not Started'
@@ -133,17 +152,25 @@ class DashboardMahasiswa extends Controller
                 'peerAssessmentCount' => $peerAssessmentCount,
                 'selfAssessmentQuestions' => $selfAssessmentQuestions,
                 'totalExpectedPeerAnswers' => $totalExpectedPeerAnswers,
-                'groupPeersCount' => count($groupPeers)
+                'groupPeersCount' => count($groupPeers),
+                'latest_self_assessment_order' => $latestSelfAssessment ? $latestSelfAssessment->assessment_order : null,
+                'latest_peer_assessment_order' => $latestPeerAssessment ? $latestPeerAssessment->assessment_order : null,
+                'latest_self_assessment_end_date' => $latestSelfAssessment ? $latestSelfAssessment->end_date : null,
+                'latest_peer_assessment_end_date' => $latestPeerAssessment ? $latestPeerAssessment->end_date : null
             ];
         });
 
         $overallSelfAssessmentStatus = $projectStatuses->every(function ($status) {
             return $status['selfAssessmentStatus'] === 'Completed';
-        }) ? 'Completed' : 'Pending';
+        }) ? 'Completed' : ($projectStatuses->every(function ($status) {
+            return $status['selfAssessmentStatus'] === 'Not Started';
+        }) ? 'Not Started' : 'Pending');
 
         $overallPeerAssessmentStatus = $projectStatuses->every(function ($status) {
             return $status['peerAssessmentStatus'] === 'Completed';
-        }) ? 'Completed' : 'Pending';
+        }) ? 'Completed' : ($projectStatuses->every(function ($status) {
+            return $status['peerAssessmentStatus'] === 'Not Started';
+        }) ? 'Not Started' : 'Pending');
 
         return response()->json([
             'overallSelfAssessmentStatus' => $overallSelfAssessmentStatus,
@@ -249,5 +276,160 @@ class DashboardMahasiswa extends Controller
             'completed_peer_assessments' => $completedPeerAssessments,
             'peer_completed_count' => $peerCompletedCount
         ]);
+    }
+
+    public function getFeedback(Request $request)
+    {
+        try {
+            // Get the current authenticated user (mahasiswa)
+            $user = Auth::user();
+            $mahasiswaId = $user->mahasiswa->id;
+
+            // Get project filter if provided
+            $projectName = $request->get('project', null);
+
+            // Log for debugging
+
+
+            // Get lecturer feedback - ensure we load both dosen and group relationships
+            $lecturerFeedbackQuery = Feedback::where('peer_id', $mahasiswaId)
+                ->whereNotNull('dosen_id')
+                ->with(['dosen', 'group.project']);
+
+            // Filter by project if specified
+            if ($projectName) {
+                // Find the project with case-insensitive search
+                $project = Project::where('project_name', 'LIKE', $projectName)
+                    ->orWhere('project_name', 'LIKE', '%' . $projectName . '%')
+                    ->first();
+
+
+
+                if ($project) {
+                    // Get groups for this project and student
+                    $groupIds = Group::where('project_id', $project->id)
+                        ->where('mahasiswa_id', $mahasiswaId)
+                        ->pluck('id')
+                        ->toArray();
+
+
+
+                    // Filter feedback by these groups
+                    if (!empty($groupIds)) {
+                        $lecturerFeedbackQuery->whereIn('group_id', $groupIds);
+                    } else {
+                        // Alternative approach: filter using join instead of subquery
+                        $lecturerFeedbackQuery->whereHas('group', function ($query) use ($project) {
+                            $query->where('project_id', $project->id);
+                        });
+                    }
+                } else {
+                    // If project not found, return empty results
+                    $lecturerFeedbackQuery->where('id', null); // This ensures no results
+
+                }
+            }
+
+            // Execute the query and get the results
+            $lecturerFeedback = $lecturerFeedbackQuery->get();
+
+            // Loop through and check if dosen relation is loaded properly
+            foreach ($lecturerFeedback as $index => $feedback) {
+            }
+
+            $lecturerFeedbackData = $lecturerFeedback->map(function ($feedback) {
+                return [
+                    'id' => $feedback->id,
+                    'feedback' => $feedback->feedback,
+                    'dosenName' => $feedback->dosen && $feedback->dosen->user ? $feedback->dosen->user->name : 'Unknown',
+                    'createdAt' => $feedback->created_at->format('Y-m-d H:i:s'),
+                    'groupId' => $feedback->group_id,
+                    'projectName' => $feedback->group && $feedback->group->project ? $feedback->group->project->project_name : 'Unknown Project'
+                ];
+            });
+
+            // Get peer feedback from feedback_ai
+            $peerFeedbackQuery = feedback_ai::where('mahasiswa_id', $mahasiswaId);
+
+            // Filter by project if specified
+            if ($projectName) {
+                if (isset($project) && $project) {
+                    // Use the already found project instance
+                    // Get groups for this project and student
+                    if (!empty($groupIds)) {
+                        // Use the already queried group IDs
+                        $peerFeedbackQuery->whereIn('group_id', $groupIds);
+                    } else {
+                        // Alternative approach using nested relationship
+                        $peerFeedbackQuery->whereHas('group', function ($query) use ($project) {
+                            $query->where('project_id', $project->id);
+                        });
+                    }
+                } else {
+                    // Try to find the project again if not already found
+                    $project = Project::where('project_name', 'LIKE', $projectName)
+                        ->orWhere('project_name', 'LIKE', '%' . $projectName . '%')
+                        ->first();
+
+                    if ($project) {
+                        // Get groups for this project and student
+                        $groupIds = Group::where('project_id', $project->id)
+                            ->where('mahasiswa_id', $mahasiswaId)
+                            ->pluck('id')
+                            ->toArray();
+
+                        // Filter feedback by these groups
+                        if (!empty($groupIds)) {
+                            $peerFeedbackQuery->whereIn('group_id', $groupIds);
+                        } else {
+                            $peerFeedbackQuery->whereHas('group', function ($query) use ($project) {
+                                $query->where('project_id', $project->id);
+                            });
+                        }
+                    } else {
+                        // If project not found, return empty results
+                        $peerFeedbackQuery->where('id', null);
+                    }
+                }
+            }
+
+            // Execute the peer feedback query
+            $peerFeedback = $peerFeedbackQuery->get();
+
+
+
+            $peerFeedbackData = $peerFeedback->map(function ($feedback) {
+                return [
+                    'id' => $feedback->id,
+                    'feedback' => $feedback->summary,
+                    'createdAt' => $feedback->created_at instanceof \DateTime
+                        ? $feedback->created_at->format('Y-m-d H:i:s')
+                        : $feedback->created_at,
+                    'groupId' => $feedback->group_id
+                ];
+            });
+
+            // Return final response with debug info in development environment
+            $response = [
+                'success' => true,
+                'data' => [
+                    'lecturerFeedback' => $lecturerFeedbackData,
+                    'peerFeedback' => $peerFeedbackData
+                ]
+            ];
+
+
+            return response()->json($response);
+        } catch (\Exception $e) {
+
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching feedback data',
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ], 500);
+        }
     }
 }

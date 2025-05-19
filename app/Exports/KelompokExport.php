@@ -31,7 +31,7 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
     public function collection()
     {
         try {
-            // First get the project details including prodi_id
+
             $project = DB::table('project')
                 ->where('batch_year', $this->tahunAjaran)
                 ->where('project_name', $this->namaProyek)
@@ -45,12 +45,24 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
                 throw new \Exception('Project not found');
             }
 
-            // Get the major_id through prodi
             $majorId = DB::table('prodi')
                 ->where('id', $project->prodi_id)
                 ->value('major_id');
-
+            
+            DB::statement('SET @row_number = 0');
+            
             $mahasiswaQuery = DB::table('mahasiswa')
+                ->select(
+                    DB::raw('@row_number := @row_number + 1 AS no'),
+                    DB::raw("'{$this->tahunAjaran}' as batch_year"),
+                    DB::raw("'{$this->namaProyek}' as project_name"),
+                    DB::raw("'{$this->angkatan}' as angkatan"),
+                    'users.name as mahasiswa_name',
+                    'mahasiswa.nim',
+                    'class_room.class_name as class',
+                    'dosen.kode_dosen as dosen_manajer',
+                    DB::raw("COALESCE(`groups`.`group`, '') as kelompok")
+                )
                 ->join('users', 'mahasiswa.user_id', '=', 'users.id')
                 ->join('class_room', 'mahasiswa.class_id', '=', 'class_room.id')
                 ->join('prodi', 'class_room.prodi_id', '=', 'prodi.id')
@@ -60,27 +72,15 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
                             $query->select(DB::raw(1))
                                 ->from('project')
                                 ->whereRaw('project.id = groups.project_id')
-                                ->where('project.id', $project->id);
+                                ->where('project.id', '=', $project->id);
                         });
                 })
                 ->leftJoin('dosen', function ($join) use ($majorId) {
                     $join->on('groups.dosen_id', '=', 'dosen.id')
-                        ->where('dosen.major_id', $majorId);
+                        ->where('dosen.major_id', '=', $majorId);
                 })
-                ->where('prodi.id', $project->prodi_id)
-                ->where('class_room.angkatan', $this->angkatan)
-                ->select(
-                    DB::raw('(@row_number:=@row_number + 1) AS no'),
-                    DB::raw("'{$this->tahunAjaran}' as batch_year"),
-                    DB::raw("'{$this->namaProyek}' as project_name"),
-                    DB::raw("'{$this->angkatan}' as angkatan"),
-                    'users.name as mahasiswa_name',
-                    'mahasiswa.nim',
-                    'class_room.class_name as class',
-                    'dosen.kode_dosen as dosen_manajer',
-                    DB::raw('COALESCE(groups.`group`, \'\') as kelompok'),
-                )
-                ->from(DB::raw('(SELECT @row_number:=0) as r, mahasiswa'))
+                ->where('prodi.id', '=', $project->prodi_id)
+                ->where('class_room.angkatan', '=', $this->angkatan)
                 ->get();
 
             return $mahasiswaQuery;
@@ -105,7 +105,6 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
                 $worksheet = $event->sheet->getDelegate();
                 $lastRow = $worksheet->getHighestRow();
 
-                // Get project and major information
                 $project = DB::table('project')
                     ->where('project_name', $this->namaProyek)
                     ->where('batch_year', $this->tahunAjaran)
@@ -115,24 +114,20 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
                     ->where('id', $project->prodi_id)
                     ->value('major_id');
 
-                // Get dosen codes list instead of names
                 $dosenList = DB::table('dosen')
                     ->where('major_id', $majorId)
                     ->whereNotNull('kode_dosen')
                     ->pluck('kode_dosen')
                     ->toArray();
 
-                // Create hidden sheet for dosen list
                 $spreadsheet = $worksheet->getParent();
                 $listSheet = $spreadsheet->createSheet();
                 $listSheet->setTitle('DosenList');
 
-                // Add dosen codes to hidden sheet
                 foreach ($dosenList as $index => $code) {
                     $listSheet->setCellValue('A' . ($index + 1), $code);
                 }
 
-                // Name the range for dosen list
                 $lastDosenRow = count($dosenList);
                 $spreadsheet->addNamedRange(
                     new \PhpOffice\PhpSpreadsheet\NamedRange(
@@ -142,10 +137,8 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
                     )
                 );
 
-                // Hide the list sheet
                 $listSheet->setSheetState(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet::SHEETSTATE_HIDDEN);
 
-                // Add data validation for Dosen Manajer column
                 $dosenValidation = new DataValidation();
                 $dosenValidation->setType(DataValidation::TYPE_LIST)
                     ->setErrorStyle(DataValidation::STYLE_INFORMATION)
@@ -153,14 +146,13 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
                     ->setShowDropDown(true)
                     ->setFormula1('=DosenList');
 
-                // Add data validation for Kelompok column
                 $groupValidation = new DataValidation();
                 $groupValidation->setType(DataValidation::TYPE_WHOLE)
                     ->setErrorStyle(DataValidation::STYLE_INFORMATION)
                     ->setAllowBlank(true)
                     ->setShowDropDown(true)
-                    ->setFormula1(1)  // minimum value
-                    ->setFormula2(10);  // maximum value
+                    ->setFormula1(1) 
+                    ->setFormula2(10); 
 
                 // Apply validations to all rows
                 for ($row = 2; $row <= $lastRow; $row++) {
@@ -169,15 +161,15 @@ class KelompokExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
                 }
 
                 // Set column widths
-                $worksheet->getColumnDimension('A')->setWidth(5);   // No
-                $worksheet->getColumnDimension('B')->setWidth(15);  // Tahun Ajaran
-                $worksheet->getColumnDimension('C')->setWidth(20);  // Proyek
-                $worksheet->getColumnDimension('D')->setWidth(10);  // Angkatan
-                $worksheet->getColumnDimension('E')->setWidth(30);  // Nama
-                $worksheet->getColumnDimension('F')->setWidth(15);  // NIM
-                $worksheet->getColumnDimension('G')->setWidth(15);  // Kelas
-                $worksheet->getColumnDimension('H')->setWidth(15);  // Kode Dosen
-                $worksheet->getColumnDimension('I')->setWidth(10);  // Kelompok
+                $worksheet->getColumnDimension('A')->setWidth(5);
+                $worksheet->getColumnDimension('B')->setWidth(15); 
+                $worksheet->getColumnDimension('C')->setWidth(20);
+                $worksheet->getColumnDimension('D')->setWidth(10);
+                $worksheet->getColumnDimension('E')->setWidth(30); 
+                $worksheet->getColumnDimension('F')->setWidth(15);  
+                $worksheet->getColumnDimension('G')->setWidth(15); 
+                $worksheet->getColumnDimension('H')->setWidth(15);  
+                $worksheet->getColumnDimension('I')->setWidth(10);  
 
                 // Apply styles
                 $worksheet->getStyle('A1:I' . $lastRow)->getBorders()->getAllBorders()->setBorderStyle('thin');

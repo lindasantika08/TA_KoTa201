@@ -22,6 +22,7 @@ class Answers extends Model
         'status',
         'score_SLA',
         'similarity',
+        'selected_score_type',
     ];
 
     /**
@@ -51,5 +52,14 @@ class Answers extends Model
     public function dosen()
     {
         return $this->belongsTo(Dosen::class, 'dosen_id', 'id');
+    }
+
+    public function getSelectedScoreValue()
+    {
+        if ($this->selected_score_type === 'score_SLA') {
+            return $this->score_SLA;
+        }
+        
+        return $this->score;
     }
 }
