@@ -199,6 +199,23 @@
                         Feedback
                     </a>
                 </li>
+                <li>
+                    <a
+                        :href="'/sispa/dosen/assessment/projects-reflective'"
+                        :class="{
+                            'bg-gray-200': isActive(
+                                '/sispa/dosen/assessment/projects-reflective'
+                            ),
+                        }"
+                        class="block px-4 py-2 rounded hover:bg-gray-100 text-base font-medium"
+                    >
+                        <font-awesome-icon
+                            icon="fa-solid fa-comment-dots"
+                            class="mr-4"
+                        />
+                        Reflective
+                    </a>
+                </li>
                 <li class="mb-4">
                     <button
                         @click="toggleKelolaSettingsMenu"
