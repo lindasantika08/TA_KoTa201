@@ -30,7 +30,7 @@ class AssessmentMahasiswa extends Controller
         return Inertia::render('Mahasiswa/ProjectPeerAssessment');
     }
 
-    public function getDataSelf()
+        public function getDataSelf()
     {
         try {
             $user = Auth::user();
@@ -49,33 +49,92 @@ class AssessmentMahasiswa extends Controller
                 ], 404);
             }
 
-            $assessments = DB::table('groups')
-                ->join('project', 'groups.project_id', '=', 'project.id')
-                ->join('assessment', function($join) {
-                    $join->on('project.id', '=', 'assessment.project_id')
-                        ->where('assessment.type', '=', 'selfAssessment')
-                        ->where('assessment.is_published', '=', 1); // Filter langsung di join si publishnya
-                })
-                ->where('groups.mahasiswa_id', $mahasiswa->id)
-                ->select([
-                    'groups.id',
-                    'project.batch_year',
-                    'project.project_name',
-                    'project.status',
-                    'groups.created_at',
-                    'assessment.assessment_order'
-                ])
-                ->selectRaw('COUNT(DISTINCT assessment.id) as total_questions')
-                ->groupBy('groups.id', 'project.batch_year', 'project.project_name', 'project.status', 'groups.created_at', 'assessment.assessment_order')
-                ->having('total_questions', '>', 0)
-                ->orderBy('project.batch_year', 'desc')
-                ->orderBy('project.project_name')
-                ->orderBy('assessment.assessment_order')
+            $studentGroups = DB::table('groups')
+                ->where('mahasiswa_id', $mahasiswa->id)
+                ->select('id', 'project_id')
                 ->get();
+            
+            $projectIds = $studentGroups->pluck('project_id')->unique()->toArray();
+            
+            if (empty($projectIds)) {
+                return response()->json([
+                    'success' => true,
+                    'assessments' => []
+                ]);
+            }
+
+            $projects = DB::table('project')
+                ->whereIn('id', $projectIds)
+                ->where('status', 'Active')
+                ->get()
+                ->keyBy('id');
+            
+            $result = [];
+            
+            foreach ($projects as $projectId => $project) {
+                $assessmentOrders = DB::table('assessment')
+                    ->where('project_id', $projectId)
+                    ->where('type', 'selfAssessment')
+                    ->where('is_published', 1)
+                    ->select('assessment_order')
+                    ->distinct()
+                    ->orderBy('assessment_order')
+                    ->pluck('assessment_order');
+                
+                $studentGroup = $studentGroups->where('project_id', $projectId)->first();
+                    
+                foreach ($assessmentOrders as $order) {
+                    $totalQuestions = DB::table('assessment')
+                        ->where('project_id', $projectId)
+                        ->where('type', 'selfAssessment')
+                        ->where('assessment_order', $order)
+                        ->where('is_published', 1)
+                        ->count();
+
+                    $questionIds = DB::table('assessment')
+                        ->where('project_id', $projectId)
+                        ->where('type', 'selfAssessment')
+                        ->where('assessment_order', $order)
+                        ->where('is_published', 1)
+                        ->pluck('id');
+
+                    $answeredQuestions = DB::table('answers')
+                        ->where('mahasiswa_id', $mahasiswa->id)
+                        ->whereIn('question_id', $questionIds)
+                        ->count();
+      
+                    if ($totalQuestions > 0) {
+                        $result[] = [
+                            'id' => $studentGroup->id,
+                            'batch_year' => $project->batch_year,
+                            'project_name' => $project->project_name,
+                            'status' => $project->status,
+                            'created_at' => $project->created_at,
+                            'assessment_order' => $order,
+                            'total_questions' => $totalQuestions,
+                            'answered_questions' => $answeredQuestions,
+                        ];
+                    }
+                }
+            }
+            
+            usort($result, function($a, $b) {
+                $batchYearComparison = strcmp($b['batch_year'], $a['batch_year']);
+                if ($batchYearComparison !== 0) {
+                    return $batchYearComparison;
+                }
+                
+                $projectNameComparison = strcmp($a['project_name'], $b['project_name']);
+                if ($projectNameComparison !== 0) {
+                    return $projectNameComparison;
+                }
+                
+                return $a['assessment_order'] - $b['assessment_order'];
+            });
 
             return response()->json([
                 'success' => true,
-                'assessments' => $assessments
+                'assessments' => $result
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -85,7 +144,7 @@ class AssessmentMahasiswa extends Controller
         }
     }
 
-    public function getDataPeer()
+        public function getDataPeer()
     {
         try {
             $user = Auth::user();
@@ -104,33 +163,102 @@ class AssessmentMahasiswa extends Controller
                 ], 404);
             }
 
-            $assessments = DB::table('groups')
-                ->join('project', 'groups.project_id', '=', 'project.id')
-                ->join('assessment', function($join) {
-                    $join->on('project.id', '=', 'assessment.project_id')
-                        ->where('assessment.type', '=', 'peerAssessment')
-                        ->where('assessment.is_published', '=', 1); // Filter hanya yang dipublish
-                })
-                ->where('groups.mahasiswa_id', $mahasiswa->id)
-                ->select([
-                    'groups.id',
-                    'project.batch_year',
-                    'project.project_name',
-                    'project.status',
-                    'groups.created_at',
-                    'assessment.assessment_order'
-                ])
-                ->selectRaw('COUNT(DISTINCT assessment.id) as total_questions')
-                ->groupBy('groups.id', 'project.batch_year', 'project.project_name', 'project.status', 'groups.created_at', 'assessment.assessment_order')
-                ->having('total_questions', '>', 0)
-                ->orderBy('project.batch_year', 'desc')
-                ->orderBy('project.project_name')
-                ->orderBy('assessment.assessment_order')
+            // Get the projects that the student is part of
+            $studentGroups = DB::table('groups')
+                ->where('mahasiswa_id', $mahasiswa->id)
+                ->select('id', 'project_id')
                 ->get();
+            
+            $projectIds = $studentGroups->pluck('project_id')->unique()->toArray();
+            
+            if (empty($projectIds)) {
+                return response()->json([
+                    'success' => true,
+                    'assessments' => []
+                ]);
+            }
+
+            // Get all projects the student is part of
+            $projects = DB::table('project')
+                ->whereIn('id', $projectIds)
+                ->where('status', 'Active')
+                ->get()
+                ->keyBy('id');
+            
+            $result = [];
+            
+            // For each project, get the assessment orders that are published and of type peerAssessment
+            foreach ($projects as $projectId => $project) {
+                $assessmentOrders = DB::table('assessment')
+                    ->where('project_id', $projectId)
+                    ->where('type', 'peerAssessment')
+                    ->where('is_published', 1)
+                    ->select('assessment_order')
+                    ->distinct()
+                    ->orderBy('assessment_order')
+                    ->pluck('assessment_order');
+                
+                // Get the student's group for this project
+                $studentGroup = $studentGroups->where('project_id', $projectId)->first();
+                    
+                // For each published assessment order, add an entry
+                foreach ($assessmentOrders as $order) {
+                    // Count the number of questions in this assessment
+                    $totalQuestions = DB::table('assessment')
+                        ->where('project_id', $projectId)
+                        ->where('type', 'peerAssessment')
+                        ->where('assessment_order', $order)
+                        ->where('is_published', 1)
+                        ->count();
+                    
+                    $questionIds = DB::table('assessment')
+                        ->where('project_id', $projectId)
+                        ->where('type', 'peerAssessment')
+                        ->where('assessment_order', $order)
+                        ->where('is_published', 1)
+                        ->pluck('id');
+
+                    $answeredQuestions = DB::table('answers_peer')
+                        ->where('mahasiswa_id', $mahasiswa->id)
+                        ->whereIn('question_id', $questionIds)
+                        ->count();
+                    
+                    if ($totalQuestions > 0) {
+                        $result[] = [
+                            'id' => $studentGroup->id,
+                            'batch_year' => $project->batch_year,
+                            'project_name' => $project->project_name,
+                            'status' => $project->status,
+                            'created_at' => $project->created_at,
+                            'assessment_order' => $order,
+                            'total_questions' => $totalQuestions,
+                            'answered_questions' => $answeredQuestions
+                        ];
+                    }
+                }
+            }
+            
+            // Sort by batch year (desc), project name, and assessment order
+            usort($result, function($a, $b) {
+                // First compare batch year in descending order
+                $batchYearComparison = strcmp($b['batch_year'], $a['batch_year']);
+                if ($batchYearComparison !== 0) {
+                    return $batchYearComparison;
+                }
+                
+                // Then compare project name
+                $projectNameComparison = strcmp($a['project_name'], $b['project_name']);
+                if ($projectNameComparison !== 0) {
+                    return $projectNameComparison;
+                }
+                
+                // Finally compare assessment order
+                return $a['assessment_order'] - $b['assessment_order'];
+            });
 
             return response()->json([
                 'success' => true,
-                'assessments' => $assessments
+                'assessments' => $result
             ]);
         } catch (\Exception $e) {
             return response()->json([

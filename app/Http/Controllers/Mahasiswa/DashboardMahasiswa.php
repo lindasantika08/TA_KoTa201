@@ -224,6 +224,8 @@ class DashboardMahasiswa extends Controller
 
         $hasPeerAssessment = Assessment::where('type', 'peerAssessment')
             ->where('project_id', $project->id)
+            ->where('is_published', true) 
+            
             ->exists();
 
         if (!$hasPeerAssessment) {
@@ -242,21 +244,26 @@ class DashboardMahasiswa extends Controller
 
         $peerAssessmentQuestions = Assessment::where('type', 'peerAssessment')
             ->where('project_id', $project->id)
+            ->where('is_published', true) 
+            
             ->count();
 
         $completedPeerAssessments = $groupPeerIds->mapWithKeys(function ($peerId) use ($mahasiswa, $project, $peerAssessmentQuestions) {
             $completedCount = AnswersPeer::where('mahasiswa_id', $mahasiswa->id)
                 ->whereHas('question', function ($query) use ($project, $peerId) {
                     $query->where('type', 'peerAssessment')
-                        ->where('project_id', $project->id);
+                        ->where('project_id', $project->id)
+                        ->where('is_published', true); 
+                        
                 })
                 ->where('peer_id', $peerId)
                 ->count();
 
-            $isCompleted = $completedCount == $peerAssessmentQuestions;
+            $isCompleted = $completedCount == $peerAssessmentQuestions && $peerAssessmentQuestions > 0;
 
             return [$peerId => [
                 'total_completed' => $completedCount,
+                'total_questions' => $peerAssessmentQuestions,
                 'is_completed' => $isCompleted
             ]];
         });

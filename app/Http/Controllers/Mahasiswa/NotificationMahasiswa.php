@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Assessment;
 use App\Models\Mahasiswa;
 use App\Notifications\AssessmentNotifications;
+use App\Notifications\AssessmentReminderNotification;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -38,64 +39,59 @@ class NotificationMahasiswa extends Controller
         ]);
     }
 
+    // public function getNotifications()
+    // {
+    //     try {
+    //         $user = Auth::user();
+    //         $notifications = $user->notifications()
+    //             ->orderBy('created_at', 'desc')
+    //             ->get();
+
+    //         return response()->json([
+    //             'success' => true,
+    //             'data' => [
+    //                 'notifications' => $notifications,
+    //                 'unread_count' => $user->unreadNotifications->count()
+    //             ]
+    //         ], 200);
+
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Error fetching notifications: ' . $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
+
     public function getNotifications()
     {
-        try {
-            $user = Auth::user();
-            $assessments = Assessment::with(['project'])
-                ->select(
-                    'project_id',
-                    'type',
-                    DB::raw('MAX(id) as id'), 
-                    DB::raw('MAX(end_date) as end_date'), 
-                    DB::raw('MIN(created_at) as created_at')
-                )
-                ->where('is_published', true)
-                ->groupBy('project_id', 'type')
-                ->get();
+        $user = Auth::user();
 
-            foreach ($assessments as $assessment) {
-                $notificationData = [
-                    'assessment_id' => $assessment->id,
-                    'project_name' => $assessment->project->project_name ?? 'Unknown Project',
-                    'type' => $assessment->type,
-                    'end_date' => $assessment->end_date,
-                ];
+        $notifications = $user->notifications()
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(fn ($n) => [
+                'id'            => $n->id,
+                'type'          => $n->data['type'] ?? null,
+                'project_name'  => $n->data['project_name'] ?? null,
+                'assessment_id' => $n->data['assessment_id'] ?? null,
+                'assessment_order' => $n->data['assessment_order'] ?? null,
+                'batch_year' => $n->data['batch_year'] ?? null,
+                'message'       => $n->data['message'],
+                'url'           => $n->data['url'] ?? null,
+                'read_at'       => $n->read_at,
+                'created_at'    => $n->created_at->diffForHumans(),
+            ]);
 
-                \Log::info('Project data:', [
-                    'project' => $assessment->project,
-                    'notification_data' => $notificationData
-                ]);
-                
-                $exists = $user->notifications()
-                    ->where('type', AssessmentNotifications::class)
-                    ->whereJsonContains('data->assessment_id', $assessment->id)
-                    ->exists();
-                
-                if (!$exists) {
-                    $user->notify(new AssessmentNotifications($notificationData));
-                }
-            }
-
-            $notifications = $user->notifications()
-                ->orderBy('created_at', 'desc')
-                ->get();
-
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'notifications' => $notifications,
-                    'unread_count' => $user->unreadNotifications->count()
-                ]
-            ], 200);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error fetching notifications: ' . $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'notifications' => $notifications,
+                'unread_count'  => $user->unreadNotifications->count(),
+            ],
+        ]);
     }
+
 
     public function markAsRead($id)
     {
@@ -107,7 +103,7 @@ class NotificationMahasiswa extends Controller
         if ($notification) {
             $notification->markAsRead();
             
-            $type = $notification->data['type'];
+            $type = $notification->data['type'] ?? null;
             
             return response()->json([
                 'success' => true,
@@ -131,6 +127,51 @@ class NotificationMahasiswa extends Controller
         return response()->json([
             'success' => true,
             'count' => $unreadCount
+        ]);
+    }
+
+    public function testReminderNotification()
+    {
+        $user = Auth::user();
+        $mahasiswa = Mahasiswa::where('user_id', $user->id)->first();
+
+        $assessments = Assessment::with(['project.groups.mahasiswa'])
+            ->where('is_published', true)
+            ->whereDate('end_date', Carbon::today()->addDays(2))
+            ->get();
+
+        $notificationsSent = 0;
+
+        foreach ($assessments as $assessment) {
+            if (!$assessment->project) {
+                continue;
+            }
+            
+            $groups = $assessment->project->groups;
+
+            foreach ($groups as $group) {
+                $student = $group->mahasiswa;
+                
+                if (!$student) {
+                    continue; 
+                }
+                
+                $hasFilled = DB::table('answers')
+                    ->where('question_id', $assessment->id)
+                    ->where('mahasiswa_id', $student->id)
+                    ->exists();
+
+                if (!$hasFilled) {
+                    $student->user->notify(new AssessmentReminderNotification($assessment));
+                    $notificationsSent++;
+                }
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Notifikasi reminder terkirim!',
+            'count' => $notificationsSent
         ]);
     }
 }

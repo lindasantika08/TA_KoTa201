@@ -2,18 +2,23 @@
 import { router } from "@inertiajs/vue3";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import axios from "axios";
+import Swal from "sweetalert2";
+
+// import { onMounted } from 'vue'
 
 export default {
   name: "Navbar",
   components: {
     FontAwesomeIcon,
   },
+
   props: {
     userName: {
       type: String,
       default: "User",
     },
   },
+
   data() {
     return {
       showProfileMenu: false,
@@ -22,37 +27,42 @@ export default {
       unreadNotificationsCount: 0,
       socket: null,
       eventSource: null,
-      unreadNotificationsCount: 0
     };
   },
+
   mounted() {
     this.fetchUserName();
-    this.fetchNotificationsCount();
+    // this.fetchNotificationsCount();
+    this.refreshNotifications();
+
+    // console.log(this.unreadNotificationsCount);
   },
-  beforeUnmount() {
-    this.disconnectWebSocket();
-  },
+
+  // beforeUnmount() {
+  //   this.disconnectWebSocket();
+  // },
+
   methods: {
-    initializeSSE() {
-        this.eventSource = new EventSource('/notifications/stream');
-        
-        this.eventSource.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            this.unreadNotificationsCount = data.count;
-            this.showNotification('New notification received!');
-        };
-    },
+    // initializeSSE() {
+    //   this.eventSource = new EventSource('/notifications/stream');
+
+    //   this.eventSource.onmessage = (event) => {
+    //     const data = JSON.parse(event.data);
+    //     this.unreadNotificationsCount = data.count;
+    //     this.showNotification('New notification received!');
+    //   };
+    // },
 
     showNotification(message) {
-        if (Notification.permission === 'granted') {
-            new Notification(message);
-        }
+      if (Notification.permission === 'granted') {
+        new Notification(message);
+      }
     },
-    
+
     beforeUnmount() {
-        if (this.eventSource) {
-            this.eventSource.close();
-        }
+      if (this.eventSource) {
+        this.eventSource.close();
+      }
     },
 
     disconnectWebSocket() {
@@ -90,12 +100,13 @@ export default {
             Authorization: `Bearer ${token}`,
           }
         });
+        // console.log(response.data.success);
         if (response.data.success) {
           this.unreadNotificationsCount = response.data.count;
         }
       } catch (error) {
         console.error("Gagal mendapatkan jumlah notifikasi:", error);
-        this.unreadNotificationsCount = 0;
+        // this.unreadNotificationsCount = 0;
       }
     },
 
@@ -118,7 +129,11 @@ export default {
         }
       } catch (error) {
         console.error("Logout error:", error);
-        alert("Logout failed. Please try again.");
+        Swal.fire({
+          icon: "error",
+          title: "Logout failed",
+          text: "Please try again.",
+        });
       } finally {
         this.disconnectWebSocket();
         localStorage.removeItem("auth_token");
@@ -140,7 +155,11 @@ export default {
         })
         .catch(error => {
           console.error('Gagal mendapatkan role pengguna:', error);
-          alert('Terjadi kesalahan. Silakan coba lagi.');
+            Swal.fire({
+            icon: "error",
+            title: "Terjadi kesalahan",
+            text: "Silakan coba lagi.",
+            });
         });
     },
 
@@ -153,24 +172,55 @@ export default {
           } else if (role === 'mahasiswa') {
             router.visit('/sispa/mahasiswa/profile');
           } else {
-            alert('Role tidak dikenali.');
+            Swal.fire({
+              icon: "error",
+              title: "Role tidak dikenali.",
+              text: "Silakan hubungi administrator.",
+            });
           }
         })
         .catch(error => {
           console.error('Gagal mendapatkan role pengguna:', error);
-          alert('Terjadi kesalahan. Silakan coba lagi.');
+            Swal.fire({
+            icon: "error",
+            title: "Terjadi kesalahan",
+            text: "Silakan coba lagi.",
+            });
         });
     },
+
+    async refreshNotifications() {
+      if (this.loading) return;
+
+      try {
+        this.loading = true;
+        const response = await axios.get('/sispa/api/notifications/get');
+
+        if (response.data.success) {
+          // this.localNotifications = this.processNotifications(response.data.data.notifications);
+          this.unreadNotificationsCount = response.data.data.unread_count;
+          // console.log(this.unreadNotificationsCount);
+        }
+      } catch (error) {
+        console.error('Error refreshing notifications:', error);
+      } finally {
+        this.loading = false;
+      }
+    },
+
   },
 };
+
+// onMounted(() => {
+//   fetchNotificationsCount();
+// });
 </script>
 
 <template>
   <nav class="bg-white text-black py-4 px-6 flex justify-between items-center sticky top-0 w-full z-10 shadow-md">
     <div class="text-xl font-bold">Assessment App</div>
     <div class="flex items-center space-x-4">
-      <button aria-label="Notifications" class="relative group focus:outline-none"
-        @click="goToNotifications">
+      <button aria-label="Notifications" class="relative group focus:outline-none" @click="goToNotifications">
         <font-awesome-icon icon="fa-solid fa-bell" class="w-6 h-6 text-black group-hover:text-gray-200" />
         <span v-if="unreadNotificationsCount > 0"
           class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-5 h-5 flex items-center justify-center px-1">

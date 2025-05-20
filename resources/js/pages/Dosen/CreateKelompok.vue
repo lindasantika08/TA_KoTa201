@@ -5,6 +5,8 @@ import Sidebar from "@/Components/Sidebar.vue";
 import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
 import Breadcrumb from "@/Components/Breadcrumb.vue";
+import Swal from "sweetalert2";
+
 
 export default {
   components: {
@@ -41,49 +43,63 @@ export default {
 
     const downloadTemplate = async () => {
       if (
-        !selectedProject.value.batch_year ||
-        !selectedProject.value.semester ||
-        !selectedProject.value.project_name ||
-        !selectedAngkatan.value
+      !selectedProject.value.batch_year ||
+      !selectedProject.value.semester ||
+      !selectedProject.value.project_name ||
+      !selectedAngkatan.value
       ) {
-        alert("Pilih Project dan angkatan terlebih dahulu.");
-        return;
+      Swal.fire({
+        icon: "warning",
+        title: "Peringatan",
+        text: "Pilih Project dan angkatan terlebih dahulu.",
+      });
+      return;
       }
 
       try {
-        const token = localStorage.getItem("auth_token");
+      const token = localStorage.getItem("auth_token");
 
-        const response = await axios.get("/sispa/dosen/kelola-kelompok/export", {
-          params: {
-            batch_year: selectedProject.value.batch_year,
-            semester: selectedProject.value.semester,
-            project_name: selectedProject.value.project_name,
-            angkatan: selectedAngkatan.value,
-          },
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-          },
-          responseType: "blob",
-        });
+      const response = await axios.get("/sispa/dosen/kelola-kelompok/export", {
+        params: {
+        batch_year: selectedProject.value.batch_year,
+        semester: selectedProject.value.semester,
+        project_name: selectedProject.value.project_name,
+        angkatan: selectedAngkatan.value,
+        },
+        headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+        },
+        responseType: "blob",
+      });
 
-        const blob = new Blob([response.data], {
-          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        });
+      const blob = new Blob([response.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
 
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.setAttribute("download", "Data_Kelompok.xlsx");
-        document.body.appendChild(link);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "Data_Kelompok.xlsx");
+      document.body.appendChild(link);
 
-        link.click();
+      link.click();
 
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      Swal.fire({
+        icon: "success",
+        title: "Berhasil",
+        text: "File berhasil diunduh.",
+      });
       } catch (error) {
-        console.error("Download error:", error);
-        alert("Terjadi kesalahan saat mengunduh file excel");
+      console.error("Download error:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Kesalahan",
+        text: "Terjadi kesalahan saat mengunduh file excel.",
+      });
       }
     };
 
@@ -115,8 +131,12 @@ export default {
 
     const handleFiles = (file) => {
       if (!file.name.match(/\.(xlsx|xls)$/)) {
-        alert('Hanya file Excel (.xlsx atau .xls) yang diperbolehkan');
-        return;
+      Swal.fire({
+        icon: 'error',
+        title: 'Invalid File',
+        text: 'Hanya file Excel (.xlsx atau .xls) yang diperbolehkan',
+      });
+      return;
       }
       selectedFile.value = file;
       uploadProgress.value = 0;
@@ -129,27 +149,35 @@ export default {
       formData.append("file", selectedFile.value);
 
       try {
-        isUploading.value = true;
-        const token = localStorage.getItem("auth_token");
-        await axios.post("/sispa/dosen/kelola-kelompok/import", formData, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-          onUploadProgress: (progressEvent) => {
-            uploadProgress.value = Math.round(
-              (progressEvent.loaded * 100) / progressEvent.total
-            );
-          },
-        });
-        alert("Data mahasiswa berhasil diimpor.");
-        selectedFile.value = null;
-        uploadProgress.value = 0;
+      isUploading.value = true;
+      const token = localStorage.getItem("auth_token");
+      await axios.post("/sispa/dosen/kelola-kelompok/import", formData, {
+        headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data",
+        },
+        onUploadProgress: (progressEvent) => {
+        uploadProgress.value = Math.round(
+          (progressEvent.loaded * 100) / progressEvent.total
+        );
+        },
+      });
+      Swal.fire({
+        icon: "success",
+        title: "Berhasil",
+        text: "Data mahasiswa berhasil diimpor.",
+      });
+      selectedFile.value = null;
+      uploadProgress.value = 0;
       } catch (error) {
-        console.error("Error import:", error.response?.data);
-        alert("Gagal mengimpor data. Silakan periksa format file Anda.");
+      console.error("Error import:", error.response?.data);
+      Swal.fire({
+        icon: "error",
+        title: "Gagal",
+        text: "Gagal mengimpor data. Silakan periksa format file Anda.",
+      });
       } finally {
-        isUploading.value = false;
+      isUploading.value = false;
       }
     };
 

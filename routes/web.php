@@ -32,6 +32,9 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Mahasiswa\RefleksiMahasiswa;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/', function () {
+    return redirect('/sispa');
+});
 Route::prefix('sispa')->group(function () {
     Route::get('/', function () {
         $user = Auth::user();
@@ -93,8 +96,8 @@ Route::prefix('sispa')->group(function () {
             Route::get('/AnswerSelf', [AnswerController::class, 'answerSelf'])->name('dosen.answerSelf');
             Route::get('/Answers-self', [AnswerController::class, 'showAnswersSelf'])->name('showself');
             Route::get('/AnswerPeer', [AnswerController::class, 'answerPeer'])->name('dosen.answerPeer');
-            Route::get('/answers-self-assessment', [AnswerController::class, 'getListAnswersView']);
-            Route::get('/answers-peer-assessment', [AnswerController::class, 'getListAnswersPeerView']);
+            Route::get('/answers-self-assessment', [AnswerController::class, 'getListAnswersView'])->name('dosen.answers-self-assessment');
+            Route::get('/answers-peer-assessment', [AnswerController::class, 'getListAnswersPeerView'])->name('dosen.answers-peer-assessment');
             Route::get('/answer-list-peer', [AnswerController::class, 'getListAnswerPeer'])->name('ListAnswerPeer');
             Route::get('/answers/details', [AnswerController::class, 'getDetails']);
 
