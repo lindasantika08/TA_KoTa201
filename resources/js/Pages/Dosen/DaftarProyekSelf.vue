@@ -65,9 +65,10 @@ export default {
         handleTogglePublish(item) {
             const newStatus = !item.is_published;
 
+            // Set loading to true
             this.items = this.items.map(i => {
                 if (i.uniqueKey === item.uniqueKey) {
-                    return { ...i, is_published: newStatus };
+                    return { ...i, is_loading: true };
                 }
                 return i;
             });
@@ -79,26 +80,30 @@ export default {
                 assessment_order: item.assessment_order,
                 is_published: newStatus
             })
-                .then(response => {
-                    // console.log('Publish status updated successfully');
+                .then(() => {
+                    // Update status dan matikan loading
+                    this.items = this.items.map(i => {
+                        if (i.uniqueKey === item.uniqueKey) {
+                            return { ...i, is_published: newStatus, is_loading: false };
+                        }
+                        return i;
+                    });
                 })
                 .catch(error => {
                     console.error('Error toggling publish status:', error);
 
+                    // Revert status dan matikan loading
                     this.items = this.items.map(i => {
                         if (i.uniqueKey === item.uniqueKey) {
-                            return { ...i, is_published: !newStatus };
+                            return { ...i, is_published: !newStatus, is_loading: false };
                         }
                         return i;
                     });
 
-                    if (this.$toast) {
-                        this.$toast.error("Gagal memperbarui status publikasi");
-                    } else {
-                        console.error("Gagal memperbarui status publikasi");
-                    }
+                    this.$toast?.error("Gagal memperbarui status publikasi");
                 });
         },
+
 
         updateItems(data) {
             this.items = data.map((item, index) => ({
@@ -160,12 +165,28 @@ export default {
                             <template #column-publish="{ item }">
                                 <label class="relative inline-flex items-center cursor-pointer">
                                     <input type="checkbox" :checked="item.is_published"
-                                        @change="handleTogglePublish(item)" class="sr-only peer" />
-                                    <div
-                                        class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
+                                        @change="handleTogglePublish(item)" class="sr-only peer"
+                                        :disabled="item.is_loading" />
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full
+                peer peer-checked:after:translate-x-full peer-checked:after:border-white
+                after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300
+                after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600
+                relative">
+                                        <!-- Optional: Tambahkan spinner saat loading -->
+                                        <div v-if="item.is_loading"
+                                            class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50 rounded-full">
+                                            <svg class="animate-spin h-4 w-4 text-blue-600"
+                                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                                    stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z">
+                                                </path>
+                                            </svg>
+                                        </div>
                                     </div>
                                 </label>
                             </template>
+
 
                             <template #column-actions="{ item }">
                                 <button @click="handleDetail(item)"
