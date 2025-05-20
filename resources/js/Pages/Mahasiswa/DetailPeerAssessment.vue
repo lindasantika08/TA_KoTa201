@@ -4,6 +4,7 @@ import SidebarMahasiswa from "@/Components/SidebarMahasiswa.vue";
 import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
 import Breadcrumb from "@/Components/Breadcrumb.vue";
+import DataTable from "@/Components/DataTable.vue";
 
 export default {
     props: {
@@ -15,6 +16,10 @@ export default {
             type: String,
             required: true,
         },
+        assessmentOrder: {
+            type: String,
+            required: true,
+        },
     },
     name: "PeerAssessmentDetail",
     components: {
@@ -22,6 +27,7 @@ export default {
         Navbar,
         Card,
         Breadcrumb,
+        DataTable,
     },
 
     data() {
@@ -33,6 +39,14 @@ export default {
                 },
                 { text: "Detail", href: null },
             ],
+            headers: [
+                { key: "no", label: "No" },
+                { key: "aspek", label: "Aspek" },
+                { key: "pertanyaan", label: "Pertanyaan" },
+                { key: "peer", label: "Peer" },
+                { key: "skala", label: "Skala" },
+                { key: "alasan", label: "Alasan" },
+            ],
             studentInfo: {
                 nim: "",
                 name: "",
@@ -41,8 +55,7 @@ export default {
                 project: "",
                 date: "",
             },
-            peerAssessments: {},
-            collapsedCards: {},
+            items: [],
         };
     },
     methods: {
@@ -70,32 +83,24 @@ export default {
                         params: {
                             batch_year: this.batchYear,
                             project_name: this.projectName,
+                            assessment_order: this.assessmentOrder,
                         },
                     }
                 );
 
-                // Group assessments by peer name
-                const groupedByPeer = {};
-                response.data.answers.forEach((answer) => {
-                    const peerName = answer.peer_name || "Unknown";
-                    if (!groupedByPeer[peerName]) {
-                        groupedByPeer[peerName] = [];
-                    }
-                    groupedByPeer[peerName].push(answer);
-                });
-
-                this.peerAssessments = groupedByPeer;
-
-                // Initialize all cards as expanded
-                Object.keys(groupedByPeer).forEach((peerName) => {
-                    this.collapsedCards[peerName] = false;
-                });
+                this.items = response.data.answers.flatMap((aspect) =>
+                    aspect.answers.map((answer, index) => ({
+                        no: index + 1,
+                        aspek: aspect.aspect || "N/A",
+                        pertanyaan: answer.question || "N/A",
+                        peer: answer.peer_name || "N/A",
+                        skala: answer.scale,
+                        alasan: answer.reason || "N/A",
+                    }))
+                );
             } catch (error) {
                 console.error("Error fetching peer assessment:", error);
             }
-        },
-        toggleCard(peerName) {
-            this.collapsedCards[peerName] = !this.collapsedCards[peerName];
         },
     },
     created() {
@@ -106,7 +111,7 @@ export default {
 </script>
 
 <template>
-    <div class="flex min-h-screen bg-gray-100">
+    <div class="flex min-h-screen bg-gray-50">
         <SidebarMahasiswa role="mahasiswa" />
 
         <div class="flex-1">
@@ -120,19 +125,19 @@ export default {
                     <template #title>
                         <div class="flex items-center space-x-2 text-blue-700">
                             <h1 class="text-2xl font-bold">
-                                HASIL PENGISIAN PEER ASSESSMENT
+                                HASIL PENGISIAN PEER ASSESSMENT - TAHAP
+                                {{ assessmentOrder }}
                             </h1>
                         </div>
                     </template>
 
-                    <!-- Student Information Card -->
-                    <div class="bg-white rounded-lg p-6 mb-6 shadow-sm">
+                    <div class="bg-white rounded-lg p-6 mb-6">
                         <h2
-                            class="text-lg font-semibold text-blue-700 mb-4 border-b pb-2"
+                            class="text-lg font-semibold text-gray-700 mb-4 border-b pb-2"
                         >
                             Informasi Mahasiswa
                         </h2>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="grid grid-cols-2 gap-8">
                             <div class="space-y-3">
                                 <div class="flex items-center">
                                     <span class="text-gray-600 font-medium w-32"
@@ -188,147 +193,20 @@ export default {
                         </div>
                     </div>
 
-                    <!-- Assessment Summary -->
-                    <div class="mb-6">
-                        <h2 class="text-lg font-semibold text-blue-700 mb-4">
-                            Ringkasan Assessment ({{
-                                Object.keys(peerAssessments).length
-                            }}
-                            Peer)
-                        </h2>
-                    </div>
-
-                    <!-- Individual Peer Cards -->
-                    <div class="space-y-6">
-                        <div
-                            v-for="(
-                                assessments, peerName, index
-                            ) in peerAssessments"
-                            :key="index"
-                            class="bg-white rounded-lg shadow-sm overflow-hidden"
+                    <div class="bg-white rounded-lg shadow-sm">
+                        <DataTable
+                            :headers="headers"
+                            :items="items"
+                            class="w-full"
                         >
-                            <div
-                                @click="toggleCard(peerName)"
-                                class="bg-blue-50 p-4 border-b border-blue-100 flex justify-between items-center cursor-pointer hover:bg-blue-100 transition-colors"
-                            >
-                                <h3 class="font-medium text-lg text-blue-800">
-                                    Peer: {{ peerName }} ({{
-                                        assessments.length
-                                    }}
-                                    penilaian)
-                                </h3>
-                                <button
-                                    class="text-blue-700 focus:outline-none"
+                            <template #cell-skala="{ item }">
+                                <span
+                                    class="px-2 py-1 rounded-full text-sm font-medium"
                                 >
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        class="h-5 w-5 transition-transform duration-200"
-                                        :class="{
-                                            'transform rotate-180':
-                                                !collapsedCards[peerName],
-                                        }"
-                                        viewBox="0 0 20 20"
-                                        fill="currentColor"
-                                    >
-                                        <path
-                                            fill-rule="evenodd"
-                                            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                            clip-rule="evenodd"
-                                        />
-                                    </svg>
-                                </button>
-                            </div>
-
-                            <div
-                                v-if="!collapsedCards[peerName]"
-                                class="divide-y divide-gray-100"
-                            >
-                                <div
-                                    v-for="(assessment, idx) in assessments"
-                                    :key="idx"
-                                    class="p-4 hover:bg-gray-50 transition-colors"
-                                >
-                                    <div
-                                        class="grid grid-cols-1 lg:grid-cols-4 gap-4"
-                                    >
-                                        <div>
-                                            <h4
-                                                class="text-sm font-semibold text-gray-500"
-                                            >
-                                                Aspek
-                                            </h4>
-                                            <p class="text-gray-800">
-                                                {{ assessment.aspect || "N/A" }}
-                                            </p>
-                                        </div>
-                                        <div class="lg:col-span-2">
-                                            <h4
-                                                class="text-sm font-semibold text-gray-500"
-                                            >
-                                                Pertanyaan
-                                            </h4>
-                                            <p class="text-gray-800">
-                                                {{
-                                                    assessment.question || "N/A"
-                                                }}
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <div class="flex justify-between">
-                                                <div>
-                                                    <h4
-                                                        class="text-sm font-semibold text-gray-500"
-                                                    >
-                                                        Skala
-                                                    </h4>
-                                                    <div class="mt-1">
-                                                        <span
-                                                            class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium"
-                                                        >
-                                                            {{
-                                                                assessment.scale
-                                                            }}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="mt-3">
-                                                <h4
-                                                    class="text-sm font-semibold text-gray-500"
-                                                >
-                                                    Alasan
-                                                </h4>
-                                                <p
-                                                    class="text-gray-800 text-sm mt-1"
-                                                >
-                                                    {{
-                                                        assessment.reason ||
-                                                        "N/A"
-                                                    }}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div
-                                v-else
-                                class="px-4 py-3 text-center text-sm text-gray-500 italic"
-                            >
-                                Klik untuk menampilkan detail penilaian
-                            </div>
-                        </div>
-
-                        <!-- Empty state if no assessments -->
-                        <div
-                            v-if="Object.keys(peerAssessments).length === 0"
-                            class="bg-white rounded-lg p-8 text-center shadow-sm"
-                        >
-                            <p class="text-gray-500">
-                                Belum ada data peer assessment yang tersedia.
-                            </p>
-                        </div>
+                                    {{ item.skala }}
+                                </span>
+                            </template>
+                        </DataTable>
                     </div>
                 </Card>
             </main>

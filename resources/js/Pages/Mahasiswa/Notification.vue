@@ -23,7 +23,7 @@ export default {
             default: 0
         }
     },
-    
+
     data() {
         return {
             loading: false,
@@ -32,29 +32,28 @@ export default {
             maxReconnectAttempts: 5,
             reconnectInterval: 5000,
             breadcrumbs: [
-                { text: 'Home', href: '/sispa/mahasiswa' },
                 { text: 'Notifications', href: '#' }
             ],
             localNotifications: [],
             localUnreadCount: 0,
         };
     },
-    
+
     created() {
         this.localNotifications = this.notifications;
         this.localUnreadCount = this.unreadCount;
     },
-    
+
     mounted() {
-        this.initializeWebSocket();
+        // this.initializeWebSocket();
         // Initial fetch of notifications
         this.refreshNotifications();
     },
-    
+
     beforeUnmount() {
-        this.disconnectWebSocket();
+        // this.disconnectWebSocket();
     },
-    
+
     methods: {
         initializeWebSocket() {
             try {
@@ -62,7 +61,7 @@ export default {
                 const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
                 const wsHost = window.location.host;
                 this.socket = new WebSocket(`${wsProtocol}//${wsHost}/ws/notifications`);
-                
+
                 this.socket.onopen = () => {
                     // console.log('WebSocket connected');
                     this.reconnectAttempts = 0; // Reset reconnect attempts on successful connection
@@ -70,13 +69,13 @@ export default {
 
                 this.socket.onmessage = (event) => {
                     const data = JSON.parse(event.data);
-                    
+
                     if (data.type === 'new_notification') {
                         // Add new notification to the list
                         const processedNotification = this.processNotifications([data.notification])[0];
                         this.localNotifications = [processedNotification, ...this.localNotifications];
                         this.localUnreadCount++;
-                        
+
                         // Show browser notification if supported
                         this.showBrowserNotification(processedNotification);
                     } else if (data.type === 'notification_update') {
@@ -143,9 +142,9 @@ export default {
                 if (notification.message !== undefined && notification.project_name !== undefined) {
                     return notification;
                 }
-                
+
                 let data = notification.data || {};
-                
+
                 return {
                     id: notification.id,
                     type: data.type || 'notification',
@@ -153,36 +152,45 @@ export default {
                     project_name: data.project_name || '',
                     assessment_id: data.assessment_id,
                     read_at: notification.read_at,
-                    created_at: notification.created_at
+                    created_at: notification.created_at,
+                    url: data.url || ''
                 };
             });
         },
-        
+
         async markAsRead(notification) {
             try {
-                const response = await axios.post(`/sispa/api/notifications/${notification.id}/read`);
-                if (response.data.success) {
-                    notification.read_at = new Date();
-                    this.localUnreadCount = Math.max(0, this.localUnreadCount - 1);
-                    
-                    const type = notification.type || (response.data.type || '');
-                    
-                    let route = '/sispa/mahasiswa/assessment/';
-                    if (type.toLowerCase().includes('self')) {
-                        route += 'self';
-                    } else if (type.toLowerCase().includes('peer')) {
-                        route += 'peer';
-                    } else {
-                        console.warn('Unknown notification type:', type);
-                        return;
-                    }
-                    
-                    router.visit(route);
+                const res = await axios.post(
+                    `/sispa/api/notifications/${notification.id}/read`
+                );
+
+                if (!res.data.success) return;
+
+                notification.read_at = new Date();
+                this.localUnreadCount = Math.max(0, this.localUnreadCount - 1);
+
+                if (notification.url) {
+                    return router.visit(notification.url);
                 }
-            } catch (error) {
-                console.error('Error marking notification as read:', error);
+
+                const type = (notification.type || res.data.type || '').toLowerCase();
+
+                let route = '/sispa/mahasiswa/assessment/';
+                if (type.includes('self')) {
+                    route += 'self';
+                } else if (type.includes('peer')) {
+                    route += 'peer';
+                } else {
+                    console.warn('Unknown notification type:', type);
+                    return;
+                }
+
+                router.visit(route);
+            } catch (err) {
+                console.error('Error marking notification as read:', err);
             }
         },
+
 
         async markAllAsRead() {
             try {
@@ -200,11 +208,11 @@ export default {
 
         async refreshNotifications() {
             if (this.loading) return;
-            
+
             try {
                 this.loading = true;
                 const response = await axios.get('/sispa/api/notifications/get');
-                
+
                 if (response.data.success) {
                     this.localNotifications = this.processNotifications(response.data.data.notifications);
                     this.localUnreadCount = response.data.data.unread_count;
@@ -228,7 +236,7 @@ export default {
                 <div class="mb-4">
                     <Breadcrumb :items="breadcrumbs" />
                 </div>
-                
+
                 <!-- Main Content -->
                 <div class="bg-white rounded-lg shadow-md">
                     <!-- Header with unread count and actions -->
@@ -241,15 +249,11 @@ export default {
                             </span>
                         </div>
                         <div class="flex gap-2">
-                            <button 
-                                @click="refreshNotifications"
-                                :disabled="loading"
+                            <button @click="refreshNotifications" :disabled="loading"
                                 class="px-3 py-1 text-sm text-gray-600 hover:text-gray-900 disabled:opacity-50">
                                 {{ loading ? 'Refreshing...' : 'Refresh' }}
                             </button>
-                            <button 
-                                v-if="localUnreadCount > 0"
-                                @click="markAllAsRead"
+                            <button v-if="localUnreadCount > 0" @click="markAllAsRead"
                                 class="px-3 py-1 text-sm text-blue-600 hover:text-blue-800">
                                 Mark all as read
                             </button>
@@ -264,17 +268,14 @@ export default {
                     <!-- Notifications List -->
                     <div v-else>
                         <template v-if="localNotifications && localNotifications.length > 0">
-                            <div v-for="notification in localNotifications" 
-                                :key="notification.id" 
+                            <div v-for="notification in localNotifications" :key="notification.id"
                                 class="p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150 cursor-pointer"
-                                :class="{ 'bg-blue-50': !notification.read_at }"
-                                @click="markAsRead(notification)">
-                                <div class="flex items-start space-x-4">
-                                    <div class="flex-shrink-0">
-                                        <span class="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
-                                            {{ notification.type }}
-                                        </span>
-                                    </div>
+                                :class="{ 'bg-blue-50': !notification.read_at }" @click="markAsRead(notification)">
+                                <div class="flex items-start gap-3">
+                                    <!-- Unread indicator (small dot) -->
+                                    <span class="h-2 w-2 mt-2 rounded-full flex-shrink-0"
+                                        :class="notification.read_at ? 'bg-transparent' : 'bg-blue-500'"></span>
+                                    
                                     <div class="flex-1 min-w-0">
                                         <p class="text-sm font-medium text-gray-900">
                                             {{ notification.message || 'New notification' }}
@@ -286,8 +287,7 @@ export default {
                                             <p class="text-xs text-gray-500">
                                                 {{ notification.created_at }}
                                             </p>
-                                            <span v-if="!notification.read_at" 
-                                                class="text-xs text-blue-600">
+                                            <span v-if="!notification.read_at" class="text-xs text-blue-600">
                                                 • New
                                             </span>
                                         </div>

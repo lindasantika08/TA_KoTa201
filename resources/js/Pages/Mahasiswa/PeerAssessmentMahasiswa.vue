@@ -6,7 +6,8 @@ import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
 import SidebarMahasiswa from "@/Components/SidebarMahasiswa.vue";
 import Breadcrumb from "@/Components/Breadcrumb.vue";
-import ConfirmModal from "@/Components/ConfirmModal.vue";
+import Swal from "sweetalert2";
+
 
 export default {
     components: {
@@ -15,7 +16,6 @@ export default {
         Card,
         SidebarMahasiswa,
         Breadcrumb,
-        ConfirmModal,
     },
 
     setup() {
@@ -60,7 +60,6 @@ export default {
             },
             score: 0,
             temporaryAnswers: {},
-            showConfirmModal: false,
             modalTitle: "Konfirmasi Pengiriman",
             modalMessage: "Apakah Anda yakin semua jawaban sudah sesuai?",
             isSubmitting: false,
@@ -90,16 +89,12 @@ export default {
             );
         },
         availableMembers() {
-            // console.log("Kelompok:", this.kelompok);
-            // console.log("Answered Peers:", this.answeredPeers);
-
             if (!this.kelompok || !this.answeredPeers) return [];
 
             const filtered = this.kelompok.filter(
                 (member) => !this.answeredPeers.includes(member.mahasiswa_id)
             );
 
-            // console.log("Available Members:", filtered);
             return filtered;
         },
     },
@@ -108,7 +103,7 @@ export default {
         kelompok: {
             immediate: true,
             handler(newVal) {
-                // console.log("Kelompok updated:", newVal);
+                // Watch for kelompok changes
             },
         },
         selectedMember: {
@@ -158,9 +153,6 @@ export default {
 
                 this.assessment_order = assessment_order;
 
-                // console.log('Batch Year:', batch_year);
-                // console.log('Project Name:', project_name);
-
                 const userInfoResponse = await axios.get(
                     "/sispa/api/user-info-peer",
                     {
@@ -174,8 +166,6 @@ export default {
 
                 const userInfo = userInfoResponse.data;
 
-                // console.log("User info received:", userInfo);
-
                 this.currentUserId = userInfo.id;
                 this.studentInfo = {
                     nim: userInfo.nim || "",
@@ -188,9 +178,6 @@ export default {
 
                 this.batch_year = userInfo.batch_year;
 
-                // console.log("Student info set:", this.studentInfo);
-                // console.log("Batch year set:", this.batch_year);
-
                 if (this.batch_year && this.studentInfo.project_name) {
                     const kelompokResponse = await axios.get("/sispa/api/groups", {
                         params: {
@@ -201,7 +188,6 @@ export default {
 
                     if (kelompokResponse.data) {
                         this.kelompok = kelompokResponse.data;
-                        // console.log("Kelompok data:", this.kelompok);
                     }
                 } else {
                     console.error("Missing batch_year or project_name:", {
@@ -230,12 +216,6 @@ export default {
         async loadQuestions(retryCount = 3) {
             for (let i = 0; i < retryCount; i++) {
                 try {
-                    // console.log("Loading questions with params:", {
-                    //    batch_year: this.batch_year,
-                    //    project_name: this.studentInfo.project_name,
-                    //    assessment_order: this.assessment_order,
-                    // });
-
                     const response = await axios.get("/sispa/api/questions-peer", {
                         params: {
                             batch_year: this.batch_year,
@@ -243,8 +223,6 @@ export default {
                             assessment_order: this.assessment_order,
                         },
                     });
-
-                    // console.log("Raw API response:", response.data);
 
                     if (!response.data || !response.data.data) {
                         console.error(
@@ -291,10 +269,6 @@ export default {
                         }
                     }
 
-                    // console.log("Processed questions:", this.questions);
-                    // console.log("Group members:", this.groupMembers);
-                    // console.log("Project details:", this.projectDetails);
-
                     return;
                 } catch (error) {
                     console.error(`Attempt ${i + 1} failed:`, error);
@@ -319,7 +293,11 @@ export default {
                 this.studentInfo.nim
             );
             if (!mahasiswaData?.mahasiswa_id) {
-                alert("Data mahasiswa tidak ditemukan");
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Data Tidak Ditemukan',
+                    text: 'Data mahasiswa tidak ditemukan',
+                });
                 return;
             }
 
@@ -366,13 +344,25 @@ export default {
                     this.nextQuestion();
                     this.saveCurrentState();
 
-                    alert("Answer saved successfully");
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil',
+                        text: 'Jawaban berhasil disimpan.',
+                    });
                 } else {
-                    alert("Some answers failed to save. Please try again.");
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Gagal',
+                        text: 'Beberapa jawaban gagal disimpan. Silakan coba lagi.',
+                    });
                 }
             } catch (error) {
                 console.error("Error submitting answers:", error);
-                alert("Failed to save the answer. Please try again.");
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal',
+                    text: 'Gagal menyimpan jawaban. Silakan coba lagi.',
+                });
             }
         },
 
@@ -450,8 +440,6 @@ export default {
                     },
                 });
 
-                // console.log("Check Existing Answer Response:", response.data);
-
                 if (response.data && response.data.length > 0) {
                     const existingAnswer = response.data[0];
                     this.answer = existingAnswer.answer || "";
@@ -519,9 +507,27 @@ export default {
         showSubmitConfirmation() {
             this.saveTemporaryAnswer();
             if (this.allQuestionsAnswered) {
-                this.showConfirmModal = true;
+                // Replace ConfirmModal with SweetAlert2
+                Swal.fire({
+                    title: 'Konfirmasi Pengiriman',
+                    text: 'Apakah Anda yakin semua jawaban sudah sesuai? Setelah dikirim, jawaban tidak dapat diubah kembali.',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Ya, Kirim!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        this.submitAllAnswers();
+                    }
+                });
             } else {
-                alert("Mohon jawab semua question terlebih dahulu");
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Peringatan',
+                    text: 'Mohon jawab semua question terlebih dahulu',
+                });
             }
         },
         async loadExistingAnswers() {
@@ -532,7 +538,11 @@ export default {
                     this.studentInfo.nim
                 );
                 if (!mahasiswaData?.mahasiswa_id) {
-                    alert("Data mahasiswa tidak ditemukan");
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Data Tidak Ditemukan',
+                        text: 'Data mahasiswa tidak ditemukan',
+                    });
                     return;
                 }
 
@@ -605,7 +615,11 @@ export default {
                     this.studentInfo.nim
                 );
                 if (!mahasiswaData?.mahasiswa_id) {
-                    alert("Data mahasiswa tidak ditemukan");
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Data Tidak Ditemukan',
+                        text: 'Data mahasiswa tidak ditemukan',
+                    });
                     return;
                 }
 
@@ -621,11 +635,14 @@ export default {
                 });
 
                 if (emptyQuestions.length > 0) {
-                    alert(
-                        `Mohon isi jawaban untuk pertanyaan berikut:\n${emptyQuestions
-                            .map((q) => q.question)
-                            .join("\n")}`
-                    );
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Peringatan',
+                        html: `Mohon isi jawaban untuk pertanyaan berikut:<br>${emptyQuestions
+                            .map((q) => `<li>${q.question}</li>`)
+                            .join("")}`,
+                        confirmButtonText: 'OK'
+                    });
                     return;
                 }
 
@@ -649,13 +666,21 @@ export default {
                 localStorage.removeItem("temporaryAnswers");
                 localStorage.removeItem("peerAssessmentState");
 
-                window.location.href = "/sispa/mahasiswa/assessment/peer";
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil',
+                    text: 'Semua jawaban berhasil disimpan.',
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    window.location.href = "/sispa/mahasiswa/assessment/peer";
+                });
             } catch (error) {
                 console.error("Error submitting answers:", error);
-                alert(
-                    error.response?.data?.message ||
-                    "Gagal menyimpan jawaban. Silakan coba lagi."
-                );
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal',
+                    text: error.response?.data?.message || "Gagal menyimpan jawaban. Silakan coba lagi.",
+                });
             } finally {
                 this.isSubmitting = false;
             }
@@ -668,7 +693,6 @@ export default {
                     },
                 });
                 this.answeredPeers = response.data.answered_peers;
-                // console.log("Answered Peers:", this.answeredPeers);
             } catch (error) {
                 console.error("Error fetching answered peers:", error);
             }
@@ -683,8 +707,6 @@ export default {
         },
     },
 };
-
-// // console.log(currentQuestion.skill_type)
 </script>
 
 <template>
@@ -854,7 +876,8 @@ export default {
                                     </label>
                                     <textarea id="answer" v-model="answer" rows="4"
                                         class="block w-full rounded-md border border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
-                                        placeholder="Berikan contoh atau penjelasan sesuai rubrik..." required></textarea>
+                                        placeholder="Berikan contoh atau penjelasan sesuai rubrik..."
+                                        required></textarea>
                                 </div>
 
                                 <div class="flex justify-between items-center pt-4">
@@ -868,27 +891,17 @@ export default {
                                         Save Answer
                                     </button>
 
-                                    <button v-if="
-                                        currentQuestionIndex ===
-                                        questions.length - 1
-                                    " type="button" @click="showSubmitConfirmation" :disabled="isSubmitting"
+                                    <button v-if="currentQuestionIndex === questions.length - 1" type="button"
+                                        @click="showSubmitConfirmation" :disabled="isSubmitting"
                                         class="px-4 py-2 bg-green-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed">
-                                        {{
-                                            isSubmitting
-                                                ? "Mengirim..."
-                                                : "Send"
-                                        }}
+                                        {{ isSubmitting ? "Mengirim..." : "Send" }}
                                     </button>
-                                    <button v-else type="button" @click="nextQuestion" :disabled="currentQuestionIndex ===
-                                        questions.length - 1
-                                        " class="px-4 py-2 bg-green-500 text-white rounded hover:bg-blue-600">
+                                    <button v-else type="button" @click="nextQuestion"
+                                        :disabled="currentQuestionIndex === questions.length - 1"
+                                        class="px-4 py-2 bg-green-500 text-white rounded hover:bg-blue-600">
                                         Next
                                     </button>
                                 </div>
-
-                                <ConfirmModal :show="showConfirmModal" title="Konfirmasi Pengiriman"
-                                    message="Apakah Anda yakin semua jawaban sudah sesuai? Setelah dikirim, jawaban tidak dapat diubah kembali."
-                                    @close="showConfirmModal = false" @confirm="submitAllAnswers" />
                             </form>
                         </div>
                     </template>
