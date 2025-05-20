@@ -240,30 +240,30 @@ export default {
     checkPasswordChangeStatus() {
       const needPasswordChange = localStorage.getItem("need_password_change");
 
-      if (needPasswordChange === "true") {
-        this.showChangePasswordToast = true;
-        this.needPasswordChange = true;
+            if (needPasswordChange === "true") {
+                this.showChangePasswordToast = true;
+                this.needPasswordChange = true;
 
-        this.toastTimeout = setTimeout(() => {
-          this.showChangePasswordToast = false;
-        }, 10000);
-      } else {
-        this.checkUserStatus();
-      }
-    },
+                this.toastTimeout = setTimeout(() => {
+                    this.showChangePasswordToast = false;
+                }, 10000);
+            } else {
+                this.checkUserStatus();
+            }
+        },
 
-    async checkUserStatus() {
-      try {
-        const response = await axios.get("/sispa/api/user/status");
+        async checkUserStatus() {
+            try {
+                const response = await axios.get("/sispa/api/user/status");
 
         if (response.data.hasOwnProperty("change_password")) {
           const needPasswordChange = !response.data.change_password;
 
-          if (needPasswordChange) {
-            this.showChangePasswordToast = true;
-            this.needPasswordChange = true;
+                    if (needPasswordChange) {
+                        this.showChangePasswordToast = true;
+                        this.needPasswordChange = true;
 
-            localStorage.setItem("need_password_change", "true");
+                        localStorage.setItem("need_password_change", "true");
 
             this.toastTimeout = setTimeout(() => {
               this.showChangePasswordToast = false;
@@ -389,66 +389,66 @@ export default {
 </script>
 
 <template>
-  <div class="flex min-h-screen bg-gray-50">
-    <!-- Password Change Toast -->
-    <div
-      v-if="showChangePasswordToast"
-      class="fixed top-4 right-4 bg-white shadow-xl rounded-lg p-4 max-w-md z-50 animate-fade-in border-l-4 border-yellow-500"
-    >
-      <div class="flex items-center space-x-4">
+    <div class="flex min-h-screen bg-gray-50">
+        <!-- Password Change Toast -->
         <div
-          class="bg-yellow-500 flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center"
+            v-if="showChangePasswordToast"
+            class="fixed top-4 right-4 bg-white shadow-xl rounded-lg p-4 max-w-md z-50 animate-fade-in border-l-4 border-yellow-500"
         >
-          <svg
-            class="w-6 h-6 text-white"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
-            />
-          </svg>
+            <div class="flex items-center space-x-4">
+                <div
+                    class="bg-yellow-500 flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center"
+                >
+                    <svg
+                        class="w-6 h-6 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
+                        />
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-gray-900">
+                        Untuk alasan keamanan, silakan ganti password Anda
+                    </p>
+                    <p class="text-sm text-gray-500 mt-1">
+                        Direkomendasikan untuk mengganti password secara berkala
+                    </p>
+                </div>
+                <div class="flex space-x-2">
+                    <button
+                        @click="handleChangePassword"
+                        class="px-4 py-2 bg-yellow-600 text-white text-sm font-medium rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-colors"
+                    >
+                        Ganti Password
+                    </button>
+                    <button
+                        @click="showChangePasswordToast = false"
+                        class="p-2 text-gray-400 hover:text-gray-500 focus:outline-none transition-colors"
+                    >
+                        <svg
+                            class="w-5 h-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"
+                            />
+                        </svg>
+                    </button>
+                </div>
+            </div>
         </div>
-        <div class="flex-1">
-          <p class="text-sm font-medium text-gray-900">
-            Untuk alasan keamanan, silakan ganti password Anda
-          </p>
-          <p class="text-sm text-gray-500 mt-1">
-            Direkomendasikan untuk mengganti password secara berkala
-          </p>
-        </div>
-        <div class="flex space-x-2">
-          <button
-            @click="handleChangePassword"
-            class="px-4 py-2 bg-yellow-600 text-white text-sm font-medium rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-colors"
-          >
-            Ganti Password
-          </button>
-          <button
-            @click="showChangePasswordToast = false"
-            class="p-2 text-gray-400 hover:text-gray-500 focus:outline-none transition-colors"
-          >
-            <svg
-              class="w-5 h-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
-      </div>
-    </div>
 
     <SidebarMahasiswa role="mahasiswa" />
     <div class="flex-1 flex flex-col">
@@ -461,8 +461,8 @@ export default {
           </p>
         </div>
 
-        <!-- Project Selection -->
-        <!-- Menghapus section project selection dan memindahkannya ke card Kelola Project -->
+                <!-- Project Selection -->
+                <!-- Menghapus section project selection dan memindahkannya ke card Kelola Project -->
 
         <!-- Status Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
@@ -826,7 +826,7 @@ export default {
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 
 .animate-fade-in {
-  animation: fadeIn 0.3s ease-in-out;
+    animation: fadeIn 0.3s ease-in-out;
 }
 
 @keyframes fadeIn {

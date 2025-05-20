@@ -72,7 +72,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/toggle-publish-assessment', [ProjectController::class, 'togglePublishAssessment']);
     Route::post('/toggle-publish-assessment-peer', [ProjectController::class, 'togglePublishAssessmentPeer']);
     Route::get('/projects/active', [DashboardDosen::class, 'getActiveProjects']);
-    
+
 
     Route::get('/data-with-bobot-self', [AssessmentController::class, 'getAssessmentsWithBobotSelf']);
 
@@ -93,11 +93,17 @@ Route::middleware('auth:sanctum')->group(function () {
     //Reflective Assessment Dosen
     Route::get('/export-reflective-assessment', [RefleksiController::class, 'exportExcel']);
     Route::get('/reflective-assessment-list', [RefleksiController::class, 'getReflectiveAssessmentList']);
+    Route::get('/reflective-writing-list', [RefleksiController::class, 'getReflectiveWritingList']);
     Route::post('/toggle-publish-reflective-assessment', [RefleksiController::class, 'togglePublish']);
+    Route::post('/toggle-publish-reflective-writing', [RefleksiController::class, 'togglePublishWriting']);
     Route::delete('/reflective-assessment', [RefleksiController::class, 'deleteReflectiveAssessment']);
     Route::get('/get-reflective-answer', [RefleksiController::class, 'getAnswerReflectiveAssessment']);
+    Route::get('/get-reflective-writing-answer', [RefleksiController::class, 'getAnswerReflectiveWriting']);
     Route::get('/reflective-assessment-answer-details', [RefleksiController::class, 'getViewDetailsAnswer']);
+    Route::get('/reflective-assessment-writing-answer-details', [RefleksiController::class, 'getViewDetailsAnswerWriting']);
     Route::get('/answers/get-details-answer-reflective', [RefleksiController::class, 'getDetailsAnswerReflective']);
+    Route::get('/answers/get-details-answer-reflective-writing', [RefleksiController::class, 'getDetailsAnswerReflectiveWriting']);
+    Route::get('/reflective/summary', [RefleksiController::class, 'getReflectiveSummary']);
 
     // Manage Group
     Route::get('/kelola-kelompok/export', [KelolaKelompokController::class, 'exportTemplate']);
@@ -145,14 +151,14 @@ Route::middleware('auth:sanctum')->group(function () {
 
     //Dosen Report
     Route::get('/dropdown-options', [ReportController::class, 'getDropdownOptions']);
-    Route::get('/kelompok/report', [ReportController::class, 'getKelompokReport']); 
-    Route::get('/kelompok/report-detail', [ReportController::class, 'getScoreKelompok']); 
-    Route::get('/report/kelompok/answers', [ReportController::class, 'getKelompokAnswers']); 
-    Route::post('/report/storeReport', [ReportController::class, 'storeReport']); 
-    Route::get('/student-peer-data', [ReportController::class, 'getStudentPeerData']); 
-    Route::get('/questions-peer-dosen-report', [ReportController::class, 'getQuestionsByProjectPeerReport']); 
-    Route::post('/report/save-final-scores-self', [ReportController::class, 'saveFinalScoresSelf']); 
-    Route::post('/report/save-final-scores-peer', [ReportController::class, 'saveFinalScoresPeer']); 
+    Route::get('/kelompok/report', [ReportController::class, 'getKelompokReport']);
+    Route::get('/kelompok/report-detail', [ReportController::class, 'getScoreKelompok']);
+    Route::get('/report/kelompok/answers', [ReportController::class, 'getKelompokAnswers']);
+    Route::post('/report/storeReport', [ReportController::class, 'storeReport']);
+    Route::get('/student-peer-data', [ReportController::class, 'getStudentPeerData']);
+    Route::get('/questions-peer-dosen-report', [ReportController::class, 'getQuestionsByProjectPeerReport']);
+    Route::post('/report/save-final-scores-self', [ReportController::class, 'saveFinalScoresSelf']);
+    Route::post('/report/save-final-scores-peer', [ReportController::class, 'saveFinalScoresPeer']);
 
     //Dosen Feedback
     Route::get('/feedbacks-get-answer', [FeedbackController::class, 'getFeedbackAnswer']);
@@ -166,6 +172,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/assessment-status', [DashboardMahasiswa::class, 'getSelfAssessmentStatus']);
     Route::get('/count-peer', [DashboardMahasiswa::class, 'getPeerAssessmentDetails']);
     Route::get('/detail-report-chart', [DashboardMahasiswa::class, 'getProjectScoreDetails']);
+    Route::get('/feedback-dashboard-mhs', [DashboardMahasiswa::class, 'getFeedback']);
 
     // self assessment mhs
     Route::get('/self-assessment', [AssessmentMahasiswa::class, 'getDataSelf']);
@@ -197,11 +204,19 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // reflective Assessment
     Route::get('/reflective-assessment', [RefleksiMahasiswa::class, 'getDataReflective']);
+    Route::get('/reflective-writing', [RefleksiMahasiswa::class, 'getDataReflectiveWriting']);
+    Route::get('/reflective-writing-points', [RefleksiMahasiswa::class, 'getDataReflectiveWritingPoints']);
+    Route::get('/reflective-writing-count', [RefleksiMahasiswa::class, 'getDataReflectiveWritingCount']);
     Route::get('/reflective-questions', [RefleksiMahasiswa::class, 'getReflectiveQuestions']);
     Route::post('/save-all-reflective-answers', [RefleksiMahasiswa::class, 'saveReflectiveAllAnswer']);
     Route::post('/save-answer-reflective', [RefleksiMahasiswa::class, 'saveReflectiveAnswer']);
+    Route::post('/save-answer-reflective-writing', [RefleksiMahasiswa::class, 'saveReflectiveWriting']);
     Route::get('/get-answer-reflective/{questionId}', [RefleksiMahasiswa::class, 'getAnswer']);
+    Route::get('/get-answer-reflective-writing/{assessment_order}', [RefleksiMahasiswa::class, 'getAnswerReflectiveWriting']);
+    Route::post('/submit-all-reflective-writing', [RefleksiMahasiswa::class, 'submitAllReflectiveWriting']);
     Route::get('/detail-answer-reflective', [RefleksiMahasiswa::class, 'getAnswerReflective']);
+    Route::get('/detail-answer-reflective-writing', [RefleksiMahasiswa::class, 'getDetailAnswerReflectiveWriting']);
+
 
 
     // detail assessment

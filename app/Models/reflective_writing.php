@@ -5,23 +5,26 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use App\Models\ReflectiveRubric;
 use App\Models\Project;
+use Illuminate\Testing\Fluent\Concerns\Has;
 
-class Reflective extends Model
+class reflective_writing extends Model
 {
     use HasFactory, HasUuids;
 
-    protected $table = 'reflective_assessment';
+    protected $table = 'reflective_writing';
 
     protected $fillable = [
         'id',
         'batch_year',
         'project_id',
-        'reflective_assessment_order',
+        'reflective_writing_order',
         'type',
-        'question',
-        'criteria_id',
+        'point_1',
+        'point_2',
+        'point_3',
+        'point_4',
+        'point_5',
         'end_date',
         'is_published'
     ];
@@ -29,11 +32,6 @@ class Reflective extends Model
     protected $casts = [
         'is_published' => 'boolean'
     ];
-
-    public function rubric()
-    {
-        return $this->belongsTo(ReflectiveRubric::class, 'criteria_id');
-    }
 
     public function project()
     {

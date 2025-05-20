@@ -50,14 +50,14 @@ class DetailPeerMahasiswa extends Controller
             ], 404);
         }
 
-        $answers = AnswersPeer::with(['mahasiswa', 'peer', 'question'])
+        $answers = AnswersPeer::with(['mahasiswa', 'peer', 'question.typeCriteria'])
             ->where('mahasiswa_id', $mahasiswa->id)
             ->whereHas('question', function ($query) use ($group, $assessment_order) {
                 $query->where('project_id', $group->project_id)
                     ->where('assessment_order', $assessment_order);
             })
             ->get()
-            ->groupBy('question.aspek')
+            ->groupBy('question.typeCriteria.aspect')
             ->map(function ($aspectAnswers, $aspectName) {
                 return [
                     'aspect' => $aspectName,
