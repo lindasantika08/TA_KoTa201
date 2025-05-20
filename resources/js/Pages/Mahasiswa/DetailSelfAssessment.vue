@@ -10,7 +10,7 @@ export default {
     props: {
         batchYear: {
             type: String,
-            required: true
+            required: true,
         },
         projectName: {
             type: String,
@@ -31,7 +31,10 @@ export default {
     data() {
         return {
             breadcrumbs: [
-                { text: "Self Assessment", href: "/sispa/mahasiswa/assessment/self" },
+                {
+                    text: "Self Assessment",
+                    href: "/sispa/mahasiswa/assessment/self",
+                },
                 { text: "Detail", href: null },
             ],
             headers: [
@@ -56,12 +59,15 @@ export default {
     methods: {
         async fetchUserInfo() {
             try {
-                const response = await axios.get("/sispa/api/user-detail-answer", {
-                    params: {
-                        batch_year: this.batchYear,
-                        project_name: this.projectName,
+                const response = await axios.get(
+                    "/sispa/api/user-detail-answer",
+                    {
+                        params: {
+                            batch_year: this.batchYear,
+                            project_name: this.projectName,
+                        },
                     }
-                });
+                );
                 this.studentInfo = response.data;
             } catch (error) {
                 console.error("Error fetching user info:", error);
@@ -105,10 +111,10 @@ export default {
         },
         getScaleColor(scale) {
             const scaleNum = parseInt(scale);
-            if (scaleNum >= 4) return 'bg-green-100 text-green-800';
-            if (scaleNum >= 3) return 'bg-blue-100 text-blue-800';
-            if (scaleNum >= 2) return 'bg-yellow-100 text-yellow-800';
-            return 'bg-red-100 text-red-800';
+            if (scaleNum >= 4) return "bg-green-100 text-green-800";
+            if (scaleNum >= 3) return "bg-blue-100 text-blue-800";
+            if (scaleNum >= 2) return "bg-yellow-100 text-yellow-800";
+            return "bg-red-100 text-red-800";
         },
     },
     created() {
@@ -135,20 +141,28 @@ export default {
 
 <template>
     <div class="flex min-h-screen bg-gray-50">
+        <!-- Sidebar -->
         <SidebarMahasiswa role="mahasiswa" />
 
         <div class="flex-1">
+            <!-- Navbar -->
             <Navbar userName="Mahasiswa" />
+
+            <!-- Main Content -->
             <main class="p-6">
+                <!-- Breadcrumb Navigation -->
                 <div class="mb-4">
                     <Breadcrumb :items="breadcrumbs" />
                 </div>
 
                 <!-- Main Card -->
                 <Card class="shadow-lg">
+                    <!-- Card Title -->
                     <template #title>
                         <div class="flex items-center space-x-2 text-blue-700">
-                            <h1 class="text-2xl font-bold">HASIL PENGISIAN SELF ASSESSMENT</h1>
+                            <h1 class="text-2xl font-bold">
+                                HASIL PENGISIAN SELF ASSESSMENT
+                            </h1>
                         </div>
                     </template>
 

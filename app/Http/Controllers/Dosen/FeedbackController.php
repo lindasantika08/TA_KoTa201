@@ -364,14 +364,13 @@ Hasilkan ringkasan professional, mendalam, dan bermakna yang dapat membantu maha
         }
     }
 
-    // Metode tambahan untuk error handling Gemini
     private function callGeminiWithErrorHandling($prompt)
     {
         $apiKey = config('services.gemini.api_key');
 
         $response = Http::withHeaders([
             'Content-Type' => 'application/json',
-        ])->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={$apiKey}", [
+        ])->post("https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={$apiKey}", [
             'contents' => [
                 ['role' => 'user', 'parts' => [['text' => $prompt]]]
             ]
