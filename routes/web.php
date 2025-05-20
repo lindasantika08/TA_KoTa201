@@ -35,7 +35,7 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('sispa')->group(function () {
     Route::get('/', function () {
         $user = Auth::user();
-    
+
         if ($user->role == 'admin') {
             return redirect()->route('dashboard.admin');
         } elseif ($user->role == "dosen") {
@@ -43,7 +43,6 @@ Route::prefix('sispa')->group(function () {
         } elseif ($user->role == "mahasiswa") {
             return redirect()->route('mahasiswa.dashboard');
         }
-
     })->middleware('auth');
 
     Route::get('/login', [AuthController::class, 'index'])->name('login');
@@ -76,6 +75,7 @@ Route::prefix('sispa')->group(function () {
             Route::get('/assessment/projects-reflective', [RefleksiController::class, 'getViewReflective']);
             Route::post('/reflectiveAssessment/import', [RefleksiController::class, 'import']);
             Route::get('/reflectiveAssessment/detail', [RefleksiController::class, 'getDetailReflective']);
+            Route::get('/reflectiveWriting/detail', [RefleksiController::class, 'getDetailReflectiveWriting']);
             Route::get('/reflectiveAssessment/detail-answer', [RefleksiController::class, 'showDetailAnswer']);
 
             Route::get('/kelola-proyek', [KelolaProyekController::class, 'KelolaProyekView'])->name('kelola.proyek');
@@ -139,8 +139,10 @@ Route::prefix('sispa')->group(function () {
 
             //Reflective Assessment
             Route::get('/reflective-assessment', [RefleksiMahasiswa::class, 'reflectiveAssessment']);
-            Route::get('assessment/reflective-assessment', [RefleksiMahasiswa::class, 'getReflectiveAssessment']);
+            Route::get('/assessment/reflective-assessment', [RefleksiMahasiswa::class, 'getReflectiveAssessment']);
+            Route::get('/assessment/reflective-writing', [RefleksiMahasiswa::class, 'getReflectiveWriting']);
             Route::get('/reflective-detail', [RefleksiMahasiswa::class, 'getDetailReflective']);
+            Route::get('/reflective-writing-detail', [RefleksiMahasiswa::class, 'getDetailReflectiveWriting']);
 
 
             Route::get('/profile', [ProfileMahasiswa::class, 'profile'])->name('profile');

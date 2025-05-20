@@ -15,12 +15,14 @@ class ReflectiveAssessmentExport implements WithMultipleSheets
     protected $batchYear;
     protected $projectName;
     protected $projectId;
+    protected $reflectiveType;
 
-    public function __construct($batchYear, $projectName, $projectId = null)
+    public function __construct($batchYear, $projectName, $projectId = null, $reflectiveType)
     {
         $this->batchYear = $batchYear;
         $this->projectName = $projectName;
         $this->projectId = $projectId;
+        $this->reflectiveType = $reflectiveType;
     }
 
     public function sheets(): array
@@ -43,7 +45,8 @@ class ReflectiveAssessmentExport implements WithMultipleSheets
             $sheets[] = new ReflectiveAssessmentQuestionSheet(
                 $this->batchYear,
                 $this->projectName,
-                $this->projectId
+                $this->projectId,
+                $this->reflectiveType
             );
 
             // Add the rubric sheet

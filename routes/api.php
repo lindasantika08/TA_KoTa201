@@ -93,7 +93,9 @@ Route::middleware('auth:sanctum')->group(function () {
     //Reflective Assessment Dosen
     Route::get('/export-reflective-assessment', [RefleksiController::class, 'exportExcel']);
     Route::get('/reflective-assessment-list', [RefleksiController::class, 'getReflectiveAssessmentList']);
+    Route::get('/reflective-writing-list', [RefleksiController::class, 'getReflectiveWritingList']);
     Route::post('/toggle-publish-reflective-assessment', [RefleksiController::class, 'togglePublish']);
+    Route::post('/toggle-publish-reflective-writing', [RefleksiController::class, 'togglePublishWriting']);
     Route::delete('/reflective-assessment', [RefleksiController::class, 'deleteReflectiveAssessment']);
     Route::get('/get-reflective-answer', [RefleksiController::class, 'getAnswerReflectiveAssessment']);
     Route::get('/reflective-assessment-answer-details', [RefleksiController::class, 'getViewDetailsAnswer']);
@@ -198,10 +200,16 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // reflective Assessment
     Route::get('/reflective-assessment', [RefleksiMahasiswa::class, 'getDataReflective']);
+    Route::get('/reflective-writing', [RefleksiMahasiswa::class, 'getDataReflectiveWriting']);
+    Route::get('/reflective-writing-points', [RefleksiMahasiswa::class, 'getDataReflectiveWritingPoints']);
+    Route::get('/reflective-writing-count', [RefleksiMahasiswa::class, 'getDataReflectiveWritingCount']);
     Route::get('/reflective-questions', [RefleksiMahasiswa::class, 'getReflectiveQuestions']);
     Route::post('/save-all-reflective-answers', [RefleksiMahasiswa::class, 'saveReflectiveAllAnswer']);
     Route::post('/save-answer-reflective', [RefleksiMahasiswa::class, 'saveReflectiveAnswer']);
+    Route::post('/save-answer-reflective-writing', [RefleksiMahasiswa::class, 'saveReflectiveWriting']);
     Route::get('/get-answer-reflective/{questionId}', [RefleksiMahasiswa::class, 'getAnswer']);
+    Route::get('/get-answer-reflective-writing/{assessment_order}', [RefleksiMahasiswa::class, 'getAnswerReflectiveWriting']);
+    Route::post('/submit-all-reflective-writing', [RefleksiMahasiswa::class, 'submitAllReflectiveWriting']);
     Route::get('/detail-answer-reflective', [RefleksiMahasiswa::class, 'getAnswerReflective']);
 
 

@@ -210,7 +210,7 @@
                         class="block px-4 py-2 rounded hover:bg-gray-100 text-base font-medium"
                     >
                         <font-awesome-icon
-                            icon="fa-solid fa-comment-dots"
+                            icon="fa-solid fa-bars-progress"
                             class="mr-4"
                         />
                         Reflective
