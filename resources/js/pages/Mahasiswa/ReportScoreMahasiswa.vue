@@ -48,42 +48,26 @@ const feedbackError = ref(null);
 const projectScoreDetails = computed(() => scoreData.value);
 
 const analysisScores = computed(() => {
-  if (!scoreData.value?.self_assessment || !scoreData.value?.peer_assessment) {
-    console.warn("Self or Peer assessment data is missing:", scoreData.value);
+  if (!scoreData.value?.self_assessment || !scoreData.value?.peer_assessment)
     return [];
-  }
-
-  console.log("Self Assessment Data:", scoreData.value.self_assessment);
-  console.log("Peer Assessment Data:", scoreData.value.peer_assessment);
 
   return scoreData.value.self_assessment.map((selfAspect) => {
     const peerEvaluations = scoreData.value.peer_assessment.filter(
       (peer) => peer.aspek === selfAspect.aspek
     );
 
-    console.log(`Processing aspect: ${selfAspect.aspek}`);
-    console.log("Matching peer evaluations:", peerEvaluations);
-
     const averagePeerScore =
-  peerEvaluations.length > 0
-    ? peerEvaluations.reduce((sum, peer) => {
-        const score = peer.total_score_peer != null
-          ? peer.total_score_peer
-          : (peer.total_score || 0);
-        return sum + score;
-      }, 0) / peerEvaluations.length
-    : 0;
+      peerEvaluations.length > 0
+        ? peerEvaluations.reduce(
+            (sum, peer) => sum + (peer.total_score || 0),
+            0
+          ) / peerEvaluations.length
+        : 0;
 
-
-    // const selfScore = selfAspect.total_score || 0;
-    const selfScore = 
-      selfAspect.total_score_self != null
-        ? selfAspect.total_score_self
-        : (selfAspect.total_score || 0);
-
+    const selfScore = selfAspect.total_score || 0;
     const scoreDifference = selfScore - averagePeerScore;
 
-    const result = {
+    return {
       aspek: selfAspect.aspek,
       kriteria: selfAspect.kriteria,
       selfScore: selfScore.toFixed(2),
@@ -93,18 +77,14 @@ const analysisScores = computed(() => {
         scoreDifference > 0 ? "Over" : scoreDifference < 0 ? "Under" : "Match",
       questions: selfAspect.questions,
     };
-
-    console.log("Computed analysis for aspect:", result);
-
-    return result;
   });
 });
 
 const radarChartOptions = computed(() => ({
   chart: {
     type: "radar",
-    height: "50%",  // Reduced from 100% to make it smaller
-    width: "50%",   // Reduced from 100% to make it smaller
+    height: "100%",  
+    width: "100%",  
     dropShadow: {
       enabled: true,
       blur: 1,
@@ -128,9 +108,9 @@ const radarChartOptions = computed(() => ({
     },
   ],
   labels: analysisScores.value.map((score) => score.aspek),
-  colors: ["#2563EB", "#F97316"], // Changed to blue and orange
+  colors: ["#2563EB", "#F97316"], 
   stroke: {
-    width: 2,  // Reduced from 3 to match smaller size
+    width: 2,  
   },
   fill: {
     opacity: 0.4,
@@ -154,27 +134,27 @@ const radarChartOptions = computed(() => ({
     labels: {
       formatter: (val) => val.toFixed(1),
       style: {
-        fontSize: "14px",  // Reduced from 16px
+        fontSize: "14px",  
       },
     },
   },
   xaxis: {
     labels: {
       style: {
-        fontSize: "14px",  // Reduced from 16px
+        fontSize: "14px",  
       },
     },
   },
   legend: {
     position: "bottom",
     horizontalAlign: "center",
-    fontSize: "14px",  // Reduced from 16px
+    fontSize: "14px",  
     markers: {
-      width: 16,  // Reduced from 20
-      height: 16,  // Reduced from 20
+      width: 16,  
+      height: 16,  
     },
     itemMargin: {
-      horizontal: 15,  // Reduced from 20
+      horizontal: 15,  
     },
   },
 }));
@@ -185,12 +165,6 @@ const fetchProjectScoreDetails = async () => {
   error.value = null;
 
   try {
-    console.log("Fetching project score details with params:", {
-      batch_year: props.batchYear,
-      project_id: props.projectId,
-      kelompok: props.kelompok,
-    });
-
     const response = await axios.get("/sispa/api/project-score-details", {
       params: {
         batch_year: props.batchYear,
@@ -199,14 +173,10 @@ const fetchProjectScoreDetails = async () => {
       },
     });
 
-    console.log("API Response:", response);
-
     if (response.data.status === "success") {
       scoreData.value = response.data.data;
-      console.log("Fetched score data:", scoreData.value);
     } else {
       error.value = response.data.message || "Failed to fetch project details";
-      console.warn("API returned error status:", error.value);
     }
   } catch (err) {
     error.value =
@@ -216,6 +186,31 @@ const fetchProjectScoreDetails = async () => {
     loading.value = false;
   }
 };
+
+// Calculate summary statistics
+const calculateSummaryStats = computed(() => {
+  if (!analysisScores.value.length) return null;
+
+  const selfScores = analysisScores.value.map((score) =>
+    parseFloat(score.selfScore)
+  );
+  const peerScores = analysisScores.value.map((score) =>
+    parseFloat(score.averagePeerScore)
+  );
+
+  return {
+    averageSelfScore: (
+      selfScores.reduce((a, b) => a + b, 0) / selfScores.length
+    ).toFixed(2),
+    averagePeerScore: (
+      peerScores.reduce((a, b) => a + b, 0) / peerScores.length
+    ).toFixed(2),
+    highestSelfScore: Math.max(...selfScores).toFixed(2),
+    lowestSelfScore: Math.min(...selfScores).toFixed(2),
+    highestPeerScore: Math.max(...peerScores).toFixed(2),
+    lowestPeerScore: Math.min(...peerScores).toFixed(2),
+  };
+});
 
 
 const feedback = ref({
@@ -361,37 +356,37 @@ onMounted(() => {
           <div class="border-b border-gray-200">
             <nav class="-mb-px flex space-x-8">
 <!-- Add to navigation tabs -->
-            <button
-              v-for="tab in ['overview', 'details', 'analysis', 'feedback']"
-              :key="tab"
-              @click="activeTab = tab"
-              :class="[
-                activeTab === tab
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                'whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm',
-              ]"
-            >
-              {{ tab.charAt(0).toUpperCase() + tab.slice(1) }}
-            </button>
-                        </nav>
-                      </div>
+<button
+  v-for="tab in ['overview', 'details', 'analysis', 'feedback']"
+  :key="tab"
+  @click="activeTab = tab"
+  :class="[
+    activeTab === tab
+      ? 'border-indigo-500 text-indigo-600'
+      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+    'whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm',
+  ]"
+>
+  {{ tab.charAt(0).toUpperCase() + tab.slice(1) }}
+</button>
+            </nav>
+          </div>
 
-                <!-- Tab Contents -->
-              <div v-if="activeTab === 'overview'" class="space-y-6">
-                <!-- Radar Chart -->
-                <Card class="bg-white">
-                  <template #title>Score Comparison</template>
-                  <div class="p-4 w-full aspect-square max-w-[850px] mx-auto">
-                    <VueApexCharts
-                      type="radar"
-                      :height="'80%'"
-                      :options="radarChartOptions"
-                      :series="radarChartOptions.series"
-                    />
-                  </div>
-                </Card>
-              </div>
+     <!-- Tab Contents -->
+  <div v-if="activeTab === 'overview'" class="space-y-6">
+    <!-- Radar Chart -->
+    <Card class="bg-white">
+      <template #title>Score Comparison</template>
+      <div class="p-4 w-full aspect-square max-w-[1000px] mx-auto">
+        <VueApexCharts
+          type="radar"
+          :height="'100%'"
+          :options="radarChartOptions"
+          :series="radarChartOptions.series"
+        />
+      </div>
+    </Card>
+  </div>
 
           <div v-if="activeTab === 'details'" class="space-y-6">
             <!-- Detailed Scores -->

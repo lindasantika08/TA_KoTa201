@@ -20,6 +20,7 @@ export default {
       selectedProject: {
         project_name: null,
         batch_year: null,
+        project_id: null
       },
       scoreData: null,
       loadingScoreData: false,
@@ -100,8 +101,8 @@ export default {
       return {
         chart: {
           type: "radar",
-          height: "50%",
-          width: "50%",
+          height: 600,
+          width: 600,
           dropShadow: {
             enabled: true,
             blur: 1,
@@ -126,9 +127,11 @@ export default {
         colors: ["#2563EB", "#F97316"],
         stroke: {
           width: 2,
+          colors: ["#2563EB", "#F97316"]
         },
+        colors: ["#2563EB", "#F97316"],
         fill: {
-          opacity: 0.4,
+          opacity: 0.2,
         },
         markers: {
           size: 6,
@@ -165,8 +168,8 @@ export default {
           horizontalAlign: "center",
           fontSize: "14px",
           markers: {
-            width: 16,
-            height: 16,
+            width: 18,
+            height: 18,
           },
           itemMargin: {
             horizontal: 15,
@@ -179,7 +182,6 @@ export default {
     this.fetchProjectData();
     this.fetchSelfAssessmentStatus();
     this.fetchPeerAssessmentDetails();
-    this.fetchProjectScoreDetails();
     // this.checkPasswordChangeStatus();
   },
   beforeUnmount() {
@@ -189,14 +191,15 @@ export default {
   },
   watch: {
     selectedProject(newProject) {
-      if (newProject) {
-        this.fetchSelfAssessmentStatus(newProject);
-        this.fetchPeerAssessmentDetails(newProject);
+      if (newProject && newProject.project_name && newProject.batch_year && newProject.project_id) {
+        this.fetchSelfAssessmentStatus(newProject.project_name);
+        this.fetchPeerAssessmentDetails(newProject.project_name);
+        this.fetchProjectScoreDetails(newProject.batch_year, newProject.project_id);
       }
     },
   },
   methods: {
-    async fetchProjectScoreDetails(batchYear, projectId, kelompok) {
+    async fetchProjectScoreDetails(batchYear, projectId) {
       this.loadingScoreData = true;
 
       try {
@@ -204,7 +207,6 @@ export default {
           params: {
             batch_year: batchYear,
             project_id: projectId,
-            kelompok: kelompok,
           },
         });
 
@@ -266,11 +268,14 @@ export default {
       axios
         .get("/sispa/api/projects-user")
         .then((response) => {
-          console.log("Response from /projects-user:", response.data);
-          this.projects = response.data.projects;
+          this.projects = response.data.projects.map(project => ({
+            project_name: project.project_name,
+            batch_year: project.batch_year,
+            project_id: project.id || project.project_id 
+          }));
+          
           if (this.projects.length > 0) {
-            this.selectedProject = this.projects[0].project_name;
-            console.log("Selected project:", this.selectedProject);
+            this.selectedProject = this.projects[0];
           }
         })
         .catch((error) => {
@@ -499,8 +504,8 @@ export default {
                     >
                       <option
                         v-for="project in projects"
-                        :key="project.id"
-                        :value="project.project_name"
+                        :key="project.project_id || project.id"
+                        :value="project"
                       >
                         {{ project.project_name }}
                       </option>
@@ -520,7 +525,7 @@ export default {
                 <h3 class="text-lg font-medium text-gray-800">Skills Assessment</h3>
                 <p class="text-sm text-gray-500 mt-1">Visualisasi kompetensi Anda dalam project</p>
               </div>
-              <div class="p-4">
+              <div id="chart-container">
                 <apexchart
                   width="100%"
                   type="radar"
@@ -640,5 +645,12 @@ export default {
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-20px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+#chart-container {
+  display: flex;
+  justify-content: center; 
+  align-items: center;    
+  height: 700px;         
 }
 </style>

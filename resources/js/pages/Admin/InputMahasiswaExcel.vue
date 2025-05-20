@@ -2,14 +2,14 @@
 import { ref, onMounted } from "vue";
 import axios from "axios";
 import Sidebar from "@/Components/SidebarAdmin.vue";
-import Navbar from "@/Components/Navbar.vue";
+import NavbarAdmin from "@/Components/NavbarAdmin.vue";
 import Card from "@/Components/Card.vue";
 import Breadcrumb from "@/Components/Breadcrumb.vue";
 
 export default {
     components: {
         Sidebar,
-        Navbar,
+        NavbarAdmin,
         Card,
         Breadcrumb,
     },
@@ -253,7 +253,7 @@ export default {
         <Sidebar role="admin" />
 
         <div class="flex-1">
-            <Navbar userName="Admin" />
+            <NavbarAdmin userName="Admin" />
             <main class="p-6">
                 <div class="mb-4">
                     <Breadcrumb :items="breadcrumbs" />

@@ -58,8 +58,8 @@ export default {
     updateStats() {
       this.stats.totalProjects = this.projectList.length;
       // Adjust status check based on your actual status values
-      this.stats.activeProjects = this.projectList.filter(p => p.status.toLowerCase() === 'Active').length;
-      this.stats.completedProjects = this.projectList.filter(p => p.status.toLowerCase() === 'NonActive').length;
+      this.stats.activeProjects = this.projectList.filter(p => p.status.toLowerCase() === 'active').length;
+      this.stats.completedProjects = this.projectList.filter(p => p.status.toLowerCase() === 'nonActive').length;
     },
 
     
@@ -86,7 +86,7 @@ export default {
 
     getStatusColor(status) {
       const normalizedStatus = status.toLowerCase();
-      return normalizedStatus === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+      return normalizedStatus === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
     }
   },
 
