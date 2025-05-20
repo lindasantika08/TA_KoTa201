@@ -64,9 +64,9 @@ class ProjectController extends Controller
     //         $projects = Project::where('status', 'Active')
     //             ->orderBy('created_at', 'desc')
     //             ->get();
-            
+
     //         $result = [];
-            
+
     //         foreach ($projects as $project) {
     //             // Untuk setiap assessment order yang terkait dengan proyek ini
     //             $assessmentOrders = Assessment::where('project_id', $project->id)
@@ -74,16 +74,16 @@ class ProjectController extends Controller
     //                 ->distinct()
     //                 ->orderBy('assessment_order')
     //                 ->pluck('assessment_order');
-                
+
     //             foreach ($assessmentOrders as $order) {
     //                 $isPublished = Assessment::where('project_id', $project->id)
     //                     ->where('assessment_order', $order)
     //                     ->where('type', 'selfAssessment')
     //                     ->value('is_published');
-                    
+
     //                 // Jika tidak ada record, anggap sebagai not published
     //                 $isPublished = $isPublished !== null ? $isPublished : 0;
-                    
+
     //                 $result[] = [
     //                     'id' => $project->id,
     //                     'batch_year' => $project->batch_year,
@@ -96,7 +96,7 @@ class ProjectController extends Controller
     //                 ];
     //             }
     //         }
-            
+
     //         return response()->json($result);
     //     } catch (\Exception $e) {
     //         Log::error('Error in getProyekSelfAssessment:', [
@@ -104,7 +104,7 @@ class ProjectController extends Controller
     //             'file' => $e->getFile(),
     //             'line' => $e->getLine()
     //         ]);
-            
+
     //         return response()->json([
     //             'success' => false,
     //             'message' => 'Failed to fetch self assessment projects',
@@ -114,125 +114,125 @@ class ProjectController extends Controller
     // }
 
     public function getDataSelf()
-{
-    try {
-        // Start by getting only projects that have selfAssessment type entries
-        $projectIds = Assessment::where('type', 'selfAssessment')
-            ->distinct()
-            ->pluck('project_id');
-            
-        $projects = Project::whereIn('id', $projectIds)
-            ->where('status', 'Active')
-            ->orderBy('created_at', 'desc')
-            ->get();
-        
-        $result = [];
-        
-        foreach ($projects as $project) {
-            // Only get assessment orders that have selfAssessment type
-            $assessmentOrders = Assessment::where('project_id', $project->id)
-                ->where('type', 'selfAssessment')
-                ->select('assessment_order')
+    {
+        try {
+            // Start by getting only projects that have selfAssessment type entries
+            $projectIds = Assessment::where('type', 'selfAssessment')
                 ->distinct()
-                ->orderBy('assessment_order')
-                ->pluck('assessment_order');
-            
-            foreach ($assessmentOrders as $order) {
-                $isPublished = Assessment::where('project_id', $project->id)
-                    ->where('assessment_order', $order)
-                    ->where('type', 'selfAssessment')
-                    ->value('is_published');
-                
-                $isPublished = $isPublished !== null ? $isPublished : 0;
-                
-                $result[] = [
-                    'id' => $project->id,
-                    'batch_year' => $project->batch_year,
-                    'project_name' => $project->project_name,
-                    'assessment_order' => $order,
-                    'status' => $project->status,
-                    'is_published' => $isPublished,
-                    'created_at' => $project->created_at,
-                    'unique_key' => $project->id . '-' . $order
-                ];
-            }
-        }
-        
-        return response()->json($result);
-    } catch (\Exception $e) {
-        Log::error('Error in getProyekSelfAssessment:', [
-            'message' => $e->getMessage(),
-            'file' => $e->getFile(),
-            'line' => $e->getLine()
-        ]);
-        
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to fetch self assessment projects',
-            'error' => $e->getMessage()
-        ], 500);
-    }
-}
+                ->pluck('project_id');
 
-public function getDataPeer()
-{
-    try {
-        // Get only projects that have peerAssessment type entries
-        $projectIds = Assessment::where('type', 'peerAssessment')
-            ->distinct()
-            ->pluck('project_id');
-            
-        $projects = Project::whereIn('id', $projectIds)
-            ->where('status', 'Active')
-            ->orderBy('created_at', 'desc')
-            ->get();
-        
-        $result = [];
-        
-        foreach ($projects as $project) {
-            $assessmentOrders = Assessment::where('project_id', $project->id)
-                ->where('type', 'peerAssessment')
-                ->select('assessment_order')
-                ->distinct()
-                ->orderBy('assessment_order')
-                ->pluck('assessment_order');
-            
-            foreach ($assessmentOrders as $order) {
-                $isPublished = Assessment::where('project_id', $project->id)
-                    ->where('assessment_order', $order)
-                    ->where('type', 'peerAssessment')
-                    ->value('is_published');
-                
-                $isPublished = $isPublished !== null ? $isPublished : 0;
-                
-                $result[] = [
-                    'id' => $project->id,
-                    'batch_year' => $project->batch_year,
-                    'project_name' => $project->project_name,
-                    'assessment_order' => $order,
-                    'status' => $project->status,
-                    'is_published' => $isPublished,
-                    'created_at' => $project->created_at,
-                    'unique_key' => $project->id . '-' . $order
-                ];
+            $projects = Project::whereIn('id', $projectIds)
+                ->where('status', 'Active')
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            $result = [];
+
+            foreach ($projects as $project) {
+                // Only get assessment orders that have selfAssessment type
+                $assessmentOrders = Assessment::where('project_id', $project->id)
+                    ->where('type', 'selfAssessment')
+                    ->select('assessment_order')
+                    ->distinct()
+                    ->orderBy('assessment_order')
+                    ->pluck('assessment_order');
+
+                foreach ($assessmentOrders as $order) {
+                    $isPublished = Assessment::where('project_id', $project->id)
+                        ->where('assessment_order', $order)
+                        ->where('type', 'selfAssessment')
+                        ->value('is_published');
+
+                    $isPublished = $isPublished !== null ? $isPublished : 0;
+
+                    $result[] = [
+                        'id' => $project->id,
+                        'batch_year' => $project->batch_year,
+                        'project_name' => $project->project_name,
+                        'assessment_order' => $order,
+                        'status' => $project->status,
+                        'is_published' => $isPublished,
+                        'created_at' => $project->created_at,
+                        'unique_key' => $project->id . '-' . $order
+                    ];
+                }
             }
+
+            return response()->json($result);
+        } catch (\Exception $e) {
+            Log::error('Error in getProyekSelfAssessment:', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch self assessment projects',
+                'error' => $e->getMessage()
+            ], 500);
         }
-        
-        return response()->json($result);
-    } catch (\Exception $e) {
-        Log::error('Error in getProyekPeerAssessment:', [
-            'message' => $e->getMessage(),
-            'file' => $e->getFile(),
-            'line' => $e->getLine()
-        ]);
-        
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to fetch peer assessment projects',
-            'error' => $e->getMessage()
-        ], 500);
     }
-}
+
+    public function getDataPeer()
+    {
+        try {
+            // Get only projects that have peerAssessment type entries
+            $projectIds = Assessment::where('type', 'peerAssessment')
+                ->distinct()
+                ->pluck('project_id');
+
+            $projects = Project::whereIn('id', $projectIds)
+                ->where('status', 'Active')
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            $result = [];
+
+            foreach ($projects as $project) {
+                $assessmentOrders = Assessment::where('project_id', $project->id)
+                    ->where('type', 'peerAssessment')
+                    ->select('assessment_order')
+                    ->distinct()
+                    ->orderBy('assessment_order')
+                    ->pluck('assessment_order');
+
+                foreach ($assessmentOrders as $order) {
+                    $isPublished = Assessment::where('project_id', $project->id)
+                        ->where('assessment_order', $order)
+                        ->where('type', 'peerAssessment')
+                        ->value('is_published');
+
+                    $isPublished = $isPublished !== null ? $isPublished : 0;
+
+                    $result[] = [
+                        'id' => $project->id,
+                        'batch_year' => $project->batch_year,
+                        'project_name' => $project->project_name,
+                        'assessment_order' => $order,
+                        'status' => $project->status,
+                        'is_published' => $isPublished,
+                        'created_at' => $project->created_at,
+                        'unique_key' => $project->id . '-' . $order
+                    ];
+                }
+            }
+
+            return response()->json($result);
+        } catch (\Exception $e) {
+            Log::error('Error in getProyekPeerAssessment:', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch peer assessment projects',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 
     // public function getDataPeer()
     // {
@@ -240,9 +240,9 @@ public function getDataPeer()
     //         $projects = Project::where('status', 'Active')
     //             ->orderBy('created_at', 'desc')
     //             ->get();
-            
+
     //         $result = [];
-            
+
     //         foreach ($projects as $project) {
     //             $assessmentOrders = Assessment::where('project_id', $project->id)
     //                 ->where('type', 'peerAssessment')
@@ -250,15 +250,15 @@ public function getDataPeer()
     //                 ->distinct()
     //                 ->orderBy('assessment_order')
     //                 ->pluck('assessment_order');
-                
+
     //             foreach ($assessmentOrders as $order) {
     //                 $isPublished = Assessment::where('project_id', $project->id)
     //                     ->where('assessment_order', $order)
     //                     ->where('type', 'peerAssessment')
     //                     ->value('is_published');
-                    
+
     //                 $isPublished = $isPublished !== null ? $isPublished : 0;
-                    
+
     //                 $result[] = [
     //                     'id' => $project->id,
     //                     'batch_year' => $project->batch_year,
@@ -271,7 +271,7 @@ public function getDataPeer()
     //                 ];
     //             }
     //         }
-            
+
     //         return response()->json($result);
     //     } catch (\Exception $e) {
     //         Log::error('Error in getProyekPeerAssessment:', [
@@ -279,7 +279,7 @@ public function getDataPeer()
     //             'file' => $e->getFile(),
     //             'line' => $e->getLine()
     //         ]);
-            
+
     //         return response()->json([
     //             'success' => false,
     //             'message' => 'Failed to fetch peer assessment projects',
@@ -291,11 +291,11 @@ public function getDataPeer()
     public function togglePublishAssessment(Request $request)
     {
         try {
-            \DB::enableQueryLog();
+            DB::enableQueryLog();
 
             $project = Project::where('batch_year', $request->batch_year)
-                            ->where('project_name', $request->project_name)
-                            ->first();
+                ->where('project_name', $request->project_name)
+                ->first();
 
             if (!$project) {
                 return response()->json([
@@ -304,39 +304,23 @@ public function getDataPeer()
                 ], 404);
             }
 
-            // $updated = Assessment::where([
-            //     'project_id' => $project->id,
-            //     'type' => 'selfAssessment',
-            //     'assessment_order' => $request->assessment_order
-            // ])->update([
-            //     'is_published' => $request->is_published ? 1 : 0
-            // ]);
-
-            $assessments = Assessment::where([
+            // Melakukan update pada semua assessment dengan parameter yang sama dalam satu query
+            $updated = Assessment::where([
                 'project_id' => $project->id,
                 'type' => 'selfAssessment',
                 'assessment_order' => $request->assessment_order
-            ])->get();
+            ])->update([
+                'is_published' => $request->is_published ? 1 : 0
+            ]);
 
-            $updatedCount = 0;
-
-            foreach ($assessments as $assessment) {
-                $assessment->is_published = $request->is_published ? 1 : 0;
-                if ($assessment->isDirty('is_published')) {
-                    $assessment->save(); // This triggers the observer
-                    $updatedCount++;
-                }
-            }
-            
-            \Log::info('Updated count:', ['updated_count' => $updatedCount]);
-
+            \Log::info('Updated count:', ['updated_count' => $updated]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Assessment publish status updated successfully',
                 'data' => [
                     'is_published' => $request->is_published,
-                    'updated_count' => $updatedCount
+                    'updated_count' => $updated
                 ]
             ]);
         } catch (\Exception $e) {
@@ -351,11 +335,11 @@ public function getDataPeer()
     public function togglePublishAssessmentPeer(Request $request)
     {
         try {
-            \DB::enableQueryLog();
+            DB::enableQueryLog();
 
             $project = Project::where('batch_year', $request->batch_year)
-                            ->where('project_name', $request->project_name)
-                            ->first();
+                ->where('project_name', $request->project_name)
+                ->first();
 
             if (!$project) {
                 return response()->json([
@@ -364,41 +348,24 @@ public function getDataPeer()
                 ], 404);
             }
 
-            // $updated = Assessment::where([
-            //     'project_id' => $project->id,
-            //     'type' => 'peerAssessment',
-            //     'assessment_order' => $request->assessment_order
-            // ])->update([
-            //     'is_published' => $request->is_published ? 1 : 0
-            // ]);
-
-            // \Log::info('SQL Query:', \DB::getQueryLog());
-            // \Log::info('Update result:', ['updated' => $updated]);
-
-            $assessments = Assessment::where([
+            // Melakukan update pada semua assessment peer dengan parameter yang sama dalam satu query
+            $updated = Assessment::where([
                 'project_id' => $project->id,
                 'type' => 'peerAssessment',
                 'assessment_order' => $request->assessment_order
-            ])->get();
+            ])->update([
+                'is_published' => $request->is_published ? 1 : 0
+            ]);
 
-            $updatedCount = 0;
-
-            foreach ($assessments as $assessment) {
-                $assessment->is_published = $request->is_published ? 1 : 0;
-                if ($assessment->isDirty('is_published')) {
-                    $assessment->save(); // This triggers the observer
-                    $updatedCount++;
-                }
-            }
-            
-            \Log::info('Updated count:', ['updated_count' => $updatedCount]);
+            \Log::info('SQL Query:', \DB::getQueryLog());
+            \Log::info('Updated count:', ['updated_count' => $updated]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Assessment publish status updated successfully',
+                'message' => 'Peer assessment publish status updated successfully',
                 'data' => [
                     'is_published' => $request->is_published,
-                    'updated_count' => $updatedCount,
+                    'updated_count' => $updated,
                 ]
             ]);
         } catch (\Exception $e) {

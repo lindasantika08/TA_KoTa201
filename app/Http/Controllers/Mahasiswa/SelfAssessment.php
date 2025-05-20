@@ -69,18 +69,22 @@ class SelfAssessment extends Controller
                 throw new \Exception('Mahasiswa not found for user ID: ' . $user->id);
             }
 
-            $group = Group::whereHas('project', function ($query) use ($batchYear, $projectName) {
-                $query->where('batch_year', $batchYear)
-                    ->where('project_name', $projectName);
-            })->where('mahasiswa_id', $mahasiswa->id)->first();
+            // First find the project directly
+            $project = Project::where('batch_year', $batchYear)
+                ->where('project_name', $projectName)
+                ->first();
 
-            if (!$group) {
-                throw new \Exception('Group not found for this project');
+            if (!$project) {
+                throw new \Exception('Project not found with these criteria');
             }
 
-            $project = $group->project;
-            if (!$project) {
-                throw new \Exception('Project not found');
+            // Then check if the student is in a group for this project
+            $group = Group::where('project_id', $project->id)
+                ->where('mahasiswa_id', $mahasiswa->id)
+                ->first();
+
+            if (!$group) {
+                throw new \Exception('Student is not in any group for this project');
             }
 
             Log::info('Project Details', [
@@ -89,15 +93,20 @@ class SelfAssessment extends Controller
                 'project_name' => $project->project_name
             ]);
 
+            // Get all assessments for this project
             $assessments = Assessment::where('project_id', $project->id)
                 ->where('type', 'selfAssessment')
                 ->where('assessment_order', $assessmentOrder)
-                ->where('is_published', 1) 
+                ->where('is_published', 1)
                 ->get();
 
             if ($assessments->isEmpty()) {
                 throw new \Exception('No assessments found for this project and assessment order');
             }
+
+            Log::info('Assessments Found', [
+                'count' => $assessments->count()
+            ]);
 
             $formattedAssessments = $assessments->map(function ($assessment) {
                 $criteria = TypeCriteria::find($assessment->criteria_id);
@@ -119,7 +128,7 @@ class SelfAssessment extends Controller
                     'bobot_4' => $criteria->bobot_4,
                     'bobot_5' => $criteria->bobot_5,
                 ];
-            })->filter();
+            })->filter()->values(); // Add values() to reindex the array after filtering
 
             Log::info('Formatted Assessments', [
                 'count' => $formattedAssessments->count(),
@@ -143,7 +152,7 @@ class SelfAssessment extends Controller
     {
         $user = Auth::user();
         $mahasiswa = Mahasiswa::where('user_id', $user->id)->first();
-        
+
         $batch_year = $request->input('batch_year');
         $project_name = $request->input('project_name');
 
@@ -159,7 +168,7 @@ class SelfAssessment extends Controller
         ]);
 
         $group = Group::where('mahasiswa_id', $mahasiswa->id)
-            ->whereHas('project', function($query) use ($batch_year, $project_name) {
+            ->whereHas('project', function ($query) use ($batch_year, $project_name) {
                 $query->where('batch_year', $batch_year)
                     ->where('project_name', $project_name);
             })
@@ -183,17 +192,17 @@ class SelfAssessment extends Controller
                 ], 404);
             }
         }
-        
-            if (!$group) {
-                return response()->json([
-                    'message' => 'No matching group found',
-                    'debug' => [
-                        'mahasiswa_id' => $mahasiswa->id,
-                        'batch_year' => $batch_year,
-                        'project_name' => $project_name
-                    ]
-                ], 404);
-            }
+
+        if (!$group) {
+            return response()->json([
+                'message' => 'No matching group found',
+                'debug' => [
+                    'mahasiswa_id' => $mahasiswa->id,
+                    'batch_year' => $batch_year,
+                    'project_name' => $project_name
+                ]
+            ], 404);
+        }
 
         return response()->json([
             'nim' => $mahasiswa->nim,
@@ -218,16 +227,16 @@ class SelfAssessment extends Controller
                 'answers.*.status' => 'required|string',
                 'temporaryAnswers' => 'sometimes|array'
             ]);
-            
+
             $user = Auth::user();
             $mahasiswa = Mahasiswa::where('user_id', $user->id)->first();
-            
+
             if (!$mahasiswa) {
                 throw new \Exception('Mahasiswa tidak ditemukan');
             }
-            
+
             $savedAnswers = [];
-            
+
             foreach ($validated['answers'] as $answerData) {
                 $answer = Answers::updateOrCreate(
                     [
@@ -242,19 +251,19 @@ class SelfAssessment extends Controller
                         'status' => $answerData['status']
                     ]
                 );
-                
+
                 $savedAnswers[] = $answer;
-                
+
                 $simpleAnswerData = [
                     'question_id' => $answerData['question_id'],
                     'answer' => $answerData['answer'],
                     'score' => $answerData['score']
                 ];
-                
+
                 ProcessFlaskAssessment::dispatch($simpleAnswerData, $answer->id)
                     ->onQueue('flask-processing');
             }
-            
+
             // Next, save all temporary answers if provided
             if (isset($validated['temporaryAnswers']) && !empty($validated['temporaryAnswers'])) {
                 foreach ($validated['temporaryAnswers'] as $questionId => $tempAnswer) {
@@ -262,7 +271,7 @@ class SelfAssessment extends Controller
                     if (in_array($questionId, array_column($validated['answers'], 'question_id'))) {
                         continue;
                     }
-                    
+
                     // Ensure the temporary answer has the required fields
                     if (isset($tempAnswer['answer']) && isset($tempAnswer['score'])) {
                         $answer = Answers::updateOrCreate(
@@ -278,23 +287,23 @@ class SelfAssessment extends Controller
                                 'status' => $request->input('answers.0.status', 'submitted') // Use the same status as main answers
                             ]
                         );
-                        
+
                         $savedAnswers[] = $answer;
-                        
+
                         $simpleAnswerData = [
                             'question_id' => $questionId,
                             'answer' => $tempAnswer['answer'],
                             'score' => $tempAnswer['score']
                         ];
-                        
+
                         ProcessFlaskAssessment::dispatch($simpleAnswerData, $answer->id)
                             ->onQueue('flask-processing');
                     }
                 }
             }
-            
+
             DB::commit();
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'All answers saved successfully.',
@@ -302,12 +311,12 @@ class SelfAssessment extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             Log::error('Error in saveAnswer:', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return response()->json([
                 'success' => false,
                 'error' => 'Failed to save answers: ' . $e->getMessage()
