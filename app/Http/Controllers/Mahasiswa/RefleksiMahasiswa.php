@@ -976,6 +976,98 @@ Hasilkan ringkasan yang komprehensif, profesional, dan bermanfaat untuk penilaia
         ]);
     }
 
+    public function getDetailAnswerReflectiveWriting(Request $request)
+    {
+        $batch_year = $request->query('batch_year');
+        $project_name = $request->query('project_name');
+
+        $user = Auth::user();
+
+        // Get the mahasiswa record
+        $mahasiswa = Mahasiswa::where('user_id', $user->id)->first();
+
+        if (!$mahasiswa) {
+            return response()->json([
+                'error' => 'Student record not found'
+            ], 404);
+        }
+
+        // Get the project
+        $project = Project::where('project_name', $project_name)
+            ->where('batch_year', $batch_year)
+            ->first();
+
+        if (!$project) {
+            return response()->json([
+                'error' => 'Project not found'
+            ], 404);
+        }
+
+        // Get the group for this specific project and student
+        $group = Group::where('project_id', $project->id)
+            ->where('mahasiswa_id', $mahasiswa->id)
+            ->first();
+
+        if (!$group) {
+            return response()->json([
+                'error' => 'Group not found'
+            ], 404);
+        }
+
+        // Get all reflective writing assignments for this project
+        $reflectiveWritings = reflective_writing::where('project_id', $project->id)
+            ->where('is_published', true)
+            ->orderBy('reflective_writing_order')
+            ->get();
+
+        if ($reflectiveWritings->isEmpty()) {
+            return response()->json([
+                'answers' => []
+            ]);
+        }
+
+        // Get the student's answers
+        $answers = ReflectiveWritingAnswer::where('mahasiswa_id', $mahasiswa->id)
+            ->whereIn('reflectiveWriting_id', $reflectiveWritings->pluck('id'))
+            ->get();
+
+        // Create a mapping of reflective writing IDs to answers for easy lookup
+        $answerMap = $answers->keyBy('reflectiveWriting_id');
+
+        // Group reflective writings by type
+        $groupedAnswers = $reflectiveWritings->groupBy('type')
+            ->map(function ($typeWritings, $type) use ($answerMap) {
+                return [
+                    'type' => $type,
+                    'answers' => $typeWritings->map(function ($writing) use ($answerMap) {
+                        // Get answer for this reflective writing
+                        $answer = $answerMap->get($writing->id) ? $answerMap->get($writing->id)->answer : '';
+
+                        // Get points from reflective writing
+                        $points = [];
+                        for ($i = 1; $i <= 5; $i++) {
+                            $pointKey = "point_$i";
+                            if (!empty($writing->$pointKey)) {
+                                $points[] = $writing->$pointKey;
+                            }
+                        }
+
+                        return [
+                            'writing_id' => $writing->id,
+                            'writing_order' => $writing->reflective_writing_order,
+                            'points' => $points,
+                            'answer' => $answer
+                        ];
+                    })
+                ];
+            })
+            ->values();
+
+        return response()->json([
+            'answers' => $groupedAnswers
+        ]);
+    }
+
 
     /**
      * Save all reflective writing answers for a student

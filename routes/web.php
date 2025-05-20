@@ -80,6 +80,7 @@ Route::prefix('sispa')->group(function () {
             Route::get('/reflectiveAssessment/detail', [RefleksiController::class, 'getDetailReflective']);
             Route::get('/reflectiveWriting/detail', [RefleksiController::class, 'getDetailReflectiveWriting']);
             Route::get('/reflectiveAssessment/detail-answer', [RefleksiController::class, 'showDetailAnswer']);
+            Route::get('/reflectiveWriting/detail-answer', [RefleksiController::class, 'showDetailAnswerWriting']);
 
             Route::get('/kelola-proyek', [KelolaProyekController::class, 'KelolaProyekView'])->name('kelola.proyek');
             Route::post('/tambah-proyek', [KelolaProyekController::class, 'AddProyek'])->name('kelola-proyek.store');
@@ -146,6 +147,7 @@ Route::prefix('sispa')->group(function () {
             Route::get('/assessment/reflective-writing', [RefleksiMahasiswa::class, 'getReflectiveWriting']);
             Route::get('/reflective-detail', [RefleksiMahasiswa::class, 'getDetailReflective']);
             Route::get('/reflective-writing-detail', [RefleksiMahasiswa::class, 'getDetailReflectiveWriting']);
+
 
 
             Route::get('/profile', [ProfileMahasiswa::class, 'profile'])->name('profile');

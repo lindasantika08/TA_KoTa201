@@ -13,6 +13,7 @@ use App\Models\reflective_writing;
 use App\Models\reflective_ai;
 use App\Models\Mahasiswa;
 use App\Models\Group;
+use App\Models\ReflectiveWritingAnswer;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -708,6 +709,21 @@ class RefleksiController extends Controller
         ]);
     }
 
+    public function showDetailAnswerWriting(Request $request)
+    {
+        $validated = $request->validate([
+            'batch_year' => 'required|string',
+            'project_name' => 'required|string',
+            'reflective_writing_order' => 'required|integer',
+        ]);
+
+        return Inertia::render('Dosen/ListReflectiveWritingAnswer', [
+            'batchYear' => $validated['batch_year'],
+            'projectName' => $validated['project_name'],
+            'reflective_writing_order' => $validated['reflective_writing_order'],
+        ]);
+    }
+
     public function getAnswerReflectiveAssessment(Request $request)
     {
         $validated = $request->validate([
@@ -803,6 +819,101 @@ class RefleksiController extends Controller
         ]);
     }
 
+    public function getAnswerReflectiveWriting(Request $request)
+    {
+        $validated = $request->validate([
+            'batchYear' => 'required|string',
+            'projectName' => 'required|string', // Using projectName instead of projectId
+            'reflective_writing_order' => 'required|integer',
+        ]);
+
+        $batchYear = $validated['batchYear'];
+        $projectName = $validated['projectName'];
+        $reflectiveWritingOrder = $validated['reflective_writing_order'];
+
+        // Find the project ID based on batch year and project name
+        $project = Project::where('batch_year', $batchYear)
+            ->where('project_name', $projectName)
+            ->first();
+
+        if (!$project) {
+            return response()->json(['message' => 'Project not found with the specified batch year and name.'], 404);
+        }
+
+        $projectId = $project->id;
+
+        // Get the specific reflective assessment by order
+        $assessment = reflective_writing::where('batch_year', $batchYear)
+            ->where('project_id', $projectId)
+            ->where('reflective_writing_order', $reflectiveWritingOrder)
+            ->first();
+
+        if (!$assessment) {
+            return response()->json([
+                'message' => 'No reflective assessment found with the specified order.',
+                'project' => [
+                    'name' => $projectName,
+                    'id' => $projectId,
+                    'batch_year' => $batchYear
+                ]
+            ], 404);
+        }
+
+        // Get all users in the specified project group
+        $usersInGroup = Group::where('batch_year', $batchYear)
+            ->where('project_id', $projectId)
+            ->pluck('mahasiswa_id');
+
+        if ($usersInGroup->isEmpty()) {
+            return response()->json(['message' => 'No students found in this project group.'], 404);
+        }
+
+        // Get answers for the specified assessment
+        $answers = ReflectiveWritingAnswer::whereIn('mahasiswa_id', $usersInGroup)
+            ->where('reflectiveWriting_id', $assessment->id)
+            ->with(['mahasiswa.user'])  // Include the user relationship to get the name
+            ->get();
+
+        $userAnswers = $answers->groupBy('mahasiswa_id');
+
+        $result = [];
+
+        foreach ($usersInGroup as $mahasiswaId) {
+            $mahasiswa = Mahasiswa::with('user')->find($mahasiswaId);
+
+            if (!$mahasiswa) {
+                continue; // Skip if mahasiswa not found
+            }
+
+            $userAnswered = isset($userAnswers[$mahasiswaId]) ? $userAnswers[$mahasiswaId] : collect();
+
+            // Since we're only looking at one specific reflective assessment question,
+            // the status is simply whether they've answered it or not
+            if ($userAnswered->count() === 0) {
+                $status = 'unsubmitted';
+            } else {
+                $status = 'submitted';
+            }
+
+            $result[] = [
+                'mahasiswa' => $mahasiswa,
+                'status' => $status,
+                'answers' => $userAnswered,
+            ];
+        }
+
+        // Sort the result array by NIM (assuming NIM is in the user's nim field)
+        usort($result, function ($a, $b) {
+            return $a['mahasiswa']->nim <=> $b['mahasiswa']->nim;
+        });
+
+        return response()->json([
+            'assessment' => $assessment,
+            'project' => $project,
+            'students' => $result
+        ]);
+    }
+
     public function getViewDetailsAnswer(Request $request)
     {
         $validated = $request->validate([
@@ -821,6 +932,27 @@ class RefleksiController extends Controller
             'batch_year' => $validated['batch_year'],
             'project_name' => $validated['project_name'],
             'assessment_order' => $validated['reflective_assessment_order'],
+        ]);
+    }
+
+    public function getViewDetailsAnswerWriting(Request $request)
+    {
+        $validated = $request->validate([
+            'batch_year' => 'required|string',
+            'project_name' => 'required|string',
+            'reflective_writing_order' => 'required|integer',
+            'mahasiswaId' => 'required|string',
+        ]);
+
+        $mahasiswa = Mahasiswa::findOrFail($validated['mahasiswaId']);
+
+        // Jika menggunakan Inertia untuk SPA, gunakan:
+        return Inertia::render('Dosen/AnswerDetailReflectiveWriting', [
+            'mahasiswaName' => $mahasiswa->user->name,
+            'mahasiswaId' => $validated['mahasiswaId'],
+            'batch_year' => $validated['batch_year'],
+            'project_name' => $validated['project_name'],
+            'assessment_order' => $validated['reflective_writing_order'],
         ]);
     }
 
@@ -902,6 +1034,77 @@ class RefleksiController extends Controller
         ]);
     }
 
+    public function getDetailsAnswerReflectiveWriting(Request $request)
+    {
+        $validated = $request->validate([
+            'mahasiswaId' => 'required|string',
+            'batch_year' => 'required|string',
+            'project_name' => 'required|string',
+            'assessment_order' => 'required|integer',
+        ]);
+
+        // Find mahasiswa directly by ID
+        $mahasiswa = Mahasiswa::findOrFail($validated['mahasiswaId']);
+
+        // Find project_id based on project_name and batch_year
+        $project = Project::where('project_name', $validated['project_name'])
+            ->where('batch_year', $validated['batch_year'])
+            ->first();
+
+        if (!$project) {
+            return response()->json(['error' => 'Project tidak ditemukan'], 404);
+        }
+
+        $project_id = $project->id;
+
+        // Step 1: Find all reflective writings that match the criteria
+        $reflectiveWritings = reflective_writing::where('batch_year', $validated['batch_year'])
+            ->where('project_id', $project_id)
+            ->where('reflective_writing_order', $validated['assessment_order'])
+            ->get();
+
+        if ($reflectiveWritings->isEmpty()) {
+            return response()->json(['message' => 'Reflective writing tidak ditemukan'], 404);
+        }
+
+        // Get all reflective writing IDs
+        $reflectiveWritingIds = $reflectiveWritings->pluck('id')->toArray();
+
+        // Step 2: Get ALL answers for these reflective writing assignments
+        $reflectiveWritingAnswers = ReflectiveWritingAnswer::where('mahasiswa_id', $mahasiswa->id)
+            ->whereIn('reflectiveWriting_id', $reflectiveWritingIds)
+            ->get();
+
+        if ($reflectiveWritingAnswers->isEmpty()) {
+            return response()->json(['message' => 'Jawaban tidak ditemukan untuk mahasiswa ini'], 404);
+        }
+
+        // Create a map of reflective writings by ID for easy lookup
+        $reflectiveWritingsMap = $reflectiveWritings->keyBy('id');
+
+        // Format all answers with their corresponding points
+        $formattedAnswers = $reflectiveWritingAnswers->map(function ($answer) use ($reflectiveWritingsMap) {
+            // Get the associated reflective writing for this answer
+            $reflectiveWriting = $reflectiveWritingsMap[$answer->reflectiveWriting_id];
+
+            return [
+                'point_1' => $reflectiveWriting->point_1,
+                'point_2' => $reflectiveWriting->point_2,
+                'point_3' => $reflectiveWriting->point_3,
+                'point_4' => $reflectiveWriting->point_4,
+                'point_5' => $reflectiveWriting->point_5,
+                'answer' => $answer->answer,
+                'status' => $answer->status,
+                'created_at' => $answer->created_at,
+                'id' => $answer->id,
+                'reflective_writing_id' => $answer->reflectiveWriting_id,
+            ];
+        });
+
+        return response()->json([
+            'answers' => $formattedAnswers,
+        ]);
+    }
     protected $geminiService;
 
     /**

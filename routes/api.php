@@ -98,8 +98,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/toggle-publish-reflective-writing', [RefleksiController::class, 'togglePublishWriting']);
     Route::delete('/reflective-assessment', [RefleksiController::class, 'deleteReflectiveAssessment']);
     Route::get('/get-reflective-answer', [RefleksiController::class, 'getAnswerReflectiveAssessment']);
+    Route::get('/get-reflective-writing-answer', [RefleksiController::class, 'getAnswerReflectiveWriting']);
     Route::get('/reflective-assessment-answer-details', [RefleksiController::class, 'getViewDetailsAnswer']);
+    Route::get('/reflective-assessment-writing-answer-details', [RefleksiController::class, 'getViewDetailsAnswerWriting']);
     Route::get('/answers/get-details-answer-reflective', [RefleksiController::class, 'getDetailsAnswerReflective']);
+    Route::get('/answers/get-details-answer-reflective-writing', [RefleksiController::class, 'getDetailsAnswerReflectiveWriting']);
     Route::get('/reflective/summary', [RefleksiController::class, 'getReflectiveSummary']);
 
     // Manage Group
@@ -211,6 +214,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/get-answer-reflective-writing/{assessment_order}', [RefleksiMahasiswa::class, 'getAnswerReflectiveWriting']);
     Route::post('/submit-all-reflective-writing', [RefleksiMahasiswa::class, 'submitAllReflectiveWriting']);
     Route::get('/detail-answer-reflective', [RefleksiMahasiswa::class, 'getAnswerReflective']);
+    Route::get('/detail-answer-reflective-writing', [RefleksiMahasiswa::class, 'getDetailAnswerReflectiveWriting']);
 
 
 

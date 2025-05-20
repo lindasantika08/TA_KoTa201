@@ -55,6 +55,26 @@ export default {
         const groupedAnswers = ref([]);
         const isLoading = ref(true);
         const completionPercentage = ref(0);
+        const collapsedCards = ref({});
+
+        const toggleCard = (groupIndex, writingIndex) => {
+            const key = `${groupIndex}-${writingIndex}`;
+            collapsedCards.value[key] = !collapsedCards.value[key];
+        };
+
+        const isCardCollapsed = (groupIndex, writingIndex) => {
+            const key = `${groupIndex}-${writingIndex}`;
+            return collapsedCards.value[key] === true;
+        };
+
+        const toggleGroup = (groupIndex) => {
+            collapsedCards.value[`group-${groupIndex}`] =
+                !collapsedCards.value[`group-${groupIndex}`];
+        };
+
+        const isGroupCollapsed = (groupIndex) => {
+            return collapsedCards.value[`group-${groupIndex}`] === true;
+        };
 
         const fetchUserInfo = async () => {
             try {
@@ -88,15 +108,27 @@ export default {
                 console.log("Fetched answers:", response.data.answers);
                 groupedAnswers.value = response.data.answers;
 
+                // Initialize collapsed state for all cards
+                groupedAnswers.value.forEach((group, groupIndex) => {
+                    collapsedCards.value[`group-${groupIndex}`] = false;
+                    group.answers.forEach((writing, writingIndex) => {
+                        const key = `${groupIndex}-${writingIndex}`;
+                        collapsedCards.value[key] = false;
+                    });
+                });
+
                 // Calculate completion percentage
                 if (groupedAnswers.value.length > 0) {
                     let totalAnswers = 0;
                     let completedAnswers = 0;
 
                     groupedAnswers.value.forEach((aspect) => {
-                        aspect.answers.forEach((answer) => {
+                        aspect.answers.forEach((writing) => {
                             totalAnswers++;
-                            if (answer.reason && answer.reason.trim() !== "") {
+                            if (
+                                writing.answer &&
+                                writing.answer.trim() !== ""
+                            ) {
                                 completedAnswers++;
                             }
                         });
@@ -125,6 +157,11 @@ export default {
             studentInfo,
             groupedAnswers,
             isLoading,
+            completionPercentage,
+            toggleCard,
+            isCardCollapsed,
+            toggleGroup,
+            isGroupCollapsed,
         };
     },
 };
@@ -155,7 +192,7 @@ export default {
                     </div>
                 </div>
 
-                <div>
+                <div v-else>
                     <Card class="shadow-lg mb-6">
                         <template #title>
                             <div
@@ -185,6 +222,27 @@ export default {
                                     >
                                         Reflective Assessment
                                     </h1>
+                                </div>
+
+                                <!-- Progress Bar -->
+                                <div class="flex flex-col items-center">
+                                    <div class="text-gray-700 font-medium mb-1">
+                                        Progres Pengisian
+                                    </div>
+                                    <div
+                                        class="w-full h-4 bg-gray-200 rounded-full"
+                                    >
+                                        <div
+                                            class="h-full bg-green-500 rounded-full transition-all duration-500"
+                                            :style="{
+                                                width:
+                                                    completionPercentage + '%',
+                                            }"
+                                        ></div>
+                                    </div>
+                                    <div class="text-sm text-gray-600 mt-1">
+                                        {{ completionPercentage }}% Selesai
+                                    </div>
                                 </div>
                             </div>
                         </template>
@@ -284,6 +342,235 @@ export default {
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Reflective Writings Section -->
+                        <div
+                            v-for="(group, groupIndex) in groupedAnswers"
+                            :key="groupIndex"
+                            class="mb-8"
+                        >
+                            <div class="bg-white rounded-lg p-4 shadow-sm">
+                                <!-- Group Header - Clickable -->
+                                <div
+                                    @click="toggleGroup(groupIndex)"
+                                    class="flex justify-between items-center cursor-pointer border-b pb-3 mb-4 hover:bg-blue-50 rounded-t-lg p-2"
+                                >
+                                    <h2 class="text-xl font-bold text-blue-700">
+                                        {{ group.type }}
+                                    </h2>
+                                    <div class="flex items-center">
+                                        <button
+                                            class="p-1 rounded-full hover:bg-blue-100"
+                                        >
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                class="h-6 w-6 text-blue-600 transition-transform duration-300"
+                                                :class="{
+                                                    'transform rotate-180':
+                                                        !isGroupCollapsed(
+                                                            groupIndex
+                                                        ),
+                                                }"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                stroke="currentColor"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M19 9l-7 7-7-7"
+                                                />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Group Content -->
+                                <div v-show="!isGroupCollapsed(groupIndex)">
+                                    <div
+                                        v-for="(
+                                            writing, writingIndex
+                                        ) in group.answers"
+                                        :key="writingIndex"
+                                        class="mb-6"
+                                    >
+                                        <div class="bg-gray-50 rounded-lg">
+                                            <!-- Reflective Writing Header - Clickable -->
+                                            <div
+                                                @click="
+                                                    toggleCard(
+                                                        groupIndex,
+                                                        writingIndex
+                                                    )
+                                                "
+                                                class="p-4 cursor-pointer flex justify-between items-center hover:bg-gray-100 rounded-t-lg"
+                                            >
+                                                <h3
+                                                    class="text-lg font-semibold text-gray-800"
+                                                >
+                                                    Reflective Writing
+                                                </h3>
+                                                <button
+                                                    class="p-1 rounded-full hover:bg-gray-200"
+                                                >
+                                                    <svg
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        class="h-5 w-5 text-gray-600 transition-transform duration-300"
+                                                        :class="{
+                                                            'transform rotate-180':
+                                                                !isCardCollapsed(
+                                                                    groupIndex,
+                                                                    writingIndex
+                                                                ),
+                                                        }"
+                                                        fill="none"
+                                                        viewBox="0 0 24 24"
+                                                        stroke="currentColor"
+                                                    >
+                                                        <path
+                                                            stroke-linecap="round"
+                                                            stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M19 9l-7 7-7-7"
+                                                        />
+                                                    </svg>
+                                                </button>
+                                            </div>
+
+                                            <!-- Reflective Writing Content - Collapsible -->
+                                            <div
+                                                v-show="
+                                                    !isCardCollapsed(
+                                                        groupIndex,
+                                                        writingIndex
+                                                    )
+                                                "
+                                                class="p-4 pt-0"
+                                            >
+                                                <!-- Points Section - Horizontal Table -->
+                                                <div class="mb-4">
+                                                    <h4
+                                                        class="font-medium text-blue-600 mb-2"
+                                                    >
+                                                        Points yang harus
+                                                        direfleksikan:
+                                                    </h4>
+
+                                                    <div
+                                                        class="overflow-x-auto"
+                                                    >
+                                                        <table
+                                                            class="min-w-full bg-white rounded-lg border border-gray-200"
+                                                        >
+                                                            <thead>
+                                                                <tr>
+                                                                    <th
+                                                                        v-for="(
+                                                                            _,
+                                                                            pointIndex
+                                                                        ) in writing.points"
+                                                                        :key="
+                                                                            pointIndex
+                                                                        "
+                                                                        class="py-2 px-3 border-b border-r text-left text-sm font-medium text-gray-700 uppercase tracking-wider"
+                                                                    >
+                                                                        Point
+                                                                        {{
+                                                                            pointIndex +
+                                                                            1
+                                                                        }}
+                                                                    </th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td
+                                                                        v-for="(
+                                                                            point,
+                                                                            pointIndex
+                                                                        ) in writing.points"
+                                                                        :key="
+                                                                            pointIndex
+                                                                        "
+                                                                        class="py-2 px-3 border-r text-sm text-gray-800 align-top"
+                                                                    >
+                                                                        {{
+                                                                            point
+                                                                        }}
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Answer Section -->
+                                                <div class="mt-4">
+                                                    <h4
+                                                        class="font-medium text-green-600 mb-2"
+                                                    >
+                                                        Jawaban Refleksi:
+                                                    </h4>
+                                                    <div
+                                                        class="bg-white p-4 rounded border border-gray-200"
+                                                    >
+                                                        <p
+                                                            v-if="
+                                                                writing.answer &&
+                                                                writing.answer.trim() !==
+                                                                    ''
+                                                            "
+                                                            class="text-gray-800"
+                                                        >
+                                                            {{ writing.answer }}
+                                                        </p>
+                                                        <p
+                                                            v-else
+                                                            class="text-gray-500 italic"
+                                                        >
+                                                            Belum ada jawaban
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Empty State -->
+                        <div
+                            v-if="groupedAnswers.length === 0"
+                            class="bg-white rounded-lg p-8 text-center"
+                        >
+                            <div class="flex flex-col items-center">
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    class="h-16 w-16 text-gray-400 mb-4"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                    />
+                                </svg>
+                                <h3
+                                    class="text-xl font-medium text-gray-700 mb-2"
+                                >
+                                    Belum Ada Data
+                                </h3>
+                                <p class="text-gray-500">
+                                    Saat ini belum ada reflective writing yang
+                                    tersedia untuk proyek ini.
+                                </p>
                             </div>
                         </div>
                     </Card>
