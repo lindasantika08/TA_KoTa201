@@ -530,6 +530,7 @@ export default {
             kelompok: this.kelompok,
           },
         });
+        console.log("Data dari API kelompok/answers:", response.data);
         this.userAnalysis = response.data;
       } catch (error) {
         this.error = "Gagal memuat data";

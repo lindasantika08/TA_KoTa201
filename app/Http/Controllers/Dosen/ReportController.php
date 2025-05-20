@@ -278,7 +278,7 @@ class ReportController extends Controller
                     ->with('typeCriteria')
                     ->get();
 
-                $selfAspekKriteriaAnalysis = $this->analyzeAssessments($selfAssessments, $mahasiswaId, 'self', $project->id);
+                $selfAspekKriteriaAnalysis = $this->analyzeAssessments($selfAssessments, $mahasiswaId, 'self', $project->id, $group->id);
 
                 // Peer Assessments
                 $peerAssessments = Assessment::where('batch_year', $tahunAjaran)
@@ -287,7 +287,7 @@ class ReportController extends Controller
                     ->with('typeCriteria')
                     ->get();
 
-                $peerAspekKriteriaAnalysis = $this->analyzeAssessments($peerAssessments, $mahasiswaId, 'peer', $project->id);
+                $peerAspekKriteriaAnalysis = $this->analyzeAssessments($peerAssessments, $mahasiswaId, 'peer', $project->id, $group->id);
 
                 // Get all peer evaluations for this mahasiswa
                 $peerEvaluations = AnswersPeer::select(
@@ -405,17 +405,19 @@ class ReportController extends Controller
         }
     }
 
-    private function analyzeAssessments($assessments, $mahasiswaId, $assessmentType, $projectId)
+    private function analyzeAssessments($assessments, $mahasiswaId, $assessmentType, $projectId, $groupId)
     {
         if ($assessments->isEmpty()) {
             return collect([]);
         }
+        Log::info("Analyzing assessments for mahasiswa: {$mahasiswaId}, type: {$assessmentType}, project: {$projectId}, group: {$groupId}");
 
         return $assessments->groupBy(function ($assessment) {
             return $assessment->typeCriteria->aspect . '_' . $assessment->typeCriteria->criteria;
-        })->map(function ($groupAssessments) use ($mahasiswaId, $assessmentType) {
+        })->map(function ($groupAssessments) use ($mahasiswaId, $assessmentType, $projectId, $groupId) {
             $questionIds = $groupAssessments->pluck('id');
-
+            $typeCriteriaId = $groupAssessments->first()->typeCriteria->id;
+            Log::info("Processing typeCriteria ID: {$typeCriteriaId}");
             $answers = $assessmentType === 'self'
                 ? Answers::whereIn('question_id', $questionIds)
                 ->where('mahasiswa_id', $mahasiswaId)
@@ -430,13 +432,46 @@ class ReportController extends Controller
                 'total_score' => $answers->avg('score'),
                 'total_score_SLA' => $answers->avg('score_SLA'),
                 'total_answers' => $answers->count(),
-                'questions' => $groupAssessments->map(function ($assessment) use ($answers) {
+                'questions' => $groupAssessments->map(function ($assessment) use ($answers, $mahasiswaId, $assessmentType, $projectId, $groupId, $typeCriteriaId) {
                     $relatedAnswer = $answers->where('question_id', $assessment->id)->first();
+                    // Ambil final_score dari tabel Report berdasarkan question_id dan typeCriteria_id
+                    Log::info("Query Report Parameters", [
+                        'project_id' => $projectId,
+                        'group_id' => $groupId,
+                        'mahasiswa_id' => $mahasiswaId,
+                        'typeCriteria_id' => $typeCriteriaId,
+                        'question_id' => $assessment->id,
+                        'assessment_type' => $assessmentType
+                    ]);
+                    $report = Report::where('project_id', $projectId)
+                        ->where('group_id', $groupId)
+                        ->where('mahasiswa_id', $mahasiswaId)
+                        ->where('typeCriteria_id', $typeCriteriaId)
+                        ->where('question_id', $assessment->id);
+                
+                    if ($assessmentType === 'self') {
+                        $report = $report->whereNull('peer_id')->first();
+                    } else {
+                        // Untuk peer assessment, mungkin perlu disesuaikan berdasarkan struktur data
+                        $report = $report->whereNotNull('peer_id')->first();
+                    }
+                    // Logging untuk debug
+                    Log::info("Report Query Result", [
+                        'mahasiswa_id' => $mahasiswaId,
+                        'question_id' => $assessment->id,
+                        'typeCriteria_id' => $typeCriteriaId,
+                        'assessment_type' => $assessmentType,
+                        'final_score_self' => $report ? $report->final_score_self : 'NULL',
+                        'final_score_peer' => $report ? $report->final_score_peer : 'NULL',
+                        'report_exists' => $report !== null
+                    ]);
                     return [
                         'question_id' => $assessment->id,
                         'pertanyaan' => $assessment->question,
                         'score' => $relatedAnswer ? $relatedAnswer->score : null,
                         'score_SLA' => $relatedAnswer ? $relatedAnswer->score_SLA : null,
+                        'nilai_akhir_self' => $assessmentType === 'self' && $report ? $report->final_score_self : null,
+                        'nilai_akhir_peer' => $assessmentType === 'peer' && $report ? $report->final_score_peer : null,
                         'answer' => $relatedAnswer ? $relatedAnswer->answer : null
                     ];
                 })
