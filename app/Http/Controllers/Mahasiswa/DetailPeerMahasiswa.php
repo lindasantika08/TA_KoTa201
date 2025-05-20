@@ -50,7 +50,7 @@ class DetailPeerMahasiswa extends Controller
             ], 404);
         }
 
-        $answers = AnswersPeer::with(['mahasiswa', 'peer', 'question'])
+        $answers = AnswersPeer::with(['mahasiswa', 'peer', 'question.typeCriteria'])
             ->where('mahasiswa_id', $mahasiswa->id)
             ->whereHas('question', function ($query) use ($group, $assessment_order) {
                 $query->where('project_id', $group->project_id)

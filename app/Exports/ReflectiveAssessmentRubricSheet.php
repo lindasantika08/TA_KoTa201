@@ -93,6 +93,6 @@ class ReflectiveAssessmentRubricSheet implements FromCollection, WithHeadings, W
 
     public function title(): string
     {
-        return 'Assessment Rubric';
+        return 'Reflective Rubric';
     }
 }

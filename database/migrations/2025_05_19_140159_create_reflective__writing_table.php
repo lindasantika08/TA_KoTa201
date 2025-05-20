@@ -11,14 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('reflective_assessment', function (Blueprint $table) {
+        Schema::create('reflective_writing', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('batch_year');
             $table->foreignUuid('project_id')->constrained('project');
-            $table->integer('reflective_assessment_order');
+            $table->integer('reflective_writing_order');
             $table->string('type', 30);
-            $table->string('question', 255);
-            $table->foreignUuid('criteria_id')->constrained('reflective_assessment_rubric');
+            $table->string('point_1', 255)->nullable();
+            $table->string('point_2', 255)->nullable();
+            $table->string('point_3', 255)->nullable();
+            $table->string('point_4', 255)->nullable();
+            $table->string('point_5', 255)->nullable();
             $table->boolean('is_published')->default(0);
             $table->date('end_date')->nullable();
             $table->timestamps();
@@ -30,6 +33,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('reflective_assessment');
+        Schema::dropIfExists('reflective_writing');
     }
 };

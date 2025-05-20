@@ -29,7 +29,7 @@ export default {
                 { key: "no", label: "No" },
                 { key: "batch_year", label: "Batch Year" },
                 { key: "project_name", label: "Project Name" },
-                { key: "reflective_assessment_order", label: "Order" },
+                { key: "order", label: "Order" }, // Generic key for conditional rendering
                 { key: "status", label: "Status" },
                 { key: "date", label: "Created Date" },
                 { key: "publish", label: "Publish" },
@@ -37,86 +37,78 @@ export default {
             ],
             loading: false,
             items: [],
+            listReflectiveType: "Reflective Assessment", // Default reflective type for list view
         };
     },
     setup() {
         const projects = ref([]);
         const inputMode = ref("export");
-        const selectedActiveProject = ref(null);
-        const selectedInactiveProject = ref(null);
+        const selectedProject = ref(null);
+        const selectedReflectiveType = ref("Reflective Assessment");
 
         const defaultEndDate = new Date();
         defaultEndDate.setDate(defaultEndDate.getDate() + 7);
         const endDate = ref(defaultEndDate.toISOString().split("T")[0]);
 
-        const activeProjects = computed(() => {
-            return projects.value.filter(
-                (project) => project.status === "Active"
-            );
+        const allProjects = computed(() => {
+            return projects.value.map((project) => ({
+                ...project,
+                display: `${project.batch_year} - ${project.project_name} (${project.status})`,
+            }));
         });
 
-        const inactiveProjects = computed(() => {
-            return projects.value.filter(
-                (project) => project.status !== "Active"
-            );
-        });
+        const reflectiveTypes = [
+            { value: "Reflective Assessment", label: "Reflective Assessment" },
+            { value: "Reflective Writing", label: "Reflective Writing" },
+        ];
 
-        const downloadActiveTemplate = async () => {
-            if (selectedActiveProject.value) {
-                await downloadTemplate(selectedActiveProject.value, "Active");
+        const downloadTemplate = async () => {
+            if (selectedProject.value) {
+                try {
+                    const token = localStorage.getItem("auth_token");
+                    const response = await axios.get(
+                        "/sispa/api/export-reflective-assessment",
+                        {
+                            params: {
+                                batch_year: selectedProject.value.batch_year,
+                                project_name:
+                                    selectedProject.value.project_name,
+                                type: selectedProject.value.status, // Active or NonActive
+                                reflective_type: selectedReflectiveType.value,
+                            },
+                            headers: {
+                                Authorization: `Bearer ${token}`,
+                                Accept: "application/json",
+                            },
+                            responseType: "blob",
+                        }
+                    );
+
+                    const blob = new Blob([response.data], {
+                        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    });
+
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement("a");
+                    link.href = url;
+                    link.setAttribute(
+                        "download",
+                        `${selectedReflectiveType.value
+                            .toLowerCase()
+                            .replace(" ", "-")}-${
+                            selectedProject.value.status
+                        }.xlsx`
+                    );
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                } catch (error) {
+                    console.error("Download error:", error);
+                    alert("There was an error downloading the Excel file.");
+                }
             } else {
-                alert("Please select an active project.");
-            }
-        };
-
-        const downloadInactiveTemplate = async () => {
-            if (selectedInactiveProject.value) {
-                await downloadTemplate(
-                    selectedInactiveProject.value,
-                    "NonActive"
-                );
-            } else {
-                alert("Please select a non-active project.");
-            }
-        };
-
-        const downloadTemplate = async (project, type = "template") => {
-            try {
-                const token = localStorage.getItem("auth_token");
-                const response = await axios.get(
-                    "/sispa/api/export-reflective-assessment",
-                    {
-                        params: {
-                            batch_year: project.batch_year,
-                            project_name: project.project_name,
-                            type: type, // Only affects the filename
-                        },
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                            Accept: "application/json",
-                        },
-                        responseType: "blob",
-                    }
-                );
-
-                const blob = new Blob([response.data], {
-                    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                });
-
-                const url = window.URL.createObjectURL(blob);
-                const link = document.createElement("a");
-                link.href = url;
-                link.setAttribute(
-                    "download",
-                    `reflective-assessment-${type}.xlsx`
-                );
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                window.URL.revokeObjectURL(url);
-            } catch (error) {
-                console.error("Download error:", error);
-                alert("There was an error downloading the Excel file.");
+                alert("Please select a project.");
             }
         };
 
@@ -163,12 +155,11 @@ export default {
 
         return {
             projects,
-            activeProjects,
-            inactiveProjects,
-            selectedActiveProject,
-            selectedInactiveProject,
-            downloadActiveTemplate,
-            downloadInactiveTemplate,
+            allProjects,
+            selectedProject,
+            selectedReflectiveType,
+            reflectiveTypes,
+            downloadTemplate,
             handleFileUpload,
             inputMode,
             endDate,
@@ -176,40 +167,74 @@ export default {
     },
     methods: {
         handleDetail(item) {
-            // With axios.get, parameters should be in the params property of the config object
-            axios
-                .get("/sispa/dosen/reflectiveAssessment/detail", {
-                    params: {
-                        batch_year: item.batch_year,
-                        project_name: item.project_name,
-                        reflective_assessment_order:
-                            item.reflective_assessment_order,
-                    },
-                })
-                .then((response) => {
-                    window.location.href = response.request.responseURL;
-                })
-                .catch((error) => {
-                    console.error(
-                        "Error loading reflective assessment details:",
-                        error
-                    );
-                });
+            // Handle detail differently based on reflective type
+            if (this.listReflectiveType === "Reflective Assessment") {
+                axios
+                    .get("/sispa/dosen/reflectiveAssessment/detail", {
+                        params: {
+                            batch_year: item.batch_year,
+                            project_name: item.project_name,
+                            reflective_assessment_order: item.order_value,
+                        },
+                    })
+                    .then((response) => {
+                        window.location.href = response.request.responseURL;
+                    })
+                    .catch((error) => {
+                        console.error(
+                            "Error loading reflective assessment details:",
+                            error
+                        );
+                    });
+            } else {
+                // For Reflective Writing
+                axios
+                    .get("/sispa/dosen/reflectiveWriting/detail", {
+                        params: {
+                            batch_year: item.batch_year,
+                            project_name: item.project_name,
+                            reflective_writing_order: item.order_value,
+                        },
+                    })
+                    .then((response) => {
+                        window.location.href = response.request.responseURL;
+                    })
+                    .catch((error) => {
+                        console.error(
+                            "Error loading reflective writing details:",
+                            error
+                        );
+                    });
+            }
         },
 
         handleListAnswer(item) {
-            router.get(
-                "/sispa/dosen/reflectiveAssessment/detail-answer",
-                {
-                    batch_year: item.batch_year,
-                    project_name: item.project_name,
-                    reflective_assessment_order:
-                        item.reflective_assessment_order,
-                },
-                {
-                    preserveState: true,
-                }
-            );
+            if (this.listReflectiveType === "Reflective Assessment") {
+                router.get(
+                    "/sispa/dosen/reflectiveAssessment/detail-answer",
+                    {
+                        batch_year: item.batch_year,
+                        project_name: item.project_name,
+                        reflective_assessment_order: item.order_value,
+                    },
+                    {
+                        preserveState: true,
+                    }
+                );
+            } else {
+                // For Reflective Writing
+                router.get(
+                    "/sispa/dosen/reflectiveWriting/detail-answer",
+                    {
+                        batch_year: item.batch_year,
+                        project_name: item.project_name,
+                        reflective_writing_order: item.order_value,
+                    },
+                    {
+                        preserveState: true,
+                    }
+                );
+            }
         },
 
         handleTogglePublish(item) {
@@ -222,15 +247,29 @@ export default {
                 return i;
             });
 
+            // Different API endpoints based on the type
+            const endpoint =
+                this.listReflectiveType === "Reflective Assessment"
+                    ? "/sispa/api/toggle-publish-reflective-assessment"
+                    : "/sispa/api/toggle-publish-reflective-writing";
+
+            // Different payload based on the type
+            const payload = {
+                project_id: item.id,
+                batch_year: item.batch_year,
+                project_name: item.project_name,
+                is_published: newStatus,
+            };
+
+            // Add the appropriate order field based on type
+            if (this.listReflectiveType === "Reflective Assessment") {
+                payload.reflective_assessment_order = item.order_value;
+            } else {
+                payload.reflective_writing_order = item.order_value;
+            }
+
             axios
-                .post("/sispa/api/toggle-publish-reflective-assessment", {
-                    project_id: item.id,
-                    batch_year: item.batch_year,
-                    project_name: item.project_name,
-                    reflective_assessment_order:
-                        item.reflective_assessment_order,
-                    is_published: newStatus,
-                })
+                .post(endpoint, payload)
                 .then((response) => {
                     // Success handling
                 })
@@ -253,25 +292,43 @@ export default {
         },
 
         updateItems(data) {
-            this.items = data.map((item, index) => ({
-                no: index + 1,
-                id: item.id,
-                batch_year: item.batch_year,
-                project_name: item.project_name,
-                reflective_assessment_order: item.reflective_assessment_order,
-                status: item.status,
-                uniqueKey:
-                    item.unique_key ||
-                    `${item.id}-${item.reflective_assessment_order}`,
-                is_published: Boolean(item.is_published),
-                date: dayjs(item.created_at).format("DD MMMM YYYY"),
-            }));
+            this.items = data.map((item, index) => {
+                // Determine which order field to use based on the reflective type
+                const orderField =
+                    this.listReflectiveType === "Reflective Assessment"
+                        ? item.reflective_assessment_order
+                        : item.reflective_writing_order;
+
+                return {
+                    no: index + 1,
+                    id: item.id,
+                    batch_year: item.batch_year,
+                    project_name: item.project_name,
+                    order: orderField, // Display value for table
+                    order_value: orderField, // Actual value to use in API calls
+                    status: item.status,
+                    uniqueKey: item.unique_key || `${item.id}-${orderField}`,
+                    is_published: Boolean(item.is_published),
+                    date: dayjs(item.created_at).format("DD MMMM YYYY"),
+                };
+            });
         },
 
         fetchData() {
             this.loading = true;
+
+            // Different API endpoints based on type
+            const endpoint =
+                this.listReflectiveType === "Reflective Assessment"
+                    ? "/sispa/api/reflective-assessment-list"
+                    : "/sispa/api/reflective-writing-list";
+
             axios
-                .get("/sispa/api/reflective-assessment-list")
+                .get(endpoint, {
+                    params: {
+                        reflective_type: this.listReflectiveType,
+                    },
+                })
                 .then((response) => {
                     this.updateItems(response.data);
                 })
@@ -294,6 +351,11 @@ export default {
     watch: {
         inputMode(newValue) {
             if (newValue === "List") {
+                this.fetchData();
+            }
+        },
+        listReflectiveType() {
+            if (this.inputMode === "List") {
                 this.fetchData();
             }
         },
@@ -368,87 +430,83 @@ export default {
                         </div>
 
                         <div v-if="inputMode === 'export'">
-                            <div class="grid grid-cols-2 gap-8">
-                                <div class="border-r pr-4">
+                            <div class="space-y-4">
+                                <!-- Combined Projects Dropdown -->
+                                <div>
                                     <label
                                         class="block text-sm font-medium text-gray-700 mb-2"
                                     >
-                                        Proyek Aktif
+                                        Pilih Proyek
                                     </label>
                                     <select
-                                        v-model="selectedActiveProject"
+                                        v-model="selectedProject"
                                         class="mt-2 p-2 border border-gray-300 rounded w-full"
                                         required
                                     >
                                         <option value="" disabled selected>
-                                            Pilih Proyek Aktif
+                                            Pilih Proyek
                                         </option>
                                         <option
-                                            v-for="project in activeProjects"
-                                            :key="`active-${project.batch_year}-${project.project_name}`"
+                                            v-for="project in allProjects"
+                                            :key="`${project.batch_year}-${project.project_name}`"
                                             :value="project"
                                         >
-                                            {{ project.batch_year }} -
-                                            {{ project.project_name }}
+                                            {{ project.display }}
                                         </option>
                                     </select>
-                                    <div class="mt-4">
-                                        <button
-                                            @click="downloadActiveTemplate"
-                                            class="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                            :disabled="!selectedActiveProject"
+                                </div>
+
+                                <!-- Type Reflective Radio Buttons -->
+                                <div>
+                                    <label
+                                        class="block text-sm font-medium text-gray-700 mb-2"
+                                    >
+                                        Type Reflective
+                                    </label>
+                                    <div class="flex w-full mt-2">
+                                        <label
+                                            v-for="type in reflectiveTypes"
+                                            :key="type.value"
+                                            class="flex-1 text-center py-2 border cursor-pointer"
+                                            :class="{
+                                                'bg-blue-500 text-white':
+                                                    selectedReflectiveType ===
+                                                    type.value,
+                                                'bg-white text-gray-700 border-gray-300':
+                                                    selectedReflectiveType !==
+                                                    type.value,
+                                            }"
                                         >
-                                            <font-awesome-icon
-                                                :icon="['fas', 'file-excel']"
-                                                class="mr-2"
+                                            <input
+                                                type="radio"
+                                                v-model="selectedReflectiveType"
+                                                :value="type.value"
+                                                class="hidden"
                                             />
-                                            Download Template Aktif
-                                        </button>
+                                            {{ type.label }}
+                                        </label>
                                     </div>
                                 </div>
 
-                                <div class="pl-4">
-                                    <label
-                                        class="block text-sm font-medium text-gray-700 mb-2"
+                                <!-- Download Button -->
+                                <div class="mt-6">
+                                    <button
+                                        @click="downloadTemplate"
+                                        class="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        :disabled="!selectedProject"
                                     >
-                                        Proyek Tidak Aktif
-                                    </label>
-                                    <select
-                                        v-model="selectedInactiveProject"
-                                        class="mt-2 p-2 border border-gray-300 rounded w-full"
-                                        required
-                                    >
-                                        <option value="" disabled selected>
-                                            Pilih Proyek Tidak Aktif
-                                        </option>
-                                        <option
-                                            v-for="project in inactiveProjects"
-                                            :key="`inactive-${project.batch_year}-${project.project_name}`"
-                                            :value="project"
-                                        >
-                                            {{ project.batch_year }} -
-                                            {{ project.project_name }}
-                                        </option>
-                                    </select>
-                                    <div class="mt-4">
-                                        <button
-                                            @click="downloadInactiveTemplate"
-                                            class="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                            :disabled="!selectedInactiveProject"
-                                        >
-                                            <font-awesome-icon
-                                                :icon="['fas', 'file-excel']"
-                                                class="mr-2"
-                                            />
-                                            Download Template Tidak Aktif
-                                        </button>
-                                    </div>
+                                        <font-awesome-icon
+                                            :icon="['fas', 'file-excel']"
+                                            class="mr-2"
+                                        />
+                                        Download Template
+                                    </button>
                                 </div>
                             </div>
                         </div>
 
                         <div v-if="inputMode === 'import'" class="mt-8">
-                            <!-- New End Date Input -->
+                            <!-- End Date Input -->
                             <div class="mb-4">
                                 <label
                                     for="end-date"
@@ -482,6 +540,38 @@ export default {
                         </div>
 
                         <div v-if="inputMode === 'List'" class="mt-8">
+                            <!-- Type Reflective Radio Buttons for List mode -->
+                            <div class="mb-4">
+                                <label
+                                    class="block text-sm font-medium text-gray-700 mb-2"
+                                >
+                                    Type Reflective
+                                </label>
+                                <div class="flex w-full mt-2">
+                                    <label
+                                        v-for="type in reflectiveTypes"
+                                        :key="type.value"
+                                        class="flex-1 text-center py-2 border cursor-pointer"
+                                        :class="{
+                                            'bg-blue-500 text-white':
+                                                listReflectiveType ===
+                                                type.value,
+                                            'bg-white text-gray-700 border-gray-300':
+                                                listReflectiveType !==
+                                                type.value,
+                                        }"
+                                    >
+                                        <input
+                                            type="radio"
+                                            v-model="listReflectiveType"
+                                            :value="type.value"
+                                            class="hidden"
+                                        />
+                                        {{ type.label }}
+                                    </label>
+                                </div>
+                            </div>
+
                             <div
                                 v-if="loading"
                                 class="text-center text-gray-500 py-6"
@@ -492,7 +582,7 @@ export default {
                                 v-else-if="items.length === 0"
                                 class="text-center text-gray-500 py-6"
                             >
-                                No reflective assessment available
+                                No {{ listReflectiveType }} available
                             </div>
                             <div v-else>
                                 <DataTable

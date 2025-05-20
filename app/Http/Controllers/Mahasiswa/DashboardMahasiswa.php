@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Mahasiswa;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Models\User;
 use App\Models\Group;
 use App\Models\Project;
 use App\Models\Answers;
@@ -12,7 +13,6 @@ use App\Models\AnswersPeer;
 use App\Models\Report;
 use App\Models\Assessment;
 use App\Models\Mahasiswa;
-use App\Models\User;
 use App\Models\Feedback;
 use App\Models\feedback_ai;
 use Illuminate\Support\Facades\Auth;
@@ -55,7 +55,9 @@ class DashboardMahasiswa extends Controller
             ->map(function ($group) {
                 return [
                     'project_name' => $group->project->project_name,
-                    'batch_year' => $group->project->batch_year
+                    'batch_year' => $group->project->batch_year,
+                    'project_id' => $group->project->id, 
+                    'group_id' => $group->id 
                 ];
             });
 
@@ -290,13 +292,11 @@ class DashboardMahasiswa extends Controller
     {
         $batchYear = $request->input('batch_year');
         $projectId = $request->input('project_id');
-        $kelompok = $request->input('kelompok');
         $userId = Auth::id();
 
         Log::info('Request parameters:', [
             'batch_year' => $batchYear,
             'project_id' => $projectId,
-            'kelompok' => $kelompok,
             'user_id' => $userId
         ]);
 
@@ -486,8 +486,8 @@ class DashboardMahasiswa extends Controller
         Log::info('Analysis result count:', ['count' => $result->count()]);
 
         return $result;
-    }  
-    
+    }    
+
     public function getFeedback(Request $request)
     {
         try {
@@ -642,5 +642,4 @@ class DashboardMahasiswa extends Controller
             ], 500);
         }
     }
-    
-    }
+}

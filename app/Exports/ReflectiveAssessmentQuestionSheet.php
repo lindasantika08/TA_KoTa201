@@ -17,12 +17,14 @@ class ReflectiveAssessmentQuestionSheet implements FromCollection, WithHeadings,
     protected $batchYear;
     protected $projectName;
     protected $projectId;
+    protected $reflectiveType;
 
-    public function __construct($batchYear, $projectName, $projectId, $endDate = null)
+    public function __construct($batchYear, $projectName, $projectId, $reflectiveType)
     {
         $this->batchYear = $batchYear;
         $this->projectName = $projectName;
         $this->projectId = $projectId;
+        $this->reflectiveType = $reflectiveType;
     }
 
     public function collection()
@@ -34,6 +36,7 @@ class ReflectiveAssessmentQuestionSheet implements FromCollection, WithHeadings,
                 'no' => $i,
                 'batch_year' => $this->batchYear,
                 'project_name' => $this->projectName,
+                'reflective_type' => $this->reflectiveType,
                 'question' => '',
                 'criteria_id' => '',
             ];
@@ -48,6 +51,7 @@ class ReflectiveAssessmentQuestionSheet implements FromCollection, WithHeadings,
             'No',
             'Batch Year',
             'Project Name',
+            'Reflective Type',
             'Question',
             'Criteria ID'
         ];
@@ -60,17 +64,17 @@ class ReflectiveAssessmentQuestionSheet implements FromCollection, WithHeadings,
                 $worksheet = $event->sheet->getDelegate();
                 $lastRow = $worksheet->getHighestRow();
 
-                // Format header
-                $worksheet->getStyle('A1:E1')
+                // Format header - Updated from E to F to account for new column
+                $worksheet->getStyle('A1:F1')
                     ->getFont()
                     ->setBold(true);
 
-                $worksheet->getStyle('A1:E1')
+                $worksheet->getStyle('A1:F1')
                     ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-                // Format data
-                $worksheet->getStyle('A1:E' . $lastRow)
+                // Format data - Updated from E to F to account for new column
+                $worksheet->getStyle('A1:F' . $lastRow)
                     ->getBorders()
                     ->getAllBorders()
                     ->setBorderStyle('thin');
@@ -79,8 +83,8 @@ class ReflectiveAssessmentQuestionSheet implements FromCollection, WithHeadings,
                     ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-                // Auto-size columns
-                foreach (range('A', 'E') as $col) {
+                // Auto-size columns - Updated from E to F to account for new column
+                foreach (range('A', 'F') as $col) {
                     $worksheet->getColumnDimension($col)->setAutoSize(true);
                 }
             }
@@ -89,6 +93,7 @@ class ReflectiveAssessmentQuestionSheet implements FromCollection, WithHeadings,
 
     public function title(): string
     {
-        return 'Reflective Questions';
+        // You can customize the sheet title based on reflective type if needed
+        return $this->reflectiveType;
     }
 }
