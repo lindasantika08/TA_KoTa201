@@ -4,6 +4,8 @@ import NavbarAdmin from "@/Components/NavbarAdmin.vue";
 import Card from "@/Components/Card.vue";
 import Breadcrumb from "@/Components/Breadcrumb.vue";
 import DataTable from "@/Components/DataTable.vue";
+import Swal from "sweetalert2";
+
 
 import axios from "axios";
 
@@ -91,51 +93,78 @@ export default {
     },
     async saveMajor() {
       if (!this.newMajor.trim()) {
-        alert("Major Name can't be empty!");
-        return;
+      Swal.fire({
+        icon: "warning",
+        title: "Validation Error",
+        text: "Major Name can't be empty!",
+      });
+      return;
       }
       this.isLoading = true;
       try {
-        const response = await axios.post("/sispa/api/add-major", {
-          major_name: this.newMajor,
-        });
+      const response = await axios.post("/sispa/api/add-major", {
+        major_name: this.newMajor,
+      });
 
-        if (response.status === 201) {
-          alert("Major added successfully!");
-          this.showModal = false;
-          this.newMajor = "";
-          await this.fetchMajors();
-        }
+      if (response.status === 201) {
+        Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: "Major added successfully!",
+        });
+        this.showModal = false;
+        this.newMajor = "";
+        await this.fetchMajors();
+      }
       } catch (error) {
-        console.error("Error Adding Major: ", error);
-        alert("Failed to add Major!");
+      console.error("Error Adding Major: ", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to add Major!",
+      });
       } finally {
-        this.isLoading = false;
+      this.isLoading = false;
       }
     },
     async deleteMajor(majorName) {
-      if (
-        !confirm(
-          `Are you sure you want to delete "${majorName}"? This action cannot be undone.`
-        )
-      ) {
-        return;
+      const result = await Swal.fire({
+      title: `Are you sure?`,
+      text: `You are about to delete "${majorName}". This action cannot be undone.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
+      });
+
+      if (!result.isConfirmed) {
+      return;
       }
+
       this.isLoading = true;
       try {
-        const response = await axios.post("/sispa/api/delete-major", {
-          major_name: majorName,
-        });
+      const response = await axios.post("/sispa/api/delete-major", {
+        major_name: majorName,
+      });
 
-        if (response.status === 201) {
-          alert("Major deleted successfully!");
-          await this.fetchMajors();
-        }
+      if (response.status === 201) {
+        Swal.fire({
+        icon: "success",
+        title: "Deleted!",
+        text: "Major deleted successfully!",
+        });
+        await this.fetchMajors();
+      }
       } catch (error) {
-        console.error("Error Deleting Major: ", error);
-        alert("Failed to delete major!");
+      console.error("Error Deleting Major: ", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to delete major!",
+      });
       } finally {
-        this.isLoading = false;
+      this.isLoading = false;
       }
     },
     async EditMajor(majorName) {
@@ -145,26 +174,38 @@ export default {
     },
     async updateMajor() {
       if (!this.editedMajor.trim()) {
-        alert("Major Name can't be empty!");
-        return;
+      Swal.fire({
+        icon: "warning",
+        title: "Validation Error",
+        text: "Major Name can't be empty!",
+      });
+      return;
       }
       this.isLoading = true;
       try {
-        const response = await axios.post("/sispa/api/edit-major", {
-          old_major_name: this.originalMajor,
-          new_major_name: this.editedMajor,
-        });
+      const response = await axios.post("/sispa/api/edit-major", {
+        old_major_name: this.originalMajor,
+        new_major_name: this.editedMajor,
+      });
 
-        if (response.status === 200) {
-          alert("Major updated successfully!");
-          this.showModalEdit = false;
-          await this.fetchMajors();
-        }
+      if (response.status === 200) {
+        Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: "Major updated successfully!",
+        });
+        this.showModalEdit = false;
+        await this.fetchMajors();
+      }
       } catch (error) {
-        console.error("Error Editing Major: ", error);
-        alert("Failed to update Major!");
+      console.error("Error Editing Major: ", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to update Major!",
+      });
       } finally {
-        this.isLoading = false;
+      this.isLoading = false;
       }
     },
     async clearSearch() {

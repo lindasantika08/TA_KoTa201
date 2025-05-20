@@ -5,6 +5,9 @@ import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
 import Dropdown from "@/Components/Dropdown.vue";
 import Breadcrumb from "@/Components/Breadcrumb.vue";
+import Swal from "sweetalert2";
+import DataTable from "@/Components/DataTable.vue";
+
 
 export default {
     name: "KelolaProyek",
@@ -14,6 +17,7 @@ export default {
         Card,
         Dropdown,
         Breadcrumb,
+        DataTable
     },
     data() {
         return {
@@ -21,7 +25,7 @@ export default {
                 { text: "Manage Project", href: "/sispa/dosen/kelola-proyek" },
             ],
             isModalOpen: false,
-            isEditModalOpen: false, // Add this line to fix the edit modal
+            isEditModalOpen: false,
             newProject: {
                 semester: "",
                 batch_year: "",
@@ -87,12 +91,27 @@ export default {
                         },
                     }
                 );
-                alert("Proyek berhasil ditambahkan!");
+                
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: 'Proyek berhasil ditambahkan!',
+                    confirmButtonColor: '#3085d6'
+                });
+                
                 this.closeModal();
                 this.getProjects();
             } catch (error) {
                 console.error("Error adding project:", error);
-                alert("Terjadi kesalahan saat menambahkan proyek.");
+                
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal!',
+                    text: 'Terjadi kesalahan saat menambahkan proyek.',
+                    confirmButtonColor: '#3085d6'
+                });
             }
         },
         async updateProject() {
@@ -107,12 +126,26 @@ export default {
                     }
                 );
                 
-                alert("Proyek berhasil diperbarui!");
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: 'Proyek berhasil diperbarui!',
+                    confirmButtonColor: '#3085d6'
+                });
+                
                 this.closeEditModal();
                 this.getProjects();
             } catch (error) {
                 console.error("Error updating project:", error);
-                alert("Terjadi kesalahan saat memperbarui proyek.");
+                
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal!',
+                    text: 'Terjadi kesalahan saat memperbarui proyek.',
+                    confirmButtonColor: '#3085d6'
+                });
             }
         },
         async deleteProject(projectId) {
@@ -125,18 +158,44 @@ export default {
                         project_id: projectId
                     }
                 });
-                alert("Proyek berhasil dihapus!");
+                
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: 'Proyek berhasil dihapus!',
+                    confirmButtonColor: '#3085d6'
+                });
+                
                 this.getProjects();
             } catch (error) {
                 console.error("Error deleting project:", error);
-                alert("Terjadi kesalahan saat menghapus proyek.");
+                
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal!',
+                    text: 'Terjadi kesalahan saat menghapus proyek.',
+                    confirmButtonColor: '#3085d6'
+                });
             }
         },
         confirmDelete(item) {
-            const confirmDel = window.confirm(`Apakah Anda yakin ingin menghapus proyek "${item.project_name}"?`);
-            if (confirmDel) {
-                this.deleteProject(item.id);
-            }
+            // Replace confirm with SweetAlert2
+            Swal.fire({
+                title: 'Apakah Anda yakin?',
+                text: `Anda akan menghapus proyek "${item.project_name}"`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Ya, hapus!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    this.deleteProject(item.id);
+                }
+            });
         },
 
         // Fetch and Filter Methods
@@ -158,8 +217,15 @@ export default {
                 ];
             } catch (error) {
                 console.error("Error fetching projects:", error.response ? error.response : error);
-                alert("Terjadi kesalahan saat mengambil data proyek: " +
-                    (error.response?.data?.message || error.message));
+                
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal!',
+                    text: 'Terjadi kesalahan saat mengambil data proyek: ' + 
+                        (error.response?.data?.message || error.message),
+                    confirmButtonColor: '#3085d6'
+                });
             }
         },
         async getProdis() {
@@ -172,7 +238,14 @@ export default {
                 this.prodis = response.data;
             } catch (error) {
                 console.error("Error fetching prodis:", error);
-                alert("Terjadi kesalahan saat mengambil data prodi.");
+                
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal!',
+                    text: 'Terjadi kesalahan saat mengambil data prodi.',
+                    confirmButtonColor: '#3085d6'
+                });
             }
         },
         filterProjects() {
@@ -199,20 +272,43 @@ export default {
                     }
                 );
                 project.status = newStatus;
-                alert("Status proyek berhasil diperbarui!");
+                
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: 'Status proyek berhasil diperbarui!',
+                    confirmButtonColor: '#3085d6'
+                });
+                
             } catch (error) {
                 console.error("Error changing project status:", error);
-                alert("Terjadi kesalahan saat mengubah status proyek.");
+                
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal!',
+                    text: 'Terjadi kesalahan saat mengubah status proyek.',
+                    confirmButtonColor: '#3085d6'
+                });
             }
         },
         confirmStatusChange(project) {
-            const confirmChange = window.confirm(
-                `Apakah Anda yakin ingin mengubah status proyek "${project.project_name}" menjadi ${project.status === "Active" ? "NonActive" : "Active"}?`
-            );
-
-            if (confirmChange) {
-                this.changeProjectStatus(project);
-            }
+            // Replace confirm with SweetAlert2
+            Swal.fire({
+                title: 'Apakah Anda yakin?',
+                text: `Anda akan mengubah status proyek "${project.project_name}" menjadi ${project.status === "Active" ? "NonActive" : "Active"}`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Ya, ubah!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    this.changeProjectStatus(project);
+                }
+            });
         },
     },
 };
@@ -246,7 +342,7 @@ export default {
                         <div>
                             <table class="min-w-full border-collapse table-auto">
                                 <thead>
-                                    <tr class="bg-gray-100">
+                                    <tr class="bg-white-100">
                                         <th class="px-4 py-2 border">Nama Proyek</th>
                                         <th class="px-4 py-2 border">Semester</th>
                                         <th class="px-4 py-2 border">Tahun Ajaran</th>

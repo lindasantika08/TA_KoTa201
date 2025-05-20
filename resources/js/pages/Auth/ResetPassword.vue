@@ -57,6 +57,8 @@
 
 <script>
 import axios from 'axios';
+import Swal from "sweetalert2";
+
 
 export default {
   props: {
@@ -77,16 +79,24 @@ export default {
   methods: {
     async resetPassword() {
       try {
-        const response = await axios.post('/sispa/api/reset-password', {
-          token: this.token,
-          email: this.formData.email,
-          password: this.formData.password,
-          password_confirmation: this.formData.password_confirmation
-        });
-        alert(response.data.message);
-        window.location.href = '/sispa/login';
+      const response = await axios.post('/sispa/api/reset-password', {
+        token: this.token,
+        email: this.formData.email,
+        password: this.formData.password,
+        password_confirmation: this.formData.password_confirmation
+      });
+      Swal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: response.data.message
+      });
+      window.location.href = '/sispa/login';
       } catch (error) {
-        alert(error.response.data.message);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: error.response.data.message
+      });
       }
     }
   }

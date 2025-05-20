@@ -5,6 +5,7 @@ import Sidebar from "@/Components/Sidebar.vue";
 import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
 import Breadcrumb from "@/Components/Breadcrumb.vue";
+import Swal from "sweetalert2"; // Import SweetAlert2
 
 export default {
   components: {
@@ -43,7 +44,11 @@ export default {
       if (selectedActiveProject.value) {
         await downloadTemplate(selectedActiveProject.value, 'Active');
       } else {
-        alert("Please select an active project.");
+        Swal.fire({
+          icon: 'warning',
+          title: 'Warning',
+          text: 'Please select an active project.',
+        });
       }
     };
 
@@ -51,7 +56,11 @@ export default {
       if (selectedInactiveProject.value) {
         await downloadTemplate(selectedInactiveProject.value, 'NonActive');
       } else {
-        alert("Please select a non-active project.");
+        Swal.fire({
+          icon: 'warning',
+          title: 'Warning',
+          text: 'Please select a non-active project.',
+        });
       }
     };
 
@@ -85,7 +94,11 @@ export default {
         window.URL.revokeObjectURL(url);
       } catch (error) {
         console.error("Download error:", error);
-        alert("There was an error downloading the Excel file.");
+        Swal.fire({
+          icon: 'error',
+          title: 'Download Failed',
+          text: 'There was an error downloading the Excel file.',
+        });
       }
     };
 
@@ -100,6 +113,15 @@ export default {
       formData.append("end_date", selectedEndDate);
 
       try {
+        Swal.fire({
+          title: 'Uploading...',
+          text: 'Please wait while we process your file',
+          allowOutsideClick: false,
+          didOpen: () => {
+            Swal.showLoading();
+          }
+        });
+
         const token = localStorage.getItem("auth_token");
         const response = await axios.post("/sispa/dosen/assessment/import", formData, {
           headers: {
@@ -108,11 +130,20 @@ export default {
           }
         });
 
-        alert(response.data.message || "Data imported successfully.");
+        Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: response.data.message || "Data imported successfully."
+        });
+
         event.target.value = '';
       } catch (error) {
         console.error("Import error:", error);
-        alert("There was an error importing the data.");
+        Swal.fire({
+          icon: 'error',
+          title: 'Import Failed',
+          text: error.response?.data?.message || 'There was an error importing the data.',
+        });
       }
     };
 
@@ -122,6 +153,11 @@ export default {
         projects.value = response.data;
       } catch (error) {
         console.error("Error fetching projects:", error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Failed to fetch project data. Please refresh the page.',
+        });
       }
     });
 

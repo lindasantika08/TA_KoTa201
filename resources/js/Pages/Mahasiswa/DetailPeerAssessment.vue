@@ -15,6 +15,10 @@ export default {
         projectName: {
             type: String,
             required: true
+        },
+        assessmentOrder: {
+            type: String,
+            required: true
         }
     },
     name: "PeerAssessmentDetail",
@@ -25,7 +29,7 @@ export default {
         Breadcrumb,
         DataTable,
     },
-
+// test
     data() {
         return {
             breadcrumbs: [
@@ -71,17 +75,20 @@ export default {
                     params: {
                         batch_year: this.batchYear,
                         project_name: this.projectName,
+                        assessment_order: this.assessmentOrder
                     }
                 });
 
-                this.items = response.data.answers.map((answer, index) => ({
-                    no: index + 1,
-                    aspek: answer.aspect || 'N/A',
-                    pertanyaan: answer.question || 'N/A',
-                    peer: answer.peer_name || 'N/A',
-                    skala: answer.scale,
-                    alasan: answer.reason || 'N/A'
-                }));
+                this.items = response.data.answers.flatMap(aspect => 
+                    aspect.answers.map((answer, index) => ({
+                        no: index + 1,
+                        aspek: aspect.aspect || 'N/A',
+                        pertanyaan: answer.question || 'N/A',
+                        peer: answer.peer_name || 'N/A',
+                        skala: answer.scale,
+                        alasan: answer.reason || 'N/A'
+                    }))
+                );
             } catch (error) {
                 console.error("Error fetching peer assessment:", error);
             }
@@ -108,7 +115,7 @@ export default {
                 <Card class="mb-6">
                     <template #title>
                         <div class="flex items-center space-x-2 text-blue-700">
-                            <h1 class="text-2xl font-bold">HASIL PENGISIAN PEER ASSESSMENT</h1>
+                            <h1 class="text-2xl font-bold">HASIL PENGISIAN PEER ASSESSMENT - TAHAP {{ assessmentOrder }}</h1>
                         </div>
                     </template>
 

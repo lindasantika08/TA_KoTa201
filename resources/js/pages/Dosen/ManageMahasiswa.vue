@@ -143,14 +143,27 @@ export default {
 
         async deleteUser(userId) {
             try {
-                const response = await axios.delete(`/sispa/api/delete-mhs/${userId}`);
-                this.fetchUsers();
+            const response = await axios.delete(`/sispa/api/delete-mhs/${userId}`);
+            Swal.fire({
+                icon: 'success',
+                title: 'User Deleted',
+                text: 'The user has been successfully deleted.'
+            });
+            this.fetchUsers();
             } catch (error) {
-                if (error.response.data.requires_action) {
-                    alert('Tidak dapat menghapus mahasiswa yang memiliki group');
-                } else {
-                    console.error("Error deleting user:", error);
-                }
+            if (error.response.data.requires_action) {
+                Swal.fire({
+                icon: 'warning',
+                title: 'Action Required',
+                text: 'Tidak dapat menghapus mahasiswa yang memiliki group.'
+                });
+            } else {
+                Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Error deleting user: ' + (error.response?.data?.message || error.message)
+                });
+            }
             }
         },
 

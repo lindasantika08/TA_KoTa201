@@ -6,6 +6,8 @@ import Card from "@/Components/Card.vue";
 import Sidebar from '@/Components/Sidebar.vue';
 import Breadcrumb from "@/Components/Breadcrumb.vue";
 import ConfirmModal from '@/Components/ConfirmModal.vue';
+import Swal from "sweetalert2";
+
 
 export default {
     components: {
@@ -162,35 +164,47 @@ export default {
             if (!this.currentQuestion) return;
 
             if (!this.score) {
-                alert('Silakan pilih nilai terlebih dahulu');
-                return;
+            Swal.fire({
+                icon: 'warning',
+                title: 'Peringatan',
+                text: 'Silakan pilih nilai terlebih dahulu',
+            });
+            return;
             }
 
             try {
-                const response = await axios.post('/sispa/api/save-answer', {
-                    answers: [{
-                        question_id: this.currentQuestion.id,
-                        answer: this.answer,
-                        score: this.score,
-                        status: 'submitted'
-                    }]
+            const response = await axios.post('/sispa/api/save-answer', {
+                answers: [{
+                question_id: this.currentQuestion.id,
+                answer: this.answer,
+                score: this.score,
+                status: 'submitted'
+                }]
+            });
+
+            if (response.data.message.includes('successfully')) {
+                delete this.temporaryAnswers[this.currentQuestion.id];
+                localStorage.setItem('temporaryAnswers', JSON.stringify(this.temporaryAnswers));
+
+                Swal.fire({
+                icon: 'success',
+                title: 'Berhasil',
+                text: response.data.message,
                 });
 
-                if (response.data.message.includes('successfully')) {
-                    delete this.temporaryAnswers[this.currentQuestion.id];
-                    localStorage.setItem('temporaryAnswers', JSON.stringify(this.temporaryAnswers));
-
-                    alert(response.data.message);
-
-                    if (this.currentQuestionIndex < this.questions.length - 1) {
-                        this.currentQuestionIndex++;
-                        await this.loadExistingAnswer();
-                    }
+                if (this.currentQuestionIndex < this.questions.length - 1) {
+                this.currentQuestionIndex++;
+                await this.loadExistingAnswer();
                 }
+            }
             } catch (error) {
-                console.error('Error saving answer:', error);
-                const errorMessage = error.response?.data?.message || 'Gagal menyimpan jawaban. Silakan coba lagi.';
-                alert(errorMessage);
+            console.error('Error saving answer:', error);
+            const errorMessage = error.response?.data?.message || 'Gagal menyimpan jawaban. Silakan coba lagi.';
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal',
+                text: errorMessage,
+            });
             }
         },
 
@@ -258,8 +272,12 @@ export default {
             this.saveTemporaryAnswer();
 
             if (!this.canSubmitAll) {
-                alert('Mohon jawab semua pertanyaan terlebih dahulu');
-                return;
+            Swal.fire({
+                icon: 'warning',
+                title: 'Peringatan',
+                text: 'Mohon jawab semua pertanyaan terlebih dahulu',
+            });
+            return;
             }
 
             this.showConfirmModal = true;
@@ -267,26 +285,34 @@ export default {
 
         async submitAllAnswers() {
             try {
-                const allAnswers = this.questions.map(question => ({
-                    question_id: question.id,
-                    answer: this.temporaryAnswers[question.id]?.answer || '',
-                    score: this.temporaryAnswers[question.id]?.score || null,
-                    status: 'submitted'
-                }));
+            const allAnswers = this.questions.map(question => ({
+                question_id: question.id,
+                answer: this.temporaryAnswers[question.id]?.answer || '',
+                score: this.temporaryAnswers[question.id]?.score || null,
+                status: 'submitted'
+            }));
 
-                const response = await axios.post('/sispa/api/save-all-answers-dosen', { answers: allAnswers });
+            const response = await axios.post('/sispa/api/save-all-answers-dosen', { answers: allAnswers });
 
-                if (response.data.success) {
-                    this.clearFormFields();
-                    alert('Semua jawaban berhasil disimpan!');
-                    this.$inertia.visit('/sispa/dosen/assessment/projects-self');
-                }
+            if (response.data.success) {
+                this.clearFormFields();
+                Swal.fire({
+                icon: 'success',
+                title: 'Berhasil',
+                text: 'Semua jawaban berhasil disimpan!',
+                });
+                this.$inertia.visit('/sispa/dosen/assessment/projects-self');
+            }
             } catch (error) {
-                console.error('Error submitting answers:', error);
-                alert('Gagal menyimpan jawaban. Silakan coba lagi.');
+            console.error('Error submitting answers:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal',
+                text: 'Gagal menyimpan jawaban. Silakan coba lagi.',
+            });
             } finally {
-                this.isSubmitting = false;
-                this.showConfirmModal = false;
+            this.isSubmitting = false;
+            this.showConfirmModal = false;
             }
         },
 

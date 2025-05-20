@@ -5,6 +5,8 @@ import Card from "@/Components/Card.vue";
 import Breadcrumb from "@/Components/Breadcrumb.vue";
 import DataTable from "@/Components/DataTable.vue";
 import axios from "axios";
+import Swal from "sweetalert2";
+
 
 export default {
     components: {
@@ -142,19 +144,26 @@ export default {
 
         async submitProdi() {
             try {
-                await axios.post("/sispa/api/add-prodi", {
-                    major_name: this.formData.selectedMajor,
-                    prodi_name: this.formData.prodiName,
-                });
-                this.showModalInput = false;
-                this.fetchProdi();
-                alert("Prodi added successfully!");
+            await axios.post("/sispa/api/add-prodi", {
+                major_name: this.formData.selectedMajor,
+                prodi_name: this.formData.prodiName,
+            });
+            this.showModalInput = false;
+            this.fetchProdi();
+            Swal.fire({
+                icon: "success",
+                title: "Success",
+                text: "Prodi added successfully!",
+            });
             } catch (error) {
-                console.error("Error adding prodi:", error);
-                alert("Failed to add prodi!");
+            console.error("Error adding prodi:", error);
+            Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: "Failed to add prodi!",
+            });
             }
         },
-
         editProdi(item, prodiName, index) {
             this.editData = {
                 majorName: item.major_name,
@@ -167,44 +176,66 @@ export default {
 
         async updateProdi() {
             try {
-                await axios.post(`/sispa/api/update-prodi`, {
-                    old_major_name: this.editData.majorName,
-                    old_prodi_name: this.editData.originalProdiName, // Gunakan nilai awal
-                    new_major_name: this.editData.majorName,
-                    new_prodi_name: this.editData.prodiName,
-                });
-                this.showModalEdit = false;
-                await this.fetchProdi();
-                alert("Prodi updated successfully!");
+            await axios.post(`/sispa/api/update-prodi`, {
+                old_major_name: this.editData.majorName,
+                old_prodi_name: this.editData.originalProdiName, // Gunakan nilai awal
+                new_major_name: this.editData.majorName,
+                new_prodi_name: this.editData.prodiName,
+            });
+            this.showModalEdit = false;
+            await this.fetchProdi();
+            Swal.fire({
+                icon: "success",
+                title: "Success",
+                text: "Prodi updated successfully!",
+            });
             } catch (error) {
-                console.error("Error updating prodi:", error);
-                alert("Failed to update prodi!");
+            console.error("Error updating prodi:", error);
+            Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: "Failed to update prodi!",
+            });
             }
         },
 
         async deleteSelectedProdis() {
             if (!this.hasSelectedProdis) return;
 
-            if (
-                !confirm(
-                    `Are you sure you want to delete ${this.selectedProdis.length} selected prodi(s)?`
-                )
-            ) {
-                return;
+            const result = await Swal.fire({
+            title: `Are you sure?`,
+            text: `You are about to delete ${this.selectedProdis.length} selected prodi(s). This action cannot be undone.`,
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#3085d6",
+            confirmButtonText: "Yes, delete it!",
+            });
+
+            if (!result.isConfirmed) {
+            return;
             }
 
             try {
-                for (const prodiName of this.selectedProdis) {
-                    await axios.post("/sispa/api/delete-prodi", {
-                        prodi_name: prodiName,
-                    });
-                }
-                alert("Selected prodis deleted successfully!");
-                this.selectedProdis = [];
-                await this.fetchProdi();
+            for (const prodiName of this.selectedProdis) {
+                await axios.post("/sispa/api/delete-prodi", {
+                prodi_name: prodiName,
+                });
+            }
+            Swal.fire({
+                icon: "success",
+                title: "Deleted!",
+                text: "Selected prodis have been deleted successfully.",
+            });
+            this.selectedProdis = [];
+            await this.fetchProdi();
             } catch (error) {
-                console.error("Error Deleting Prodis: ", error);
-                alert("Failed to delete selected prodis!");
+            console.error("Error Deleting Prodis: ", error);
+            Swal.fire({
+                icon: "error",
+                title: "Error!",
+                text: "Failed to delete selected prodis.",
+            });
             }
         },
 

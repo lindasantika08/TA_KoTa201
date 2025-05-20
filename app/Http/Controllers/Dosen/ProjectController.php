@@ -304,20 +304,39 @@ public function getDataPeer()
                 ], 404);
             }
 
-            $updated = Assessment::where([
+            // $updated = Assessment::where([
+            //     'project_id' => $project->id,
+            //     'type' => 'selfAssessment',
+            //     'assessment_order' => $request->assessment_order
+            // ])->update([
+            //     'is_published' => $request->is_published ? 1 : 0
+            // ]);
+
+            $assessments = Assessment::where([
                 'project_id' => $project->id,
                 'type' => 'selfAssessment',
                 'assessment_order' => $request->assessment_order
-            ])->update([
-                'is_published' => $request->is_published ? 1 : 0
-            ]);
+            ])->get();
+
+            $updatedCount = 0;
+
+            foreach ($assessments as $assessment) {
+                $assessment->is_published = $request->is_published ? 1 : 0;
+                if ($assessment->isDirty('is_published')) {
+                    $assessment->save(); // This triggers the observer
+                    $updatedCount++;
+                }
+            }
+            
+            \Log::info('Updated count:', ['updated_count' => $updatedCount]);
+
 
             return response()->json([
                 'success' => true,
                 'message' => 'Assessment publish status updated successfully',
                 'data' => [
                     'is_published' => $request->is_published,
-                    'updated_count' => $updated
+                    'updated_count' => $updatedCount
                 ]
             ]);
         } catch (\Exception $e) {
@@ -345,23 +364,41 @@ public function getDataPeer()
                 ], 404);
             }
 
-            $updated = Assessment::where([
+            // $updated = Assessment::where([
+            //     'project_id' => $project->id,
+            //     'type' => 'peerAssessment',
+            //     'assessment_order' => $request->assessment_order
+            // ])->update([
+            //     'is_published' => $request->is_published ? 1 : 0
+            // ]);
+
+            // \Log::info('SQL Query:', \DB::getQueryLog());
+            // \Log::info('Update result:', ['updated' => $updated]);
+
+            $assessments = Assessment::where([
                 'project_id' => $project->id,
                 'type' => 'peerAssessment',
                 'assessment_order' => $request->assessment_order
-            ])->update([
-                'is_published' => $request->is_published ? 1 : 0
-            ]);
+            ])->get();
 
-            \Log::info('SQL Query:', \DB::getQueryLog());
-            \Log::info('Update result:', ['updated' => $updated]);
+            $updatedCount = 0;
+
+            foreach ($assessments as $assessment) {
+                $assessment->is_published = $request->is_published ? 1 : 0;
+                if ($assessment->isDirty('is_published')) {
+                    $assessment->save(); // This triggers the observer
+                    $updatedCount++;
+                }
+            }
+            
+            \Log::info('Updated count:', ['updated_count' => $updatedCount]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Assessment publish status updated successfully',
                 'data' => [
                     'is_published' => $request->is_published,
-                    'updated_count' => $updated
+                    'updated_count' => $updatedCount,
                 ]
             ]);
         } catch (\Exception $e) {

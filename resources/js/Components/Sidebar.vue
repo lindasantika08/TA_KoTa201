@@ -32,15 +32,20 @@
                 isActive('/sispa/dosen/assessment/projectsSelf') ||
                 isActive('/sispa/dosen/assessment/projectsPeer'),
             }"
-            class="w-full text-left px-4 py-2 rounded flex justify-start hover:bg-gray-100"
+            class="w-full text-left px-4 py-2 rounded flex items-center hover:bg-gray-100"
           >
             <font-awesome-icon icon="fa-solid fa-clipboard-list" class="mr-6" />
             <span class="text-base font-medium">Assessment</span>
-            <span
-              :class="{ 'rotate-180': isAssessmentOpen }"
-              class="transform transition-all ml-2"
-              >▼</span
+            <svg 
+              :class="{ 'rotate-180': isAssessmentOpen }" 
+              class="w-4 h-4 ml-12 self-center transform transition-all" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24" 
+              xmlns="http://www.w3.org/2000/svg"
             >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+            </svg>
           </button>
           <ul v-if="isAssessmentOpen" class="pl-4 mt-2 space-y-2">
             <li v-if="role === 'dosen'">
@@ -92,15 +97,20 @@
                 isActive('/sispa/dosen/kelola-proyek') ||
                 isActive('/sispa/dosen/kelola-kelompok'),
             }"
-            class="w-full text-left px-4 py-2 rounded flex justify-start hover:bg-gray-100"
+            class="w-full text-left px-4 py-2 rounded flex items-center hover:bg-gray-100"
           >
             <font-awesome-icon icon="fa-solid fa-cogs" class="mr-4" />
             <span class="text-base font-medium">Manage Projects</span>
-            <span
-              :class="{ 'rotate-180': isKelolaProyekOpen }"
-              class="transform transition-all ml-2"
-              >▼</span
+            <svg 
+              :class="{ 'rotate-180': isKelolaProyekOpen }" 
+              class="w-4 h-4 ml-3 self-center transform transition-all" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24" 
+              xmlns="http://www.w3.org/2000/svg"
             >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+            </svg>
           </button>
           <ul v-if="isKelolaProyekOpen" class="pl-4 mt-2 space-y-2">
             <li>
@@ -161,15 +171,20 @@
                 isActive('/sispa/dosen/manage-mahasiswa') ||
                 isActive('/sispa/dosen/manage-dosen'),
             }"
-            class="w-full text-left px-4 py-2 rounded flex justify-start hover:bg-gray-100"
+            class="w-full text-left px-4 py-2 rounded flex items-center hover:bg-gray-100"
           >
             <font-awesome-icon icon="fa-solid fa-cogs" class="mr-4" />
             <span class="text-base font-medium">Manage Users</span>
-            <span
-              :class="{ 'rotate-180': isKelolaSettingsOpen }"
-              class="transform transition-all ml-2"
-              >▼</span
+            <svg 
+              :class="{ 'rotate-180': isKelolaSettingsOpen }" 
+              class="w-4 h-4 ml-8 self-center transform transition-all" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24" 
+              xmlns="http://www.w3.org/2000/svg"
             >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+            </svg>
           </button>
           <ul v-if="isKelolaSettingsOpen" class="pl-4 mt-2 space-y-2">
             <li>
@@ -219,7 +234,7 @@ export default {
         this.isActive("/sispa/dosen/kelola-kelompok"),
       isKelolaSettingsOpen:
         this.isActive("/sispa/dosen/manage-mahasiswa"),
-    };
+    };
   },
   methods: {
     toggleAssessmentMenu() {
@@ -230,7 +245,7 @@ export default {
     },
     toggleKelolaSettingsMenu() {
       this.isKelolaSettingsOpen = !this.isKelolaSettingsOpen;
-    },
+    },
     goToCreateAssessment() {
       router.visit("/sispa/dosen/assessment/create");
     },
