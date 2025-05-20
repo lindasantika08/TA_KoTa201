@@ -201,6 +201,8 @@ import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
 import Breadcrumb from "@/Components/Breadcrumb.vue";
 import axios from "axios";
+import Swal from "sweetalert2";
+
 
 export default {
   name: "Profile",
@@ -273,21 +275,29 @@ export default {
     },
     handleEditSave() {
       if (this.isEditMode) {
-        // Mode Simpan
-        axios
-          .put("/sispa/api/mahasiswa/update-profile", this.formData)
-          .then((response) => {
-            alert("Data berhasil disimpan!");
-            this.originalData = { ...this.formData }; // Update data asli
-            this.isEditMode = false;
-          })
-          .catch((error) => {
-            alert("Gagal menyimpan data. Silakan coba lagi.");
-            console.error("Error menyimpan data:", error);
-          });
+      // Mode Simpan
+      axios
+        .put("/sispa/api/mahasiswa/update-profile", this.formData)
+        .then((response) => {
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil',
+          text: 'Data berhasil disimpan!',
+        });
+        this.originalData = { ...this.formData }; // Update data asli
+        this.isEditMode = false;
+        })
+        .catch((error) => {
+        Swal.fire({
+          icon: 'error',
+          title: 'Gagal',
+          text: 'Gagal menyimpan data. Silakan coba lagi.',
+        });
+        console.error("Error menyimpan data:", error);
+        });
       } else {
-        // Mode Edit
-        this.isEditMode = true;
+      // Mode Edit
+      this.isEditMode = true;
       }
     },
     // Jika user membatalkan edit
@@ -312,40 +322,69 @@ export default {
     handleFileUpload(event) {
       const file = event.target.files[0];
       if (file) {
-        const formData = new FormData();
-        formData.append("photo", file);
+      const formData = new FormData();
+      formData.append("photo", file);
 
-        axios
-          .post("/sispa/api/mahasiswa/upload-profile-photo", formData, {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          })
-          .then((response) => {
-            const baseUrl = "/storage/";
-            this.profileImage = baseUrl + response.data.path;
-            this.isDropdownVisible = false;
-          })
-          .catch((error) => {
-            console.error("Error uploading profile photo:", error);
-          });
+      axios
+        .post("/sispa/api/mahasiswa/upload-profile-photo", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        })
+        .then((response) => {
+        const baseUrl = "/storage/";
+        this.profileImage = baseUrl + response.data.path;
+        this.isDropdownVisible = false;
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil',
+          text: 'Foto profil berhasil diunggah!',
+        });
+        })
+        .catch((error) => {
+        Swal.fire({
+          icon: 'error',
+          title: 'Gagal',
+          text: 'Gagal mengunggah foto. Silakan coba lagi.',
+        });
+        console.error("Error uploading profile photo:", error);
+        });
       }
     },
 
     deleteProfilePhoto() {
-      if (confirm("Apakah Anda yakin ingin menghapus foto profil?")) {
+      Swal.fire({
+      title: 'Apakah Anda yakin?',
+      text: "Foto profil akan dihapus!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Ya, hapus!',
+      cancelButtonText: 'Batal'
+      }).then((result) => {
+      if (result.isConfirmed) {
         axios
-          .delete("/sispa/api/mahasiswa/delete-profile-photo")
-          .then(() => {
-            this.profileImage = "";
-            this.isDropdownVisible = false;
-            alert("Foto profil berhasil dihapus!");
-          })
-          .catch((error) => {
-            alert("Gagal menghapus foto. Silakan coba lagi.");
-            console.error("Error menghapus foto:", error);
-          });
+        .delete("/sispa/api/mahasiswa/delete-profile-photo")
+        .then(() => {
+          this.profileImage = "";
+          this.isDropdownVisible = false;
+          Swal.fire(
+          'Berhasil!',
+          'Foto profil berhasil dihapus.',
+          'success'
+          );
+        })
+        .catch((error) => {
+          Swal.fire(
+          'Gagal!',
+          'Gagal menghapus foto. Silakan coba lagi.',
+          'error'
+          );
+          console.error("Error menghapus foto:", error);
+        });
       }
+      });
     },
     resetErrors() {
       this.errors = {
@@ -395,26 +434,38 @@ export default {
 
     changePassword() {
       if (!this.validatePasswordForm()) {
-        return;
+      return;
       }
 
       axios.post('/sispa/api/change-password', this.passwordForm)
-        .then(response => {
-          alert(response.data.message || 'Password berhasil diubah');
-          this.closeModal();
-        })
-        .catch(error => {
-          if (error.response && error.response.data) {
-            if (error.response.status === 401) {
-              this.errors.oldPassword = error.response.data.message;
-            } else {
-              alert(error.response.data.message || 'Gagal mengubah password. Silakan coba lagi.');
-            }
-          } else {
-            alert('Terjadi kesalahan. Silakan coba lagi.');
-          }
-          console.error('Error changing password:', error);
+      .then(response => {
+        Swal.fire({
+        icon: 'success',
+        title: 'Berhasil',
+        text: response.data.message || 'Password berhasil diubah',
         });
+        this.closeModal();
+      })
+      .catch(error => {
+        if (error.response && error.response.data) {
+        if (error.response.status === 401) {
+          this.errors.oldPassword = error.response.data.message;
+        } else {
+          Swal.fire({
+          icon: 'error',
+          title: 'Gagal',
+          text: error.response.data.message || 'Gagal mengubah password. Silakan coba lagi.',
+          });
+        }
+        } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Kesalahan',
+          text: 'Terjadi kesalahan. Silakan coba lagi.',
+        });
+        }
+        console.error('Error changing password:', error);
+      });
     }
   },
 };

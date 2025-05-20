@@ -3,6 +3,7 @@ import { defineProps, ref, computed, onMounted } from "vue";
 import Sidebar from "@/Components/Sidebar.vue";
 import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
+import Swal from "sweetalert2";
 
 const props = defineProps({
   batch_year: String,
@@ -46,17 +47,29 @@ const tabs = [
 const submitFeedbackDosen = async () => {
   // Validate all required fields
   if (!feedbackDosen.value?.trim()) {
-    alert("Feedback tidak boleh kosong");
+    Swal.fire({
+      icon: "warning",
+      title: "Peringatan",
+      text: "Feedback tidak boleh kosong",
+    });
     return;
   }
 
   if (!selectedStudent.value?.mahasiswa?.id) {
-    alert("Silakan pilih mahasiswa");
+    Swal.fire({
+      icon: "warning",
+      title: "Peringatan",
+      text: "Silakan pilih mahasiswa",
+    });
     return;
   }
 
   if (!props.batch_year || !props.project_name || !props.kelompok) {
-    alert("Data kelompok tidak lengkap");
+    Swal.fire({
+      icon: "warning",
+      title: "Peringatan",
+      text: "Data kelompok tidak lengkap",
+    });
     return;
   }
 
@@ -68,7 +81,6 @@ const submitFeedbackDosen = async () => {
     student_id: selectedStudent.value.mahasiswa.id,
   };
 
-  // console.log("Submitting feedback with payload:", payload);
   try {
     // Get CSRF token from meta tag
     const csrfToken = document
@@ -90,7 +102,11 @@ const submitFeedbackDosen = async () => {
       const data = await response.json();
       feedbackDosen.value = "";
       selectedStudent.value = null;
-      alert("Feedback berhasil dikirim!");
+      Swal.fire({
+        icon: "success",
+        title: "Berhasil",
+        text: "Feedback berhasil dikirim!",
+      });
       fetchFeedbacks();
       activeTab.value = "history";
     } else {
@@ -99,7 +115,11 @@ const submitFeedbackDosen = async () => {
     }
   } catch (err) {
     console.error("Error submitting feedback:", err);
-    alert(err.message);
+    Swal.fire({
+      icon: "error",
+      title: "Kesalahan",
+      text: err.message,
+    });
   }
 };
 
@@ -132,7 +152,11 @@ const fetchFeedbackSummary = async (forceRegenerate = false) => {
   } catch (err) {
     summaryError.value = err.message;
     console.error("Fetch Error:", err);
-    alert(err.message);
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: err.message,
+    });
   } finally {
     summaryLoading.value = false;
   }
@@ -287,9 +311,7 @@ onMounted(fetchFeedbacks);
 
             <!-- Informasi Proyek -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div
-                class="bg-white p-6 rounded-lg shadow-sm border border-gray-200"
-              >
+              <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                 <h3 class="text-sm font-medium text-gray-500 mb-2">
                   Tahun Ajaran
                 </h3>
@@ -297,9 +319,7 @@ onMounted(fetchFeedbacks);
                   {{ batch_year }}
                 </p>
               </div>
-              <div
-                class="bg-white p-6 rounded-lg shadow-sm border border-gray-200"
-              >
+              <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                 <h3 class="text-sm font-medium text-gray-500 mb-2">
                   Nama Proyek
                 </h3>
@@ -307,9 +327,7 @@ onMounted(fetchFeedbacks);
                   {{ project_name }}
                 </p>
               </div>
-              <div
-                class="bg-white p-6 rounded-lg shadow-sm border border-gray-200"
-              >
+              <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                 <h3 class="text-sm font-medium text-gray-500 mb-2">Kelompok</h3>
                 <p class="text-lg font-semibold text-gray-900">
                   {{ kelompok }}
@@ -332,11 +350,7 @@ onMounted(fetchFeedbacks);
                   </tr>
                 </thead>
                 <tbody>
-                  <tr
-                    v-for="(member, index) in initialData.groupMembers"
-                    :key="member.id"
-                    class="border-t"
-                  >
+                  <tr v-for="(member, index) in initialData.groupMembers" :key="member.id" class="border-t">
                     <td class="p-3">{{ index + 1 }}</td>
                     <td class="p-3">
                       {{ member.mahasiswa?.user?.name || "Tidak Ada" }}
@@ -355,36 +369,19 @@ onMounted(fetchFeedbacks);
             <!-- Tab Navigation -->
             <div class="border-b border-gray-200 mt-6">
               <nav class="flex space-x-8" aria-label="Tabs">
-                <button
-                  v-for="tab in tabs"
-                  :key="tab.id"
-                  @click="handleTabChange(tab.id)"
-                  :class="[
+                <button v-for="tab in tabs" :key="tab.id" @click="handleTabChange(tab.id)" :class="[
+                  activeTab === tab.id
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                  'group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm',
+                ]">
+                  <svg class="mr-2 h-5 w-5" :class="[
                     activeTab === tab.id
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                    'group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm',
-                  ]"
-                >
-                  <svg
-                    class="mr-2 h-5 w-5"
-                    :class="[
-                      activeTab === tab.id
-                        ? 'text-blue-500'
-                        : 'text-gray-400 group-hover:text-gray-500',
-                    ]"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      :d="tab.icon"
-                    />
+                      ? 'text-blue-500'
+                      : 'text-gray-400 group-hover:text-gray-500',
+                  ]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                    aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="tab.icon" />
                   </svg>
                   {{ tab.name }}
                 </button>
@@ -393,24 +390,19 @@ onMounted(fetchFeedbacks);
 
             <div class="mt-6">
               <!-- Riwayat Feedback Panel -->
-              <div
-                v-show="activeTab === 'history'"
-                class="bg-white rounded-lg shadow-sm border border-gray-200"
-              >
+              <div v-show="activeTab === 'history'" class="bg-white rounded-lg shadow-sm border border-gray-200">
                 <div class="p-6">
                   <div v-if="loading" class="text-center py-8">
                     <div
-                      class="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"
-                    ></div>
+                      class="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto">
+                    </div>
                     <p class="mt-2 text-gray-500">Memuat feedback...</p>
                   </div>
 
                   <div v-else-if="error" class="text-center py-8">
                     <p class="text-red-500">{{ error }}</p>
-                    <button
-                      @click="fetchFeedbacks"
-                      class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                    >
+                    <button @click="fetchFeedbacks"
+                      class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
                       Coba Lagi
                     </button>
                   </div>
@@ -421,11 +413,7 @@ onMounted(fetchFeedbacks);
                       <h2 class="text-xl font-semibold text-gray-900 mb-4">
                         Feedback Dosen
                       </h2>
-                      <div
-                        v-for="feedback in dosenFeedbacks"
-                        :key="feedback.id"
-                        class="border rounded-lg p-6 mb-4"
-                      >
+                      <div v-for="feedback in dosenFeedbacks" :key="feedback.id" class="border rounded-lg p-6 mb-4">
                         <div class="flex justify-between items-start mb-3">
                           <div>
                             <p class="text-sm font-medium text-gray-900">
@@ -466,11 +454,7 @@ onMounted(fetchFeedbacks);
                       <h2 class="text-xl font-semibold text-gray-900 mb-4">
                         Feedback Teman Sebaya
                       </h2>
-                      <div
-                        v-for="peer in groupedPeerFeedbacks"
-                        :key="peer.peer_id"
-                        class="border rounded-lg p-6 mb-4"
-                      >
+                      <div v-for="peer in groupedPeerFeedbacks" :key="peer.peer_id" class="border rounded-lg p-6 mb-4">
                         <!-- Peer Information Header -->
                         <div class="mb-4">
                           <h3 class="text-lg font-semibold text-gray-900">
@@ -483,11 +467,8 @@ onMounted(fetchFeedbacks);
 
                         <!-- Individual Feedback Items -->
                         <div class="space-y-4">
-                          <div
-                            v-for="feedback in peer.feedbacks"
-                            :key="feedback.created_at"
-                            class="bg-gray-50 rounded-lg p-4"
-                          >
+                          <div v-for="feedback in peer.feedbacks" :key="feedback.created_at"
+                            class="bg-gray-50 rounded-lg p-4">
                             <div class="flex justify-between items-start mb-2">
                               <div>
                                 <p class="text-sm font-medium text-gray-900">
@@ -531,27 +512,18 @@ onMounted(fetchFeedbacks);
                 </div>
               </div>
               <!-- Modified Input Panel -->
-              <div
-                v-show="activeTab === 'input'"
-                class="bg-white rounded-lg shadow-sm border border-gray-200"
-              >
+              <div v-show="activeTab === 'input'" class="bg-white rounded-lg shadow-sm border border-gray-200">
                 <div class="p-6 space-y-6">
                   <!-- Modified Student Selection Dropdown -->
                   <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">
                       Pilih Mahasiswa
                     </label>
-                    <select
-                      v-model="selectedStudent"
-                      class="w-full p-3 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
+                    <select v-model="selectedStudent"
+                      class="w-full p-3 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                       <option :value="null">Pilih mahasiswa...</option>
-                      <option
-                        v-for="student in initialData.groupMembers"
-                        :key="student.mahasiswa?.id"
-                        :value="student"
-                        :disabled="!student.mahasiswa?.id"
-                      >
+                      <option v-for="student in initialData.groupMembers" :key="student.mahasiswa?.id" :value="student"
+                        :disabled="!student.mahasiswa?.id">
                         {{ student.mahasiswa?.user?.name || "Tidak Ada" }} -
                         {{ student.mahasiswa?.nim || "Tidak Ada" }}
                       </option>
@@ -563,81 +535,54 @@ onMounted(fetchFeedbacks);
                     <label class="block text-sm font-medium text-gray-700 mb-2">
                       Feedback
                     </label>
-                    <textarea
-                      v-model="feedbackDosen"
+                    <textarea v-model="feedbackDosen"
                       class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      rows="4"
-                      placeholder="Masukkan feedback untuk mahasiswa ini..."
-                      :disabled="!selectedStudent"
-                    ></textarea>
+                      rows="4" placeholder="Masukkan feedback untuk mahasiswa ini..."
+                      :disabled="!selectedStudent"></textarea>
                   </div>
 
                   <!-- Submit Button -->
                   <div class="flex justify-end">
-                    <button
-                      @click="submitFeedbackDosen"
+                    <button @click="submitFeedbackDosen"
                       class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                      :disabled="!canSubmitFeedback"
-                    >
+                      :disabled="!canSubmitFeedback">
                       Kirim Feedback
                     </button>
                   </div>
                 </div>
               </div>
-              <div
-                v-show="activeTab === 'summary'"
-                class="bg-white rounded-lg shadow-sm border border-gray-200"
-              >
+              <div v-show="activeTab === 'summary'" class="bg-white rounded-lg shadow-sm border border-gray-200">
                 <div class="p-6">
                   <div v-if="summaryLoading" class="text-center py-8">
                     <div
-                      class="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"
-                    ></div>
+                      class="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto">
+                    </div>
                     <p class="mt-2 text-gray-500">Memuat summary...</p>
                   </div>
 
-                  <div
-                    v-else-if="summaryError"
-                    class="text-center py-8 text-red-500"
-                  >
+                  <div v-else-if="summaryError" class="text-center py-8 text-red-500">
                     {{ summaryError }}
-                    <button
-                      @click="refreshSummary"
-                      class="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
-                    >
+                    <button @click="refreshSummary" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded">
                       Coba Lagi
                     </button>
                   </div>
 
                   <template v-else>
-                    <div
-                      v-if="summaryData.length > 0"
-                      class="flex justify-end mb-4"
-                    >
-                      <button
-                        @click="refreshSummary"
-                        :disabled="summaryLoading"
-                        class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
-                      >
+                    <div v-if="summaryData.length > 0" class="flex justify-end mb-4">
+                      <button @click="refreshSummary" :disabled="summaryLoading"
+                        class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50">
                         {{ summaryLoading ? "Memuat..." : "Refresh Summary" }}
                       </button>
                     </div>
 
-                    <div
-                      v-if="summaryData.length === 0"
-                      class="text-center py-8"
-                    >
+                    <div v-if="summaryData.length === 0" class="text-center py-8">
                       <p class="text-gray-500">
                         Belum ada data summary yang tersedia.
                       </p>
                     </div>
 
                     <div v-else class="space-y-6">
-                      <div
-                        v-for="summary in summaryData"
-                        :key="summary.peer_id"
-                        class="border rounded-lg p-4"
-                      >
+                      <div v-for="summary in summaryData" :key="summary.peer_id" class="border rounded-lg p-4">
                         <div class="mb-4">
                           <h3 class="text-lg font-semibold text-gray-900">
                             {{ summary.peer_name }}

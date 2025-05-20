@@ -6,6 +6,8 @@ import Card from "@/Components/Card.vue";
 import Sidebar from '@/Components/Sidebar.vue';
 import Breadcrumb from "@/Components/Breadcrumb.vue";
 import ConfirmModal from '@/Components/ConfirmModal.vue';
+import Swal from "sweetalert2";
+
 
 export default {
     components: {
@@ -246,12 +248,20 @@ export default {
                     this.temporaryAnswers = {};
                     localStorage.removeItem('temporaryAnswers');
                     this.nextQuestion();
-                    alert("Jawaban berhasil disimpan");
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil',
+                        text: 'Jawaban berhasil disimpan',
+                    });
                 }
             } catch (error) {
                 console.error("Error submitting answers:", error);
                 const errorMessage = error.response?.data?.error || error.message || "Gagal menyimpan jawaban";
-                alert(errorMessage);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal',
+                    text: errorMessage,
+                });
             }
         },
 
@@ -275,8 +285,12 @@ export default {
             this.saveTemporaryAnswer();
 
             if (!this.canSubmitAll) {
-                alert('Mohon jawab semua pertanyaan terlebih dahulu');
-                return;
+            Swal.fire({
+                icon: 'warning',
+                title: 'Peringatan',
+                text: 'Mohon jawab semua pertanyaan terlebih dahulu',
+            });
+            return;
             }
 
             this.showConfirmModal = true;
@@ -309,7 +323,11 @@ export default {
                 }
             } catch (error) {
                 console.error('Error submitting answers:', error);
-                alert('Gagal menyimpan jawaban');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal',
+                    text: 'Gagal menyimpan jawaban',
+                });
             } finally {
                 this.isSubmitting = false;
                 this.showConfirmModal = false;

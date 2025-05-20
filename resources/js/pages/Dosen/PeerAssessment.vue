@@ -6,6 +6,8 @@ import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
 import Breadcrumb from "@/Components/Breadcrumb.vue";
 import axios from "axios";
+import Swal from "sweetalert2";
+
 
 export default {
     components: {
@@ -59,23 +61,25 @@ export default {
 
         const fetchQuestionId = async () => {
             try {
-                const response = await axios.get("/sispa/api/get-question-id", {
-                    params: {
-                        batch_year: props.tahunAjaran,
-                        project_name: props.namaProyek,
-                        assessment_order: props.assessmentOrder
-                    },
-                });
+            const response = await axios.get("/sispa/api/get-question-id", {
+                params: {
+                batch_year: props.tahunAjaran,
+                project_name: props.namaProyek,
+                assessment_order: props.assessmentOrder
+                },
+            });
 
-                if (response.data) {
-                    return response.data.questionId;
-                }
+            if (response.data) {
+                return response.data.questionId;
+            }
             } catch (error) {
-                console.error("Error fetching QuestionId:", error);
-                alert(
-                    "Gagal mendapatkan QuestionId. Periksa kembali data Anda."
-                );
-                return null;
+            console.error("Error fetching QuestionId:", error);
+            Swal.fire({
+                icon: "error",
+                title: "Gagal",
+                text: "Gagal mendapatkan QuestionId. Periksa kembali data Anda.",
+            });
+            return null;
             }
         };
 

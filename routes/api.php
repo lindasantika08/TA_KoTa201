@@ -209,6 +209,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{id}/read', [NotificationMahasiswa::class, 'markAsRead']);
         Route::post('/read-all', [NotificationMahasiswa::class, 'markAllAsRead']);
         Route::post('/count', [NotificationMahasiswa::class, 'getCountNotif']);
+        Route::get('/test-reminder', [NotificationMahasiswa::class, 'testReminderNotification']);
     });
 
     //Mahasiswa Feedback

@@ -7,6 +7,8 @@ import NavbarAdmin from "@/Components/NavbarAdmin.vue";
 import Card from "@/Components/Card.vue";
 import DataTable from "@/Components/DataTable.vue";
 import Breadcrumb from "@/Components/Breadcrumb.vue";
+import Swal from "sweetalert2";
+
 
 export default {
     name: "ManageDosen",
@@ -123,46 +125,75 @@ export default {
                     kode_dosen: this.editedDosen.kode_dosen,
                 });
 
-                alert("Dosen updated successfully!");
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Sukses',
+                    text: 'Dosen berhasil diperbarui!',
+                });
                 this.showEditModal = false;
                 await this.fetchUsers();
             } catch (error) {
-                alert("Failed to update dosen");
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal',
+                    text: 'Gagal memperbarui dosen.',
+                });
                 console.error(error);
             }
         },
-        async deleteDosen(NIP) {
-            if (!confirm(`Apakah Anda yakin ingin menghapus ${NIP}?`)) {
-                return;
-            }
-            try {
-                const response = await axios.post("/sispa/api/delete-dosen", {
-                    nip: NIP,
-                });
 
-                // Check if the data was actually deleted despite the error
+        async deleteDosen(NIP) {
+            const result = await Swal.fire({
+                title: `Yakin ingin menghapus dosen ${NIP}?`,
+                text: "Tindakan ini tidak dapat dibatalkan!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Ya, hapus!',
+                cancelButtonText: 'Batal'
+            });
+
+            if (!result.isConfirmed) return;
+
+            try {
+                const response = await axios.post("/sispa/api/delete-dosen", { nip: NIP });
+
                 if (response.status === 201 || response.status === 200) {
-                    alert("Dosen deleted successfully!");
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Dihapus!',
+                        text: 'Dosen berhasil dihapus.',
+                    });
                     await this.fetchUsers();
                 } else {
-                    alert("Failed to delete dosen");
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Gagal',
+                        text: 'Gagal menghapus dosen.',
+                    });
                 }
             } catch (error) {
-                // The data might still be deleted despite the error
-                // You could check by refreshing the data
                 await this.fetchUsers();
-
-                // If the user no longer exists in the refreshed data, it was actually deleted
                 const userStillExists = this.users.some(user => user.nip === NIP);
 
                 if (!userStillExists) {
-                    alert("Dosen deleted successfully despite some errors.");
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Dihapus!',
+                        text: 'Dosen berhasil dihapus meskipun terjadi kesalahan.',
+                    });
                 } else {
-                    alert("Failed to delete dosen");
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Gagal',
+                        text: 'Gagal menghapus dosen.',
+                    });
                     console.error(error);
                 }
             }
         },
+
     },
 };
 </script>

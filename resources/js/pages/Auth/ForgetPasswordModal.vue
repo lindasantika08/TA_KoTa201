@@ -34,6 +34,8 @@
 
 <script>
 import axios from 'axios';
+import Swal from "sweetalert2";
+
 
 export default {
   props: {
@@ -51,13 +53,21 @@ export default {
     },
     async submitForm() {
       try {
-        const response = await axios.post('/sispa/api/forgot-password', {
-          email: this.email,
-        });
-        alert(response.data.message);
-        this.closeModal();
+      const response = await axios.post('/sispa/api/forgot-password', {
+        email: this.email,
+      });
+      Swal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: response.data.message,
+      });
+      this.closeModal();
       } catch (error) {
-        alert(error.response.data.message);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: error.response.data.message,
+      });
       }
     },
   },

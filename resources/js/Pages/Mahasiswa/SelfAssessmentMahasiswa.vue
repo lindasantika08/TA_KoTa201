@@ -5,7 +5,7 @@ import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
 import SidebarMahasiswa from '@/Components/SidebarMahasiswa.vue';
 import Breadcrumb from "@/Components/Breadcrumb.vue";
-import ConfirmModal from '@/Components/ConfirmModal.vue';
+import Swal from "sweetalert2";
 
 export default {
     components: {
@@ -13,8 +13,7 @@ export default {
         Navbar,
         Card,
         SidebarMahasiswa,
-        Breadcrumb,
-        ConfirmModal
+        Breadcrumb
     },
     props: {
         studentInfo: {
@@ -64,7 +63,6 @@ export default {
             score: 0,
             scaleAnswer: null,
             temporaryAnswers: {},
-            showConfirmModal: false,
             isSubmitting: false,
         };
     },
@@ -95,14 +93,10 @@ export default {
     methods: {
 
         async fetchQuestions() {
-            // console.log('Fetching questions started');
             this.loading = true;
             this.error = null;
 
             try {
-                // console.log('Tahun Ajaran:', this.batch_year);
-                // console.log('Nama Proyek:', this.project_name);
-
                 const response = await axios.get('/sispa/api/questions', {
                     params: {
                         batch_year: this.batch_year,
@@ -111,11 +105,8 @@ export default {
                     }
                 });
 
-                // console.log('API Response:', response);
-
                 if (response.data && Array.isArray(response.data)) {
                     this.questions = response.data;
-                    // console.log('Questions loaded:', this.questions.length);
                     this.loading = false;
                     await this.loadExistingAnswer();
                 } else {
@@ -154,14 +145,17 @@ export default {
         },
         setScore(value) {
             this.score = value;
-            // console.log('Score set to:', value);
         },
 
         async submitAnswer() {
             if (!this.currentQuestion) return;
 
             if (!this.score) {
-                alert('Silakan pilih nilai terlebih dahulu');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Peringatan',
+                    text: 'Silakan pilih nilai terlebih dahulu',
+                });
                 return;
             }
 
@@ -184,7 +178,11 @@ export default {
                     delete this.temporaryAnswers[this.currentQuestion.id];
                     localStorage.setItem('temporaryAnswers', JSON.stringify(this.temporaryAnswers));
 
-                    alert(response.data.message);
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil',
+                        text: response.data.message,
+                    });
 
                     if (this.currentQuestionIndex < this.questions.length - 1) {
                         this.currentQuestionIndex++;
@@ -194,7 +192,11 @@ export default {
             } catch (error) {
                 console.error('Error saving answer:', error);
                 const errorMessage = error.response?.data?.message || 'Gagal menyimpan jawaban. Silakan coba lagi.';
-                alert(errorMessage);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal',
+                    text: errorMessage,
+                });
             }
         },
         async nextQuestion() {
@@ -259,15 +261,35 @@ export default {
             this.saveTemporaryAnswer();
 
             if (!this.canSubmitAll) {
-                alert('Mohon lengkapi semua jawaban terlebih dahulu');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Peringatan',
+                    text: 'Mohon lengkapi semua jawaban terlebih dahulu',
+                });
                 return;
             }
 
-            this.showConfirmModal = true;
+            // Using Sweetalert2 for confirmation instead of ConfirmModal component
+            Swal.fire({
+                title: 'Konfirmasi Pengiriman',
+                text: 'Apakah Anda yakin semua jawaban sudah sesuai? Setelah dikirim, jawaban tidak dapat diubah kembali.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Ya, Kirim!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    this.submitAllAnswers();
+                }
+            });
         },
 
         async submitAllAnswers() {
             try {
+                this.isSubmitting = true;
+                
                 const allAnswers = this.questions.map(question => ({
                     question_id: question.id,
                     answer: this.temporaryAnswers[question.id]?.answer || '',
@@ -279,15 +301,22 @@ export default {
 
                 if (response.data.success) {
                     this.clearFormFields();
-                    alert('Semua jawaban berhasil disimpan!');
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil',
+                        text: 'Semua jawaban berhasil disimpan!',
+                    });
                     this.$inertia.visit('/sispa/mahasiswa/assessment/self');
                 }
             } catch (error) {
                 console.error('Error submitting answers:', error);
-                alert('Gagal menyimpan jawaban. Silakan coba lagi.');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal',
+                    text: 'Gagal menyimpan jawaban. Silakan coba lagi.',
+                });
             } finally {
                 this.isSubmitting = false;
-                this.showConfirmModal = false;
             }
         },
 
@@ -310,12 +339,8 @@ export default {
         beforeDestroy() {
             window.removeEventListener('beforeunload');
         }
-
     },
-
 };
-
-
 </script>
 
 <template>
@@ -445,10 +470,6 @@ export default {
                                         Next
                                     </button>
                                 </div>
-
-                                <ConfirmModal :show="showConfirmModal" title="Konfirmasi Pengiriman"
-                                    message="Apakah Anda yakin semua jawaban sudah sesuai? Setelah dikirim, jawaban tidak dapat diubah kembali."
-                                    @close="showConfirmModal = false" @confirm="submitAllAnswers" />
                             </form>
                         </div>
 

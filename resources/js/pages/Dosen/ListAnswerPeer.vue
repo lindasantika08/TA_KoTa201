@@ -5,6 +5,8 @@ import Navbar from "@/Components/Navbar.vue";
 import Sidebar from "@/Components/Sidebar.vue";
 import Breadcrumb from "@/Components/Breadcrumb.vue";
 import { router } from "@inertiajs/vue3";
+import Swal from "sweetalert2";
+
 
 export default {
   components: {
@@ -46,38 +48,46 @@ export default {
   },
   methods: {
     fetchAnswers() {
-    axios
-      .get("/sispa/api/answersKelompokPeer/list", {
-        params: {
-          tahun_ajaran: this.tahun_ajaran,
-          nama_proyek: this.nama_proyek,
-        },
-      })
-      .then((response) => {
-        if (response.data.success && Array.isArray(response.data.data)) {
-          this.answers = response.data.data.map((item) => ({
-            kelompok: item.nama_kelompok,
-            jumlah_user: `${item.total_filled}/${item.total_mahasiswa}`,
-            user_ids: item.user_ids,
-            id: item.user_id,
-          }));
-        } else {
-          // More detailed error handling
-          console.error(
-            "Data yang diterima tidak sesuai format yang diharapkan.",
-            response.data
-          );
-          // Optional: show user-friendly notification
-          alert(response.data.message || "Gagal memuat data");
-        }
-      })
-      .catch((error) => {
-        // Improved error logging
-        console.error("Error fetching answers:", error.response?.data || error);
-        // Optional: show user-friendly error message
-        alert(error.response?.data?.message || "Terjadi kesalahan");
-      });
-  },
+      axios
+        .get("/sispa/api/answersKelompokPeer/list", {
+          params: {
+            tahun_ajaran: this.tahun_ajaran,
+            nama_proyek: this.nama_proyek,
+          },
+        })
+        .then((response) => {
+          if (response.data.success && Array.isArray(response.data.data)) {
+            this.answers = response.data.data.map((item) => ({
+              kelompok: item.nama_kelompok,
+              jumlah_user: `${item.total_filled}/${item.total_mahasiswa}`,
+              user_ids: item.user_ids,
+              id: item.user_id,
+            }));
+          } else {
+            // More detailed error handling
+            console.error(
+              "Data yang diterima tidak sesuai format yang diharapkan.",
+              response.data
+            );
+            // Optional: show user-friendly notification
+            Swal.fire({
+              icon: "error",
+              title: "Gagal Memuat Data",
+              text: response.data.message || "Data yang diterima tidak sesuai format yang diharapkan.",
+            });
+          }
+        })
+        .catch((error) => {
+          // Improved error logging
+          console.error("Error fetching answers:", error.response?.data || error);
+          // Optional: show user-friendly error message
+          Swal.fire({
+            icon: "error",
+            title: "Terjadi Kesalahan",
+            text: error.response?.data?.message || "Gagal memuat data.",
+          });
+        });
+    },
 
     handleDetail(item) {
       router.get("/sispa/dosen/answers-peer-assessment", {

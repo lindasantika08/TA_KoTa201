@@ -5,6 +5,8 @@ import Sidebar from "@/Components/Sidebar.vue";
 import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
 import Breadcrumb from "@/Components/Breadcrumb.vue";
+import Swal from "sweetalert2";
+
 
 export default {
     components: {
@@ -58,35 +60,49 @@ export default {
         // Fungsi untuk mengunduh template berdasarkan jurusan
         const downloadTemplate = async () => {
             if (!selectedJurusan.value) {
-                alert("Harap pilih jurusan terlebih dahulu.");
-                return;
+            Swal.fire({
+                icon: "warning",
+                title: "Peringatan",
+                text: "Harap pilih jurusan terlebih dahulu.",
+            });
+            return;
             }
 
             try {
-                const token = localStorage.getItem("auth_token");
-                const response = await axios.get("/sispa/dosen/manage-dosen/export", {
-                    params: { jurusan: selectedJurusan.value },
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        Accept: "application/json",
-                    },
-                    responseType: "blob",
-                });
+            const token = localStorage.getItem("auth_token");
+            const response = await axios.get("/sispa/dosen/manage-dosen/export", {
+                params: { jurusan: selectedJurusan.value },
+                headers: {
+                Authorization: `Bearer ${token}`,
+                Accept: "application/json",
+                },
+                responseType: "blob",
+            });
 
-                const blob = new Blob([response.data], {
-                    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                });
-                const url = window.URL.createObjectURL(blob);
-                const link = document.createElement("a");
-                link.href = url;
-                link.setAttribute("download", "Data_Dosen.xlsx");
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                window.URL.revokeObjectURL(url);
+            const blob = new Blob([response.data], {
+                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.setAttribute("download", "Data_Dosen.xlsx");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+
+            Swal.fire({
+                icon: "success",
+                title: "Berhasil",
+                text: "Template berhasil diunduh.",
+            });
             } catch (error) {
-                console.error("Error download:", error);
-                alert("Gagal mengunduh template. Silakan coba lagi.");
+            console.error("Error download:", error);
+            Swal.fire({
+                icon: "error",
+                title: "Gagal",
+                text: "Gagal mengunduh template. Silakan coba lagi.",
+            });
             }
         };
 
@@ -96,17 +112,25 @@ export default {
             formData.append("file", event.target.files[0]);
 
             try {
-                const token = localStorage.getItem("auth_token");
-                await axios.post("/sispa/dosen/manage-dosen/import", formData, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "multipart/form-data",
-                    },
-                });
-                alert("Data dosen berhasil diimpor.");
+            const token = localStorage.getItem("auth_token");
+            await axios.post("/sispa/dosen/manage-dosen/import", formData, {
+                headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "multipart/form-data",
+                },
+            });
+            Swal.fire({
+                icon: "success",
+                title: "Berhasil",
+                text: "Data dosen berhasil diimpor.",
+            });
             } catch (error) {
-                console.error("Error import:", error.response?.data);
-                alert("Gagal mengimpor data. Silakan periksa format file Anda.");
+            console.error("Error import:", error.response?.data);
+            Swal.fire({
+                icon: "error",
+                title: "Gagal",
+                text: "Gagal mengimpor data. Silakan periksa format file Anda.",
+            });
             }
         };
 

@@ -5,6 +5,7 @@ import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
 import Breadcrumb from "@/Components/Breadcrumb.vue";
 import dayjs from 'dayjs';
+import Swal from 'sweetalert2';
 import { router } from '@inertiajs/vue3';
 
 export default {
@@ -118,7 +119,11 @@ export default {
       // });
 
       if (!project.isAssessmentCompleted) {
-        alert("Assessments are not completed yet.");
+        Swal.fire({
+          icon: 'warning',
+          title: 'Incomplete Assessments',
+          text: 'Assessments are not completed yet.',
+        });
         return;
       }
 

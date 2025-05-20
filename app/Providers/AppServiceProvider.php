@@ -7,6 +7,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Routing\UrlGenerator;
 use App\Models\Assessment;
 use App\Observers\AssessmentObserver;
+// use App\Observers\AssessmentReminderObserver;
 use Illuminate\Support\Facades\Log;
 
 class AppServiceProvider extends ServiceProvider
@@ -24,12 +25,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        If(env('APP_ENV') !== 'local') { 
+        if(env('APP_ENV') !== 'local') { 
             URL::forceScheme('https');
         }
 
         // URL::forceRootUrl(config('app.url'));
 
         Assessment::observe(AssessmentObserver::class);
+        // Assessment::observe(AssessmentReminderObserver::class);
     }
 }

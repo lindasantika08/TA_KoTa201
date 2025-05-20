@@ -183,6 +183,8 @@ import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
 import Breadcrumb from "@/Components/Breadcrumb.vue";
 import axios from "axios";
+import Swal from "sweetalert2";
+
 
 export default {
   name: "Profile",
@@ -259,15 +261,25 @@ export default {
         // Mode Simpan
         axios
           .put("/sispa/api/dosen/update-profile", this.formData)
-          .then((response) => {
-            alert("Data berhasil disimpan!");
+            .then((response) => {
+            Swal.fire({
+              icon: "success",
+              title: "Berhasil",
+              text: "Data berhasil disimpan!",
+              timer: 1500,
+              showConfirmButton: false,
+            });
             this.originalData = { ...this.formData }; // Update data asli
             this.isEditMode = false;
-          })
-          .catch((error) => {
-            alert("Gagal menyimpan data. Silakan coba lagi.");
+            })
+            .catch((error) => {
+            Swal.fire({
+              icon: "error",
+              title: "Gagal",
+              text: "Gagal menyimpan data. Silakan coba lagi.",
+            });
             console.error("Error menyimpan data:", error);
-          });
+            });
       } else {
         // Mode Edit
         this.isEditMode = true;
@@ -299,14 +311,22 @@ export default {
         // Check file type
         const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
         if (!validTypes.includes(file.type)) {
-          alert('Please upload a JPG, PNG, or GIF image.');
+          Swal.fire({
+            icon: 'error',
+            title: 'Invalid File Type',
+            text: 'Please upload a JPG, PNG, or GIF image.',
+          });
           return;
         }
 
         // Check file size (2MB limit example)
         const maxSize = 2 * 1024 * 1024; // 2MB
         if (file.size > maxSize) {
-          alert('File size should be less than 2MB.');
+          Swal.fire({
+            icon: 'error',
+            title: 'File Too Large',
+            text: 'File size should be less than 2MB.',
+          });
           return;
         }
 
@@ -324,15 +344,29 @@ export default {
             // this.profileImage = response.data.path;
             this.fetchProfile();
             this.isDropdownVisible = false;
-            alert("Foto profil berhasil diupload!");
+            Swal.fire({
+              icon: "success",
+              title: "Berhasil",
+              text: "Foto profil berhasil diupload!",
+              timer: 1500,
+              showConfirmButton: false,
+            });
           })
           .catch((error) => {
             if (error.response && error.response.data) {
               // Show more detailed error information
               console.error("Error details:", error.response.data);
-              alert(`Upload failed: ${error.response.data.message || 'Unknown error'}`);
+              Swal.fire({
+          icon: "error",
+          title: "Upload failed",
+          text: error.response.data.message || 'Unknown error',
+              });
             } else {
-              alert("Gagal mengupload foto. Silakan coba lagi.");
+              Swal.fire({
+          icon: "error",
+          title: "Gagal",
+          text: "Gagal mengupload foto. Silakan coba lagi.",
+              });
               console.error("Error upload foto:", error);
             }
           });
@@ -346,10 +380,20 @@ export default {
           .then(() => {
             this.profileImage = "";
             this.isDropdownVisible = false;
-            alert("Foto profil berhasil dihapus!");
-          })
-          .catch((error) => {
-            alert("Gagal menghapus foto. Silakan coba lagi.");
+            Swal.fire({
+              icon: "success",
+              title: "Berhasil",
+              text: "Foto profil berhasil dihapus!",
+              timer: 1500,
+              showConfirmButton: false,
+            });
+            })
+            .catch((error) => {
+            Swal.fire({
+              icon: "error",
+              title: "Gagal",
+              text: "Gagal menghapus foto. Silakan coba lagi.",
+            });
             console.error("Error menghapus foto:", error);
           });
       }
@@ -422,19 +466,33 @@ export default {
             axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
           }
 
-          alert(response.data.message || 'Password berhasil diubah');
-          this.closeModal();
-        })
-        .catch(error => {
-          if (error.response && error.response.data) {
+            Swal.fire({
+            icon: "success",
+            title: "Berhasil",
+            text: response.data.message || 'Password berhasil diubah',
+            timer: 1500,
+            showConfirmButton: false,
+            });
+            this.closeModal();
+          })
+          .catch(error => {
+            if (error.response && error.response.data) {
             if (error.response.status === 401) {
               this.errors.oldPassword = error.response.data.message;
             } else {
-              alert(error.response.data.message || 'Gagal mengubah password. Silakan coba lagi.');
+              Swal.fire({
+              icon: "error",
+              title: "Gagal",
+              text: error.response.data.message || 'Gagal mengubah password. Silakan coba lagi.',
+              });
             }
-          } else {
-            alert('Terjadi kesalahan. Silakan coba lagi.');
-          }
+            } else {
+            Swal.fire({
+              icon: "error",
+              title: "Terjadi Kesalahan",
+              text: 'Terjadi kesalahan. Silakan coba lagi.',
+            });
+            }
           console.error('Error changing password:', error);
         });
     },

@@ -259,56 +259,91 @@ class KelolaKelompokController extends Controller
     }
 
     public function checkGroupDeletion(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'project_id' => [
-                'required', 
-                'string', 
-                function($attribute, $value, $fail) {
-                    if (!$value) {
-                        $fail('The project ID cannot be empty.');
-                    }
-                    
-                    $projectExists = DB::table('groups')
-                        ->where('project_id', $value)
-                        ->exists();
-                    
-                    if (!$projectExists) {
-                        $fail('The selected project does not exist.');
-                    }
+{
+    $validator = Validator::make($request->all(), [
+        'project_id' => [
+            'required', 
+            'string', 
+            function($attribute, $value, $fail) {
+                if (!$value) {
+                    $fail('The project ID cannot be empty.');
                 }
-            ],
-            'group_name' => 'required|string'
-        ]);
+                
+                $projectExists = DB::table('groups')
+                    ->where('project_id', $value)
+                    ->exists();
+                
+                if (!$projectExists) {
+                    $fail('The selected project does not exist.');
+                }
+            }
+        ],
+        'group_name' => 'required|string'
+    ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'errors' => $validator->errors(),
-                'message' => 'Validation failed',
-                'request_data' => $request->all()
-            ], 422);
-        }
-
-        $validated = $validator->validated();
-
-        $relatedAnswersPeer = DB::table('answers_peer')
-            ->join('mahasiswa', 'answers_peer.mahasiswa_id', '=', 'mahasiswa.id')
-            ->join('groups', 'mahasiswa.id', '=', 'groups.mahasiswa_id')
-            ->where('groups.project_id', $validated['project_id'])
-            ->where('groups.group', $validated['group_name'])
-            ->exists();
-
-        if ($relatedAnswersPeer) {
-            return response()->json([
-                'warning' => 'This group has related peer assessment answers. Deleting the group will remove all associated assessment data.',
-                'requires_confirmation' => true
-            ]);
-        }
-
-        return response()->json(['requires_confirmation' => false]);
+    if ($validator->fails()) {
+        return response()->json([
+            'errors' => $validator->errors(),
+            'message' => 'Validation failed',
+            'request_data' => $request->all()
+        ], 422);
     }
 
-    public function deleteGroup(Request $request)
+    $validated = $validator->validated();
+
+    // Check related data in answers_peer
+    $relatedAnswersPeer = DB::table('answers_peer')
+        ->join('mahasiswa', 'answers_peer.mahasiswa_id', '=', 'mahasiswa.id')
+        ->join('groups', 'mahasiswa.id', '=', 'groups.mahasiswa_id')
+        ->where('groups.project_id', $validated['project_id'])
+        ->where('groups.group', $validated['group_name'])
+        ->exists();
+
+    // Check related data in answers table
+    $relatedAnswers = DB::table('answers')
+        ->join('mahasiswa', 'answers.mahasiswa_id', '=', 'mahasiswa.id')
+        ->join('groups', 'mahasiswa.id', '=', 'groups.mahasiswa_id')
+        ->where('groups.project_id', $validated['project_id'])
+        ->where('groups.group', $validated['group_name'])
+        ->exists();
+
+    // Check related data in reports table
+    $relatedReports = DB::table('reports')
+        ->join('groups', 'reports.group_id', '=', 'groups.id')
+        ->where('groups.project_id', $validated['project_id'])
+        ->where('groups.group', $validated['group_name'])
+        ->exists();
+
+    // If any related data exists, require confirmation
+    if ($relatedAnswersPeer || $relatedAnswers || $relatedReports) {
+        $warningMessage = 'This group has related data. Deleting the group will remove all associated data';
+        
+        $relatedDataTypes = [];
+        
+        if ($relatedAnswersPeer) {
+            $relatedDataTypes[] = 'peer assessment answers';
+        }
+        
+        if ($relatedAnswers) {
+            $relatedDataTypes[] = 'regular answers';
+        }
+        
+        if ($relatedReports) {
+            $relatedDataTypes[] = 'reports';
+        }
+        
+        $warningMessage .= ' including ' . implode(', ', $relatedDataTypes) . '.';
+
+        return response()->json([
+            'warning' => $warningMessage,
+            'requires_confirmation' => true
+        ]);
+    }
+
+    return response()->json(['requires_confirmation' => false]);
+}
+    
+        public function deleteGroup(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'project_id' => ['required', 'string', 'exists:groups,project_id'],
@@ -334,8 +369,8 @@ class KelolaKelompokController extends Controller
         try {
             // Fetch the groups to delete
             $groupsToDelete = Group::where('project_id', $validated['project_id'])
-                                    ->where('group', $validated['group_name'])
-                                    ->get();
+                                ->where('group', $validated['group_name'])
+                                ->get();
 
             if ($groupsToDelete->isEmpty()) {
                 \Log::warning('No Groups Found:', [
@@ -350,62 +385,65 @@ class KelolaKelompokController extends Controller
                 'group_ids' => $groupsToDelete->pluck('id')->toArray()
             ]);
 
-            // Variable to track total deletions
+            // Track deletion statistics
             $totalAnswersDeleted = 0;
+            $totalAnswersPeerDeleted = 0;
+            $totalReportsDeleted = 0;
             $totalGroupMembersDeleted = 0;
 
-            if ($request->input('force', false)) {
-                foreach ($groupsToDelete as $group) {
-                    // Delete associated answers
-                    $answersDeleted = DB::table('answers_peer')
-                        ->join('mahasiswa', 'answers_peer.mahasiswa_id', '=', 'mahasiswa.id')
-                        ->join('groups', 'mahasiswa.id', '=', 'groups.mahasiswa_id')
-                        ->where('groups.id', $group->id)
-                        ->delete();
-                    
-                    // Delete associated answers where the peer is in this group
-                    $peerAnswersDeleted = DB::table('answers_peer')
-                        ->join('mahasiswa', 'answers_peer.peer_id', '=', 'mahasiswa.id')
-                        ->join('groups', 'mahasiswa.id', '=', 'groups.mahasiswa_id')
-                        ->where('groups.id', $group->id)
-                        ->delete();
+            // Process each group
+            foreach ($groupsToDelete as $group) {
+                $groupId = $group->id;
+                
+                // 1. Delete records from reports table first (this is causing the constraint violation)
+                $reportsDeleted = DB::table('reports')
+                    ->where('group_id', $groupId)
+                    ->delete();
+                $totalReportsDeleted += $reportsDeleted;
+                
+                \Log::info("Deleted {$reportsDeleted} reports for group {$groupId}");
 
-                    // Force delete group members and the group itself
-                    $membersDeleted = Group::where('id', $group->id)->forceDelete();
-                    $group->forceDelete();
-
-                    $totalAnswersDeleted += ($answersDeleted + $peerAnswersDeleted);
-                    $totalGroupMembersDeleted += $membersDeleted;
-
-                    \Log::info('Individual Group Deletion:', [
-                        'group_id' => $group->id,
-                        'answers_peer_deleted' => $answersDeleted,
-                        'peer_answers_deleted' => $peerAnswersDeleted,
-                        'group_members_deleted' => $membersDeleted
-                    ]);
-                }
-            } else {
-                // Check for related answers before deletion
-                $relatedAnswersPeer = DB::table('answers_peer')
+                // 2. Delete associated answers_peer where students in this group provided answers
+                $answersPeerDeleted = DB::table('answers_peer')
                     ->join('mahasiswa', 'answers_peer.mahasiswa_id', '=', 'mahasiswa.id')
                     ->join('groups', 'mahasiswa.id', '=', 'groups.mahasiswa_id')
-                    ->where('groups.project_id', $validated['project_id'])
-                    ->where('groups.group', $validated['group_name'])
-                    ->exists();
+                    ->where('groups.id', $groupId)
+                    ->delete();
+                
+                // 3. Delete associated answers_peer where the peer is in this group
+                $peerAnswersDeleted = DB::table('answers_peer')
+                    ->join('mahasiswa', 'answers_peer.peer_id', '=', 'mahasiswa.id')
+                    ->join('groups', 'mahasiswa.id', '=', 'groups.mahasiswa_id')
+                    ->where('groups.id', $groupId)
+                    ->delete();
 
-                if ($relatedAnswersPeer) {
-                    \Log::warning('Deletion Blocked - Related Entries Exist', [
-                        'project_id' => $validated['project_id'],
-                        'group_name' => $validated['group_name']
-                    ]);
+                $totalAnswersPeerDeleted += ($answersPeerDeleted + $peerAnswersDeleted);
+                
+                \Log::info("Deleted answers_peer for group {$groupId}: {$answersPeerDeleted} direct answers, {$peerAnswersDeleted} peer answers");
 
-                    return response()->json([
-                        'error' => 'Group has related assessment entries. Use force delete.',
-                        'requires_confirmation' => true
-                    ], 400);
+                // 4. Delete associated records from answers table where students in this group provided answers
+                $answersDeleted = DB::table('answers')
+                    ->join('mahasiswa', 'answers.mahasiswa_id', '=', 'mahasiswa.id')
+                    ->join('groups', 'mahasiswa.id', '=', 'groups.mahasiswa_id')
+                    ->where('groups.id', $groupId)
+                    ->delete();
+                
+                $totalAnswersDeleted += $answersDeleted;
+                
+                \Log::info("Deleted {$answersDeleted} answers for group {$groupId}");
+
+                // 5. Check for any other tables that might have foreign key relationships with groups
+                // Add more delete operations as needed for other related tables
+                
+                // 6. Finally delete the group itself
+                $result = $group->delete();
+                
+                if ($result) {
+                    $totalGroupMembersDeleted++;
+                    \Log::info("Successfully deleted group {$groupId}");
+                } else {
+                    \Log::warning("Failed to delete group {$groupId}");
                 }
-
-                $deletedCount = $groupsToDelete->each->forceDelete();
             }
 
             DB::commit();
@@ -414,6 +452,8 @@ class KelolaKelompokController extends Controller
                 'message' => 'Group deleted successfully',
                 'deleted_group_count' => $groupsToDelete->count(),
                 'deleted_answers_count' => $totalAnswersDeleted,
+                'deleted_answers_peer_count' => $totalAnswersPeerDeleted,
+                'deleted_reports_count' => $totalReportsDeleted,
                 'deleted_group_members_count' => $totalGroupMembersDeleted
             ]);
 

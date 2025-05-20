@@ -1,6 +1,7 @@
 <script>
 import { ref, onMounted } from "vue";
 import axios from "axios";
+import Swal from "sweetalert2";
 import Sidebar from "@/Components/SidebarAdmin.vue";
 import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
@@ -72,9 +73,13 @@ export default {
                 !selectedProdi.value ||
                 !selectedAngkatan.value
             ) {
-                alert(
-                    "Harap lengkapi semua pilihan: Jurusan, Prodi, dan Angkatan."
-                );
+                Swal.fire({
+                    title: 'Data Tidak Lengkap',
+                    text: 'Harap lengkapi semua pilihan: Jurusan, Prodi, dan Angkatan.',
+                    icon: 'warning',
+                    confirmButtonColor: '#3085d6',
+                    confirmButtonText: 'OK'
+                });
                 return;
             }
 
@@ -123,10 +128,13 @@ export default {
                 window.URL.revokeObjectURL(url);
             } catch (error) {
                 console.error("Download error:", error);
-                alert(
-                    error.response?.data?.message ||
-                        "Terjadi kesalahan saat mengunduh file excel"
-                );
+                Swal.fire({
+                    title: 'Gagal Mengunduh',
+                    text: error.response?.data?.message || "Terjadi kesalahan saat mengunduh file excel",
+                    icon: 'error',
+                    confirmButtonColor: '#3085d6',
+                    confirmButtonText: 'OK'
+                });
             }
         };
 
@@ -158,7 +166,13 @@ export default {
 
         const handleFiles = (file) => {
             if (!file.name.match(/\.(xlsx|xls)$/)) {
-                alert('Hanya file Excel (.xlsx atau .xls) yang diperbolehkan');
+                Swal.fire({
+                    title: 'Format File Tidak Valid',
+                    text: 'Hanya file Excel (.xlsx atau .xls) yang diperbolehkan',
+                    icon: 'error',
+                    confirmButtonColor: '#3085d6',
+                    confirmButtonText: 'OK'
+                });
                 return;
             }
             selectedFile.value = file;
@@ -186,12 +200,27 @@ export default {
                         );
                     },
                 });
-                alert("Data mahasiswa berhasil diimpor.");
+                
+                Swal.fire({
+                    title: 'Berhasil',
+                    text: 'Data mahasiswa berhasil diimpor.',
+                    icon: 'success',
+                    confirmButtonColor: '#3085d6',
+                    confirmButtonText: 'OK'
+                });
+                
                 selectedFile.value = null;
                 uploadProgress.value = 0;
             } catch (error) {
                 console.error("Error import:", error.response?.data);
-                alert("Gagal mengimpor data. Silakan periksa format file Anda.");
+                
+                Swal.fire({
+                    title: 'Gagal',
+                    text: 'Gagal mengimpor data. Silakan periksa format file Anda.',
+                    icon: 'error',
+                    confirmButtonColor: '#3085d6',
+                    confirmButtonText: 'OK'
+                });
             } finally {
                 isUploading.value = false;
             }

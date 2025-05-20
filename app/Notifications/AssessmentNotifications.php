@@ -5,6 +5,7 @@ namespace App\Notifications;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 class AssessmentNotifications extends Notification
 {
@@ -49,12 +50,16 @@ class AssessmentNotifications extends Notification
 
     public function toDatabase(object $notifiable): array
     {
+        $prettyType = Str::title(
+            preg_replace('/([a-z])([A-Z])/', '$1 $2', $this->assessmentData['type'])
+        );
+
         return [
-            'message' => "New {$this->assessmentData['type']} assessment available",
-            'assessment_id' => $this->assessmentData['assessment_id'],
-            'project_name' => $this->assessmentData['project_name'],
-            'type' => $this->assessmentData['type'],
-            'end_date' => $this->assessmentData['end_date']
+            'message'        => "New {$prettyType} available",
+            'assessment_id'  => $this->assessmentData['assessment_id'],
+            'project_name'   => $this->assessmentData['project_name'],
+            'type'           => $prettyType,
+            'end_date'       => $this->assessmentData['end_date'],
         ];
     }
 }

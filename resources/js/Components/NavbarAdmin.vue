@@ -2,6 +2,7 @@
 import { router } from "@inertiajs/vue3";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import axios from "axios";
+import Swal from "sweetalert2";
 
 export default {
   name: "NavbarAdmin",
@@ -118,7 +119,11 @@ export default {
         }
       } catch (error) {
         console.error("Logout error:", error);
-        alert("Logout failed. Please try again.");
+        Swal.fire({
+          icon: "error",
+          title: "Logout failed",
+          text: "Please try again.",
+        });
       } finally {
         this.disconnectWebSocket();
         localStorage.removeItem("auth_token");
@@ -140,7 +145,11 @@ export default {
         })
         .catch(error => {
           console.error('Gagal mendapatkan role pengguna:', error);
-          alert('Terjadi kesalahan. Silakan coba lagi.');
+            Swal.fire({
+            icon: "error",
+            title: "Terjadi kesalahan",
+            text: "Silakan coba lagi.",
+            });
         });
     },
 
@@ -153,12 +162,20 @@ export default {
           } else if (role === 'mahasiswa') {
             router.visit('/sispa/mahasiswa/profile');
           } else {
-            alert('Role tidak dikenali.');
+            Swal.fire({
+              icon: "error",
+              title: "Role tidak dikenali.",
+              text: "Silakan coba lagi.",
+            });
           }
         })
         .catch(error => {
           console.error('Gagal mendapatkan role pengguna:', error);
-          alert('Terjadi kesalahan. Silakan coba lagi.');
+            Swal.fire({
+            icon: "error",
+            title: "Terjadi kesalahan",
+            text: "Silakan coba lagi.",
+            });
         });
     },
   },

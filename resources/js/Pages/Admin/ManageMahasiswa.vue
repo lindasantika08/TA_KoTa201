@@ -6,6 +6,8 @@ import NavbarAdmin from "@/Components/NavbarAdmin.vue";
 import Card from "@/Components/Card.vue";
 import DataTable from "@/Components/DataTable.vue";
 import Breadcrumb from "@/Components/Breadcrumb.vue";
+import Swal from "sweetalert2";
+
 
 export default {
     name: "admin.ManageMahasiswa",
@@ -164,31 +166,59 @@ export default {
         async updateMahasiswa() {
             try {
                 await axios.post(`/sispa/api/update-mahasiswa`, this.editedMahasiswa);
-                alert("Mahasiswa berhasil diperbarui!");
                 this.showEditModal = false;
                 await this.fetchUsers();
+                Swal.fire({
+                    icon: "success",
+                    title: "Berhasil",
+                    text: "Mahasiswa berhasil diperbarui!",
+                });
             } catch (error) {
-                alert("Gagal memperbarui mahasiswa");
+                Swal.fire({
+                    icon: "error",
+                    title: "Gagal",
+                    text: "Gagal memperbarui mahasiswa",
+                });
                 console.error(error);
             }
         },
+
         async deleteMahasiswa(NIM) {
-            if (!confirm(`Apakah Anda yakin ingin menghapus mahasiswa dengan NIM ${NIM}?`)) {
-                return;
-            }
+            const result = await Swal.fire({
+                title: `Apakah Anda yakin ingin menghapus mahasiswa dengan NIM ${NIM}?`,
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#d33",
+                cancelButtonColor: "#3085d6",
+                confirmButtonText: "Ya, hapus!",
+                cancelButtonText: "Batal",
+            });
+
+            if (!result.isConfirmed) return;
+
             try {
                 const response = await axios.post("/sispa/api/delete-mahasiswa", {
                     nim: NIM,
                 });
+
                 if (response.status === 201) {
-                    alert("Mahasiswa berhasil dihapus!");
                     await this.fetchUsers();
+                    Swal.fire({
+                        icon: "success",
+                        title: "Berhasil",
+                        text: "Mahasiswa berhasil dihapus!",
+                    });
                 }
             } catch (error) {
-                alert("Gagal menghapus mahasiswa");
+                Swal.fire({
+                    icon: "error",
+                    title: "Gagal",
+                    text: "Gagal menghapus mahasiswa",
+                });
                 console.error(error);
             }
         },
+
     },
 };
 </script>
