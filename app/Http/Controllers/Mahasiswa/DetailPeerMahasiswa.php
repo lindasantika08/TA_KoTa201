@@ -57,7 +57,7 @@ class DetailPeerMahasiswa extends Controller
                     ->where('assessment_order', $assessment_order);
             })
             ->get()
-            ->groupBy('question.aspek')
+            ->groupBy('question.typeCriteria.aspect')
             ->map(function ($aspectAnswers, $aspectName) {
                 return [
                     'aspect' => $aspectName,
