@@ -55,11 +55,13 @@ class AssessmentNotifications extends Notification
         );
 
         return [
-            'message'        => "New {$prettyType} available",
-            'assessment_id'  => $this->assessmentData['assessment_id'],
-            'project_name'   => $this->assessmentData['project_name'],
-            'type'           => $prettyType,
-            'end_date'       => $this->assessmentData['end_date'],
+            'message'           => "New {$prettyType} available",
+            'assessment_id'     => $this->assessmentData['assessment_id'],
+            'assessment_order'  => $this->assessmentData['assessment_order'],
+            'project_name'      => $this->assessmentData['project_name'],
+            'type'              => $prettyType,
+            'end_date'          => $this->assessmentData['end_date'],
         ];
     }
+
 }

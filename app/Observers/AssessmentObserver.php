@@ -35,10 +35,12 @@ class AssessmentObserver
                 foreach ($assessments as $assessment) {
                     $notificationData = [
                         'assessment_id' => $assessment->id,
+                        'assessment_order' => $assessment->project_id . '_' . strtolower($assessment->type),
                         'project_name' => $assessment->project->project_name ?? 'Unknown Project',
                         'type' => $assessment->type,
                         'end_date' => $assessment->end_date,
                     ];
+
 
                     $mahasiswa = DB::table('groups')
                         ->where('project_id', $assessment->project_id)
@@ -51,8 +53,9 @@ class AssessmentObserver
                             if ($user) {
                                 $exists = $user->notifications()
                                     ->where('type', AssessmentNotifications::class)
-                                    ->whereJsonContains('data->assessment_id', $assessment->id)
+                                    ->whereJsonContains('data->assessment_order', $assessment->project_id . '_' . strtolower($assessment->type))
                                     ->exists();
+
 
                                 if (!$exists) {
                                     $user->notify(new AssessmentNotifications($notificationData));

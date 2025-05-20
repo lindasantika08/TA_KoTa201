@@ -486,9 +486,8 @@ class DashboardMahasiswa extends Controller
         Log::info('Analysis result count:', ['count' => $result->count()]);
 
         return $result;
-    }    
-    }
-
+    }  
+    
     public function getFeedback(Request $request)
     {
         try {
@@ -643,4 +642,5 @@ class DashboardMahasiswa extends Controller
             ], 500);
         }
     }
-}
+    
+    }

@@ -266,11 +266,9 @@ export default {
       axios
         .get("/sispa/api/projects-user")
         .then((response) => {
-          console.log("Response from /projects-user:", response.data);
           this.projects = response.data.projects;
           if (this.projects.length > 0) {
             this.selectedProject = this.projects[0].project_name;
-            console.log("Selected project:", this.selectedProject);
           }
         })
         .catch((error) => {
@@ -287,74 +285,6 @@ export default {
           const currentProjectStatus = projectStatuses.find(
             (project) => project.project_name === projectName
           );
-                        this.toastTimeout = setTimeout(() => {
-                            this.showChangePasswordToast = false;
-                        }, 10000);
-                    } else {
-                        localStorage.removeItem("need_password_change");
-                    }
-                } else {
-                    console.error("API response missing change_password field");
-                }
-            } catch (error) {
-                console.error("Error checking user status:", error);
-            }
-        },
-        fetchProjectData() {
-            axios
-                .get("/sispa/api/projects-user")
-                .then((response) => {
-                    this.projects = response.data.projects;
-                    if (this.projects.length > 0) {
-                        this.selectedProject = this.projects[0].project_name;
-                    }
-                })
-                .catch((error) => {
-                    console.error("Error fetching project data:", error);
-                });
-        },
-        fetchFeedbackData(projectName) {
-            this.feedbackLoading = true;
-            this.feedbackError = null;
-
-            axios
-                .get("/sispa/api/feedback-dashboard-mhs", {
-                    params: { project: projectName },
-                })
-                .then((response) => {
-                    if (response.data.success) {
-                        // Make sure to properly assign the feedback data
-                        this.feedback = {
-                            lecturerFeedback:
-                                response.data.data.lecturerFeedback || [],
-                            peerFeedback: response.data.data.peerFeedback || [],
-                        };
-                        console.log("Feedback data:", this.feedback); // For debugging
-                    } else {
-                        this.feedbackError =
-                            response.data.message ||
-                            "Failed to load feedback data";
-                    }
-                })
-                .catch((error) => {
-                    console.error("Error fetching feedback:", error);
-                    this.feedbackError =
-                        "An error occurred while fetching feedback data";
-                })
-                .finally(() => {
-                    this.feedbackLoading = false;
-                });
-        },
-        fetchSelfAssessmentStatus(projectName) {
-            axios
-                .get(`/sispa/api/assessment-status`, {
-                    params: { project: projectName },
-                })
-                .then((response) => {
-                    const projectStatuses = response.data.projects || [];
-                    const currentProjectStatus = projectStatuses.find(
-                        (project) => project.project_name === projectName
-                    );
 
                     this.selfAssessmentStatus = currentProjectStatus
                         ? currentProjectStatus.selfAssessmentStatus
@@ -701,11 +631,11 @@ export default {
               </div>
               <div class="p-4">
                 <apexchart
-                  width="100%"
                   type="radar"
-                  :options="radarChartOptions"
-                  :series="radarChartOptions.series"
-                />
+                  height="350"
+                  :options="chartOptions"
+                  :series="series"
+                ></apexchart>
               </div>
             </div>
           </div>
