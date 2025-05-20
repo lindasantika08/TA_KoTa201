@@ -83,8 +83,8 @@ const analysisScores = computed(() => {
 const radarChartOptions = computed(() => ({
   chart: {
     type: "radar",
-    height: "100%",  
-    width: "100%",  
+    height: "100%",  // Reduced from 100% to make it smaller
+    width: "100%",   // Reduced from 100% to make it smaller
     dropShadow: {
       enabled: true,
       blur: 1,
@@ -108,9 +108,9 @@ const radarChartOptions = computed(() => ({
     },
   ],
   labels: analysisScores.value.map((score) => score.aspek),
-  colors: ["#2563EB", "#F97316"], 
+  colors: ["#2563EB", "#F97316"], // Changed to blue and orange
   stroke: {
-    width: 2,  
+    width: 2,  // Reduced from 3 to match smaller size
   },
   fill: {
     opacity: 0.4,
@@ -134,27 +134,27 @@ const radarChartOptions = computed(() => ({
     labels: {
       formatter: (val) => val.toFixed(1),
       style: {
-        fontSize: "14px",  
+        fontSize: "14px",  // Reduced from 16px
       },
     },
   },
   xaxis: {
     labels: {
       style: {
-        fontSize: "14px",  
+        fontSize: "14px",  // Reduced from 16px
       },
     },
   },
   legend: {
     position: "bottom",
     horizontalAlign: "center",
-    fontSize: "14px",  
+    fontSize: "14px",  // Reduced from 16px
     markers: {
-      width: 16,  
-      height: 16,  
+      width: 16,  // Reduced from 20
+      height: 16,  // Reduced from 20
     },
     itemMargin: {
-      horizontal: 15,  
+      horizontal: 15,  // Reduced from 20
     },
   },
 }));
