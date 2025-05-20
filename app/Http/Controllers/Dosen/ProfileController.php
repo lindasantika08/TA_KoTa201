@@ -29,10 +29,10 @@ class ProfileController extends Controller
             return response()->json(['message' => 'Data Dosen tidak ditemukan.'], 404);
         }
 
-        // Simple, direct approach - use the exact URL where the file is located
         $photoUrl = $dosen->user->photo 
-            ? 'https://polban-space.cloudias79.com/sispa/storage/' . $dosen->user->photo 
+            ? asset('storage/' . $dosen->user->photo)
             : null;
+
 
         return response()->json([
             'nama' => $dosen->user->name,

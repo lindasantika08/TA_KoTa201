@@ -21,6 +21,8 @@ export default {
         project_name: null,
         batch_year: null,
       },
+      scoreData: null,
+      loadingScoreData: false,
       selfAssessmentStatus: null,
       peerGroupSize: 0,
       peerCompletedCount: 0,
@@ -47,94 +49,137 @@ export default {
     };
   },
   computed: {
-    series() {
-      return [
-        {
-          name: "Project Skills",
-          data: [80, 70, 65, 75, 60],
-        },
-      ];
+    analysisScores() {
+      if (
+        !this.scoreData?.self_assessment ||
+        !this.scoreData?.peer_assessment
+      ) {
+        return [];
+      }
+
+      return this.scoreData.self_assessment.map((selfAspect) => {
+        const peerEvaluations = this.scoreData.peer_assessment.filter(
+          (peer) => peer.aspek === selfAspect.aspek
+        );
+
+        const averagePeerScore =
+          peerEvaluations.length > 0
+            ? peerEvaluations.reduce((sum, peer) => {
+                const score =
+                  peer.total_score_peer != null
+                    ? peer.total_score_peer
+                    : peer.total_score || 0;
+                return sum + score;
+              }, 0) / peerEvaluations.length
+            : 0;
+
+        const selfScore =
+          selfAspect.total_score_self != null
+            ? selfAspect.total_score_self
+            : selfAspect.total_score || 0;
+
+        const scoreDifference = selfScore - averagePeerScore;
+
+        return {
+          aspek: selfAspect.aspek,
+          kriteria: selfAspect.kriteria,
+          selfScore: selfScore.toFixed(2),
+          averagePeerScore: averagePeerScore.toFixed(2),
+          scoreDifference: scoreDifference.toFixed(2),
+          status:
+            scoreDifference > 0
+              ? "Over"
+              : scoreDifference < 0
+              ? "Under"
+              : "Match",
+          questions: selfAspect.questions,
+        };
+      });
     },
-    chartOptions() {
+    radarChartOptions() {
       return {
         chart: {
           type: "radar",
-          toolbar: { show: false },
-          fontFamily: 'Inter, sans-serif',
-        },
-        colors: ['#4F46E5'],
-        labels: [
-          "Communication",
-          "Teamwork",
-          "Technical Skills",
-          "Problem Solving",
-          "Time Management",
-        ],
-        plotOptions: {
-          radar: {
-            polygons: {
-              strokeColor: "#e9e9e9",
-              fill: {
-                colors: ["#f8f8f8", "#fff"],
-              },
-            },
+          height: "50%",
+          width: "50%",
+          dropShadow: {
+            enabled: true,
+            blur: 1,
+            left: 1,
+            top: 1,
+          },
+          toolbar: {
+            show: true,
           },
         },
-        title: {
-          text: "",
-          align: "left",
-        },
-        xaxis: {
-          categories: [
-            "Communication",
-            "Teamwork",
-            "Technical Skills",
-            "Problem Solving",
-            "Time Management",
-          ],
-        },
-        yaxis: {
-          show: false,
-        },
+        series: [
+          {
+            name: "Self Assessment",
+            data: this.analysisScores.map((s) => parseFloat(s.selfScore)),
+          },
+          {
+            name: "Peer Average",
+            data: this.analysisScores.map((s) => parseFloat(s.averagePeerScore)),
+          },
+        ],
+        labels: this.analysisScores.map((s) => s.aspek),
+        colors: ["#2563EB", "#F97316"],
         stroke: {
           width: 2,
         },
+        fill: {
+          opacity: 0.4,
+        },
         markers: {
-          size: 4,
-          colors: ["#fff"],
-          strokeColor: "#4F46E5",
-          strokeWidth: 2,
+          size: 6,
+          hover: {
+            size: 8,
+          },
+        },
+        tooltip: {
+          y: {
+            formatter: (val) => val.toFixed(2),
+          },
+        },
+        yaxis: {
+          show: true,
+          min: 0,
+          max: 5,
+          tickAmount: 5,
+          labels: {
+            formatter: (val) => val.toFixed(1),
+            style: {
+              fontSize: "14px",
+            },
+          },
+        },
+        xaxis: {
+          labels: {
+            style: {
+              fontSize: "14px",
+            },
+          },
+        },
+        legend: {
+          position: "bottom",
+          horizontalAlign: "center",
+          fontSize: "14px",
+          markers: {
+            width: 16,
+            height: 16,
+          },
+          itemMargin: {
+            horizontal: 15,
+          },
         },
       };
     },
-    progressColor() {
-      const percentage = this.peerGroupSize > 0 
-        ? (this.peerCompletedCount / this.peerGroupSize) * 100 
-        : 0;
-      
-      if (percentage >= 75) return 'bg-green-500';
-      if (percentage >= 40) return 'bg-yellow-500';
-      return 'bg-red-500';
-    },
-    statusClass() {
-      switch(this.selfAssessmentStatus) {
-        case 'Completed': return 'bg-green-100 text-green-800 border-green-400';
-        case 'Pending': return 'bg-yellow-100 text-yellow-800 border-yellow-400';
-        default: return 'bg-red-100 text-red-800 border-red-400';
-      }
-    },
-    statusIcon() {
-      switch(this.selfAssessmentStatus) {
-        case 'Completed': return 'check-circle';
-        case 'Pending': return 'clock';
-        default: return 'exclamation-circle';
-      }
-    }
   },
   mounted() {
     this.fetchProjectData();
     this.fetchSelfAssessmentStatus();
     this.fetchPeerAssessmentDetails();
+    this.fetchProjectScoreDetails();
     // this.checkPasswordChangeStatus();
   },
   beforeUnmount() {
@@ -151,6 +196,31 @@ export default {
     },
   },
   methods: {
+    async fetchProjectScoreDetails(batchYear, projectId, kelompok) {
+      this.loadingScoreData = true;
+
+      try {
+        const response = await axios.get("/sispa/api/project-score-details", {
+          params: {
+            batch_year: batchYear,
+            project_id: projectId,
+            kelompok: kelompok,
+          },
+        });
+
+        console.log("API Response:", response);
+
+        if (response.data.status === "success") {
+          this.scoreData = response.data.data;
+        } else {
+          console.warn("Gagal mengambil data:", response.data.message);
+        }
+      } catch (err) {
+        console.error("Gagal fetch detail skor:", err);
+      } finally {
+        this.loadingScoreData = false;
+      }
+    },
     checkPasswordChangeStatus() {
       const needPasswordChange = localStorage.getItem("need_password_change");
 
@@ -196,9 +266,11 @@ export default {
       axios
         .get("/sispa/api/projects-user")
         .then((response) => {
+          console.log("Response from /projects-user:", response.data);
           this.projects = response.data.projects;
           if (this.projects.length > 0) {
             this.selectedProject = this.projects[0].project_name;
+            console.log("Selected project:", this.selectedProject);
           }
         })
         .catch((error) => {
@@ -450,11 +522,11 @@ export default {
               </div>
               <div class="p-4">
                 <apexchart
+                  width="100%"
                   type="radar"
-                  height="350"
-                  :options="chartOptions"
-                  :series="series"
-                ></apexchart>
+                  :options="radarChartOptions"
+                  :series="radarChartOptions.series"
+                />
               </div>
             </div>
           </div>

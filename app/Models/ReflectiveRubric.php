@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
-class TypeCriteria extends Model
+class ReflectiveRubric extends Model
 {
     use HasFactory, SoftDeletes, HasUuids;
 
@@ -16,7 +16,7 @@ class TypeCriteria extends Model
      *
      * @var string
      */
-    protected $table = 'type_criteria';
+    protected $table = 'reflective_assessment_rubric';
 
     /**
      * The attributes that are mass assignable.
@@ -24,9 +24,7 @@ class TypeCriteria extends Model
      * @var array
      */
     protected $fillable = [
-        'id',
-        'aspect',
-        'criteria',
+        'criteria_reflective',
         'bobot_1',
         'bobot_2',
         'bobot_3',
@@ -55,16 +53,5 @@ class TypeCriteria extends Model
         }
 
         return $query;
-    }
-
-    public function assessments()
-    {
-
-        return $this->hasMany(Assessment::class, 'criteria_id');
-    }
-
-    public function report()
-    {
-        return $this->hasMany(Report::class, 'typeCriteria_id');
     }
 }

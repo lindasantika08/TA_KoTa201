@@ -15,6 +15,7 @@ use App\Http\Controllers\Dosen\AnswerController;
 use App\Http\Controllers\Dosen\ProfileController;
 use App\Http\Controllers\Dosen\UserManagementController;
 use App\Http\Controllers\Dosen\PeerAssessmentDosen;
+use App\Http\Controllers\Dosen\RefleksiController;
 
 use App\Http\Controllers\Mahasiswa\AssessmentMahasiswa;
 use App\Http\Controllers\Mahasiswa\DashboardMahasiswa;
@@ -28,6 +29,7 @@ use App\Http\Controllers\Mahasiswa\ProfileMahasiswa;
 use App\Http\Controllers\Mahasiswa\NotificationMahasiswa;
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Mahasiswa\RefleksiMahasiswa;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -73,6 +75,11 @@ Route::prefix('sispa')->group(function () {
 
             Route::get('/assessment/projects-self', [ProjectController::class, 'getProjectsWithAssessmentsSelf']);
             Route::get('/assessment/projects-peer', [ProjectController::class, 'getProjectsWithAssessmentsPeer']);
+
+            Route::get('/assessment/projects-reflective', [RefleksiController::class, 'getViewReflective']);
+            Route::post('/reflectiveAssessment/import', [RefleksiController::class, 'import']);
+            Route::get('/reflectiveAssessment/detail', [RefleksiController::class, 'getDetailReflective']);
+            Route::get('/reflectiveAssessment/detail-answer', [RefleksiController::class, 'showDetailAnswer']);
 
             Route::get('/kelola-proyek', [KelolaProyekController::class, 'KelolaProyekView'])->name('kelola.proyek');
             Route::post('/tambah-proyek', [KelolaProyekController::class, 'AddProyek'])->name('kelola-proyek.store');
@@ -132,6 +139,12 @@ Route::prefix('sispa')->group(function () {
             Route::get('/peer-assessment/peer-detail', [DetailPeerMahasiswa::class, 'showDetail']);
             Route::get('/peer-assessment/self-detail', [DetailSelfMahasiswa::class, 'showDetail']);
             // Route::get('/notifications-mhs', [NotificationMahasiswa::class, 'index'])->name('index');
+
+            //Reflective Assessment
+            Route::get('/reflective-assessment', [RefleksiMahasiswa::class, 'reflectiveAssessment']);
+            Route::get('assessment/reflective-assessment', [RefleksiMahasiswa::class, 'getReflectiveAssessment']);
+            Route::get('/reflective-detail', [RefleksiMahasiswa::class, 'getDetailReflective']);
+
 
             Route::get('/profile', [ProfileMahasiswa::class, 'profile'])->name('profile');
 

@@ -19,8 +19,8 @@ class DashboardAdminController extends Controller
                 $inactiveProjects = 0;
 
                 foreach ($major->prodis as $prodi) {
-                    $activeProjects += $prodi->projects->where('status', 'active')->count();
-                    $inactiveProjects += $prodi->projects->where('status', '!=', 'active')->count();
+                    $activeProjects += $prodi->projects->where('status', 'Active')->count();
+                    $inactiveProjects += $prodi->projects->where('status', '!=', 'Active')->count();
                 }
 
                 return [

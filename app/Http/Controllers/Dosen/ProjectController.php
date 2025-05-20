@@ -15,7 +15,7 @@ class ProjectController extends Controller
     public function index()
     {
         $projects = Project::select('batch_year', 'semester', 'project_name')
-            ->where('status', 'active')
+            ->where('status', 'Active')
             ->get();
 
         return response()->json($projects);

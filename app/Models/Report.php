@@ -17,10 +17,16 @@ class Report extends Model
         'group_id',
         'mahasiswa_id',
         'typeCriteria_id',
+        'question_id',
+        'peer_id',
+        'final_score_self',
+        'final_score_peer',
+        'assessment_type',
         'skor_self',
         'skor_peer',
         'selisih',
         'nilai_total',
+
     ];
 
     public function project()
