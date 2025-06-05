@@ -323,6 +323,9 @@ class FeedbackController extends Controller
        - Kalimat yang bersifat personal atau menyinggung
        - Detail yang dapat mengidentifikasi individu pemberi feedback
        - Pengulangan informasi yang tidak perlu
+       - Menggunakan jargon teknis yang tidak umum
+       - Menggunakan bahasa yang terlalu formal atau kaku
+       - Menyebutkan Score yang diberikan oleh peer
     
     4. Integrasikan:
        - Feedback tertulis dengan hasil penilaian peer
