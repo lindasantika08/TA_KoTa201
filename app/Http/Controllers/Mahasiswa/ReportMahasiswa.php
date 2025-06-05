@@ -12,6 +12,7 @@ use App\Models\Project;
 use App\Models\Group;
 use App\Models\Answers;
 use App\Models\AnswersPeer;
+use App\Models\Report;
 use App\Models\Assessment;
 use App\Models\User;
 use App\Models\Mahasiswa;
@@ -35,7 +36,6 @@ class ReportMahasiswa extends Controller
         try {
             $userId = Auth::id();
 
-            // Get the mahasiswa record associated with the user
             $mahasiswa = Mahasiswa::where('user_id', $userId)->first();
 
             if (!$mahasiswa) {
@@ -45,7 +45,6 @@ class ReportMahasiswa extends Controller
                 ], 404);
             }
 
-            // Get groups associated with the mahasiswa, including project data
             $groups = Group::with(['project' => function ($query) {
                 $query->select('id', 'project_name', 'batch_year', 'status', 'semester');
             }])
@@ -120,7 +119,6 @@ class ReportMahasiswa extends Controller
         $kelompok = $request->input('kelompok');
         $userId = Auth::id();
 
-        // Add logging
         Log::info('Request parameters:', [
             'batch_year' => $batchYear,
             'project_id' => $projectId,
@@ -129,10 +127,8 @@ class ReportMahasiswa extends Controller
         ]);
 
         try {
-            // Get mahasiswa record for the logged-in user
             $mahasiswa = Mahasiswa::where('user_id', $userId)->first();
 
-            // Add logging
             Log::info('Mahasiswa found:', ['mahasiswa' => $mahasiswa]);
 
             if (!$mahasiswa) {
@@ -142,13 +138,11 @@ class ReportMahasiswa extends Controller
                 ], 404);
             }
 
-            // Get user's group for this project
             $group = Group::where('batch_year', $batchYear)
                 ->where('project_id', $projectId)
                 ->where('mahasiswa_id', $mahasiswa->id)
                 ->first();
 
-            // Add logging
             Log::info('Group found:', ['group' => $group]);
 
             if (!$group) {
@@ -158,7 +152,6 @@ class ReportMahasiswa extends Controller
                 ], 404);
             }
 
-            // Get assessments for this project with logging
             $selfAssessments = Assessment::where('batch_year', $batchYear)
                 ->where('project_id', $projectId)
                 ->where('type', 'selfAssessment')
@@ -171,10 +164,10 @@ class ReportMahasiswa extends Controller
                 $mahasiswa->id,
                 'selfAssessment',
                 $batchYear,
-                $projectId
+                $projectId,
+                $group->id
             );
 
-            // Peer Assessments with logging
             $peerAssessments = Assessment::where('batch_year', $batchYear)
                 ->where('project_id', $projectId)
                 ->where('type', 'peerAssessment')
@@ -187,14 +180,14 @@ class ReportMahasiswa extends Controller
                 $mahasiswa->id,
                 'peerAssessment',
                 $batchYear,
-                $projectId
+                $projectId,
+                $group->id
             );
 
-            // Prepare user results
             $userResults = [
                 'user_id' => $userId,
-                'name' => Auth::user()->name ?? 'Tidak dikenal',  // Correctly retrieve user name
-                'kelompok' => $group->group,  // Add group info here
+                'name' => Auth::user()->name ?? 'Tidak dikenal',
+                'kelompok' => $group->group,
                 'self_assessment' => $selfAspekKriteriaAnalysis->values(),
                 'peer_assessment' => $peerAspekKriteriaAnalysis->values(),
             ];
@@ -218,8 +211,7 @@ class ReportMahasiswa extends Controller
             ], 500);
         }
     }
-
-    private function analyzeAssessments($assessments, $mahasiswaId, $assessmentType, $batchYear, $projectId)
+    private function analyzeAssessments($assessments, $mahasiswaId, $assessmentType, $batchYear, $projectId, $groupId)
     {
         Log::info('Starting analyzeAssessments', [
             'assessmentType' => $assessmentType,
@@ -227,7 +219,6 @@ class ReportMahasiswa extends Controller
             'assessmentCount' => $assessments->count()
         ]);
 
-        // Filter assessments by batch_year and project_id
         $filteredAssessments = $assessments->filter(function ($assessment) use ($batchYear, $projectId) {
             return $assessment->batch_year === $batchYear && $assessment->project_id === $projectId;
         });
@@ -239,16 +230,22 @@ class ReportMahasiswa extends Controller
             return collect([]);
         }
 
+        $reports = Report::where('project_id', $projectId)
+            ->where('group_id', $groupId)
+            ->where('mahasiswa_id', $mahasiswaId)
+            ->get();
+
+        Log::info('Reports found:', ['count' => $reports->count()]);
+
         $result = $filteredAssessments->groupBy(function ($assessment) {
             if (!$assessment->typeCriteria) {
                 Log::error('typeCriteria relation not found for assessment:', ['assessment_id' => $assessment->id]);
                 return null;
             }
             return $assessment->typeCriteria->aspect . '_' . $assessment->typeCriteria->criteria;
-        })->map(function ($groupAssessments) use ($mahasiswaId, $assessmentType) {
+        })->map(function ($groupAssessments) use ($mahasiswaId, $assessmentType, $reports) {
             $questionIds = $groupAssessments->pluck('id');
 
-            // Get answers based on assessment type
             $answers = $assessmentType === 'selfAssessment'
                 ? Answers::whereIn('question_id', $questionIds)
                 ->where('mahasiswa_id', $mahasiswaId)
@@ -264,26 +261,51 @@ class ReportMahasiswa extends Controller
 
             $typeCriteria = $groupAssessments->first()->typeCriteria;
 
-            // Get peer names
             $peerNames = $groupAssessments->map(function ($assessment) {
-                return $assessment->peer->name ?? 'Unknown Peer'; // Ensure peer name is available
+                return $assessment->peer->name ?? 'Unknown Peer';
             })->unique()->values();
+
+            $questions = $groupAssessments->map(function ($assessment) use ($answers, $reports, $mahasiswaId, $assessmentType) {
+                $relatedAnswer = $answers->where('question_id', $assessment->id)->first();
+                $relatedReport = $reports->where('question_id', $assessment->id)
+                    ->where('typeCriteria_id', $assessment->typeCriteria->id)
+                    ->first();
+
+                $finalScoreSelf = ($assessmentType === 'selfAssessment' && $relatedReport) ? $relatedReport->final_score_self : null;
+                $finalScorePeer = ($assessmentType === 'peerAssessment' && $relatedReport) ? $relatedReport->final_score_peer : null;
+
+                return [
+                    'question_id' => $assessment->id,
+                    'pertanyaan' => $assessment->question,
+                    'score' => $relatedAnswer ? $relatedAnswer->score : null,
+                    'answer' => $relatedAnswer ? $relatedAnswer->answer : null,
+                    'final_score_self' => $finalScoreSelf,
+                    'final_score_peer' => $finalScorePeer
+                ];
+            });
+
+            $totalScoreSelf = null;
+            $totalScorePeer = null;
+
+            if ($assessmentType === 'selfAssessment') {
+                $validScores = $questions->pluck('final_score_self')->filter()->values();
+                $totalScoreSelf = $validScores->count() > 0 ? $validScores->avg() : null;
+            } else { // peerAssessment
+                $validScores = $questions->pluck('final_score_peer')->filter()->values();
+                $totalScorePeer = $validScores->count() > 0 ? $validScores->avg() : null;
+            }
+
+            $totalScore = $answers->avg('score');
 
             return [
                 'aspek' => $typeCriteria->aspect,
                 'kriteria' => $typeCriteria->criteria,
-                'total_score' => $answers->avg('score'),
+                'total_score' => $totalScore,
+                'total_score_self' => $totalScoreSelf,
+                'total_score_peer' => $totalScorePeer,
                 'total_answers' => $answers->count(),
-                'questions' => $groupAssessments->map(function ($assessment) use ($answers) {
-                    $relatedAnswer = $answers->where('question_id', $assessment->id)->first();
-                    return [
-                        'question_id' => $assessment->id,
-                        'pertanyaan' => $assessment->question,
-                        'score' => $relatedAnswer ? $relatedAnswer->score : null,
-                        'answer' => $relatedAnswer ? $relatedAnswer->answer : null
-                    ];
-                }),
-                'peer_names' => $peerNames // Include peer names in the result
+                'questions' => $questions,
+                'peer_names' => $peerNames
             ];
         });
 

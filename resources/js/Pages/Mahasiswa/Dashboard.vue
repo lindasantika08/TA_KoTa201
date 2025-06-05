@@ -20,7 +20,10 @@ export default {
             selectedProject: {
                 project_name: null,
                 batch_year: null,
+                project_id: null,
             },
+            scoreData: null,
+            loadingScoreData: false,
             selfAssessmentStatus: null,
             peerGroupSize: 0,
             peerCompletedCount: 0,
@@ -32,101 +35,153 @@ export default {
             activeTab: "peer", // Tab aktif untuk feedback (peer/dosen)
             feedback: {
                 lecturerFeedback: [],
-                peerFeedback: [],
+                peerFeedback: [
+                    // Data contoh untuk peer feedback
+                    {
+                        feedback:
+                            "Kontribusi yang bagus dalam tim. Aktif memberikan ide dan solusi.",
+                        createdAt: new Date(2025, 4, 1),
+                    },
+                    {
+                        feedback:
+                            "Sangat membantu dalam menyelesaikan tugas teknis yang rumit.",
+                        createdAt: new Date(2025, 4, 2),
+                    },
+                ],
             },
-            dosenName: null,
         };
     },
     computed: {
-        series() {
-            return [
-                {
-                    name: "Project Skills",
-                    data: [80, 70, 65, 75, 60],
-                },
-            ];
+        analysisScores() {
+            if (
+                !this.scoreData?.self_assessment ||
+                !this.scoreData?.peer_assessment
+            ) {
+                return [];
+            }
+
+            return this.scoreData.self_assessment.map((selfAspect) => {
+                const peerEvaluations = this.scoreData.peer_assessment.filter(
+                    (peer) => peer.aspek === selfAspect.aspek
+                );
+
+                const averagePeerScore =
+                    peerEvaluations.length > 0
+                        ? peerEvaluations.reduce((sum, peer) => {
+                              const score =
+                                  peer.total_score_peer != null
+                                      ? peer.total_score_peer
+                                      : peer.total_score || 0;
+                              return sum + score;
+                          }, 0) / peerEvaluations.length
+                        : 0;
+
+                const selfScore =
+                    selfAspect.total_score_self != null
+                        ? selfAspect.total_score_self
+                        : selfAspect.total_score || 0;
+
+                const scoreDifference = selfScore - averagePeerScore;
+
+                return {
+                    aspek: selfAspect.aspek,
+                    kriteria: selfAspect.kriteria,
+                    selfScore: selfScore.toFixed(2),
+                    averagePeerScore: averagePeerScore.toFixed(2),
+                    scoreDifference: scoreDifference.toFixed(2),
+                    status:
+                        scoreDifference > 0
+                            ? "Over"
+                            : scoreDifference < 0
+                            ? "Under"
+                            : "Match",
+                    questions: selfAspect.questions,
+                };
+            });
         },
-        chartOptions() {
+        radarChartOptions() {
             return {
                 chart: {
                     type: "radar",
-                    toolbar: { show: false },
-                    fontFamily: "Inter, sans-serif",
+                    height: 600,
+                    width: 600,
+                    dropShadow: {
+                        enabled: true,
+                        blur: 1,
+                        left: 1,
+                        top: 1,
+                    },
+                    toolbar: {
+                        show: true,
+                    },
                 },
-                colors: ["#4F46E5"],
-                labels: [
-                    "Communication",
-                    "Teamwork",
-                    "Technical Skills",
-                    "Problem Solving",
-                    "Time Management",
+                series: [
+                    {
+                        name: "Self Assessment",
+                        data: this.analysisScores.map((s) =>
+                            parseFloat(s.selfScore)
+                        ),
+                    },
+                    {
+                        name: "Peer Average",
+                        data: this.analysisScores.map((s) =>
+                            parseFloat(s.averagePeerScore)
+                        ),
+                    },
                 ],
-                plotOptions: {
-                    radar: {
-                        polygons: {
-                            strokeColor: "#e9e9e9",
-                            fill: {
-                                colors: ["#f8f8f8", "#fff"],
-                            },
+                labels: this.analysisScores.map((s) => s.aspek),
+                colors: ["#2563EB", "#F97316"],
+                stroke: {
+                    width: 2,
+                    colors: ["#2563EB", "#F97316"],
+                },
+                colors: ["#2563EB", "#F97316"],
+                fill: {
+                    opacity: 0.2,
+                },
+                markers: {
+                    size: 6,
+                    hover: {
+                        size: 8,
+                    },
+                },
+                tooltip: {
+                    y: {
+                        formatter: (val) => val.toFixed(2),
+                    },
+                },
+                yaxis: {
+                    show: true,
+                    min: 0,
+                    max: 5,
+                    tickAmount: 5,
+                    labels: {
+                        formatter: (val) => val.toFixed(1),
+                        style: {
+                            fontSize: "14px",
                         },
                     },
                 },
-                title: {
-                    text: "",
-                    align: "left",
-                },
                 xaxis: {
-                    categories: [
-                        "Communication",
-                        "Teamwork",
-                        "Technical Skills",
-                        "Problem Solving",
-                        "Time Management",
-                    ],
+                    labels: {
+                        style: {
+                            fontSize: "14px",
+                        },
+                    },
                 },
-                yaxis: {
-                    show: false,
-                },
-                stroke: {
-                    width: 2,
-                },
-                markers: {
-                    size: 4,
-                    colors: ["#fff"],
-                    strokeColor: "#4F46E5",
-                    strokeWidth: 2,
+                legend: {
+                    position: "bottom",
+                    horizontalAlign: "center",
+                    fontSize: "14px",
+                    markers: {
+                        width: 18,
+                        height: 18,
+                    },
+                    itemMargin: {
+                        horizontal: 15,
+                    },
                 },
             };
-        },
-        progressColor() {
-            const percentage =
-                this.peerGroupSize > 0
-                    ? (this.peerCompletedCount / this.peerGroupSize) * 100
-                    : 0;
-
-            if (percentage >= 75) return "bg-green-500";
-            if (percentage >= 40) return "bg-yellow-500";
-            return "bg-red-500";
-        },
-        statusClass() {
-            switch (this.selfAssessmentStatus) {
-                case "Completed":
-                    return "bg-green-100 text-green-800 border-green-400";
-                case "Pending":
-                    return "bg-yellow-100 text-yellow-800 border-yellow-400";
-                default:
-                    return "bg-red-100 text-red-800 border-red-400";
-            }
-        },
-        statusIcon() {
-            switch (this.selfAssessmentStatus) {
-                case "Completed":
-                    return "check-circle";
-                case "Pending":
-                    return "clock";
-                default:
-                    return "exclamation-circle";
-            }
         },
     },
     mounted() {
@@ -143,14 +198,53 @@ export default {
     },
     watch: {
         selectedProject(newProject) {
-            if (newProject) {
-                this.fetchSelfAssessmentStatus(newProject);
-                this.fetchPeerAssessmentDetails(newProject);
-                this.fetchFeedbackData(newProject);
+            if (
+                newProject &&
+                newProject.project_name &&
+                newProject.batch_year &&
+                newProject.project_id
+            ) {
+                this.fetchSelfAssessmentStatus(newProject.project_name);
+                this.fetchPeerAssessmentDetails(newProject.project_name);
+                this.fetchFeedbackData(newProject.project_name);
+                this.fetchProjectScoreDetails(
+                    newProject.batch_year,
+                    newProject.project_id
+                );
             }
         },
     },
     methods: {
+        async fetchProjectScoreDetails(batchYear, projectId) {
+            this.loadingScoreData = true;
+
+            try {
+                const response = await axios.get(
+                    "/sispa/api/project-score-details",
+                    {
+                        params: {
+                            batch_year: batchYear,
+                            project_id: projectId,
+                        },
+                    }
+                );
+
+                console.log("API Response:", response);
+
+                if (response.data.status === "success") {
+                    this.scoreData = response.data.data;
+                } else {
+                    console.warn(
+                        "Gagal mengambil data:",
+                        response.data.message
+                    );
+                }
+            } catch (err) {
+                console.error("Gagal fetch detail skor:", err);
+            } finally {
+                this.loadingScoreData = false;
+            }
+        },
         checkPasswordChangeStatus() {
             const needPasswordChange = localStorage.getItem(
                 "need_password_change"
@@ -198,45 +292,18 @@ export default {
             axios
                 .get("/sispa/api/projects-user")
                 .then((response) => {
-                    this.projects = response.data.projects;
+                    this.projects = response.data.projects.map((project) => ({
+                        project_name: project.project_name,
+                        batch_year: project.batch_year,
+                        project_id: project.id || project.project_id,
+                    }));
+
                     if (this.projects.length > 0) {
-                        this.selectedProject = this.projects[0].project_name;
+                        this.selectedProject = this.projects[0];
                     }
                 })
                 .catch((error) => {
                     console.error("Error fetching project data:", error);
-                });
-        },
-        fetchFeedbackData(projectName) {
-            this.feedbackLoading = true;
-            this.feedbackError = null;
-
-            axios
-                .get("/sispa/api/feedback-dashboard-mhs", {
-                    params: { project: projectName },
-                })
-                .then((response) => {
-                    if (response.data.success) {
-                        // Make sure to properly assign the feedback data
-                        this.feedback = {
-                            lecturerFeedback:
-                                response.data.data.lecturerFeedback || [],
-                            peerFeedback: response.data.data.peerFeedback || [],
-                        };
-                        console.log("Feedback data:", this.feedback); // For debugging
-                    } else {
-                        this.feedbackError =
-                            response.data.message ||
-                            "Failed to load feedback data";
-                    }
-                })
-                .catch((error) => {
-                    console.error("Error fetching feedback:", error);
-                    this.feedbackError =
-                        "An error occurred while fetching feedback data";
-                })
-                .finally(() => {
-                    this.feedbackLoading = false;
                 });
         },
         fetchSelfAssessmentStatus(projectName) {
@@ -280,6 +347,38 @@ export default {
                         "Error fetching peer assessment details:",
                         error
                     );
+                });
+        },
+        fetchFeedbackData(projectName) {
+            this.feedbackLoading = true;
+            this.feedbackError = null;
+
+            axios
+                .get("/sispa/api/feedback-dashboard-mhs", {
+                    params: { project: projectName },
+                })
+                .then((response) => {
+                    if (response.data.success) {
+                        // Make sure to properly assign the feedback data
+                        this.feedback = {
+                            lecturerFeedback:
+                                response.data.data.lecturerFeedback || [],
+                            peerFeedback: response.data.data.peerFeedback || [],
+                        };
+                        console.log("Feedback data:", this.feedback); // For debugging
+                    } else {
+                        this.feedbackError =
+                            response.data.message ||
+                            "Failed to load feedback data";
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error fetching feedback:", error);
+                    this.feedbackError =
+                        "An error occurred while fetching feedback data";
+                })
+                .finally(() => {
+                    this.feedbackLoading = false;
                 });
         },
         handleChangePassword() {
@@ -525,7 +624,7 @@ export default {
                                         >
                                     </div>
                                     <div
-                                        class="w-full bg-gray-200 rounded-full h-2.5"
+                                        class="w-full bg-green-600 rounded-full h-2.5"
                                     >
                                         <div
                                             :class="`h-2.5 rounded-full ${progressColor}`"
@@ -572,8 +671,11 @@ export default {
                                         >
                                             <option
                                                 v-for="project in projects"
-                                                :key="project.id"
-                                                :value="project.project_name"
+                                                :key="
+                                                    project.project_id ||
+                                                    project.id
+                                                "
+                                                :value="project"
                                             >
                                                 {{ project.project_name }}
                                             </option>
@@ -599,13 +701,13 @@ export default {
                                     Visualisasi kompetensi Anda dalam project
                                 </p>
                             </div>
-                            <div class="p-4">
+                            <div id="chart-container">
                                 <apexchart
+                                    width="100%"
                                     type="radar"
-                                    height="350"
-                                    :options="chartOptions"
-                                    :series="series"
-                                ></apexchart>
+                                    :options="radarChartOptions"
+                                    :series="radarChartOptions.series"
+                                />
                             </div>
                         </div>
                     </div>
@@ -817,5 +919,12 @@ export default {
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+#chart-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 700px;
 }
 </style>
