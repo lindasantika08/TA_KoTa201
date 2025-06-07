@@ -7,238 +7,248 @@ import Card from "@/Components/Card.vue";
 import SidebarMahasiswa from "@/Components/SidebarMahasiswa.vue";
 
 export default {
-  name: "Dashboard",
-  components: {
-    SidebarMahasiswa,
-    Navbar,
-    Card,
-    apexchart: VueApexCharts,
-  },
-  data() {
-    return {
-      projects: [],
-      selectedProject: {
-        project_name: null,
-        batch_year: null,
-        project_id: null,
-      },
-      scoreData: null,
-      loadingScoreData: false,
-      selfAssessmentStatus: null,
-      peerGroupSize: 0,
-      peerCompletedCount: 0,
-      showChangePasswordToast: false,
-      needPasswordChange: false,
-      toastTimeout: null,
-      feedbackLoading: false,
-      feedbackError: null,
-      activeTab: "peer", // Tab aktif untuk feedback (peer/dosen)
-      feedback: {
-        lecturerFeedback: [],
-        peerFeedback: [
-          // Data contoh untuk peer feedback
-          {
-            feedback:
-              "Kontribusi yang bagus dalam tim. Aktif memberikan ide dan solusi.",
-            createdAt: new Date(2025, 4, 1),
-          },
-          {
-            feedback:
-              "Sangat membantu dalam menyelesaikan tugas teknis yang rumit.",
-            createdAt: new Date(2025, 4, 2),
-          },
-        ],
-      },
-    };
-  },
-  computed: {
-    analysisScores() {
-      if (
-        !this.scoreData?.self_assessment ||
-        !this.scoreData?.peer_assessment
-      ) {
-        return [];
-      }
-
-      return this.scoreData.self_assessment.map((selfAspect) => {
-        const peerEvaluations = this.scoreData.peer_assessment.filter(
-          (peer) => peer.aspek === selfAspect.aspek
-        );
-
-        const averagePeerScore =
-          peerEvaluations.length > 0
-            ? peerEvaluations.reduce((sum, peer) => {
-                const score =
-                  peer.total_score_peer != null
-                    ? peer.total_score_peer
-                    : peer.total_score || 0;
-                return sum + score;
-              }, 0) / peerEvaluations.length
-            : 0;
-
-        const selfScore =
-          selfAspect.total_score_self != null
-            ? selfAspect.total_score_self
-            : selfAspect.total_score || 0;
-
-        const scoreDifference = selfScore - averagePeerScore;
-
+    name: "Dashboard",
+    components: {
+        SidebarMahasiswa,
+        Navbar,
+        Card,
+        apexchart: VueApexCharts,
+    },
+    data() {
         return {
-          aspek: selfAspect.aspek,
-          kriteria: selfAspect.kriteria,
-          selfScore: selfScore.toFixed(2),
-          averagePeerScore: averagePeerScore.toFixed(2),
-          scoreDifference: scoreDifference.toFixed(2),
-          status:
-            scoreDifference > 0
-              ? "Over"
-              : scoreDifference < 0
-              ? "Under"
-              : "Match",
-          questions: selfAspect.questions,
+            projects: [],
+            selectedProject: {
+                project_name: null,
+                batch_year: null,
+                project_id: null,
+            },
+            scoreData: null,
+            loadingScoreData: false,
+            selfAssessmentStatus: null,
+            peerGroupSize: 0,
+            peerCompletedCount: 0,
+            showChangePasswordToast: false,
+            needPasswordChange: false,
+            toastTimeout: null,
+            feedbackLoading: false,
+            feedbackError: null,
+            activeTab: "peer", // Tab aktif untuk feedback (peer/dosen)
+            feedback: {
+                lecturerFeedback: [],
+                peerFeedback: [
+                    // Data contoh untuk peer feedback
+                    {
+                        feedback:
+                            "Kontribusi yang bagus dalam tim. Aktif memberikan ide dan solusi.",
+                        createdAt: new Date(2025, 4, 1),
+                    },
+                    {
+                        feedback:
+                            "Sangat membantu dalam menyelesaikan tugas teknis yang rumit.",
+                        createdAt: new Date(2025, 4, 2),
+                    },
+                ],
+            },
         };
-      });
     },
-    radarChartOptions() {
-      return {
-        chart: {
-          type: "radar",
-          height: 600,
-          width: 600,
-          dropShadow: {
-            enabled: true,
-            blur: 1,
-            left: 1,
-            top: 1,
-          },
-          toolbar: {
-            show: true,
-          },
+    computed: {
+        analysisScores() {
+            if (
+                !this.scoreData?.self_assessment ||
+                !this.scoreData?.peer_assessment
+            ) {
+                return [];
+            }
+
+            return this.scoreData.self_assessment.map((selfAspect) => {
+                const peerEvaluations = this.scoreData.peer_assessment.filter(
+                    (peer) => peer.aspek === selfAspect.aspek
+                );
+
+                const averagePeerScore =
+                    peerEvaluations.length > 0
+                        ? peerEvaluations.reduce((sum, peer) => {
+                              const score =
+                                  peer.total_score_peer != null
+                                      ? peer.total_score_peer
+                                      : peer.total_score || 0;
+                              return sum + score;
+                          }, 0) / peerEvaluations.length
+                        : 0;
+
+                const selfScore =
+                    selfAspect.total_score_self != null
+                        ? selfAspect.total_score_self
+                        : selfAspect.total_score || 0;
+
+                const scoreDifference = selfScore - averagePeerScore;
+
+                return {
+                    aspek: selfAspect.aspek,
+                    kriteria: selfAspect.kriteria,
+                    selfScore: selfScore.toFixed(2),
+                    averagePeerScore: averagePeerScore.toFixed(2),
+                    scoreDifference: scoreDifference.toFixed(2),
+                    status:
+                        scoreDifference > 0
+                            ? "Over"
+                            : scoreDifference < 0
+                            ? "Under"
+                            : "Match",
+                    questions: selfAspect.questions,
+                };
+            });
         },
-        series: [
-          {
-            name: "Self Assessment",
-            data: this.analysisScores.map((s) => parseFloat(s.selfScore)),
-          },
-          {
-            name: "Peer Average",
-            data: this.analysisScores.map((s) =>
-              parseFloat(s.averagePeerScore)
-            ),
-          },
-        ],
-        labels: this.analysisScores.map((s) => s.aspek),
-        colors: ["#2563EB", "#F97316"],
-        stroke: {
-          width: 2,
-          colors: ["#2563EB", "#F97316"],
+        radarChartOptions() {
+            return {
+                chart: {
+                    type: "radar",
+                    height: 600,
+                    width: 600,
+                    dropShadow: {
+                        enabled: true,
+                        blur: 1,
+                        left: 1,
+                        top: 1,
+                    },
+                    toolbar: {
+                        show: true,
+                    },
+                },
+                series: [
+                    {
+                        name: "Self Assessment",
+                        data: this.analysisScores.map((s) =>
+                            parseFloat(s.selfScore)
+                        ),
+                    },
+                    {
+                        name: "Peer Average",
+                        data: this.analysisScores.map((s) =>
+                            parseFloat(s.averagePeerScore)
+                        ),
+                    },
+                ],
+                labels: this.analysisScores.map((s) => s.aspek),
+                colors: ["#2563EB", "#F97316"],
+                stroke: {
+                    width: 2,
+                    colors: ["#2563EB", "#F97316"],
+                },
+                colors: ["#2563EB", "#F97316"],
+                fill: {
+                    opacity: 0.2,
+                },
+                markers: {
+                    size: 6,
+                    hover: {
+                        size: 8,
+                    },
+                },
+                tooltip: {
+                    y: {
+                        formatter: (val) => val.toFixed(2),
+                    },
+                },
+                yaxis: {
+                    show: true,
+                    min: 0,
+                    max: 5,
+                    tickAmount: 5,
+                    labels: {
+                        formatter: (val) => val.toFixed(1),
+                        style: {
+                            fontSize: "14px",
+                        },
+                    },
+                },
+                xaxis: {
+                    labels: {
+                        style: {
+                            fontSize: "14px",
+                        },
+                    },
+                },
+                legend: {
+                    position: "bottom",
+                    horizontalAlign: "center",
+                    fontSize: "14px",
+                    markers: {
+                        width: 18,
+                        height: 18,
+                    },
+                    itemMargin: {
+                        horizontal: 15,
+                    },
+                },
+            };
         },
-        colors: ["#2563EB", "#F97316"],
-        fill: {
-          opacity: 0.2,
-        },
-        markers: {
-          size: 6,
-          hover: {
-            size: 8,
-          },
-        },
-        tooltip: {
-          y: {
-            formatter: (val) => val.toFixed(2),
-          },
-        },
-        yaxis: {
-          show: true,
-          min: 0,
-          max: 5,
-          tickAmount: 5,
-          labels: {
-            formatter: (val) => val.toFixed(1),
-            style: {
-              fontSize: "14px",
-            },
-          },
-        },
-        xaxis: {
-          labels: {
-            style: {
-              fontSize: "14px",
-            },
-          },
-        },
-        legend: {
-          position: "bottom",
-          horizontalAlign: "center",
-          fontSize: "14px",
-          markers: {
-            width: 18,
-            height: 18,
-          },
-          itemMargin: {
-            horizontal: 15,
-          },
-        },
-      };
     },
-  },
-  mounted() {
-    this.fetchProjectData();
-    this.fetchSelfAssessmentStatus();
-    this.fetchPeerAssessmentDetails();
-    this.fetchFeedbackData();
-    // this.checkPasswordChangeStatus();
-  },
-  beforeUnmount() {
-    if (this.toastTimeout) {
-      clearTimeout(this.toastTimeout);
-    }
-  },
-  watch: {
-    selectedProject(newProject) {
-      if (
-        newProject &&
-        newProject.project_name &&
-        newProject.batch_year &&
-        newProject.project_id
-      ) {
-        this.fetchSelfAssessmentStatus(newProject.project_name);
-        this.fetchPeerAssessmentDetails(newProject.project_name);
-        this.fetchFeedbackData(newProject.project_name);
-        this.fetchProjectScoreDetails(
-          newProject.batch_year,
-          newProject.project_id
-        );
-      }
+    mounted() {
+        this.fetchProjectData();
+        this.fetchSelfAssessmentStatus();
+        this.fetchPeerAssessmentDetails();
+        this.fetchFeedbackData();
+        // this.checkPasswordChangeStatus();
     },
-  },
-  methods: {
-    async fetchProjectScoreDetails(batchYear, projectId) {
-      this.loadingScoreData = true;
-
-      try {
-        const response = await axios.get("/sispa/api/project-score-details", {
-          params: {
-            batch_year: batchYear,
-            project_id: projectId,
-          },
-        });
-
-        console.log("API Response:", response);
-
-        if (response.data.status === "success") {
-          this.scoreData = response.data.data;
-        } else {
-          console.warn("Gagal mengambil data:", response.data.message);
+    beforeUnmount() {
+        if (this.toastTimeout) {
+            clearTimeout(this.toastTimeout);
         }
-      } catch (err) {
-        console.error("Gagal fetch detail skor:", err);
-      } finally {
-        this.loadingScoreData = false;
-      }
     },
-    checkPasswordChangeStatus() {
-      const needPasswordChange = localStorage.getItem("need_password_change");
+    watch: {
+        selectedProject(newProject) {
+            if (
+                newProject &&
+                newProject.project_name &&
+                newProject.batch_year &&
+                newProject.project_id
+            ) {
+                this.fetchSelfAssessmentStatus(newProject.project_name);
+                this.fetchPeerAssessmentDetails(newProject.project_name);
+                this.fetchFeedbackData(newProject.project_name);
+                this.fetchProjectScoreDetails(
+                    newProject.batch_year,
+                    newProject.project_id
+                );
+            }
+        },
+    },
+    methods: {
+        async fetchProjectScoreDetails(batchYear, projectId) {
+            this.loadingScoreData = true;
+
+            try {
+                const response = await axios.get(
+                    "/sispa/api/project-score-details",
+                    {
+                        params: {
+                            batch_year: batchYear,
+                            project_id: projectId,
+                        },
+                    }
+                );
+
+                console.log("API Response:", response);
+
+                if (response.data.status === "success") {
+                    this.scoreData = response.data.data;
+                } else {
+                    console.warn(
+                        "Gagal mengambil data:",
+                        response.data.message
+                    );
+                }
+            } catch (err) {
+                console.error("Gagal fetch detail skor:", err);
+            } finally {
+                this.loadingScoreData = false;
+            }
+        },
+        checkPasswordChangeStatus() {
+            const needPasswordChange = localStorage.getItem(
+                "need_password_change"
+            );
 
             if (needPasswordChange === "true") {
                 this.showChangePasswordToast = true;
@@ -265,126 +275,136 @@ export default {
 
                         localStorage.setItem("need_password_change", "true");
 
-            this.toastTimeout = setTimeout(() => {
-              this.showChangePasswordToast = false;
-            }, 10000);
-          } else {
+                        this.toastTimeout = setTimeout(() => {
+                            this.showChangePasswordToast = false;
+                        }, 10000);
+                    } else {
+                        localStorage.removeItem("need_password_change");
+                    }
+                } else {
+                    console.error("API response missing change_password field");
+                }
+            } catch (error) {
+                console.error("Error checking user status:", error);
+            }
+        },
+        fetchProjectData() {
+            axios
+                .get("/sispa/api/projects-user")
+                .then((response) => {
+                    this.projects = response.data.projects.map((project) => ({
+                        project_name: project.project_name,
+                        batch_year: project.batch_year,
+                        project_id: project.id || project.project_id,
+                    }));
+
+                    if (this.projects.length > 0) {
+                        this.selectedProject = this.projects[0];
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error fetching project data:", error);
+                });
+        },
+        fetchSelfAssessmentStatus(projectName) {
+            axios
+                .get(`/sispa/api/assessment-status`, {
+                    params: { project: projectName },
+                })
+                .then((response) => {
+                    const projectStatuses = response.data.projects || [];
+                    const currentProjectStatus = projectStatuses.find(
+                        (project) => project.project_name === projectName
+                    );
+
+                    this.selfAssessmentStatus = currentProjectStatus
+                        ? currentProjectStatus.selfAssessmentStatus
+                        : "Not Started";
+                })
+                .catch((error) => {
+                    console.error(
+                        "Error fetching self assessment status:",
+                        error
+                    );
+                    this.selfAssessmentStatus = "Not Started";
+                });
+        },
+        fetchPeerAssessmentDetails(projectName) {
+            axios
+                .get("/sispa/api/count-peer", {
+                    params: { project: projectName },
+                })
+                .then((response) => {
+                    this.peerGroupSize = response.data.group_size;
+                    this.peerCompletedCount = response.data.group_peers.filter(
+                        (peer) =>
+                            response.data.completed_peer_assessments[peer.id]
+                                .is_completed
+                    ).length;
+                })
+                .catch((error) => {
+                    console.error(
+                        "Error fetching peer assessment details:",
+                        error
+                    );
+                });
+        },
+        fetchFeedbackData(projectName) {
+            this.feedbackLoading = true;
+            this.feedbackError = null;
+
+            axios
+                .get("/sispa/api/feedback-dashboard-mhs", {
+                    params: { project: projectName },
+                })
+                .then((response) => {
+                    if (response.data.success) {
+                        // Make sure to properly assign the feedback data
+                        this.feedback = {
+                            lecturerFeedback:
+                                response.data.data.lecturerFeedback || [],
+                            peerFeedback: response.data.data.peerFeedback || [],
+                        };
+                        console.log("Feedback data:", this.feedback); // For debugging
+                    } else {
+                        this.feedbackError =
+                            response.data.message ||
+                            "Failed to load feedback data";
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error fetching feedback:", error);
+                    this.feedbackError =
+                        "An error occurred while fetching feedback data";
+                })
+                .finally(() => {
+                    this.feedbackLoading = false;
+                });
+        },
+        handleChangePassword() {
+            this.showChangePasswordToast = false;
+            this.needPasswordChange = false;
             localStorage.removeItem("need_password_change");
-          }
-        } else {
-          console.error("API response missing change_password field");
-        }
-      } catch (error) {
-        console.error("Error checking user status:", error);
-      }
+            router.visit("/sispa/mahasiswa/profile");
+        },
+        goToDashboardSelf(path) {
+            router.visit("/sispa/mahasiswa/assessment/self");
+        },
+        goToDashboardPeer(path) {
+            router.visit("/sispa/mahasiswa/assessment/peer");
+        },
+        goToKelolaProyek(path) {
+            router.visit(path);
+        },
+        formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString("id-ID", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+            });
+        },
     },
-    fetchProjectData() {
-      axios
-        .get("/sispa/api/projects-user")
-        .then((response) => {
-          this.projects = response.data.projects.map((project) => ({
-            project_name: project.project_name,
-            batch_year: project.batch_year,
-            project_id: project.id || project.project_id,
-          }));
-
-          if (this.projects.length > 0) {
-            this.selectedProject = this.projects[0];
-          }
-        })
-        .catch((error) => {
-          console.error("Error fetching project data:", error);
-        });
-    },
-    fetchSelfAssessmentStatus(projectName) {
-      axios
-        .get(`/sispa/api/assessment-status`, {
-          params: { project: projectName },
-        })
-        .then((response) => {
-          const projectStatuses = response.data.projects || [];
-          const currentProjectStatus = projectStatuses.find(
-            (project) => project.project_name === projectName
-          );
-
-          this.selfAssessmentStatus = currentProjectStatus
-            ? currentProjectStatus.selfAssessmentStatus
-            : "Not Started";
-        })
-        .catch((error) => {
-          console.error("Error fetching self assessment status:", error);
-          this.selfAssessmentStatus = "Not Started";
-        });
-    },
-    fetchPeerAssessmentDetails(projectName) {
-      axios
-        .get("/sispa/api/count-peer", {
-          params: { project: projectName },
-        })
-        .then((response) => {
-          this.peerGroupSize = response.data.group_size;
-          this.peerCompletedCount = response.data.group_peers.filter(
-            (peer) =>
-              response.data.completed_peer_assessments[peer.id].is_completed
-          ).length;
-        })
-        .catch((error) => {
-          console.error("Error fetching peer assessment details:", error);
-        });
-    },
-    fetchFeedbackData(projectName) {
-      this.feedbackLoading = true;
-      this.feedbackError = null;
-
-      axios
-        .get("/sispa/api/feedback-dashboard-mhs", {
-          params: { project: projectName },
-        })
-        .then((response) => {
-          if (response.data.success) {
-            // Make sure to properly assign the feedback data
-            this.feedback = {
-              lecturerFeedback: response.data.data.lecturerFeedback || [],
-              peerFeedback: response.data.data.peerFeedback || [],
-            };
-            console.log("Feedback data:", this.feedback); // For debugging
-          } else {
-            this.feedbackError =
-              response.data.message || "Failed to load feedback data";
-          }
-        })
-        .catch((error) => {
-          console.error("Error fetching feedback:", error);
-          this.feedbackError = "An error occurred while fetching feedback data";
-        })
-        .finally(() => {
-          this.feedbackLoading = false;
-        });
-    },
-    handleChangePassword() {
-      this.showChangePasswordToast = false;
-      this.needPasswordChange = false;
-      localStorage.removeItem("need_password_change");
-      router.visit("/sispa/mahasiswa/profile");
-    },
-    goToDashboardSelf(path) {
-      router.visit("/sispa/mahasiswa/assessment/self");
-    },
-    goToDashboardPeer(path) {
-      router.visit("/sispa/mahasiswa/assessment/peer");
-    },
-    goToKelolaProyek(path) {
-      router.visit(path);
-    },
-    formatDate(dateString) {
-      const date = new Date(dateString);
-      return date.toLocaleDateString("id-ID", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      });
-    },
-  },
 };
 </script>
 
@@ -534,118 +554,145 @@ export default {
             </div>
           </div>
 
-          <!-- Peer Assessment Card -->
-          <div
-            class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300 cursor-pointer"
-            @click="goToDashboardPeer('/sispa/mahasiswa/peer-assessment')"
-          >
-            <div class="px-6 py-5 border-b border-gray-100">
-              <h3 class="text-lg font-medium text-gray-800">Peer Assessment</h3>
-              <p class="text-sm text-gray-500 mt-1">Evaluasi rekan sejawat</p>
-            </div>
-            <div class="p-6">
-              <div class="flex items-center space-x-4">
-                <div
-                  class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center"
-                >
-                  <svg
-                    class="w-6 h-6 text-green-600"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                    />
-                  </svg>
-                </div>
-                <div class="flex-1">
-                  <div class="flex justify-between items-center mb-1">
-                    <span class="text-sm font-medium text-gray-700"
-                      >Progress</span
-                    >
-                    <span class="text-sm font-medium text-gray-700"
-                      >{{ peerCompletedCount }}/{{ peerGroupSize }}</span
-                    >
-                  </div>
-                  <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <!-- Peer Assessment Card -->
                     <div
-                      :class="`h-2.5 rounded-full ${progressColor}`"
-                      :style="`width: ${
-                        peerGroupSize > 0
-                          ? (peerCompletedCount / peerGroupSize) * 100
-                          : 0
-                      }%`"
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Project Management Card -->
-          <div
-            class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300 cursor-pointer"
-          >
-            <div class="px-6 py-5 border-b border-gray-100">
-              <h3 class="text-lg font-medium text-gray-800">Project</h3>
-              <p class="text-sm text-gray-500 mt-1">Project saat ini</p>
-            </div>
-            <div class="p-6">
-              <div class="flex flex-col space-y-4">
-                <div class="flex items-center space-x-4">
-                  <!-- Dropdown pemilihan project dipindahkan ke sini -->
-                  <div class="w-full mt-2">
-                    <label
-                      for="project-select"
-                      class="block text-sm font-medium text-gray-700 mb-1"
-                      >Pilih Project:</label
+                        class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300 cursor-pointer"
+                        @click="
+                            goToDashboardPeer(
+                                '/sispa/mahasiswa/peer-assessment'
+                            )
+                        "
                     >
-                    <select
-                      id="project-select"
-                      class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white shadow-sm"
-                      v-model="selectedProject"
-                    >
-                      <option
-                        v-for="project in projects"
-                        :key="project.project_id || project.id"
-                        :value="project"
-                      >
-                        {{ project.project_name }}
-                      </option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+                        <div class="px-6 py-5 border-b border-gray-100">
+                            <h3 class="text-lg font-medium text-gray-800">
+                                Peer Assessment
+                            </h3>
+                            <p class="text-sm text-gray-500 mt-1">
+                                Evaluasi rekan sejawat
+                            </p>
+                        </div>
+                        <div class="p-6">
+                            <div class="flex items-center space-x-4">
+                                <div
+                                    class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center"
+                                >
+                                    <svg
+                                        class="w-6 h-6 text-green-600"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                                        />
+                                    </svg>
+                                </div>
+                                <div class="flex-1">
+                                    <div
+                                        class="flex justify-between items-center mb-1"
+                                    >
+                                        <span
+                                            class="text-sm font-medium text-gray-700"
+                                            >Progress</span
+                                        >
+                                        <span
+                                            class="text-sm font-medium text-gray-700"
+                                            >{{ peerCompletedCount }}/{{
+                                                peerGroupSize
+                                            }}</span
+                                        >
+                                    </div>
+                                    <div
+                                        class="w-full bg-green-600 rounded-full h-2.5"
+                                    >
+                                        <div
+                                            :class="`h-2.5 rounded-full ${progressColor}`"
+                                            :style="`width: ${
+                                                peerGroupSize > 0
+                                                    ? (peerCompletedCount /
+                                                          peerGroupSize) *
+                                                      100
+                                                    : 0
+                                            }%`"
+                                        ></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- Assessment Activity Chart -->
-          <div class="lg:col-span-2">
-            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-              <div class="px-6 py-5 border-b border-gray-100">
-                <h3 class="text-lg font-medium text-gray-800">
-                  Skills Assessment
-                </h3>
-                <p class="text-sm text-gray-500 mt-1">
-                  Visualisasi kompetensi Anda dalam project
-                </p>
-              </div>
-              <div id="chart-container">
-                <apexchart
-                  width="100%"
-                  type="radar"
-                  :options="radarChartOptions"
-                  :series="radarChartOptions.series"
-                />
-              </div>
-            </div>
-          </div>
+                    <!-- Project Management Card -->
+                    <div
+                        class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300 cursor-pointer"
+                    >
+                        <div class="px-6 py-5 border-b border-gray-100">
+                            <h3 class="text-lg font-medium text-gray-800">
+                                Project
+                            </h3>
+                            <p class="text-sm text-gray-500 mt-1">
+                                Project saat ini
+                            </p>
+                        </div>
+                        <div class="p-6">
+                            <div class="flex flex-col space-y-4">
+                                <div class="flex items-center space-x-4">
+                                    <!-- Dropdown pemilihan project dipindahkan ke sini -->
+                                    <div class="w-full mt-2">
+                                        <label
+                                            for="project-select"
+                                            class="block text-sm font-medium text-gray-700 mb-1"
+                                            >Pilih Project:</label
+                                        >
+                                        <select
+                                            id="project-select"
+                                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white shadow-sm"
+                                            v-model="selectedProject"
+                                        >
+                                            <option
+                                                v-for="project in projects"
+                                                :key="
+                                                    project.project_id ||
+                                                    project.id
+                                                "
+                                                :value="project"
+                                            >
+                                                {{ project.project_name }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Assessment Activity Chart -->
+                    <div class="lg:col-span-2">
+                        <div
+                            class="bg-white rounded-xl shadow-sm overflow-hidden"
+                        >
+                            <div class="px-6 py-5 border-b border-gray-100">
+                                <h3 class="text-lg font-medium text-gray-800">
+                                    Skills Assessment
+                                </h3>
+                                <p class="text-sm text-gray-500 mt-1">
+                                    Visualisasi kompetensi Anda dalam project
+                                </p>
+                            </div>
+                            <div id="chart-container">
+                                <apexchart
+                                    width="100%"
+                                    type="radar"
+                                    :options="radarChartOptions"
+                                    :series="radarChartOptions.series"
+                                />
+                            </div>
+                        </div>
+                    </div>
 
           <!-- Feedback Section -->
           <div class="lg:col-span-1">
@@ -841,9 +888,9 @@ export default {
 }
 
 #chart-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 700px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 700px;
 }
 </style>

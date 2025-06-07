@@ -448,7 +448,7 @@ class ReportController extends Controller
                         ->where('mahasiswa_id', $mahasiswaId)
                         ->where('typeCriteria_id', $typeCriteriaId)
                         ->where('question_id', $assessment->id);
-                
+
                     if ($assessmentType === 'self') {
                         $report = $report->whereNull('peer_id')->first();
                     } else {
@@ -779,85 +779,85 @@ class ReportController extends Controller
             $projectIdMap = [];
             $typeCriteriaMap = [];
             $assessmentTypeMap = []; // Untuk menyimpan tipe assessment
-            
+
             foreach ($validated['answers'] as $answer) {
                 $mahasiswaId = $answer['mahasiswa_id'];
                 $typeCriteriaId = $answer['typeCriteria_id'];
                 $questionId = $answer['question_id'];
                 $finalScoreSelf = $answer['final_score_self'];
-                
+
                 // Cek dan mapping typeCriteria_id jika itu adalah string nama kriteria (bukan UUID)
-            if (!isset($typeCriteriaMap[$typeCriteriaId]) && !preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $typeCriteriaId)) {
-                // FIX: Gunakan exact match terlebih dahulu untuk mencari kriteria
-                $typeCriteria = TypeCriteria::where('criteria', $typeCriteriaId)
-                                        ->orWhere('aspect', $typeCriteriaId)
-                                        ->first();
-                
-                // Jika tidak ditemukan dengan exact match, baru coba dengan partial match
-                if (!$typeCriteria) {
-                    // Cari dengan partial match tapi lebih spesifik
-                    $typeCriteria = TypeCriteria::where(function($query) use ($typeCriteriaId) {
-                        $query->where('criteria', 'like', "{$typeCriteriaId}%")
-                              ->orWhere('criteria', 'like', "% {$typeCriteriaId}")
-                              ->orWhere('criteria', 'like', "% {$typeCriteriaId} %");
-                    })
-                    ->orWhere(function($query) use ($typeCriteriaId) {
-                        $query->where('aspect', 'like', "{$typeCriteriaId}%")
-                              ->orWhere('aspect', 'like', "% {$typeCriteriaId}")
-                              ->orWhere('aspect', 'like', "% {$typeCriteriaId} %");
-                    })
-                    ->first();
-                }
-                
-                // Jika masih belum ditemukan, gunakan metode pencarian lain
-                if (!$typeCriteria && strlen($typeCriteriaId) > 5) {
-                    // Coba dengan pencarian yang lebih ketat untuk string yang panjang
-                    $words = explode(' ', $typeCriteriaId);
-                    
-                    // Jika lebih dari satu kata, coba cari yang mengandung semua kata
-                    if (count($words) > 1) {
-                        $query = TypeCriteria::query();
-                        
-                        foreach ($words as $word) {
-                            if (strlen($word) > 3) { // Abaikan kata pendek seperti "dan", "di", dll
-                                $query->where(function($q) use ($word) {
-                                    $q->where('criteria', 'like', "%{$word}%")
-                                      ->orWhere('aspect', 'like', "%{$word}%");
-                                });
+                if (!isset($typeCriteriaMap[$typeCriteriaId]) && !preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $typeCriteriaId)) {
+                    // FIX: Gunakan exact match terlebih dahulu untuk mencari kriteria
+                    $typeCriteria = TypeCriteria::where('criteria', $typeCriteriaId)
+                        ->orWhere('aspect', $typeCriteriaId)
+                        ->first();
+
+                    // Jika tidak ditemukan dengan exact match, baru coba dengan partial match
+                    if (!$typeCriteria) {
+                        // Cari dengan partial match tapi lebih spesifik
+                        $typeCriteria = TypeCriteria::where(function ($query) use ($typeCriteriaId) {
+                            $query->where('criteria', 'like', "{$typeCriteriaId}%")
+                                ->orWhere('criteria', 'like', "% {$typeCriteriaId}")
+                                ->orWhere('criteria', 'like', "% {$typeCriteriaId} %");
+                        })
+                            ->orWhere(function ($query) use ($typeCriteriaId) {
+                                $query->where('aspect', 'like', "{$typeCriteriaId}%")
+                                    ->orWhere('aspect', 'like', "% {$typeCriteriaId}")
+                                    ->orWhere('aspect', 'like', "% {$typeCriteriaId} %");
+                            })
+                            ->first();
+                    }
+
+                    // Jika masih belum ditemukan, gunakan metode pencarian lain
+                    if (!$typeCriteria && strlen($typeCriteriaId) > 5) {
+                        // Coba dengan pencarian yang lebih ketat untuk string yang panjang
+                        $words = explode(' ', $typeCriteriaId);
+
+                        // Jika lebih dari satu kata, coba cari yang mengandung semua kata
+                        if (count($words) > 1) {
+                            $query = TypeCriteria::query();
+
+                            foreach ($words as $word) {
+                                if (strlen($word) > 3) { // Abaikan kata pendek seperti "dan", "di", dll
+                                    $query->where(function ($q) use ($word) {
+                                        $q->where('criteria', 'like', "%{$word}%")
+                                            ->orWhere('aspect', 'like', "%{$word}%");
+                                    });
+                                }
                             }
+
+                            $typeCriteria = $query->first();
                         }
-                        
-                        $typeCriteria = $query->first();
+                    }
+
+                    if ($typeCriteria) {
+                        $typeCriteriaMap[$typeCriteriaId] = $typeCriteria->id;
+                        Log::info("Menemukan ID kriteria: {$typeCriteria->id} untuk nama: {$typeCriteriaId}");
+                    } else {
+                        // Jika tidak ditemukan, lempar exception
+                        throw new \Exception("Kriteria dengan nama '{$typeCriteriaId}' tidak ditemukan di database");
                     }
                 }
-                
-                if ($typeCriteria) {
-                    $typeCriteriaMap[$typeCriteriaId] = $typeCriteria->id;
-                    Log::info("Menemukan ID kriteria: {$typeCriteria->id} untuk nama: {$typeCriteriaId}");
-                } else {
-                    // Jika tidak ditemukan, lempar exception
-                    throw new \Exception("Kriteria dengan nama '{$typeCriteriaId}' tidak ditemukan di database");
-                }
-            }
-            
-            // Gunakan ID yang valid dari mapping jika ada
-            $typeCriteriaIdValid = isset($typeCriteriaMap[$typeCriteriaId]) 
-                                ? $typeCriteriaMap[$typeCriteriaId] 
-                                : $typeCriteriaId;
-                
+
+                // Gunakan ID yang valid dari mapping jika ada
+                $typeCriteriaIdValid = isset($typeCriteriaMap[$typeCriteriaId])
+                    ? $typeCriteriaMap[$typeCriteriaId]
+                    : $typeCriteriaId;
+
                 // Cek type assessment dari question_id
                 if (!isset($assessmentTypeMap[$questionId])) {
                     $assessment = Assessment::find($questionId);
                     if ($assessment) {
                         $assessmentTypeMap[$questionId] = $assessment->type;
-                        
+
                         // Validasi tipe assessment
                         if ($assessment->type !== 'selfAssessment' && $assessment->type !== 'selfAssessment') {
                             Log::warning("Question ID: {$questionId} bukan tipe selfAssessment, melainkan: {$assessment->type}");
                         }
                     }
                 }
-                
+
                 // Cari project_id dari question_id jika belum ada di map
                 if (!isset($projectIdMap[$questionId])) {
                     $assessment = Assessment::find($questionId);
@@ -866,9 +866,9 @@ class ReportController extends Controller
                     } else {
                         // Cek jika mahasiswa memiliki jawaban dengan question_id ini
                         $existingAnswer = Answers::where('mahasiswa_id', $mahasiswaId)
-                                            ->where('question_id', $questionId)
-                                            ->first();
-                        
+                            ->where('question_id', $questionId)
+                            ->first();
+
                         if ($existingAnswer) {
                             // Cari assessment dari jawaban ini
                             $assessment = $existingAnswer->question;
@@ -880,11 +880,11 @@ class ReportController extends Controller
                 }
 
                 $projectId = $projectIdMap[$questionId] ?? null;
-                
+
                 if (!$projectId) {
                     $project = Project::where('status', 'active')->latest()->first();
                     $projectId = $project ? $project->id : null;
-                    
+
                     if ($projectId) {
                         $projectIdMap[$questionId] = $projectId;
                     } else {
@@ -894,18 +894,18 @@ class ReportController extends Controller
 
                 $mahasiswa = Mahasiswa::find($mahasiswaId);
                 $groupId = null;
-                
+
                 if ($mahasiswa) {
                     $group = $mahasiswa->group()
                         ->where('project_id', $projectId)
                         ->latest()
                         ->first();
-                    
+
                     if ($group) {
                         $groupId = $group->id;
                     } else {
                         Log::warning("Mahasiswa ID $mahasiswaId tidak memiliki grup untuk project ID $projectId");
-                        
+
                         $latestGroup = $mahasiswa->group()->latest()->first();
                         if ($latestGroup) {
                             $groupId = $latestGroup->id;
@@ -915,30 +915,30 @@ class ReportController extends Controller
                 } else {
                     Log::warning("Mahasiswa dengan ID $mahasiswaId tidak ditemukan");
                 }
-                
+
                 $report = Report::where('mahasiswa_id', $mahasiswaId)
-                            ->where('typeCriteria_id', $typeCriteriaIdValid)
-                            ->where('project_id', $projectId)
-                            ->where('question_id', $questionId)
-                            ->where('assessment_type', 'selfAssessment')
-                            ->first();
-                
+                    ->where('typeCriteria_id', $typeCriteriaIdValid)
+                    ->where('project_id', $projectId)
+                    ->where('question_id', $questionId)
+                    ->where('assessment_type', 'selfAssessment')
+                    ->first();
+
                 if ($groupId) {
                     if ($report) {
                         $report->final_score_self = $finalScoreSelf;
                         $report->question_id = $questionId;
-                        $report->group_id = $groupId; 
+                        $report->group_id = $groupId;
                         $report->save();
                         Log::info("Report diupdate untuk mahasiswa ID: $mahasiswaId, kriteria ID: $typeCriteriaIdValid");
                     } else {
                         $newReport = Report::create([
                             'mahasiswa_id' => $mahasiswaId,
-                            'typeCriteria_id' => $typeCriteriaIdValid, 
+                            'typeCriteria_id' => $typeCriteriaIdValid,
                             'final_score_self' => $finalScoreSelf,
                             'project_id' => $projectId,
                             'group_id' => $groupId,
                             'question_id' => $questionId,
-                            'assessment_type' => 'selfAssessment', 
+                            'assessment_type' => 'selfAssessment',
                         ]);
                         Log::info("Report baru dibuat dengan ID: {$newReport->id} untuk mahasiswa ID: $mahasiswaId, kriteria ID: $typeCriteriaIdValid");
                     }
@@ -953,199 +953,199 @@ class ReportController extends Controller
             DB::rollBack();
             Log::error('Error in saveFinalScoresSelf: ' . $e->getMessage());
             return response()->json([
-                'success' => false, 
+                'success' => false,
                 'message' => 'Terjadi kesalahan saat menyimpan jawaban: ' . $e->getMessage()
             ], 500);
         }
-}
+    }
 
-public function saveFinalScoresPeer(Request $request)
-{
-    // Validasi data - project_id and group_id are no longer required from frontend
-    $validated = $request->validate([
-        'answersPeer' => 'required|array',
-        'answersPeer.*.mahasiswa_id' => 'required',
-        'answersPeer.*.typeCriteria_id' => 'required',
-        'answersPeer.*.question_id' => 'required',
-        'answersPeer.*.peer_id' => 'required',
-        'answersPeer.*.final_score_peer' => 'required|integer|min:1|max:5',
-    ]);
+    public function saveFinalScoresPeer(Request $request)
+    {
+        // Validasi data - project_id and group_id are no longer required from frontend
+        $validated = $request->validate([
+            'answersPeer' => 'required|array',
+            'answersPeer.*.mahasiswa_id' => 'required',
+            'answersPeer.*.typeCriteria_id' => 'required',
+            'answersPeer.*.question_id' => 'required',
+            'answersPeer.*.peer_id' => 'required',
+            'answersPeer.*.final_score_peer' => 'required|integer|min:1|max:5',
+        ]);
 
-    DB::beginTransaction();
+        DB::beginTransaction();
 
-    try {
-        // Mapping untuk menyimpan data
-        $typeCriteriaMap = [];
-        $projectMap = []; // Map question_id to project_id
-        $groupMap = []; // Map mahasiswa_id and project_id to group_id
-        $assessmentTypeMap = []; // Untuk menyimpan tipe assessment
-        
-        foreach ($validated['answersPeer'] as $answerPeer) {
-            $mahasiswaId = $answerPeer['mahasiswa_id'];
-            $typeCriteriaId = $answerPeer['typeCriteria_id'];
-            $questionId = $answerPeer['question_id'];
-            $peerId = $answerPeer['peer_id'];
-            $finalScorePeer = $answerPeer['final_score_peer'];
-            
-            // Get project_id from question_id
-            if (!isset($projectMap[$questionId])) {
-                // Get assessment and project relation
-                $assessment = Assessment::with('project')->find($questionId);
-                
-                if (!$assessment) {
-                    throw new \Exception("Question dengan ID {$questionId} tidak ditemukan");
+        try {
+            // Mapping untuk menyimpan data
+            $typeCriteriaMap = [];
+            $projectMap = []; // Map question_id to project_id
+            $groupMap = []; // Map mahasiswa_id and project_id to group_id
+            $assessmentTypeMap = []; // Untuk menyimpan tipe assessment
+
+            foreach ($validated['answersPeer'] as $answerPeer) {
+                $mahasiswaId = $answerPeer['mahasiswa_id'];
+                $typeCriteriaId = $answerPeer['typeCriteria_id'];
+                $questionId = $answerPeer['question_id'];
+                $peerId = $answerPeer['peer_id'];
+                $finalScorePeer = $answerPeer['final_score_peer'];
+
+                // Get project_id from question_id
+                if (!isset($projectMap[$questionId])) {
+                    // Get assessment and project relation
+                    $assessment = Assessment::with('project')->find($questionId);
+
+                    if (!$assessment) {
+                        throw new \Exception("Question dengan ID {$questionId} tidak ditemukan");
+                    }
+
+                    if (!$assessment->project_id || !$assessment->project) {
+                        throw new \Exception("Project untuk question ID {$questionId} tidak ditemukan");
+                    }
+
+                    $projectMap[$questionId] = $assessment->project_id;
+                    $assessmentTypeMap[$questionId] = $assessment->type;
+
+                    // Validasi tipe assessment
+                    if ($assessment->type !== 'peerAssessment' && $assessment->type !== 'peerAssessment') {
+                        Log::warning("Question ID: {$questionId} bukan tipe peerAssessment, melainkan: {$assessment->type}");
+                    }
+
+                    Log::info("Question ID: {$questionId} terkait dengan Project ID: {$assessment->project_id}");
                 }
-                
-                if (!$assessment->project_id || !$assessment->project) {
-                    throw new \Exception("Project untuk question ID {$questionId} tidak ditemukan");
+
+                $projectId = $projectMap[$questionId];
+
+                // Get group_id for this mahasiswa in this project
+                $cacheKey = $mahasiswaId . '_' . $projectId;
+                if (!isset($groupMap[$cacheKey])) {
+                    $group = Group::where('mahasiswa_id', $mahasiswaId)
+                        ->where('project_id', $projectId)
+                        ->first();
+
+                    if (!$group) {
+                        throw new \Exception("Group untuk mahasiswa ID {$mahasiswaId} di project ID {$projectId} tidak ditemukan");
+                    }
+
+                    $groupMap[$cacheKey] = $group->id;
+                    Log::info("Menemukan Group ID: {$group->id} untuk Mahasiswa ID: {$mahasiswaId} di Project ID: {$projectId}");
                 }
-                
-                $projectMap[$questionId] = $assessment->project_id;
-                $assessmentTypeMap[$questionId] = $assessment->type;
-                
-                // Validasi tipe assessment
-                if ($assessment->type !== 'peerAssessment' && $assessment->type !== 'peerAssessment') {
-                    Log::warning("Question ID: {$questionId} bukan tipe peerAssessment, melainkan: {$assessment->type}");
-                }
-                
-                Log::info("Question ID: {$questionId} terkait dengan Project ID: {$assessment->project_id}");
-            }
-            
-            $projectId = $projectMap[$questionId];
-            
-            // Get group_id for this mahasiswa in this project
-            $cacheKey = $mahasiswaId . '_' . $projectId;
-            if (!isset($groupMap[$cacheKey])) {
-                $group = Group::where('mahasiswa_id', $mahasiswaId)
-                            ->where('project_id', $projectId)
+
+                $groupId = $groupMap[$cacheKey];
+
+                // Cek dan mapping typeCriteria_id jika itu adalah string nama kriteria (bukan UUID)
+                if (!isset($typeCriteriaMap[$typeCriteriaId]) && !preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $typeCriteriaId)) {
+                    // FIX: Gunakan exact match terlebih dahulu untuk mencari kriteria
+                    $typeCriteria = TypeCriteria::where('criteria', $typeCriteriaId)
+                        ->orWhere('aspect', $typeCriteriaId)
+                        ->first();
+
+                    // Jika tidak ditemukan dengan exact match, baru coba dengan partial match
+                    if (!$typeCriteria) {
+                        // Cari dengan partial match tapi lebih spesifik
+                        $typeCriteria = TypeCriteria::where(function ($query) use ($typeCriteriaId) {
+                            $query->where('criteria', 'like', "{$typeCriteriaId}%")
+                                ->orWhere('criteria', 'like', "% {$typeCriteriaId}")
+                                ->orWhere('criteria', 'like', "% {$typeCriteriaId} %");
+                        })
+                            ->orWhere(function ($query) use ($typeCriteriaId) {
+                                $query->where('aspect', 'like', "{$typeCriteriaId}%")
+                                    ->orWhere('aspect', 'like', "% {$typeCriteriaId}")
+                                    ->orWhere('aspect', 'like', "% {$typeCriteriaId} %");
+                            })
                             ->first();
-                
-                if (!$group) {
-                    throw new \Exception("Group untuk mahasiswa ID {$mahasiswaId} di project ID {$projectId} tidak ditemukan");
-                }
-                
-                $groupMap[$cacheKey] = $group->id;
-                Log::info("Menemukan Group ID: {$group->id} untuk Mahasiswa ID: {$mahasiswaId} di Project ID: {$projectId}");
-            }
-            
-            $groupId = $groupMap[$cacheKey];
-            
-            // Cek dan mapping typeCriteria_id jika itu adalah string nama kriteria (bukan UUID)
-            if (!isset($typeCriteriaMap[$typeCriteriaId]) && !preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $typeCriteriaId)) {
-                // FIX: Gunakan exact match terlebih dahulu untuk mencari kriteria
-                $typeCriteria = TypeCriteria::where('criteria', $typeCriteriaId)
-                                        ->orWhere('aspect', $typeCriteriaId)
-                                        ->first();
-                
-                // Jika tidak ditemukan dengan exact match, baru coba dengan partial match
-                if (!$typeCriteria) {
-                    // Cari dengan partial match tapi lebih spesifik
-                    $typeCriteria = TypeCriteria::where(function($query) use ($typeCriteriaId) {
-                        $query->where('criteria', 'like', "{$typeCriteriaId}%")
-                              ->orWhere('criteria', 'like', "% {$typeCriteriaId}")
-                              ->orWhere('criteria', 'like', "% {$typeCriteriaId} %");
-                    })
-                    ->orWhere(function($query) use ($typeCriteriaId) {
-                        $query->where('aspect', 'like', "{$typeCriteriaId}%")
-                              ->orWhere('aspect', 'like', "% {$typeCriteriaId}")
-                              ->orWhere('aspect', 'like', "% {$typeCriteriaId} %");
-                    })
-                    ->first();
-                }
-                
-                // Jika masih belum ditemukan, gunakan metode pencarian lain
-                if (!$typeCriteria && strlen($typeCriteriaId) > 5) {
-                    // Coba dengan pencarian yang lebih ketat untuk string yang panjang
-                    $words = explode(' ', $typeCriteriaId);
-                    
-                    // Jika lebih dari satu kata, coba cari yang mengandung semua kata
-                    if (count($words) > 1) {
-                        $query = TypeCriteria::query();
-                        
-                        foreach ($words as $word) {
-                            if (strlen($word) > 3) { // Abaikan kata pendek seperti "dan", "di", dll
-                                $query->where(function($q) use ($word) {
-                                    $q->where('criteria', 'like', "%{$word}%")
-                                      ->orWhere('aspect', 'like', "%{$word}%");
-                                });
+                    }
+
+                    // Jika masih belum ditemukan, gunakan metode pencarian lain
+                    if (!$typeCriteria && strlen($typeCriteriaId) > 5) {
+                        // Coba dengan pencarian yang lebih ketat untuk string yang panjang
+                        $words = explode(' ', $typeCriteriaId);
+
+                        // Jika lebih dari satu kata, coba cari yang mengandung semua kata
+                        if (count($words) > 1) {
+                            $query = TypeCriteria::query();
+
+                            foreach ($words as $word) {
+                                if (strlen($word) > 3) { // Abaikan kata pendek seperti "dan", "di", dll
+                                    $query->where(function ($q) use ($word) {
+                                        $q->where('criteria', 'like', "%{$word}%")
+                                            ->orWhere('aspect', 'like', "%{$word}%");
+                                    });
+                                }
                             }
+
+                            $typeCriteria = $query->first();
                         }
-                        
-                        $typeCriteria = $query->first();
+                    }
+
+                    if ($typeCriteria) {
+                        $typeCriteriaMap[$typeCriteriaId] = $typeCriteria->id;
+                        Log::info("Menemukan ID kriteria: {$typeCriteria->id} untuk nama: {$typeCriteriaId}");
+                    } else {
+                        // Jika tidak ditemukan, lempar exception
+                        throw new \Exception("Kriteria dengan nama '{$typeCriteriaId}' tidak ditemukan di database");
                     }
                 }
-                
-                if ($typeCriteria) {
-                    $typeCriteriaMap[$typeCriteriaId] = $typeCriteria->id;
-                    Log::info("Menemukan ID kriteria: {$typeCriteria->id} untuk nama: {$typeCriteriaId}");
+
+                // Gunakan ID yang valid dari mapping jika ada
+                $typeCriteriaIdValid = isset($typeCriteriaMap[$typeCriteriaId])
+                    ? $typeCriteriaMap[$typeCriteriaId]
+                    : $typeCriteriaId;
+
+
+                // Handle peer_id yang berupa objek kompleks
+                $peerIdValid = $peerId;
+                if (is_object($peerId) || is_array($peerId)) {
+                    // Ambil key pertama dari objek sebagai peer_id
+                    // atau gunakan JSON jika memang perlu menyimpan semua
+                    $peerIdValid = is_object($peerId) ? json_encode($peerId) : key($peerId);
+                    Log::info("Mengkonversi peer_id kompleks menjadi: {$peerIdValid}");
+                }
+
+                // Update atau buat report
+                $report = Report::where('mahasiswa_id', $mahasiswaId)
+                    ->where('typeCriteria_id', $typeCriteriaIdValid)
+                    ->where('project_id', $projectId)
+                    ->where('question_id', $questionId)
+                    ->where('peer_id', $peerId)
+                    ->where('assessment_type', 'peerAssessment')
+                    ->first();
+
+                if ($report) {
+                    // Update report yang sudah ada
+                    $report->final_score_peer = $finalScorePeer;
+                    $report->group_id = $groupId;
+                    $report->question_id = $questionId;
+                    $report->peer_id = $peerIdValid;
+                    $report->assessment_type = $assessmentTypeMap[$questionId] ?? 'peerAssessment';
+                    $report->save();
+                    Log::info("Report diupdate untuk mahasiswa ID: $mahasiswaId, kriteria ID: $typeCriteriaIdValid");
                 } else {
-                    // Jika tidak ditemukan, lempar exception
-                    throw new \Exception("Kriteria dengan nama '{$typeCriteriaId}' tidak ditemukan di database");
+                    // Buat report baru
+                    $newReport = Report::create([
+                        'mahasiswa_id' => $mahasiswaId,
+                        'typeCriteria_id' => $typeCriteriaIdValid,
+                        'final_score_peer' => $finalScorePeer,
+                        'project_id' => $projectId,
+                        'group_id' => $groupId,
+                        'question_id' => $questionId,
+                        'peer_id' => $peerIdValid,
+                        'assessment_type' => $assessmentTypeMap[$questionId] ?? 'peerAssessment',
+                        // 'skor_self' => 0,
+                        // 'skor_peer' => 0,
+                        // 'selisih' => 0,
+                        // 'nilai_total' => 0,
+                    ]);
+                    Log::info("Report baru dibuat dengan ID: {$newReport->id} untuk mahasiswa ID: $mahasiswaId, kriteria ID: $typeCriteriaIdValid");
                 }
             }
-            
-            // Gunakan ID yang valid dari mapping jika ada
-            $typeCriteriaIdValid = isset($typeCriteriaMap[$typeCriteriaId]) 
-                                ? $typeCriteriaMap[$typeCriteriaId] 
-                                : $typeCriteriaId;
-            
-            
-            // Handle peer_id yang berupa objek kompleks
-            $peerIdValid = $peerId;
-            if (is_object($peerId) || is_array($peerId)) {
-                // Ambil key pertama dari objek sebagai peer_id
-                // atau gunakan JSON jika memang perlu menyimpan semua
-                $peerIdValid = is_object($peerId) ? json_encode($peerId) : key($peerId);
-                Log::info("Mengkonversi peer_id kompleks menjadi: {$peerIdValid}");
-            }
-            
-            // Update atau buat report
-            $report = Report::where('mahasiswa_id', $mahasiswaId)
-                        ->where('typeCriteria_id', $typeCriteriaIdValid)
-                        ->where('project_id', $projectId)
-                        ->where('question_id', $questionId)
-                        ->where('peer_id', $peerId)
-                        ->where('assessment_type', 'peerAssessment')
-                        ->first();
-            
-            if ($report) {
-                // Update report yang sudah ada
-                $report->final_score_peer = $finalScorePeer;
-                $report->group_id = $groupId;
-                $report->question_id = $questionId;
-                $report->peer_id = $peerIdValid;
-                $report->assessment_type = $assessmentTypeMap[$questionId] ?? 'peerAssessment';
-                $report->save();
-                Log::info("Report diupdate untuk mahasiswa ID: $mahasiswaId, kriteria ID: $typeCriteriaIdValid");
-            } else {
-                // Buat report baru
-                $newReport = Report::create([
-                    'mahasiswa_id' => $mahasiswaId,
-                    'typeCriteria_id' => $typeCriteriaIdValid,
-                    'final_score_peer' => $finalScorePeer,
-                    'project_id' => $projectId,
-                    'group_id' => $groupId,
-                    'question_id' => $questionId,
-                    'peer_id' => $peerIdValid,
-                    'assessment_type' => $assessmentTypeMap[$questionId] ?? 'peerAssessment',
-                    // 'skor_self' => 0,
-                    // 'skor_peer' => 0,
-                    // 'selisih' => 0,
-                    // 'nilai_total' => 0,
-                ]);
-                Log::info("Report baru dibuat dengan ID: {$newReport->id} untuk mahasiswa ID: $mahasiswaId, kriteria ID: $typeCriteriaIdValid");
-            }
-        }
 
-        DB::commit();
-        return response()->json(['success' => true, 'message' => 'Jawaban penilaian peer berhasil disimpan!']);
-    } catch (\Exception $e) {
-        DB::rollBack();
-        Log::error('Error in saveFinalScoresPeer: ' . $e->getMessage());
-        return response()->json([
-            'success' => false, 
-            'message' => 'Terjadi kesalahan saat menyimpan jawaban: ' . $e->getMessage()
-        ], 500);
+            DB::commit();
+            return response()->json(['success' => true, 'message' => 'Jawaban penilaian peer berhasil disimpan!']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error in saveFinalScoresPeer: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat menyimpan jawaban: ' . $e->getMessage()
+            ], 500);
+        }
     }
-}
 }

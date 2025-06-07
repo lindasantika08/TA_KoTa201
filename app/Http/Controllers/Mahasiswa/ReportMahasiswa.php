@@ -186,8 +186,8 @@ class ReportMahasiswa extends Controller
 
             $userResults = [
                 'user_id' => $userId,
-                'name' => Auth::user()->name ?? 'Tidak dikenal',  
-                'kelompok' => $group->group,  
+                'name' => Auth::user()->name ?? 'Tidak dikenal',
+                'kelompok' => $group->group,
                 'self_assessment' => $selfAspekKriteriaAnalysis->values(),
                 'peer_assessment' => $peerAspekKriteriaAnalysis->values(),
             ];
@@ -234,7 +234,7 @@ class ReportMahasiswa extends Controller
             ->where('group_id', $groupId)
             ->where('mahasiswa_id', $mahasiswaId)
             ->get();
-        
+
         Log::info('Reports found:', ['count' => $reports->count()]);
 
         $result = $filteredAssessments->groupBy(function ($assessment) {
@@ -262,7 +262,7 @@ class ReportMahasiswa extends Controller
             $typeCriteria = $groupAssessments->first()->typeCriteria;
 
             $peerNames = $groupAssessments->map(function ($assessment) {
-                return $assessment->peer->name ?? 'Unknown Peer'; 
+                return $assessment->peer->name ?? 'Unknown Peer';
             })->unique()->values();
 
             $questions = $groupAssessments->map(function ($assessment) use ($answers, $reports, $mahasiswaId, $assessmentType) {
@@ -273,7 +273,7 @@ class ReportMahasiswa extends Controller
 
                 $finalScoreSelf = ($assessmentType === 'selfAssessment' && $relatedReport) ? $relatedReport->final_score_self : null;
                 $finalScorePeer = ($assessmentType === 'peerAssessment' && $relatedReport) ? $relatedReport->final_score_peer : null;
-                
+
                 return [
                     'question_id' => $assessment->id,
                     'pertanyaan' => $assessment->question,
@@ -286,7 +286,7 @@ class ReportMahasiswa extends Controller
 
             $totalScoreSelf = null;
             $totalScorePeer = null;
-            
+
             if ($assessmentType === 'selfAssessment') {
                 $validScores = $questions->pluck('final_score_self')->filter()->values();
                 $totalScoreSelf = $validScores->count() > 0 ? $validScores->avg() : null;
@@ -294,7 +294,7 @@ class ReportMahasiswa extends Controller
                 $validScores = $questions->pluck('final_score_peer')->filter()->values();
                 $totalScorePeer = $validScores->count() > 0 ? $validScores->avg() : null;
             }
-            
+
             $totalScore = $answers->avg('score');
 
             return [
@@ -305,7 +305,7 @@ class ReportMahasiswa extends Controller
                 'total_score_peer' => $totalScorePeer,
                 'total_answers' => $answers->count(),
                 'questions' => $questions,
-                'peer_names' => $peerNames 
+                'peer_names' => $peerNames
             ];
         });
 

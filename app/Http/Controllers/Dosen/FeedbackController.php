@@ -15,6 +15,7 @@ use App\Models\Project;
 use App\Models\Feedback;
 use App\Models\Mahasiswa;
 use App\Models\feedback_ai;
+use App\Models\AnswersPeer;
 use App\Services\GeminiService;
 
 
@@ -217,13 +218,6 @@ class FeedbackController extends Controller
         }
     }
 
-    protected $geminiService;
-
-    public function __construct(GeminiService $geminiService)
-    {
-        $this->geminiService = $geminiService;
-    }
-
     public function getSummaryFeedback(Request $request)
     {
         $validated = $request->validate([
@@ -264,43 +258,81 @@ class FeedbackController extends Controller
                 ])->first();
 
                 if (!$existingFeedback || ($validated['force_regenerate'] ?? false)) {
+                    // Get regular feedbacks
                     $feedbacks = Feedback::where('peer_id', $group->mahasiswa_id)
                         ->with(['peer.user', 'mahasiswa.user'])
                         ->get();
 
-                    if ($feedbacks->isEmpty()) {
+                    // Get peer answers where this student is being evaluated
+                    $peerAnswers = AnswersPeer::where('mahasiswa_id', $group->mahasiswa_id)
+                        ->with(['peer.user', 'mahasiswa.user', 'question'])
+                        ->get();
+
+                    if ($feedbacks->isEmpty() && $peerAnswers->isEmpty()) {
                         continue;
                     }
 
-                    $feedbackTexts = $feedbacks->map(function ($feedback) {
-                        return "Feedback: {$feedback->feedback}";
-                    })->join("\n\n");
+                    // Combine feedback texts
+                    $feedbackTexts = collect();
+
+                    // Add regular feedbacks
+                    $feedbacks->each(function ($feedback) use ($feedbackTexts) {
+                        $feedbackTexts->push("Feedback: {$feedback->feedback}");
+                    });
+
+                    // Add peer answers as feedback
+                    $peerAnswers->each(function ($answer) use ($feedbackTexts) {
+                        $questionText = $answer->question ? $answer->question->question : 'Pertanyaan tidak tersedia';
+                        $peerName = $answer->peer && $answer->peer->user ? $answer->peer->user->name : 'Rekan';
+
+                        $feedbackText = "Penilaian dari {$peerName}:\n";
+                        $feedbackText .= "Pertanyaan: {$questionText}\n";
+                        $feedbackText .= "Jawaban: {$answer->answer}";
+
+                        if ($answer->score) {
+                            $feedbackText .= "\nSkor: {$answer->score}";
+                        }
+
+                        $feedbackTexts->push($feedbackText);
+                    });
+
+                    $combinedFeedbackText = $feedbackTexts->join("\n\n");
 
                     try {
                         $response = $this->callGeminiWithErrorHandling(
-                            "Analisis Komprehensif Feedback Mahasiswa: {$group->mahasiswa->user->name} (NIM: {$group->mahasiswa->nim})
-
-Kumpulan Feedback:
-{$feedbackTexts}
-
-Instruksi untuk Pembuatan Ringkasan:
-1. Buat ringkasan deskriptif yang menjelaskan:
-   - Kekuatan utama mahasiswa
-   - Area pengembangan dan perbaikan
-   - Pola umum yang terlihat dari berbagai feedback
-   - buat jangan point per point tapi dalam bentuk deskriptif saja
-
-2. Fokus pada:
-   - Objektifitas
-   - Kejelasan
-   - Konstruktif
-
-3. Hindari:
-   - Menyebutkan nama pemberi feedback
-   - Kalimat yang bersifat personal atau menyinggung
-   - Detail spesifik yang dapat mengidentifikasi pemberi feedback
-
-Hasilkan ringkasan professional, mendalam, dan bermakna yang dapat membantu mahasiswa dalam pengembangan diri."
+                            "Analisis Komprehensif Feedback dan Penilaian Peer untuk Mahasiswa: {$group->mahasiswa->user->name} (NIM: {$group->mahasiswa->nim})
+    
+    Kumpulan Feedback dan Penilaian:
+    {$combinedFeedbackText}
+    
+    Instruksi untuk Pembuatan Ringkasan:
+    1. Buat ringkasan deskriptif yang menjelaskan:
+       - Kekuatan utama mahasiswa berdasarkan feedback dan penilaian peer
+       - Area pengembangan dan perbairan yang perlu diperhatikan
+       - Pola umum yang terlihat dari berbagai feedback dan jawaban penilaian
+       - Konsistensi antara feedback tertulis dan hasil penilaian peer
+       - Buat dalam bentuk deskriptif, bukan point per point
+    
+    2. Fokus pada:
+       - Objektifitas dalam menganalisis semua sumber informasi
+       - Kejelasan dalam menyampaikan insight
+       - Memberikan saran yang konstruktif untuk pengembangan
+    
+    3. Hindari:
+       - Menyebutkan nama pemberi feedback atau penilai secara spesifik
+       - Kalimat yang bersifat personal atau menyinggung
+       - Detail yang dapat mengidentifikasi individu pemberi feedback
+       - Pengulangan informasi yang tidak perlu
+       - Menggunakan jargon teknis yang tidak umum
+       - Menggunakan bahasa yang terlalu formal atau kaku
+       - Menyebutkan Score yang diberikan oleh peer
+    
+    4. Integrasikan:
+       - Feedback tertulis dengan hasil penilaian peer
+       - Skor numerik dengan komentar kualitatif
+       - Berbagai perspektif dari rekan sejawat
+    
+    Hasilkan ringkasan professional, mendalam, dan bermakna yang menggabungkan semua aspek penilaian untuk membantu mahasiswa dalam pengembangan diri."
                         );
 
                         if ($existingFeedback) {
@@ -318,7 +350,11 @@ Hasilkan ringkasan professional, mendalam, dan bermakna yang dapat membantu maha
                             'peer_name' => $group->mahasiswa->user->name,
                             'peer_nim' => $group->mahasiswa->nim,
                             'summary' => $response,
-                            'source' => 'gemini'
+                            'source' => 'gemini',
+                            'data_sources' => [
+                                'feedbacks_count' => $feedbacks->count(),
+                                'peer_answers_count' => $peerAnswers->count()
+                            ]
                         ];
                     } catch (\Exception $e) {
                         Log::error("Gemini API Error", [
@@ -386,13 +422,11 @@ Hasilkan ringkasan professional, mendalam, dan bermakna yang dapat membantu maha
 
     public function storeFeedback(Request $request)
     {
-        DB::beginTransaction(); // Start transaction at the beginning
+        DB::beginTransaction();
 
         try {
-            // Log untuk debugging
             Log::info('Request received:', $request->all());
 
-            // Validasi
             $validated = $request->validate([
                 'batch_year' => 'required|string',
                 'project_name' => 'required|string',
@@ -401,7 +435,6 @@ Hasilkan ringkasan professional, mendalam, dan bermakna yang dapat membantu maha
                 'feedback' => 'required|string',
             ]);
 
-            // Cek autentikasi
             if (!Auth::check()) {
                 return response()->json([
                     'status' => 'error',
@@ -409,11 +442,9 @@ Hasilkan ringkasan professional, mendalam, dan bermakna yang dapat membantu maha
                 ], 401);
             }
 
-            // Get dosen ID from authenticated user
             $dosenId = Auth::user()->dosen->id;
             Log::info('Dosen ID:', ['id' => $dosenId]);
 
-            // Cek query group
             $group = Group::whereHas('project', function ($query) use ($validated) {
                 $query->where('batch_year', $validated['batch_year'])
                     ->where('project_name', $validated['project_name']);
@@ -421,14 +452,12 @@ Hasilkan ringkasan professional, mendalam, dan bermakna yang dapat membantu maha
                 ->where('mahasiswa_id', $validated['student_id'])
                 ->first();
 
-            // Log group query result
             Log::info('Found group:', ['group' => $group]);
 
             if (!$group) {
                 throw new \Exception('Group not found for the given criteria');
             }
 
-            // Create the feedback
             $feedback = Feedback::create([
                 'dosen_id' => $dosenId,
                 'peer_id' => $validated['student_id'],
