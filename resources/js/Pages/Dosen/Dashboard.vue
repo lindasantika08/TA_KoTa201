@@ -202,6 +202,12 @@ export default {
         fetchPeerStatistics() {
             if (!this.selectedProject) return;
 
+            console.log('Selected Project:', this.selectedProject);
+            console.log('Sending params:', {
+                batch_year: this.selectedProject.batch_year,
+                project_name: this.selectedProject.project_name,
+            });
+
             // Reset values before fetching to handle potential loading state
             this.totalGroups = 0;
             this.completedGroups = 0;
@@ -354,26 +360,13 @@ export default {
 
 <template>
     <div class="flex min-h-screen bg-gray-50">
-        <div
-            v-if="showChangePasswordToast"
-            class="fixed top-4 right-4 bg-white shadow-lg rounded-lg p-4 max-w-md animate-fade-in-up z-50"
-        >
+        <div v-if="showChangePasswordToast"
+            class="fixed top-4 right-4 bg-white shadow-lg rounded-lg p-4 max-w-md animate-fade-in-up z-50">
             <div class="flex items-center space-x-4">
-                <div
-                    class="bg-yellow-500 flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center"
-                >
-                    <svg
-                        class="w-6 h-6 text-white"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
-                        />
+                <div class="bg-yellow-500 flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                     </svg>
                 </div>
                 <div class="flex-1">
@@ -385,28 +378,15 @@ export default {
                     </p>
                 </div>
                 <div class="flex space-x-2">
-                    <button
-                        @click="handleChangePassword"
-                        class="px-4 py-2 bg-yellow-600 text-white text-sm font-medium rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
-                    >
+                    <button @click="handleChangePassword"
+                        class="px-4 py-2 bg-yellow-600 text-white text-sm font-medium rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500">
                         Ganti Password
                     </button>
-                    <button
-                        @click="showChangePasswordToast = false"
-                        class="p-2 text-gray-400 hover:text-gray-500 focus:outline-none"
-                    >
-                        <svg
-                            class="w-5 h-5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12"
-                            />
+                    <button @click="showChangePasswordToast = false"
+                        class="p-2 text-gray-400 hover:text-gray-500 focus:outline-none">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
                 </div>
@@ -423,29 +403,18 @@ export default {
                         Dashboard Dosen
                     </h1>
                     <div class="bg-white rounded-lg shadow p-4">
-                        <label
-                            for="combinedDropdown"
-                            class="block text-sm font-medium text-gray-700 mb-2"
-                        >
+                        <label for="combinedDropdown" class="block text-sm font-medium text-gray-700 mb-2">
                             Select Project
                         </label>
-                        <select
-                            id="combinedDropdown"
-                            @change="handleDropdownChange"
-                            class="w-full md:w-1/2 rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        >
+                        <select id="combinedDropdown" @change="handleDropdownChange"
+                            class="w-full md:w-1/2 rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             <option value="" disabled selected>
                                 Select Batch Year - Project Name
                             </option>
-                            <option
-                                v-for="option in combinedOptions"
-                                :key="option.value"
-                                :value="option.value"
-                                :selected="
-                                    selectedOption &&
+                            <option v-for="option in combinedOptions" :key="option.value" :value="option.value"
+                                :selected="selectedOption &&
                                     option.value === selectedOption.value
-                                "
-                            >
+                                    ">
                                 {{ option.label }}
                             </option>
                         </select>
@@ -455,44 +424,29 @@ export default {
                 <!-- Statistics Overview -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     <!-- Self Assessment Card -->
-                    <div
-                        @click="handleListAnswer()"
-                        class="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500 cursor-pointer transition-all duration-200"
-                    >
+                    <div @click="handleListAnswer()"
+                        class="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500 cursor-pointer transition-all duration-200">
                         <div class="p-6">
                             <div class="flex items-center justify-between mb-4">
                                 <h3 class="text-lg font-semibold text-gray-800">
                                     Self Assessment
                                 </h3>
-                                <font-awesome-icon
-                                    icon="fa-solid fa-user"
-                                    class="text-blue-500 text-xl"
-                                />
+                                <font-awesome-icon icon="fa-solid fa-user" class="text-blue-500 text-xl" />
                             </div>
 
                             <div v-if="selectedProject">
                                 <div class="flex items-end gap-2">
-                                    <span
-                                        class="text-3xl font-bold text-gray-900"
-                                        >{{ totalAnswers }}/{{
-                                            totalUsers
-                                        }}</span
-                                    >
-                                    <span class="text-sm text-gray-600 mb-1"
-                                        >completed</span
-                                    >
+                                    <span class="text-3xl font-bold text-gray-900">{{ totalAnswers }}/{{
+                                        totalUsers
+                                    }}</span>
+                                    <span class="text-sm text-gray-600 mb-1">completed</span>
                                 </div>
 
                                 <div class="mt-4">
-                                    <div
-                                        class="w-full bg-gray-200 rounded-full h-2"
-                                    >
-                                        <div
-                                            class="bg-blue-500 h-2 rounded-full transition-all duration-500"
-                                            :style="{
-                                                width: selfAssessmentProgressWidth,
-                                            }"
-                                        ></div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-blue-500 h-2 rounded-full transition-all duration-500" :style="{
+                                            width: selfAssessmentProgressWidth,
+                                        }"></div>
                                     </div>
                                     <p class="text-sm text-gray-600 mt-2">
                                         {{ selfAssessmentPercentage }}%
@@ -510,46 +464,30 @@ export default {
 
                     <!-- Peer Assessment Card -->
                     <div
-                        class="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500 cursor-pointer transition-all duration-200"
-                    >
+                        class="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500 cursor-pointer transition-all duration-200">
                         <div class="p-6">
                             <div class="flex items-center justify-between mb-4">
                                 <h3 class="text-lg font-semibold text-gray-800">
                                     Peer Assessment
                                 </h3>
-                                <font-awesome-icon
-                                    icon="fa-solid fa-users"
-                                    class="text-green-500 text-xl"
-                                />
+                                <font-awesome-icon icon="fa-solid fa-users" class="text-green-500 text-xl" />
                             </div>
 
                             <div v-if="selectedProject">
-                                <div
-                                    @click="handleListAnswerPeer()"
-                                    class="cursor-pointer"
-                                >
+                                <div @click="handleListAnswerPeer()" class="cursor-pointer">
                                     <div class="flex items-end gap-2">
-                                        <span
-                                            class="text-3xl font-bold text-gray-900"
-                                            >{{ completedGroups }}/{{
-                                                totalGroups
-                                            }}</span
-                                        >
-                                        <span class="text-sm text-gray-600 mb-1"
-                                            >groups completed</span
-                                        >
+                                        <span class="text-3xl font-bold text-gray-900">{{ completedGroups }}/{{
+                                            totalGroups
+                                        }}</span>
+                                        <span class="text-sm text-gray-600 mb-1">groups completed</span>
                                     </div>
 
                                     <div class="mt-4">
-                                        <div
-                                            class="w-full bg-gray-200 rounded-full h-2"
-                                        >
-                                            <div
-                                                class="bg-green-500 h-2 rounded-full transition-all duration-500"
+                                        <div class="w-full bg-gray-200 rounded-full h-2">
+                                            <div class="bg-green-500 h-2 rounded-full transition-all duration-500"
                                                 :style="{
                                                     width: peerAssessmentProgressWidth,
-                                                }"
-                                            ></div>
+                                                }"></div>
                                         </div>
                                         <p class="text-sm text-gray-600 mt-2">
                                             {{ peerAssessmentPercentage }}%
@@ -560,81 +498,53 @@ export default {
 
                                 <!-- Group Details Expansion -->
                                 <div class="mt-4 border-t pt-4">
-                                    <button
-                                        @click="
-                                            showGroupDetails = !showGroupDetails
+                                    <button @click="
+                                        showGroupDetails = !showGroupDetails
                                         "
-                                        class="flex items-center justify-between w-full text-sm font-medium text-gray-700 hover:bg-gray-50 p-2 rounded-lg"
-                                    >
+                                        class="flex items-center justify-between w-full text-sm font-medium text-gray-700 hover:bg-gray-50 p-2 rounded-lg">
                                         <span>Group Details</span>
-                                        <font-awesome-icon
-                                            :icon="
-                                                showGroupDetails
-                                                    ? 'fa-solid fa-chevron-up'
-                                                    : 'fa-solid fa-chevron-down'
-                                            "
-                                            class="text-gray-500 transition-transform duration-200"
-                                        />
+                                        <font-awesome-icon :icon="showGroupDetails
+                                                ? 'fa-solid fa-chevron-up'
+                                                : 'fa-solid fa-chevron-down'
+                                            " class="text-gray-500 transition-transform duration-200" />
                                     </button>
 
-                                    <transition
-                                        enter-active-class="transition duration-200 ease-out"
+                                    <transition enter-active-class="transition duration-200 ease-out"
                                         enter-from-class="transform scale-y-0 opacity-0"
                                         enter-to-class="transform scale-y-100 opacity-100"
                                         leave-active-class="transition duration-200 ease-in"
                                         leave-from-class="transform scale-y-100 opacity-100"
-                                        leave-to-class="transform scale-y-0 opacity-0"
-                                    >
-                                        <div
-                                            v-if="showGroupDetails"
-                                            class="space-y-2 mt-2 origin-top"
-                                        >
-                                            <template
-                                                v-if="
-                                                    groupStatistics.length > 0
-                                                "
-                                            >
-                                                <div
-                                                    v-for="group in groupStatistics"
-                                                    :key="group.group_id"
-                                                    class="bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors duration-200"
-                                                >
-                                                    <div
-                                                        class="flex items-center justify-between"
-                                                    >
+                                        leave-to-class="transform scale-y-0 opacity-0">
+                                        <div v-if="showGroupDetails" class="space-y-2 mt-2 origin-top">
+                                            <template v-if="
+                                                groupStatistics.length > 0
+                                            ">
+                                                <div v-for="group in groupStatistics" :key="group.group_id"
+                                                    class="bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors duration-200">
+                                                    <div class="flex items-center justify-between">
                                                         <div>
-                                                            <h4
-                                                                class="font-medium text-gray-800"
-                                                            >
+                                                            <h4 class="font-medium text-gray-800">
                                                                 {{
                                                                     group.group_name
                                                                 }}
                                                             </h4>
-                                                            <p
-                                                                class="text-xs text-gray-600"
-                                                            >
+                                                            <p class="text-xs text-gray-600">
                                                                 {{
                                                                     group.total_members
                                                                 }}
                                                                 members
                                                             </p>
                                                         </div>
-                                                        <span
-                                                            :class="[
-                                                                'px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1',
-                                                                group.is_completed
-                                                                    ? 'bg-green-100 text-green-800'
-                                                                    : 'bg-yellow-100 text-yellow-800',
-                                                            ]"
-                                                        >
-                                                            <font-awesome-icon
-                                                                :icon="
-                                                                    group.is_completed
-                                                                        ? 'fa-check-circle'
-                                                                        : 'fa-hourglass-half'
-                                                                "
-                                                                class="text-xs"
-                                                            />
+                                                        <span :class="[
+                                                            'px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1',
+                                                            group.is_completed
+                                                                ? 'bg-green-100 text-green-800'
+                                                                : 'bg-yellow-100 text-yellow-800',
+                                                        ]">
+                                                            <font-awesome-icon :icon="group.is_completed
+                                                                    ? 'fa-check-circle'
+                                                                    : 'fa-hourglass-half'
+                                                                " class="text-xs" />
                                                             {{
                                                                 group.is_completed
                                                                     ? "Completed"
@@ -644,10 +554,7 @@ export default {
                                                     </div>
                                                 </div>
                                             </template>
-                                            <p
-                                                v-else
-                                                class="text-sm text-gray-500 italic text-center py-4"
-                                            >
+                                            <p v-else class="text-sm text-gray-500 italic text-center py-4">
                                                 No group data available
                                             </p>
                                         </div>
@@ -664,16 +571,12 @@ export default {
 
                     <!-- Project Summary Card -->
                     <div
-                        class="bg-white rounded-xl shadow-md p-6 border-l-4 border-purple-500 cursor-pointer transition-all duration-200"
-                    >
+                        class="bg-white rounded-xl shadow-md p-6 border-l-4 border-purple-500 cursor-pointer transition-all duration-200">
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="text-lg font-semibold text-gray-800">
                                 Project Summary
                             </h3>
-                            <font-awesome-icon
-                                icon="fa-solid fa-project-diagram"
-                                class="text-purple-500 text-xl"
-                            />
+                            <font-awesome-icon icon="fa-solid fa-project-diagram" class="text-purple-500 text-xl" />
                         </div>
 
                         <div v-if="selectedProject" class="space-y-4">
@@ -697,9 +600,7 @@ export default {
                                         <p class="text-sm text-purple-600 mb-1">
                                             Total Users
                                         </p>
-                                        <p
-                                            class="text-xl font-semibold text-purple-900"
-                                        >
+                                        <p class="text-xl font-semibold text-purple-900">
                                             {{ totalUsers }}
                                         </p>
                                     </div>
@@ -707,9 +608,7 @@ export default {
                                         <p class="text-sm text-purple-600 mb-1">
                                             Total Groups
                                         </p>
-                                        <p
-                                            class="text-xl font-semibold text-purple-900"
-                                        >
+                                        <p class="text-xl font-semibold text-purple-900">
                                             {{ totalGroups }}
                                         </p>
                                     </div>
