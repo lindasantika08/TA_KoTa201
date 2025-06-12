@@ -54,6 +54,7 @@ export default {
     },
     mounted() {
         // await this.fetchDropdownOptions();
+        this.clearStaleData();
         this.fetchDropdownOptions();
         this.initializeSelectedProject();
         this.checkPasswordChangeStatus();
@@ -149,29 +150,46 @@ export default {
             }
         },
 
-        // initializeSelectedProject() {
-        //     const savedProject = localStorage.getItem("selectedProject");
-        //     if (savedProject) {
-        //         try {
-        //             this.selectedProject = JSON.parse(savedProject);
-        //             this.fetchStatistics();
-        //             this.fetchPeerStatistics();
-        //         } catch (error) {
-        //             console.error("Error parsing saved project:", error);
-        //             localStorage.removeItem("selectedProject");
-        //         }
-        //     }
-        // },
         initializeSelectedProject() {
             const savedProject = localStorage.getItem("selectedProject");
             if (savedProject) {
                 try {
                     this.selectedProject = JSON.parse(savedProject);
-                    // JANGAN langsung fetch, tunggu dropdown options dimuat dulu
+                    this.fetchStatistics();
+                    this.fetchPeerStatistics();
                 } catch (error) {
                     console.error("Error parsing saved project:", error);
                     localStorage.removeItem("selectedProject");
                 }
+            }
+        },
+
+        async clearStaleData() {
+            try {
+                // Get current available options
+                const response = await axios.get("/sispa/api/dropdown-options");
+                const availableOptions = response.data.options || [];
+
+                // Check stored project
+                const storedProject = localStorage.getItem("selectedProject");
+                if (storedProject) {
+                    const project = JSON.parse(storedProject);
+
+                    // Validate if stored project still exists
+                    const isValid = availableOptions.some(option =>
+                        option.batchYear === project.batch_year &&
+                        option.projectName === project.project_name
+                    );
+
+                    if (!isValid) {
+                        console.log('Clearing stale localStorage data');
+                        localStorage.removeItem("selectedProject");
+                        localStorage.removeItem("selectedOption");
+                        this.selectedProject = null;
+                    }
+                }
+            } catch (error) {
+                console.error("Error clearing stale data:", error);
             }
         },
         async fetchDropdownOptions() {
