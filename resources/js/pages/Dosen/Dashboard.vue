@@ -52,9 +52,10 @@ export default {
             toastTimeout: null,
         };
     },
-    mounted() {
+    async mounted() {
+        await this.fetchDropdownOptions();
         this.initializeSelectedProject();
-        this.fetchDropdownOptions();
+        // this.fetchDropdownOptions();
         this.checkPasswordChangeStatus();
     },
     beforeUnmount() {
