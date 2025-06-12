@@ -52,10 +52,10 @@ export default {
             toastTimeout: null,
         };
     },
-    async mounted() {
-        await this.fetchDropdownOptions();
+    mounted() {
+        // await this.fetchDropdownOptions();
+        this.fetchDropdownOptions();
         this.initializeSelectedProject();
-        // this.fetchDropdownOptions();
         this.checkPasswordChangeStatus();
     },
     beforeUnmount() {
@@ -149,13 +149,25 @@ export default {
             }
         },
 
+        // initializeSelectedProject() {
+        //     const savedProject = localStorage.getItem("selectedProject");
+        //     if (savedProject) {
+        //         try {
+        //             this.selectedProject = JSON.parse(savedProject);
+        //             this.fetchStatistics();
+        //             this.fetchPeerStatistics();
+        //         } catch (error) {
+        //             console.error("Error parsing saved project:", error);
+        //             localStorage.removeItem("selectedProject");
+        //         }
+        //     }
+        // },
         initializeSelectedProject() {
             const savedProject = localStorage.getItem("selectedProject");
             if (savedProject) {
                 try {
                     this.selectedProject = JSON.parse(savedProject);
-                    this.fetchStatistics();
-                    this.fetchPeerStatistics();
+                    // JANGAN langsung fetch, tunggu dropdown options dimuat dulu
                 } catch (error) {
                     console.error("Error parsing saved project:", error);
                     localStorage.removeItem("selectedProject");
@@ -439,7 +451,7 @@ export default {
                                 <div class="flex items-end gap-2">
                                     <span class="text-3xl font-bold text-gray-900">{{ totalAnswers }}/{{
                                         totalUsers
-                                    }}</span>
+                                        }}</span>
                                     <span class="text-sm text-gray-600 mb-1">completed</span>
                                 </div>
 
@@ -479,7 +491,7 @@ export default {
                                     <div class="flex items-end gap-2">
                                         <span class="text-3xl font-bold text-gray-900">{{ completedGroups }}/{{
                                             totalGroups
-                                        }}</span>
+                                            }}</span>
                                         <span class="text-sm text-gray-600 mb-1">groups completed</span>
                                     </div>
 
@@ -505,8 +517,8 @@ export default {
                                         class="flex items-center justify-between w-full text-sm font-medium text-gray-700 hover:bg-gray-50 p-2 rounded-lg">
                                         <span>Group Details</span>
                                         <font-awesome-icon :icon="showGroupDetails
-                                                ? 'fa-solid fa-chevron-up'
-                                                : 'fa-solid fa-chevron-down'
+                                            ? 'fa-solid fa-chevron-up'
+                                            : 'fa-solid fa-chevron-down'
                                             " class="text-gray-500 transition-transform duration-200" />
                                     </button>
 
@@ -543,8 +555,8 @@ export default {
                                                                 : 'bg-yellow-100 text-yellow-800',
                                                         ]">
                                                             <font-awesome-icon :icon="group.is_completed
-                                                                    ? 'fa-check-circle'
-                                                                    : 'fa-hourglass-half'
+                                                                ? 'fa-check-circle'
+                                                                : 'fa-hourglass-half'
                                                                 " class="text-xs" />
                                                             {{
                                                                 group.is_completed
