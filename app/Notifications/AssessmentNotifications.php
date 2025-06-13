@@ -6,9 +6,13 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 
-class AssessmentNotifications extends Notification
+class AssessmentNotifications extends Notification implements ShouldQueue
 {
+    use Queueable;
+    
     protected $assessmentData;
 
     public function __construct($assessmentData)
