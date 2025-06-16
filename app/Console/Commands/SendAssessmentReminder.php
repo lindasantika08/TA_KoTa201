@@ -26,15 +26,19 @@ class SendAssessmentReminder extends Command
         $assessments = Assessment::with('project')
             ->where('is_published', true)
             ->whereDate('end_date', $todayPlus2)
-            ->get();
+            ->get()
+            ->groupBy('assessment_order');
 
         $sent = 0;
 
         foreach ($assessments as $assessment) {
             // semua mahasiswa di project tsb
+            $assessment = $assessment->first();
+
             $mahasiswaIds = DB::table('groups')
                 ->where('project_id', $assessment->project_id)
-                ->pluck('mahasiswa_id');
+                ->pluck('mahasiswa_id')
+                ->unique();
 
             foreach ($mahasiswaIds as $mhsId) {
                 $mhs  = Mahasiswa::find($mhsId);
