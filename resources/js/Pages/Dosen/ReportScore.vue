@@ -615,25 +615,22 @@ export default {
             this.loading = true;
             this.error = null;
 
-            try {
-                const response = await axios.get(
-                    "/sispa/api/report/kelompok/answers",
-                    {
-                        params: {
-                            batch_year: this.batch_year,
-                            project_name: this.project_name,
-                            kelompok: this.kelompok,
-                        },
-                    }
-                );
-                console.log("Data dari API kelompok/answers:", response.data);
-                this.userAnalysis = response.data;
-            } catch (error) {
-                this.error = "Gagal memuat data";
-            } finally {
-                this.loading = false;
-            }
-        },
+      try {
+        const response = await axios.get("/sispa/api/report/kelompok/answers", {
+          params: {
+            batch_year: this.batch_year,
+            project_name: this.project_name,
+            kelompok: this.kelompok,
+          },
+        });
+        console.log("Data dari API kelompok/answers:", response.data);
+        this.userAnalysis = response.data;
+      } catch (error) {
+        this.error = "Gagal memuat data";
+      } finally {
+        this.loading = false;
+      }
+    },
 
         async fetchPeerQuestions() {
             try {

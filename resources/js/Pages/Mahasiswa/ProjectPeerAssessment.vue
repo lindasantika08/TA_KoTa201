@@ -36,7 +36,37 @@ export default {
     }
   },
   methods: {
+    // Method untuk mengecek apakah semua assessment sudah lengkap
+    isAllAssessmentComplete(item) {
+      // Jika ada total_members dan answered_members, gunakan itu
+      if (item.total_members && item.answered_members !== undefined) {
+        return item.answered_members >= item.total_members && 
+               item.answered_questions >= item.total_questions;
+      }
+      
+      // Fallback: jika struktur data berbeda, bisa disesuaikan
+      // Misalnya jika ada field completion_percentage
+      if (item.completion_percentage !== undefined) {
+        return item.completion_percentage >= 100;
+      }
+      
+      // Fallback: gunakan logika lama jika tidak ada data member
+      return item.answered_questions >= item.total_questions;
+    },
+
     handleAnswer(item) {
+      // Cek apakah masih ada assessment yang belum lengkap
+      if (this.isAllAssessmentComplete(item)) {
+        Swal.fire({
+          title: 'Informasi',
+          text: 'Anda sudah menyelesaikan semua assessment untuk proyek ini.',
+          icon: 'info',
+          confirmButtonText: 'OK',
+          confirmButtonColor: '#3085d6',
+        });
+        return;
+      }
+
       Swal.fire({
         title: 'Peringatan!',
         html: 'Anda wajib mengisi alasan dengan <b>minimal 1 kalimat</b> pada setiap penilaian yang diberikan.',
@@ -69,6 +99,7 @@ export default {
         }
       });
     },
+    
     handleDetail(item) {
       router.visit(`/sispa/mahasiswa/peer-assessment/peer-detail`, {
         method: 'get',
@@ -94,6 +125,10 @@ export default {
           date: dayjs(item.created_at).format('DD MMMM YYYY HH:mm'),
           total_questions: item.total_questions,
           answered_questions: item.answered_questions,
+          // Tambahan field untuk tracking member assessment
+          total_members: item.total_members || 0,
+          answered_members: item.answered_members || 0,
+          completion_percentage: item.completion_percentage || 0,
         }));
       })
       .catch(error => {
@@ -121,11 +156,20 @@ export default {
           <DataTable :headers="headers" :items="items" class="mt-10">
             <template #column-actions="{ item }">
               <div class="flex justify-center space-x-2">
-                <button v-if="item.status === 'Active' && item.answered_questions < item.total_questions"
+                <!-- Tombol Answer: muncul jika status Active dan belum semua assessment lengkap -->
+                <button v-if="item.status === 'Active' && !isAllAssessmentComplete(item)"
                   @click="handleAnswer(item)"
                   class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                   <font-awesome-icon icon="fa-solid fa-pen" class="mr-2" />
                   Answer
+                </button>
+
+                <!-- Tombol Complete: muncul jika semua assessment sudah lengkap -->
+                <button v-if="item.status === 'Active' && isAllAssessmentComplete(item)"
+                  disabled
+                  class="px-3 py-1 bg-green-500 text-white rounded-md opacity-75 cursor-not-allowed">
+                  <font-awesome-icon icon="fa-solid fa-check" class="mr-2" />
+                  Complete
                 </button>
 
                 <button @click="handleDetail(item)"
@@ -137,12 +181,24 @@ export default {
             </template>
 
             <template #column-status="{ item }">
-              <span :class="[
-                'px-2 py-1 rounded-full text-xs font-medium',
-                item.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-              ]">
-                {{ item.status }}
-              </span>
+              <div class="flex items-center space-x-2">
+                <span :class="[
+                  'px-2 py-1 rounded-full text-xs font-medium',
+                  item.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                ]">
+                  {{ item.status }}
+                </span>
+                
+                <!-- Progress indicator untuk peer assessment -->
+                <span v-if="item.status === 'Active'" class="text-xs text-gray-500">
+                  <template v-if="item.total_members > 0">
+                    ({{ item.answered_members }}/{{ item.total_members }} members)
+                  </template>
+                  <template v-else>
+                    <!-- ({{ item.answered_questions }}/{{ item.total_questions }} questions) -->
+                  </template>
+                </span>
+              </div>
             </template>
           </DataTable>
         </Card>

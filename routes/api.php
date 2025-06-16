@@ -171,6 +171,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/projects-user', [DashboardMahasiswa::class, 'getUserProject']);
     Route::get('/assessment-status', [DashboardMahasiswa::class, 'getSelfAssessmentStatus']);
     Route::get('/count-peer', [DashboardMahasiswa::class, 'getPeerAssessmentDetails']);
+    Route::get('/detail-report-chart', [DashboardMahasiswa::class, 'getProjectScoreDetails']);
     Route::get('/feedback-dashboard-mhs', [DashboardMahasiswa::class, 'getFeedback']);
 
     // self assessment mhs

@@ -57,35 +57,29 @@ export default {
     methods: {
         initializeWebSocket() {
             try {
-                // Replace with your actual WebSocket server URL
                 const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
                 const wsHost = window.location.host;
                 this.socket = new WebSocket(`${wsProtocol}//${wsHost}/ws/notifications`);
 
                 this.socket.onopen = () => {
-                    // console.log('WebSocket connected');
-                    this.reconnectAttempts = 0; // Reset reconnect attempts on successful connection
+                    this.reconnectAttempts = 0;
                 };
 
                 this.socket.onmessage = (event) => {
                     const data = JSON.parse(event.data);
 
                     if (data.type === 'new_notification') {
-                        // Add new notification to the list
                         const processedNotification = this.processNotifications([data.notification])[0];
                         this.localNotifications = [processedNotification, ...this.localNotifications];
                         this.localUnreadCount++;
 
-                        // Show browser notification if supported
                         this.showBrowserNotification(processedNotification);
                     } else if (data.type === 'notification_update') {
-                        // Update unread count if it changed
                         this.localUnreadCount = data.unread_count;
                     }
                 };
 
                 this.socket.onclose = () => {
-                    // console.log('WebSocket disconnected');
                     this.handleReconnect();
                 };
 
@@ -102,7 +96,6 @@ export default {
         handleReconnect() {
             if (this.reconnectAttempts < this.maxReconnectAttempts) {
                 this.reconnectAttempts++;
-                // console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
                 setTimeout(() => {
                     this.initializeWebSocket();
                 }, this.reconnectInterval);

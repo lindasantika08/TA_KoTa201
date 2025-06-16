@@ -76,20 +76,21 @@ export default {
             // console.log("Project Name:", project.nama_proyek);
             // console.log("Group:", project.nama_kelompok);
 
-            // Navigasi menggunakan Vue Router dari Inertia.js
-            router.get(
-                "/sispa/mahasiswa/project-score-details",
-                {
-                    tahun_ajaran: project.tahun_ajaran,
-                    nama_proyek: project.nama_proyek,
-                    kelompok: project.nama_kelompok,
-                },
-                {
-                    preserveState: true,
-                    preserveScroll: true,
-                }
-            );
+      // Navigasi menggunakan Vue Router dari Inertia.js
+      router.get(
+        "/sispa/mahasiswa/project-score-details",
+        {
+          tahun_ajaran: project.tahun_ajaran,
+          nama_proyek: project.nama_proyek,
+          kelompok: project.nama_kelompok,
         },
+        {
+          preserveState: true,
+          preserveScroll: true,
+        }
+      );
+    },
+
 
         getStatusColor(status) {
             const normalizedStatus = status.toLowerCase();

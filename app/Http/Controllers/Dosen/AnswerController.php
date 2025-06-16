@@ -184,23 +184,52 @@ class AnswerController extends Controller
     public function getStatisticsPeer(Request $request)
     {
         try {
-            $batchYear = $request->query('batch_year');
-            $projectName = $request->query('project_name');
+            $batchYear = trim($request->query('batch_year'));
+            $projectName = trim($request->query('project_name'));
 
+            Log::info('getStatisticsPeer called', [
+                'batch_year' => $batchYear,
+                'project_name' => $projectName,
+                'all_params' => $request->all()
+            ]);
+
+    
             if (!$batchYear || !$projectName) {
                 return response()->json([
                     'message' => 'Batch year and project name are required'
                 ], 400);
             }
 
+            Log::info('Searching for project', [
+                'batch_year' => $batchYear,
+                'project_name' => $projectName
+            ]);
+
             // Find the specific project
             $project = Project::where('batch_year', $batchYear)
                 ->where('project_name', $projectName)
                 ->first();
 
+            $allProjects = Project::select('id', 'batch_year', 'project_name')->get();
+            Log::info('All available projects', [
+                'projects' => $allProjects->toArray()
+            ]);
+
             if (!$project) {
+
+                Log::warning('Project not found', [
+                'searched_batch_year' => $batchYear,
+                'searched_project_name' => $projectName,
+                'available_projects' => $allProjects->toArray()
+            ]);
+
                 return response()->json([
-                    'message' => 'Project not found for the specified batch year and project name'
+                    'message' => 'Project not found for the specified batch year and project name',
+                    'searched_for' => [
+                    'batch_year' => $batchYear,
+                    'project_name' => $projectName
+                ],
+                'available_projects' => $allProjects->toArray()
                 ], 404);
             }
 
