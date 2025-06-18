@@ -45,16 +45,15 @@ RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
 
 COPY --chown=www-data:www-data . /var/www/
 
+RUN chown -R www-data:www-data /var/www
+RUN chown -R www-data:www-data /var/log/supervisor
+RUN chmod -R 755 /var/log/supervisor
+
 # Install dependency
 RUN composer install --no-dev --optimize-autoloader
 RUN npm install
 
 RUN php artisan config:clear
-
-# Copy project ke dalam container
-RUN chown -R www-data:www-data /var/www
-RUN chown -R www-data:www-data /var/log/supervisor
-RUN chmod -R 755 /var/log/supervisor
 
 RUN php artisan storage:link
 
