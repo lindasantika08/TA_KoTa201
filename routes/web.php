@@ -32,11 +32,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Mahasiswa\RefleksiMahasiswa;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return redirect('');
-});
-Route::prefix('')->group(function () {
-    Route::get('/', function () {
+ Route::get('/', function () {
         $user = Auth::user();
 
         if ($user->role == 'admin') {
@@ -209,4 +205,3 @@ Route::prefix('')->group(function () {
             Route::post('/manage-mahasiswa/import', [UserAdminController::class, 'ImportMahasiswa']);
         });
     });
-});
