@@ -39,7 +39,7 @@ export default {
         const breadcrumbs = [
             {
                 text: "Reflective Assessment",
-                href: "/sispa/dosen/reflectiveAssessment",
+                href: "/dosen/reflectiveAssessment",
             },
             { text: "Detail", href: null },
         ];
@@ -78,7 +78,7 @@ export default {
         const changeOrder = (newOrder) => {
             loading.value = true;
             router.get(
-                "/sispa/dosen/reflectiveAssessment/detail",
+                "/dosen/reflectiveAssessment/detail",
                 {
                     batch_year: props.batchYear,
                     project_name: props.projectName,
@@ -96,7 +96,7 @@ export default {
         const fetchQuestionId = async () => {
             try {
                 const response = await axios.get(
-                    "/sispa/api/get-reflective-question-id",
+                    "/api/get-reflective-question-id",
                     {
                         params: {
                             batch_year: props.batchYear,
@@ -124,7 +124,7 @@ export default {
                 return;
             }
 
-            router.visit("/sispa/dosen/ReflectiveAnswer", {
+            router.visit("/dosen/ReflectiveAnswer", {
                 method: "get",
                 data: {
                     batch_year: props.batchYear,
@@ -565,7 +565,7 @@ export default {
                 class="bg-white border-t border-gray-200 p-4 text-center text-gray-500 text-sm"
             >
                 <p>
-                    © {{ new Date().getFullYear() }} SISPA - Reflective
+                    © {{ new Date().getFullYear() }} SAPA - Reflective
                     Assessment System
                 </p>
             </footer>

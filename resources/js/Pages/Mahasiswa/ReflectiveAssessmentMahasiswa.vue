@@ -34,7 +34,7 @@ export default {
             breadcrumbs: [
                 {
                     text: "Assessment",
-                    href: "/sispa/mahasiswa/assessment/reflective",
+                    href: "/mahasiswa/assessment/reflective",
                 },
                 { text: "Reflective Assessment", href: null },
             ],
@@ -90,7 +90,7 @@ export default {
 
             try {
                 const response = await axios.get(
-                    "/sispa/api/reflective-questions",
+                    "/api/reflective-questions",
                     {
                         params: {
                             batch_year: this.batch_year,
@@ -129,7 +129,7 @@ export default {
                     this.$page.props.project_name ||
                     this.$route.query.project_name;
 
-                const response = await axios.get("/sispa/api/user-info", {
+                const response = await axios.get("/api/user-info", {
                     params: {
                         batch_year: batch_year,
                         project_name: project_name,
@@ -152,7 +152,7 @@ export default {
 
             try {
                 const response = await axios.post(
-                    "/sispa/api/save-answer-reflective",
+                    "/api/save-answer-reflective",
                     {
                         answer: [
                             // PERUBAHAN: Nama field dari 'answers' menjadi 'answer' sesuai dengan backend
@@ -209,7 +209,7 @@ export default {
 
             try {
                 const response = await axios.get(
-                    `/sispa/api/get-answer-reflective/${this.currentQuestion.id}`
+                    `/api/get-answer-reflective/${this.currentQuestion.id}`
                 );
 
                 const tempAnswer =
@@ -264,7 +264,7 @@ export default {
                 }));
 
                 const response = await axios.post(
-                    "/sispa/api/save-all-reflective-answers",
+                    "/api/save-all-reflective-answers",
                     { answers: allAnswers }
                 );
 
@@ -272,7 +272,7 @@ export default {
                     this.clearFormFields();
                     alert("Semua jawaban berhasil disimpan!");
                     this.$inertia.visit(
-                        "/sispa/mahasiswa/reflective-assessment "
+                        "/mahasiswa/reflective-assessment "
                     );
                 }
             } catch (error) {

@@ -16,9 +16,9 @@
                 <!-- Dashboard -->
                 <li>
                     <a
-                        :href="'/sispa/mahasiswa/dashboard'"
+                        :href="'/mahasiswa/dashboard'"
                         :class="{
-                            'bg-gray-200': isActive('/sispa/mahasiswa/dashboard'),
+                            'bg-gray-200': isActive('/mahasiswa/dashboard'),
                         }"
                         class="flex items-center px-4 py-2 rounded hover:bg-gray-100 text-base font-medium"
                     >
@@ -36,8 +36,8 @@
                         @click="toggleAssessmentMenu"
                         :class="{
                             'bg-white':
-                                isActive('/sispa/mahasiswa/assessment/self') ||
-                                isActive('/sispa/mahasiswa/assessment/peer'),
+                                isActive('/mahasiswa/assessment/self') ||
+                                isActive('/mahasiswa/assessment/peer'),
                         }"
                         class="w-full text-left px-4 py-2 rounded flex items-center hover:bg-gray-100"
                     >
@@ -67,7 +67,7 @@
                             <a
                                 @click="goToSelfAssessment"
                                 :class="{
-                                    'bg-gray-200': isActive('/sispa/mahasiswa/self-assessment'),
+                                    'bg-gray-200': isActive('/mahasiswa/self-assessment'),
                                 }"
                                 class="flex items-center px-4 py-2 rounded cursor-pointer hover:bg-gray-100 text-sm"
                             >
@@ -82,7 +82,7 @@
                             <a
                                 @click="goToPeerAssessment"
                                 :class="{
-                                    'bg-gray-200': isActive('/sispa/mahasiswa/peer'),
+                                    'bg-gray-200': isActive('/mahasiswa/peer'),
                                 }"
                                 class="flex items-center px-4 py-2 rounded cursor-pointer hover:bg-gray-100 text-sm"
                             >
@@ -99,9 +99,9 @@
                 <!-- Report -->
                 <li>
                     <a
-                        :href="'/sispa/mahasiswa/report'"
+                        :href="'/mahasiswa/report'"
                         :class="{
-                            'bg-gray-200': isActive('/sispa/mahasiswa/report'),
+                            'bg-gray-200': isActive('/mahasiswa/report'),
                         }"
                         class="flex items-center px-4 py-2 rounded hover:bg-gray-100 text-base font-medium"
                     >
@@ -116,9 +116,9 @@
                 <!-- Feedback -->
                 <li>
                     <a
-                        :href="'/sispa/mahasiswa/feedback'"
+                        :href="'/mahasiswa/feedback'"
                         :class="{
-                            'bg-gray-200': isActive('/sispa/mahasiswa/feedback'),
+                            'bg-gray-200': isActive('/mahasiswa/feedback'),
                         }"
                         class="flex items-center px-4 py-2 rounded hover:bg-gray-100 text-base font-medium"
                     >
@@ -133,9 +133,9 @@
                 <!-- Reflective -->
                 <li>
                     <a
-                        :href="'/sispa/mahasiswa/reflective-assessment'"
+                        :href="'/mahasiswa/reflective-assessment'"
                         :class="{
-                            'bg-gray-200': isActive('/sispa/mahasiswa/reflective-assessment'),
+                            'bg-gray-200': isActive('/mahasiswa/reflective-assessment'),
                         }"
                         class="flex items-center px-4 py-2 rounded hover:bg-gray-100 text-base font-medium"
                     >
@@ -167,12 +167,12 @@ export default {
     data() {
         return {
             isAssessmentOpen:
-                this.isActive("/sispa/mahasiswa/self") ||
-                this.isActive("/sispa/mahasiswa/peer") ||
-                this.isActive("/sispa/mahasiswa/assessment/create"),
+                this.isActive("/mahasiswa/self") ||
+                this.isActive("/mahasiswa/peer") ||
+                this.isActive("/mahasiswa/assessment/create"),
             isKelolaProyekOpen:
-                this.isActive("/sispa/mahasiswa/kelola-proyek") ||
-                this.isActive("/sispa/mahasiswa/kelola-kelompok"),
+                this.isActive("/mahasiswa/kelola-proyek") ||
+                this.isActive("/mahasiswa/kelola-kelompok"),
         };
     },
     methods: {
@@ -183,22 +183,22 @@ export default {
             this.isKelolaProyekOpen = !this.isKelolaProyekOpen;
         },
         goToCreateAssessment() {
-            router.visit("/sispa/mahasiswa/assessment/create");
+            router.visit("/mahasiswa/assessment/create");
         },
         goToSelfAssessment() {
-            router.visit("/sispa/mahasiswa/assessment/self");
+            router.visit("/mahasiswa/assessment/self");
         },
         goToPeerAssessment() {
-            router.visit("/sispa/mahasiswa/assessment/peer");
+            router.visit("/mahasiswa/assessment/peer");
         },
         isActive(route) {
             return this.$page.url === route;
         },
         goToKelolaProyek() {
-            router.visit("/sispa/mahasiswa/kelola-proyek");
+            router.visit("/mahasiswa/kelola-proyek");
         },
         goToKelolaKelompok() {
-            router.visit("/sispa/mahasiswa/kelola-kelompok");
+            router.visit("/mahasiswa/kelola-kelompok");
         },
     },
 };

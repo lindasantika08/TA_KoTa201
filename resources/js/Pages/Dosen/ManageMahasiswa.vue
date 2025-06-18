@@ -21,7 +21,7 @@ export default {
     data() {
         return {
             breadcrumbs: [
-                { text: "Manage Mahasiswa", href: "/sispa/dosen/manage-mahasiswa" },
+                { text: "Manage Mahasiswa", href: "/dosen/manage-mahasiswa" },
             ],
             users: [],
             headers: [
@@ -77,7 +77,7 @@ export default {
 
         async fetchUsers() {
             try {
-                const response = await axios.get("/sispa/api/get-mahasiswa");
+                const response = await axios.get("/api/get-mahasiswa");
                 this.allUsers = response.data;
                 this.applyFilters();
             } catch (error) {
@@ -87,7 +87,7 @@ export default {
 
         async fetchAngkatan() {
             try {
-                const response = await axios.get("/sispa/api/get-angkatan");
+                const response = await axios.get("/api/get-angkatan");
                 this.angkatanList = response.data;
             } catch (error) {
                 console.error("Error fetching angkatan:", error);
@@ -96,7 +96,7 @@ export default {
 
         async fetchClassList() {
             try {
-                const response = await axios.get("/sispa/api/get-class");
+                const response = await axios.get("/api/get-class");
                 this.classList = response.data;
             } catch (error) {
                 console.error("Error fetching class list:", error);
@@ -134,16 +134,16 @@ export default {
         },
 
         inputMahasiswa() {
-            router.visit("/sispa/dosen/manage-mahasiswa/input");
+            router.visit("/dosen/manage-mahasiswa/input");
         },
 
         detailUser(user_id) {
-            router.visit(`/sispa/dosen/manage-mahasiswa/detail?user_id=${user_id}`);
+            router.visit(`/dosen/manage-mahasiswa/detail?user_id=${user_id}`);
         },
 
         async deleteUser(userId) {
             try {
-            const response = await axios.delete(`/sispa/api/delete-mhs/${userId}`);
+            const response = await axios.delete(`/api/delete-mhs/${userId}`);
             Swal.fire({
                 icon: 'success',
                 title: 'User Deleted',
@@ -174,7 +174,7 @@ export default {
         },
 
         detailUser(user_id) {
-            router.visit(`/sispa/dosen/manage-mahasiswa/detail?user_id=${user_id}`);
+            router.visit(`/dosen/manage-mahasiswa/detail?user_id=${user_id}`);
         },
 
         async confirmDeleteMahasiswa(item) {
@@ -183,7 +183,7 @@ export default {
 
             try {
                 // First, check if the user belongs to any groups
-                const response = await axios.get(`/sispa/api/check-mahasiswa-groups/${userId}`);
+                const response = await axios.get(`/api/check-mahasiswa-groups/${userId}`);
 
                 if (response.data.has_groups) {
                     // If user belongs to groups, show a warning
@@ -239,7 +239,7 @@ export default {
 
         async performMahasiswaDeletion(userId) {
             try {
-                const response = await axios.delete(`/sispa/api/delete-mhs/${userId}`);
+                const response = await axios.delete(`/api/delete-mhs/${userId}`);
 
                 Swal.fire({
                     icon: 'success',

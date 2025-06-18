@@ -9,7 +9,7 @@ import Card from '@/Components/Card.vue';
 import Breadcrumb from '@/Components/Breadcrumb.vue';
 
 const breadcrumbs = [
-  { text: 'Home', href: '/sispa/dosen' },
+  { text: 'Home', href: '/dosen' },
   { text: 'Notifications', href: '#' }
 ];
 
@@ -23,7 +23,7 @@ async function refreshNotifications() {
   loading.value = true;
 
   try {
-    const { data } = await axios.get('/sispa/api/notifications/get');
+    const { data } = await axios.get('/api/notifications/get');
     if (data.success) {
       localNotifications.value = data.data.notifications;
       localUnreadCount.value = data.data.unread_count;
@@ -37,7 +37,7 @@ async function refreshNotifications() {
 
 async function markAllAsRead() {
   try {
-    const { data } = await axios.post('/sispa/api/notifications/read-all');
+    const { data } = await axios.post('/api/notifications/read-all');
     if (!data.success) return;
 
     localNotifications.value.forEach(n => (n.read_at = new Date()));
@@ -52,7 +52,7 @@ async function markAsRead(n) {
   if (n.read_at) return go(n);
 
   try {
-    const { data } = await axios.post(`/sispa/api/notifications/${n.id}/read`);
+    const { data } = await axios.post(`/api/notifications/${n.id}/read`);
     if (!data.success) return;
 
     n.read_at = new Date();
@@ -72,7 +72,7 @@ function go(n, backendUrl = null) {
     const isForPeer = n.message?.toLowerCase().includes('peer assessment');
     const route = isForPeer ? 'answers-peer-assessment' : 'answers-self-assessment';
 
-    const url = `/sispa/dosen/${route
+    const url = `/dosen/${route
       }?assessment_order=${encodeURIComponent(assessment_order)
       }&batch_year=${encodeURIComponent(batch_year)
       }&project_name=${encodeURIComponent(project_name)}`;

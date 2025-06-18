@@ -12,14 +12,14 @@ export default {
     data() {
         return {
             isAssessmentOpen:
-                this.isActive("/sispa/dosen/assessment/projectsSelf") ||
-                this.isActive("/sispa/dosen/assessment/projectsPeer") ||
-                this.isActive("/sispa/dosen/assessment/create"),
+                this.isActive("/dosen/assessment/projectsSelf") ||
+                this.isActive("/dosen/assessment/projectsPeer") ||
+                this.isActive("/dosen/assessment/create"),
             isKelolaProyekOpen:
-                this.isActive("/sispa/dosen/kelola-proyek") ||
-                this.isActive("/sispa/dosen/kelola-kelompok"),
+                this.isActive("/dosen/kelola-proyek") ||
+                this.isActive("/dosen/kelola-kelompok"),
             isKelolaSettingsOpen: this.isActive(
-                "/sispa/dosen/manage-mahasiswa"
+                "/dosen/manage-mahasiswa"
             ),
         };
     },
@@ -34,25 +34,25 @@ export default {
             this.isKelolaSettingsOpen = !this.isKelolaSettingsOpen;
         },
         goToCreateAssessment() {
-            router.visit("/sispa/dosen/assessment/create");
+            router.visit("/dosen/assessment/create");
         },
         goToSelfAssessment() {
-            router.visit("/sispa/dosen/assessment/projects-self");
+            router.visit("/dosen/assessment/projects-self");
         },
         goToPeerAssessment() {
-            router.visit("/sispa/dosen/assessment/projects-peer");
+            router.visit("/dosen/assessment/projects-peer");
         },
         isActive(route) {
             return this.$page.url === route;
         },
         goToKelolaProyek() {
-            router.visit("/sispa/dosen/kelola-proyek");
+            router.visit("/dosen/kelola-proyek");
         },
         goToKelolaKelompok() {
-            router.visit("/sispa/dosen/kelola-kelompok");
+            router.visit("/dosen/kelola-kelompok");
         },
         goToKelolaMahasiswa() {
-            router.visit("/sispa/dosen/manage-mahasiswa");
+            router.visit("/dosen/manage-mahasiswa");
         },
     },
 };
@@ -75,9 +75,9 @@ export default {
                 <!-- Dashboard -->
                 <li>
                     <a
-                        :href="'/sispa/dosen/dashboard'"
+                        :href="'/dosen/dashboard'"
                         :class="{
-                            'bg-gray-200': isActive('/sispa/dosen/dashboard'),
+                            'bg-gray-200': isActive('/dosen/dashboard'),
                         }"
                         class="flex items-center px-4 py-2 rounded hover:bg-gray-100 text-base font-medium"
                     >
@@ -95,12 +95,12 @@ export default {
                         @click="toggleAssessmentMenu"
                         :class="{
                             'bg-white':
-                                isActive('/sispa/dosen/assessment/create') ||
+                                isActive('/dosen/assessment/create') ||
                                 isActive(
-                                    '/sispa/dosen/assessment/projects-self'
+                                    '/dosen/assessment/projects-self'
                                 ) ||
                                 isActive(
-                                    '/sispa/dosen/assessment/projects-peer'
+                                    '/dosen/assessment/projects-peer'
                                 ),
                         }"
                         class="w-full text-left px-4 py-2 rounded flex items-center hover:bg-gray-100"
@@ -132,7 +132,7 @@ export default {
                                 @click="goToCreateAssessment"
                                 :class="{
                                     'bg-gray-200': isActive(
-                                        '/sispa/dosen/assessment/create'
+                                        '/dosen/assessment/create'
                                     ),
                                 }"
                                 class="flex items-center px-4 py-2 rounded cursor-pointer hover:bg-gray-100 text-sm"
@@ -149,7 +149,7 @@ export default {
                                 @click="goToSelfAssessment"
                                 :class="{
                                     'bg-gray-200': isActive(
-                                        '/sispa/dosen/assessment/projects-self'
+                                        '/dosen/assessment/projects-self'
                                     ),
                                 }"
                                 class="flex items-center px-4 py-2 rounded cursor-pointer hover:bg-gray-100 text-sm"
@@ -166,7 +166,7 @@ export default {
                                 @click="goToPeerAssessment"
                                 :class="{
                                     'bg-gray-200': isActive(
-                                        '/sispa/dosen/assessment/projects-peer'
+                                        '/dosen/assessment/projects-peer'
                                     ),
                                 }"
                                 class="flex items-center px-4 py-2 rounded cursor-pointer hover:bg-gray-100 text-sm"
@@ -187,8 +187,8 @@ export default {
                         @click="toggleKelolaProyekMenu"
                         :class="{
                             'bg-white':
-                                isActive('/sispa/dosen/kelola-proyek') ||
-                                isActive('/sispa/dosen/kelola-kelompok'),
+                                isActive('/dosen/kelola-proyek') ||
+                                isActive('/dosen/kelola-kelompok'),
                         }"
                         class="w-full text-left px-4 py-2 rounded flex items-center hover:bg-gray-100"
                     >
@@ -219,7 +219,7 @@ export default {
                                 @click="goToKelolaProyek"
                                 :class="{
                                     'bg-gray-200': isActive(
-                                        '/sispa/dosen/kelola-proyek'
+                                        '/dosen/kelola-proyek'
                                     ),
                                 }"
                                 class="flex items-center px-4 py-2 rounded cursor-pointer hover:bg-gray-100 text-sm"
@@ -236,7 +236,7 @@ export default {
                                 @click="goToKelolaKelompok"
                                 :class="{
                                     'bg-gray-200': isActive(
-                                        '/sispa/dosen/kelola-kelompok'
+                                        '/dosen/kelola-kelompok'
                                     ),
                                 }"
                                 class="flex items-center px-4 py-2 rounded cursor-pointer hover:bg-gray-100 text-sm"
@@ -254,9 +254,9 @@ export default {
                 <!-- Report -->
                 <li>
                     <a
-                        :href="'/sispa/dosen/report'"
+                        :href="'/dosen/report'"
                         :class="{
-                            'bg-gray-200': isActive('/sispa/dosen/report'),
+                            'bg-gray-200': isActive('/dosen/report'),
                         }"
                         class="flex items-center px-4 py-2 rounded hover:bg-gray-100 text-base font-medium"
                     >
@@ -271,9 +271,9 @@ export default {
                 <!-- Feedback -->
                 <li>
                     <a
-                        :href="'/sispa/dosen/feedback'"
+                        :href="'/dosen/feedback'"
                         :class="{
-                            'bg-gray-200': isActive('/sispa/dosen/feedback'),
+                            'bg-gray-200': isActive('/dosen/feedback'),
                         }"
                         class="flex items-center px-4 py-2 rounded hover:bg-gray-100 text-base font-medium"
                     >
@@ -288,10 +288,10 @@ export default {
                 <!-- Reflective -->
                 <li>
                     <a
-                        :href="'/sispa/dosen/assessment/projects-reflective'"
+                        :href="'/dosen/assessment/projects-reflective'"
                         :class="{
                             'bg-gray-200': isActive(
-                                '/sispa/dosen/assessment/projects-reflective'
+                                '/dosen/assessment/projects-reflective'
                             ),
                         }"
                         class="flex items-center px-4 py-2 rounded hover:bg-gray-100 text-base font-medium"
@@ -310,8 +310,8 @@ export default {
                         @click="toggleKelolaSettingsMenu"
                         :class="{
                             'bg-white':
-                                isActive('/sispa/dosen/manage-mahasiswa') ||
-                                isActive('/sispa/dosen/manage-dosen'),
+                                isActive('/dosen/manage-mahasiswa') ||
+                                isActive('/dosen/manage-dosen'),
                         }"
                         class="w-full text-left px-4 py-2 rounded flex items-center hover:bg-gray-100"
                     >
@@ -342,7 +342,7 @@ export default {
                                 @click="goToKelolaMahasiswa"
                                 :class="{
                                     'bg-gray-200': isActive(
-                                        '/sispa/dosen/manage-mahasiswa'
+                                        '/dosen/manage-mahasiswa'
                                     ),
                                 }"
                                 class="flex items-center px-4 py-2 rounded cursor-pointer hover:bg-gray-100 text-sm"

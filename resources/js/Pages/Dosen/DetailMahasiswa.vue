@@ -95,8 +95,8 @@ export default {
   data() {
     return {
       breadcrumbs: [
-        { text: "Manage Mahasiswa", href: "/sispa/dosen/manage-mahasiswa" },
-        { text: "Detail", href: "/sispa/dosen/manage-mahasiswa/detail" },
+        { text: "Manage Mahasiswa", href: "/dosen/manage-mahasiswa" },
+        { text: "Detail", href: "/dosen/manage-mahasiswa/detail" },
       ],
       profileImage: "", // Ganti dengan URL gambar asli jika ada
       namaMahasiswa: "",
@@ -113,7 +113,7 @@ export default {
   methods: {
     fetchProfile() {
       axios
-        .get(`/sispa/api/kelola-kelompok/get-profile/${this.user_id}`) // Endpoint API untuk mendapatkan data profil
+        .get(`/api/kelola-kelompok/get-profile/${this.user_id}`) // Endpoint API untuk mendapatkan data profil
         .then((response) => {
           // Set data yang didapat dari API
           const profileData = response.data;

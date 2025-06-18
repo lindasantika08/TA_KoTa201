@@ -214,7 +214,7 @@ export default {
   },
   data() {
     return {
-      breadcrumbs: [{ text: "Profile", href: "/sispa/mahasiswa/profile" }],
+      breadcrumbs: [{ text: "Profile", href: "/mahasiswa/profile" }],
       isDropdownVisible: false,
       isEditMode: false,
       profileImage: "", // Ganti dengan URL gambar asli jika ada
@@ -255,7 +255,7 @@ export default {
   methods: {
     fetchProfile() {
       axios
-        .get("/sispa/api/get-profile") // Endpoint API untuk mendapatkan data profil
+        .get("/api/get-profile") // Endpoint API untuk mendapatkan data profil
         .then((response) => {
           const profileData = response.data;
           this.formData = {
@@ -277,7 +277,7 @@ export default {
       if (this.isEditMode) {
       // Mode Simpan
       axios
-        .put("/sispa/api/mahasiswa/update-profile", this.formData)
+        .put("/api/mahasiswa/update-profile", this.formData)
         .then((response) => {
         Swal.fire({
           icon: 'success',
@@ -326,7 +326,7 @@ export default {
       formData.append("photo", file);
 
       axios
-        .post("/sispa/api/mahasiswa/upload-profile-photo", formData, {
+        .post("/api/mahasiswa/upload-profile-photo", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -365,7 +365,7 @@ export default {
       }).then((result) => {
       if (result.isConfirmed) {
         axios
-        .delete("/sispa/api/mahasiswa/delete-profile-photo")
+        .delete("/api/mahasiswa/delete-profile-photo")
         .then(() => {
           this.profileImage = "";
           this.isDropdownVisible = false;
@@ -437,7 +437,7 @@ export default {
       return;
       }
 
-      axios.post('/sispa/api/change-password', this.passwordForm)
+      axios.post('/api/change-password', this.passwordForm)
       .then(response => {
         Swal.fire({
         icon: 'success',

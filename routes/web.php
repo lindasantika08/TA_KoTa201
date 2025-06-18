@@ -33,9 +33,9 @@ use App\Http\Controllers\Mahasiswa\RefleksiMahasiswa;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return redirect('/sispa');
+    return redirect('');
 });
-Route::prefix('sispa')->group(function () {
+Route::prefix('')->group(function () {
     Route::get('/', function () {
         $user = Auth::user();
 

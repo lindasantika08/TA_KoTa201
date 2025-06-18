@@ -35,7 +35,7 @@ export default {
             breadcrumbs: [
                 {
                     text: "Peer Assessment",
-                    href: "/sispa/mahasiswa/assessment/peer",
+                    href: "/mahasiswa/assessment/peer",
                 },
                 { text: "Detail", href: null },
             ],
@@ -62,7 +62,7 @@ export default {
         async fetchUserInfo() {
             try {
                 const response = await axios.get(
-                    "/sispa/api/user-detail-answer",
+                    "/api/user-detail-answer",
                     {
                         params: {
                             batch_year: this.batchYear,
@@ -78,7 +78,7 @@ export default {
         async fetchPeerAssessment() {
             try {
                 const response = await axios.get(
-                    "/sispa/api/peer-assessment-detail",
+                    "/api/peer-assessment-detail",
                     {
                         params: {
                             batch_year: this.batchYear,

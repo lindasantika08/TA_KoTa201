@@ -21,7 +21,7 @@ export default {
     data() {
         return {
             breadcrumbs: [
-                { text: "Manage Mahasiswa", href: "/sispa/admin/manage-mahasiswa" },
+                { text: "Manage Mahasiswa", href: "/admin/manage-mahasiswa" },
             ],
             users: [],
             filteredUsers: [],
@@ -83,7 +83,7 @@ export default {
     methods: {
         async fetchUsers() {
             try {
-                const response = await axios.get("/sispa/api/get-mahasiswa");
+                const response = await axios.get("/api/get-mahasiswa");
                 this.users = response.data.map((user, index) => ({
                     ...user,
                     no: index + 1,
@@ -95,7 +95,7 @@ export default {
         },
         async fetchAngkatan() {
             try {
-                const response = await axios.get("/sispa/api/get-angkatan");
+                const response = await axios.get("/api/get-angkatan");
                 this.angkatanList = response.data;
             } catch (error) {
                 console.error("Error fetching angkatan:", error);
@@ -103,7 +103,7 @@ export default {
         },
         async fetchClassList() {
             try {
-                const response = await axios.get("/sispa/api/get-class");
+                const response = await axios.get("/api/get-class");
                 this.classList = response.data;
             } catch (error) {
                 console.error("Error fetching class list:", error);
@@ -111,7 +111,7 @@ export default {
         },
         async fetchMajorList() { // Add method to fetch major list
             try {
-                const response = await axios.get("/sispa/api/get-majors");
+                const response = await axios.get("/api/get-majors");
                 this.majorList = response.data;
             } catch (error) {
                 console.error("Error fetching major list:", error);
@@ -150,7 +150,7 @@ export default {
         },
 
         inputMahasiswa() {
-            router.visit("/sispa/admin/manage-mahasiswa/input");
+            router.visit("/admin/manage-mahasiswa/input");
         },
         editMahasiswa(mahasiswa) {
             this.editedMahasiswa = {
@@ -165,7 +165,7 @@ export default {
         },
         async updateMahasiswa() {
             try {
-                await axios.post(`/sispa/api/update-mahasiswa`, this.editedMahasiswa);
+                await axios.post(`/api/update-mahasiswa`, this.editedMahasiswa);
                 this.showEditModal = false;
                 await this.fetchUsers();
                 Swal.fire({
@@ -197,7 +197,7 @@ export default {
             if (!result.isConfirmed) return;
 
             try {
-                const response = await axios.post("/sispa/api/delete-mahasiswa", {
+                const response = await axios.post("/api/delete-mahasiswa", {
                     nim: NIM,
                 });
 

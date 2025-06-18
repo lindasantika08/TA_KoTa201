@@ -33,7 +33,7 @@ export default {
             breadcrumbs: [
                 {
                     text: "Self Assessment",
-                    href: "/sispa/mahasiswa/assessment/self",
+                    href: "/mahasiswa/assessment/self",
                 },
                 { text: "Detail", href: null },
             ],
@@ -60,7 +60,7 @@ export default {
         async fetchUserInfo() {
             try {
                 const response = await axios.get(
-                    "/sispa/api/user-detail-answer",
+                    "/api/user-detail-answer",
                     {
                         params: {
                             batch_year: this.batchYear,
@@ -84,7 +84,7 @@ export default {
                 });
 
                 const response = await axios.get(
-                    "/sispa/api/detail-answer-self",
+                    "/api/detail-answer-self",
                     {
                         params: {
                             batch_year: this.batchYear,

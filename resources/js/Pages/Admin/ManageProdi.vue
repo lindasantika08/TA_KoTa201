@@ -18,7 +18,7 @@ export default {
     data() {
         return {
             Breadcrumb: [
-                { text: "Dashboard", href: "/sispa/admin/dashboard" },
+                { text: "Dashboard", href: "/admin/dashboard" },
                 { text: "Prodi Management", href: "#" },
             ],
             headers: [
@@ -92,7 +92,7 @@ export default {
         async fetchProdi() {
             this.isLoading = true;
             try {
-                const response = await axios.get("/sispa/api/get-prodi");
+                const response = await axios.get("/api/get-prodi");
 
                 const groupedProdis = response.data.reduce((acc, curr) => {
                     if (!acc[curr.major_name]) {
@@ -127,7 +127,7 @@ export default {
         async fetchMajor() {
             try {
                 const response = await axios.get(
-                    "/sispa/api/get-major-forDropDown"
+                    "/api/get-major-forDropDown"
                 );
                 this.majorList = response.data;
             } catch (error) {
@@ -145,7 +145,7 @@ export default {
 
         async submitProdi() {
             try {
-                await axios.post("/sispa/api/add-prodi", {
+                await axios.post("/api/add-prodi", {
                     major_name: this.formData.selectedMajor,
                     prodi_name: this.formData.prodiName,
                 });
@@ -177,7 +177,7 @@ export default {
 
         async updateProdi() {
             try {
-                await axios.post(`/sispa/api/update-prodi`, {
+                await axios.post(`/api/update-prodi`, {
                     old_major_name: this.editData.majorName,
                     old_prodi_name: this.editData.originalProdiName, // Gunakan nilai awal
                     new_major_name: this.editData.majorName,
@@ -219,7 +219,7 @@ export default {
 
             try {
                 for (const prodiName of this.selectedProdis) {
-                    await axios.post("/sispa/api/delete-prodi", {
+                    await axios.post("/api/delete-prodi", {
                         prodi_name: prodiName,
                     });
                 }

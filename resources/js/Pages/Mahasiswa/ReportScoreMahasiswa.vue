@@ -33,7 +33,7 @@ const props = defineProps({
 
 // Reactive state
 const breadcrumbs = ref([
-    { text: "Report", href: "/sispa/mahasiswa/project/report" },
+    { text: "Report", href: "/mahasiswa/project/report" },
     { text: "Detail Score", href: null },
 ]);
 
@@ -171,7 +171,7 @@ const fetchProjectScoreDetails = async () => {
     error.value = null;
 
     try {
-        const response = await axios.get("/sispa/api/project-score-details", {
+        const response = await axios.get("/api/project-score-details", {
             params: {
                 batch_year: props.batchYear,
                 project_id: props.projectId,
@@ -229,7 +229,7 @@ const fetchFeedback = async () => {
     feedbackError.value = null;
 
     try {
-        const response = await axios.get("/sispa/api/project-feedback", {
+        const response = await axios.get("/api/project-feedback", {
             params: {
                 batch_year: props.batchYear,
                 project_name: props.projectName,

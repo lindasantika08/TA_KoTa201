@@ -41,7 +41,7 @@ export default {
 
             axios
                 .get(
-                    "/sispa/api/answers/get-details-answer-reflective-writing",
+                    "/api/answers/get-details-answer-reflective-writing",
                     {
                         params: {
                             mahasiswaId: this.mahasiswaId,

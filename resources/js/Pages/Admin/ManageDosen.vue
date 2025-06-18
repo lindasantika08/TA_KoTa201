@@ -21,7 +21,7 @@ export default {
     data() {
         return {
             breadcrumbs: [
-                { text: "Manage Dosen", href: "/sispa/admin/manage-dosen" },
+                { text: "Manage Dosen", href: "/admin/manage-dosen" },
             ],
             users: [],
             filteredUsers: [],
@@ -67,7 +67,7 @@ export default {
     methods: {
         async fetchUsers() {
             try {
-                const response = await axios.get("/sispa/api/get-dosen-admin");
+                const response = await axios.get("/api/get-dosen-admin");
                 this.users = response.data.map((user, index) => ({
                     ...user,
                     no: index + 1,
@@ -112,7 +112,7 @@ export default {
         },
 
         inputDosen() {
-            router.visit("/sispa/admin/manage-dosen/input");
+            router.visit("/admin/manage-dosen/input");
         },
         editDosen(dosen) {
             this.editedDosen = {
@@ -126,7 +126,7 @@ export default {
         },
         async updateDosen() {
             try {
-                await axios.post(`/sispa/api/update-dosen`, {
+                await axios.post(`/api/update-dosen`, {
                     nip: this.editedDosen.nip,
                     name: this.editedDosen.name,
                     email: this.editedDosen.email,
@@ -165,7 +165,7 @@ export default {
             if (!result.isConfirmed) return;
 
             try {
-                const response = await axios.post("/sispa/api/delete-dosen", {
+                const response = await axios.post("/api/delete-dosen", {
                     nip: NIP,
                 });
 

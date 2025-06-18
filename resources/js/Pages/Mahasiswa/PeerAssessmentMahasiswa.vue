@@ -33,7 +33,7 @@ export default {
     data() {
         return {
             breadcrumbs: [
-                { text: "Assessment", href: "/sispa/mahasiswa/assessment/peer" },
+                { text: "Assessment", href: "/mahasiswa/assessment/peer" },
                 { text: "Peer Assessment", href: null },
             ],
             headers: [
@@ -154,7 +154,7 @@ export default {
                 this.assessment_order = assessment_order;
 
                 const userInfoResponse = await axios.get(
-                    "/sispa/api/user-info-peer",
+                    "/api/user-info-peer",
                     {
                         params: {
                             batch_year: batch_year,
@@ -179,7 +179,7 @@ export default {
                 this.batch_year = userInfo.batch_year;
 
                 if (this.batch_year && this.studentInfo.project_name) {
-                    const kelompokResponse = await axios.get("/sispa/api/groups", {
+                    const kelompokResponse = await axios.get("/api/groups", {
                         params: {
                             batch_year: this.batch_year,
                             project_name: this.studentInfo.project_name,
@@ -216,7 +216,7 @@ export default {
         async loadQuestions(retryCount = 3) {
             for (let i = 0; i < retryCount; i++) {
                 try {
-                    const response = await axios.get("/sispa/api/questions-peer", {
+                    const response = await axios.get("/api/questions-peer", {
                         params: {
                             batch_year: this.batch_year,
                             project_name: this.studentInfo.project_name,
@@ -326,7 +326,7 @@ export default {
 
                 const responses = await Promise.all(
                     answersToSubmit.map((answer) =>
-                        axios.post("/sispa/api/save-answer-peer", answer)
+                        axios.post("/api/save-answer-peer", answer)
                     )
                 );
 
@@ -369,7 +369,7 @@ export default {
         async fetchUserIdByNim(nim) {
             try {
                 const response = await axios.get(
-                    `/sispa/api/users/search?nim=${nim}`
+                    `/api/users/search?nim=${nim}`
                 );
                 return response.data;
             } catch (error) {
@@ -432,7 +432,7 @@ export default {
                     return;
                 }
 
-                const response = await axios.get("/sispa/api/existing-peer-answers", {
+                const response = await axios.get("/api/existing-peer-answers", {
                     params: {
                         mahasiswa_id: mahasiswaData.mahasiswa_id,
                         peer_id: this.selectedMember,
@@ -564,7 +564,7 @@ export default {
                 }
 
                 const response = await axios.get(
-                    `/sispa/api/get-answer-peer/${this.currentQuestion.id}`,
+                    `/api/get-answer-peer/${this.currentQuestion.id}`,
                     {
                         params: {
                             mahasiswa_id: mahasiswaData.mahasiswa_id,
@@ -659,7 +659,7 @@ export default {
                     };
                 });
 
-                await axios.post("/sispa/api/save-all-answers-peer", {
+                await axios.post("/api/save-all-answers-peer", {
                     answers: answers,
                 });
 
@@ -672,7 +672,7 @@ export default {
                     text: 'Semua jawaban berhasil disimpan.',
                     confirmButtonText: 'OK'
                 }).then(() => {
-                    window.location.href = "/sispa/mahasiswa/assessment/peer";
+                    window.location.href = "/mahasiswa/assessment/peer";
                 });
             } catch (error) {
                 console.error("Error submitting answers:", error);
@@ -687,7 +687,7 @@ export default {
         },
         async fetchAnsweredPeers() {
             try {
-                const response = await axios.get("/sispa/api/answered-peers", {
+                const response = await axios.get("/api/answered-peers", {
                     params: {
                         project_id: this.namaProyek,
                     },

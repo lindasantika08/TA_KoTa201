@@ -66,8 +66,8 @@ export default {
         handleAnswer(item) {
             const route =
                 this.selectedTab === "assessment"
-                    ? "/sispa/mahasiswa/assessment/reflective-assessment"
-                    : "/sispa/mahasiswa/assessment/reflective-writing";
+                    ? "/mahasiswa/assessment/reflective-assessment"
+                    : "/mahasiswa/assessment/reflective-writing";
 
             router.visit(route, {
                 method: "get",
@@ -88,8 +88,8 @@ export default {
         handleDetail(item) {
             const route =
                 this.selectedTab === "assessment"
-                    ? "/sispa/mahasiswa/reflective-detail"
-                    : "/sispa/mahasiswa/reflective-writing-detail";
+                    ? "/mahasiswa/reflective-detail"
+                    : "/mahasiswa/reflective-writing-detail";
 
             router.visit(route, {
                 method: "get",
@@ -106,7 +106,7 @@ export default {
 
         fetchReflectiveAssessment() {
             axios
-                .get("/sispa/api/reflective-assessment")
+                .get("/api/reflective-assessment")
                 .then((response) => {
                     if (response.data.success) {
                         this.reflectiveAssessmentItems =
@@ -142,7 +142,7 @@ export default {
 
         fetchReflectiveWriting() {
             axios
-                .get("/sispa/api/reflective-writing")
+                .get("/api/reflective-writing")
                 .then((response) => {
                     if (response.data.success) {
                         this.reflectiveWritingItems =

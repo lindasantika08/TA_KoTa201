@@ -53,7 +53,7 @@ export default {
     },
     async submitForm() {
       try {
-      const response = await axios.post('/sispa/api/forgot-password', {
+      const response = await axios.post('/api/forgot-password', {
         email: this.email,
       });
       Swal.fire({

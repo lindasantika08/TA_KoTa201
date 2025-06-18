@@ -22,7 +22,7 @@ export default {
     data() {
         return {
             breadcrumbs: [
-                { text: "Manage Project", href: "/sispa/dosen/kelola-proyek" },
+                { text: "Manage Project", href: "/dosen/kelola-proyek" },
             ],
             isModalOpen: false,
             isEditModalOpen: false,
@@ -83,7 +83,7 @@ export default {
         async addProject() {
             try {
                 const response = await axios.post(
-                    "/sispa/api/project",
+                    "/api/project",
                     this.newProject,
                     {
                         headers: {
@@ -117,7 +117,7 @@ export default {
         async updateProject() {
             try {
                 const response = await axios.put(
-                    `/sispa/api/projects/${this.editingProject.id}`, 
+                    `/api/projects/${this.editingProject.id}`, 
                     this.editingProject,
                     {
                         headers: {
@@ -150,7 +150,7 @@ export default {
         },
         async deleteProject(projectId) {
             try {
-                await axios.delete(`/sispa/api/projects/${projectId}`, {
+                await axios.delete(`/api/projects/${projectId}`, {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
                     },
@@ -201,7 +201,7 @@ export default {
         // Fetch and Filter Methods
         async getProjects() {
             try {
-                const response = await axios.get("/sispa/api/projects", {
+                const response = await axios.get("/api/projects", {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
                         'Accept': 'application/json',
@@ -230,7 +230,7 @@ export default {
         },
         async getProdis() {
             try {
-                const response = await axios.get("/sispa/api/prodis-by-major", {
+                const response = await axios.get("/api/prodis-by-major", {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
                     },
@@ -259,7 +259,7 @@ export default {
             try {
                 const newStatus = project.status === "Active" ? "NonActive" : "Active";
                 const response = await axios.post(
-                    "/sispa/api/changeStatus",
+                    "/api/changeStatus",
                     {
                         tahun_ajaran: project.batch_year,
                         nama_proyek: project.project_name,

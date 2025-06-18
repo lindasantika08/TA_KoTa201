@@ -27,7 +27,7 @@ export default {
                 isLoading.value = true;
                 error.value = null;
 
-                const response = await axios.post("/sispa/api/login", {
+                const response = await axios.post("/api/login", {
                     email: email.value,
                     password: password.value,
                     remember_me: rememberMe.value,
@@ -63,11 +63,11 @@ export default {
 
                     setTimeout(() => {
                         if (role === "dosen") {
-                            router.visit("/sispa/dosen/dashboard");
+                            router.visit("/dosen/dashboard");
                         } else if (role === "mahasiswa") {
-                            router.visit("/sispa/mahasiswa/dashboard");
+                            router.visit("/mahasiswa/dashboard");
                         } else if (role === "admin") {
-                            router.visit("/sispa/admin/dashboard");
+                            router.visit("/admin/dashboard");
                         }
                     }, 1500);
                 }

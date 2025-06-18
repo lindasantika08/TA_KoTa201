@@ -79,7 +79,7 @@ export default {
   methods: {
     async resetPassword() {
       try {
-      const response = await axios.post('/sispa/api/reset-password', {
+      const response = await axios.post('/api/reset-password', {
         token: this.token,
         email: this.formData.email,
         password: this.formData.password,
@@ -90,7 +90,7 @@ export default {
         title: 'Success',
         text: response.data.message
       });
-      window.location.href = '/sispa/login';
+      window.location.href = '/login';
       } catch (error) {
       Swal.fire({
         icon: 'error',

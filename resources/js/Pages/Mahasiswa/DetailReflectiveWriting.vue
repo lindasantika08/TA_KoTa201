@@ -29,7 +29,7 @@ export default {
         const Breadcrumbs = [
             {
                 text: "Reflective Assessment",
-                href: "/sispa/mahasiswa/assessment/self",
+                href: "/mahasiswa/assessment/self",
             },
             { text: "Detail", href: null },
         ];
@@ -79,7 +79,7 @@ export default {
         const fetchUserInfo = async () => {
             try {
                 const response = await axios.get(
-                    "/sispa/api/user-detail-answer",
+                    "/api/user-detail-answer",
                     {
                         params: {
                             batch_year: props.batchYear,
@@ -97,7 +97,7 @@ export default {
             try {
                 isLoading.value = true;
                 const response = await axios.get(
-                    "/sispa/api/detail-answer-reflective-writing",
+                    "/api/detail-answer-reflective-writing",
                     {
                         params: {
                             batch_year: props.batchYear,

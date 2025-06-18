@@ -71,7 +71,7 @@ export default {
       try {
         const token = localStorage.getItem("auth_token");
         if (token) {
-          const response = await axios.get("/sispa/api/user", {
+          const response = await axios.get("/api/user", {
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -86,7 +86,7 @@ export default {
     async fetchNotificationsCount() {
       try {
         const token = localStorage.getItem("auth_token");
-        const response = await axios.post('/sispa/api/notifications/count', {}, {
+        const response = await axios.post('/api/notifications/count', {}, {
           headers: {
             Authorization: `Bearer ${token}`,
           }
@@ -108,7 +108,7 @@ export default {
         const token = localStorage.getItem("auth_token");
         if (token) {
           await axios.put(
-            "/sispa/api/logout",
+            "/api/logout",
             {},
             {
               headers: {
@@ -128,19 +128,19 @@ export default {
         this.disconnectWebSocket();
         localStorage.removeItem("auth_token");
         localStorage.removeItem("user_data");
-        router.visit("/sispa/login");
+        router.visit("/login");
         this.isLoggingOut = false;
       }
     },
 
     goToNotifications() {
-      axios.get('/sispa/api/user-role')
+      axios.get('/api/user-role')
         .then(response => {
           const role = response.data.role;
           if (role === 'mahasiswa') {
-            router.visit('/sispa/mahasiswa/notifications-mhs');
+            router.visit('/mahasiswa/notifications-mhs');
           } else if (role === 'dosen') {
-            router.visit('/sispa/dosen/notifications');
+            router.visit('/dosen/notifications');
           }
         })
         .catch(error => {
@@ -154,13 +154,13 @@ export default {
     },
 
     goToProfile() {
-      axios.get('/sispa/api/user-role')
+      axios.get('/api/user-role')
         .then(response => {
           const role = response.data.role;
           if (role === 'dosen') {
-            router.visit('/sispa/dosen/profile');
+            router.visit('/dosen/profile');
           } else if (role === 'mahasiswa') {
-            router.visit('/sispa/mahasiswa/profile');
+            router.visit('/mahasiswa/profile');
           } else {
             Swal.fire({
               icon: "error",

@@ -19,7 +19,7 @@ export default {
     data() {
         return {
             breadcrumbs: [
-                { text: "Dashboard", href: "/sispa/mahasiswa/dashboard" },
+                { text: "Dashboard", href: "/mahasiswa/dashboard" },
                 { text: "Report", href: null },
             ],
             projectList: [],
@@ -40,7 +40,7 @@ export default {
 
             try {
                 const response = await axios.get(
-                    "/sispa/api/mahasiswa/projects"
+                    "/api/mahasiswa/projects"
                 );
                 if (response.data.success) {
                     this.projectList = response.data.projects || [];
@@ -78,7 +78,7 @@ export default {
 
       // Navigasi menggunakan Vue Router dari Inertia.js
       router.get(
-        "/sispa/mahasiswa/project-score-details",
+        "/mahasiswa/project-score-details",
         {
           tahun_ajaran: project.tahun_ajaran,
           nama_proyek: project.nama_proyek,

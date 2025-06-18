@@ -34,7 +34,7 @@ export default {
             breadcrumbs: [
                 {
                     text: "Assessment",
-                    href: "/sispa/mahasiswa/assessment/reflective",
+                    href: "/mahasiswa/assessment/reflective",
                 },
                 { text: "Reflective Writing", href: null },
             ],
@@ -95,7 +95,7 @@ export default {
                 for (let i = 1; i <= this.totalAssessmentOrders; i++) {
                     try {
                         const response = await axios.get(
-                            "/sispa/api/reflective-writing-points",
+                            "/api/reflective-writing-points",
                             {
                                 params: {
                                     batch_year: this.batch_year,
@@ -157,7 +157,7 @@ export default {
                     this.$page.props.project_name ||
                     this.$route.query.project_name;
 
-                const response = await axios.get("/sispa/api/user-info", {
+                const response = await axios.get("/api/user-info", {
                     params: {
                         batch_year: batch_year,
                         project_name: project_name,
@@ -194,7 +194,7 @@ export default {
             try {
                 // Format the request to match the expected structure in the controller
                 const response = await axios.post(
-                    "/sispa/api/save-answer-reflective-writing",
+                    "/api/save-answer-reflective-writing",
                     {
                         answer: [
                             {
@@ -233,7 +233,7 @@ export default {
         async fetchTotalAssessmentOrders() {
             try {
                 const response = await axios.get(
-                    "/sispa/api/reflective-writing-count",
+                    "/api/reflective-writing-count",
                     {
                         params: {
                             batch_year: this.batch_year,
@@ -278,7 +278,7 @@ export default {
                     // If no temporary answer, try to fetch from API
                     // Based on your controller, it expects the reflectiveWriting_id directly, not the assessment_order
                     const response = await axios.get(
-                        `/sispa/api/get-answer-reflective-writing/${writingId}`,
+                        `/api/get-answer-reflective-writing/${writingId}`,
                         {
                             params: {
                                 batch_year: this.batch_year,
@@ -324,7 +324,7 @@ export default {
                 }
 
                 const response = await axios.post(
-                    "/sispa/api/submit-all-reflective-writing",
+                    "/api/submit-all-reflective-writing",
                     {
                         batch_year: this.batch_year,
                         project_name: this.project_name,
@@ -336,7 +336,7 @@ export default {
                     this.clearFormFields();
                     alert("Semua reflective writing berhasil disimpan!");
                     this.$inertia.visit(
-                        "/sispa/mahasiswa/reflective-assessment"
+                        "/mahasiswa/reflective-assessment"
                     );
                 }
             } catch (error) {

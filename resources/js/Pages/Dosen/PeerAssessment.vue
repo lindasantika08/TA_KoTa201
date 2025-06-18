@@ -19,7 +19,7 @@ export default {
     data() {
         return {
             breadcrumbs: [
-                { text: "Peer Assessment", href: "/sispa/dosen/assessment/projectsPeer" },
+                { text: "Peer Assessment", href: "/dosen/assessment/projectsPeer" },
                 { text: "Detail", href: null }
             ],
         }
@@ -61,7 +61,7 @@ export default {
 
         const fetchQuestionId = async () => {
             try {
-            const response = await axios.get("/sispa/api/get-question-id", {
+            const response = await axios.get("/api/get-question-id", {
                 params: {
                 batch_year: props.tahunAjaran,
                 project_name: props.namaProyek,
@@ -100,7 +100,7 @@ export default {
 
             // console.log("Data yang akan dikirim:", requestData);
 
-            router.visit("/sispa/dosen/AnswerPeer", {
+            router.visit("/dosen/AnswerPeer", {
                 method: "get",
                 data: requestData,
             });

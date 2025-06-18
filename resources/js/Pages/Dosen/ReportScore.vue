@@ -35,7 +35,7 @@ export default {
     },
     data() {
         return {
-            breadcrumbs: [{ text: "Laporan", href: "/sispa/dosen/laporan" }],
+            breadcrumbs: [{ text: "Laporan", href: "/dosen/laporan" }],
             userAnalysis: {},
             loading: false,
             error: null,
@@ -156,7 +156,7 @@ export default {
                 console.log("Answers Data:", answers);
 
                 const response = await axios.post(
-                    "/sispa/api/report/save-final-scores-self",
+                    "/api/report/save-final-scores-self",
                     { answers }
                 );
 
@@ -165,7 +165,7 @@ export default {
                 } else {
                     alert(
                         response.data.message ||
-                            "Terjadi kesalahan saat menyimpan jawaban"
+                        "Terjadi kesalahan saat menyimpan jawaban"
                     );
                 }
             } catch (error) {
@@ -174,8 +174,8 @@ export default {
                 if (error.response) {
                     alert(
                         "Terjadi kesalahan pada server: " +
-                            (error.response.data.message ||
-                                error.response.statusText)
+                        (error.response.data.message ||
+                            error.response.statusText)
                     );
                 } else if (error.request) {
                     alert(
@@ -207,7 +207,7 @@ export default {
                     if (
                         pertanyaan.report &&
                         typeof pertanyaan.report.final_score_self !==
-                            "undefined"
+                        "undefined"
                     ) {
                         pertanyaan.final_score =
                             pertanyaan.report.final_score_self;
@@ -301,8 +301,8 @@ export default {
                                     const actualEvaluators =
                                         evaluator.evaluated_by
                                             ? Object.entries(
-                                                  evaluator.evaluated_by
-                                              )
+                                                evaluator.evaluated_by
+                                            )
                                             : [[peerId, evaluator]];
 
                                     // Process each actual evaluator with its id
@@ -337,7 +337,7 @@ export default {
                                                         if (
                                                             modifiedAnswer &&
                                                             modifiedAnswer.final_peer !==
-                                                                undefined
+                                                            undefined
                                                         ) {
                                                             finalPeer =
                                                                 modifiedAnswer.final_peer;
@@ -354,7 +354,7 @@ export default {
                                                     if (
                                                         finalPeer === null &&
                                                         answer.final_peer !==
-                                                            undefined
+                                                        undefined
                                                     ) {
                                                         finalPeer =
                                                             answer.final_peer;
@@ -440,9 +440,9 @@ export default {
                                                         // Hanya tambahkan jika ada nilai finalPeer yang valid
                                                         if (
                                                             finalPeer !==
-                                                                null &&
+                                                            null &&
                                                             finalPeer !==
-                                                                undefined
+                                                            undefined
                                                         ) {
                                                             // Gunakan peer ID dari structure evaluated_by
                                                             console.log(
@@ -509,7 +509,7 @@ export default {
                 }
 
                 const response = await axios.post(
-                    "/sispa/api/report/save-final-scores-peer",
+                    "/api/report/save-final-scores-peer",
                     { answersPeer }
                 );
 
@@ -520,7 +520,7 @@ export default {
                 } else {
                     alert(
                         response.data.message ||
-                            "Terjadi kesalahan saat menyimpan jawaban"
+                        "Terjadi kesalahan saat menyimpan jawaban"
                     );
                 }
             } catch (error) {
@@ -530,8 +530,8 @@ export default {
                 if (error.response) {
                     alert(
                         "Terjadi kesalahan pada server: " +
-                            (error.response.data.message ||
-                                error.response.statusText)
+                        (error.response.data.message ||
+                            error.response.statusText)
                     );
                 } else if (error.request) {
                     alert(
@@ -615,27 +615,27 @@ export default {
             this.loading = true;
             this.error = null;
 
-      try {
-        const response = await axios.get("/sispa/api/report/kelompok/answers", {
-          params: {
-            batch_year: this.batch_year,
-            project_name: this.project_name,
-            kelompok: this.kelompok,
-          },
-        });
-        console.log("Data dari API kelompok/answers:", response.data);
-        this.userAnalysis = response.data;
-      } catch (error) {
-        this.error = "Gagal memuat data";
-      } finally {
-        this.loading = false;
-      }
-    },
+            try {
+                const response = await axios.get("/api/report/kelompok/answers", {
+                    params: {
+                        batch_year: this.batch_year,
+                        project_name: this.project_name,
+                        kelompok: this.kelompok,
+                    },
+                });
+                console.log("Data dari API kelompok/answers:", response.data);
+                this.userAnalysis = response.data;
+            } catch (error) {
+                this.error = "Gagal memuat data";
+            } finally {
+                this.loading = false;
+            }
+        },
 
         async fetchPeerQuestions() {
             try {
                 const response = await axios.get(
-                    "/sispa/api/questions-peer-dosen-report",
+                    "/api/questions-peer-dosen-report",
                     {
                         params: {
                             batch_year: this.batch_year,
@@ -762,11 +762,11 @@ export default {
                 averageScore:
                     group.scores.length > 0
                         ? (
-                              group.scores.reduce(
-                                  (sum, score) => sum + score,
-                                  0
-                              ) / group.scores.length
-                          ).toFixed(2)
+                            group.scores.reduce(
+                                (sum, score) => sum + score,
+                                0
+                            ) / group.scores.length
+                        ).toFixed(2)
                         : "0.00",
             }));
         },
@@ -787,9 +787,9 @@ export default {
                 const averagePeerScore =
                     matchingPeerEvaluations.length > 0
                         ? matchingPeerEvaluations.reduce(
-                              (sum, peer) => sum + (peer.total_score || 0),
-                              0
-                          ) / matchingPeerEvaluations.length
+                            (sum, peer) => sum + (peer.total_score || 0),
+                            0
+                        ) / matchingPeerEvaluations.length
                         : 0;
 
                 const selfScore = selfAspect.total_score || 0;
@@ -994,8 +994,8 @@ export default {
         prepareSelfComparisonChartData(userData) {
             const selfScores = userData.self_assessment
                 ? userData.self_assessment.map((aspect) =>
-                      parseFloat(aspect.total_score || 0).toFixed(2)
-                  )
+                    parseFloat(aspect.total_score || 0).toFixed(2)
+                )
                 : [];
 
             const averageSelfScores = this.calculateAverageSelfScores().map(
@@ -1209,24 +1209,16 @@ export default {
             <Navbar userName="Dosen" />
             <main class="p-6">
                 <div class="mb-4">
-                    <Breadcrumb
-                        :items="[
-                            { text: 'Report', href: '/sispa/dosen/report' },
-                            { text: `${kelompok}`, href: '#' },
-                        ]"
-                    />
+                    <Breadcrumb :items="[
+                        { text: 'Report', href: '/dosen/report' },
+                        { text: `${kelompok}`, href: '#' },
+                    ]" />
                 </div>
 
                 <!-- Header Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <Card
-                        title="Detail Kelompok"
-                        class="bg-white shadow-sm border-0"
-                    >
-                        <div
-                            v-if="batch_year && project_name && kelompok"
-                            class="space-y-2"
-                        >
+                    <Card title="Detail Kelompok" class="bg-white shadow-sm border-0">
+                        <div v-if="batch_year && project_name && kelompok" class="space-y-2">
                             <div class="flex items-center">
                                 <div class="w-36 font-medium text-gray-600">
                                     Tahun Ajaran:
@@ -1253,27 +1245,13 @@ export default {
                         </div>
                     </Card>
 
-                    <Card
-                        title="Pilih Peserta"
-                        class="bg-white shadow-sm border-0"
-                    >
+                    <Card title="Pilih Peserta" class="bg-white shadow-sm border-0">
                         <div class="space-y-1">
-                            <label
-                                for="peserta"
-                                class="block text-sm font-medium text-gray-600"
-                                >Nama Peserta</label
-                            >
-                            <select
-                                id="peserta"
-                                v-model="selectedUserId"
-                                class="w-full p-2.5 bg-white border border-gray-300 text-gray-700 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
-                            >
+                            <label for="peserta" class="block text-sm font-medium text-gray-600">Nama Peserta</label>
+                            <select id="peserta" v-model="selectedUserId"
+                                class="w-full p-2.5 bg-white border border-gray-300 text-gray-700 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm">
                                 <option value="" disabled>Pilih Peserta</option>
-                                <option
-                                    v-for="(userData, userId) in userAnalysis"
-                                    :key="userId"
-                                    :value="userId"
-                                >
+                                <option v-for="(userData, userId) in userAnalysis" :key="userId" :value="userId">
                                     {{ userData.name }}
                                 </option>
                             </select>
@@ -1282,33 +1260,20 @@ export default {
                 </div>
 
                 <!-- Loading State -->
-                <div
-                    v-if="loading"
-                    class="flex justify-center items-center h-64"
-                >
-                    <div
-                        class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"
-                    ></div>
+                <div v-if="loading" class="flex justify-center items-center h-64">
+                    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
                 </div>
 
                 <!-- Error State -->
-                <div
-                    v-else-if="error"
-                    class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md"
-                >
+                <div v-else-if="error" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
                     {{ error }}
                 </div>
 
                 <!-- Charts Section -->
                 <div v-else-if="selectedUserData" class="space-y-6">
                     <!-- Peer Comparison Chart -->
-                    <Card
-                        title=""
-                        class="bg-white shadow-sm border-0 p-0 overflow-hidden"
-                    >
-                        <div
-                            class="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-100"
-                        >
+                    <Card title="" class="bg-white shadow-sm border-0 p-0 overflow-hidden">
+                        <div class="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-100">
                             <h3 class="text-lg font-semibold text-gray-800">
                                 Perbandingan Skor Peer Assessment
                             </h3>
@@ -1319,31 +1284,19 @@ export default {
                         </div>
                         <!-- Chart Container - Flex Layout -->
                         <div class="p-4">
-                            <ApexChart
-                                type="radar"
-                                height="400"
-                                :series="
-                                    preparePeerComparisonChartData(
-                                        selectedUserData
-                                    ).series
-                                "
-                                :options="
-                                    preparePeerComparisonChartData(
-                                        selectedUserData
-                                    ).options
-                                "
-                            />
+                            <ApexChart type="radar" height="400" :series="preparePeerComparisonChartData(
+                                selectedUserData
+                            ).series
+                                " :options="preparePeerComparisonChartData(
+                                    selectedUserData
+                                ).options
+                                    " />
                         </div>
                     </Card>
 
                     <!-- Self Assessment Chart -->
-                    <Card
-                        title=""
-                        class="bg-white shadow-sm border-0 p-0 overflow-hidden"
-                    >
-                        <div
-                            class="p-4 bg-gradient-to-r from-rose-50 to-orange-50 border-b border-gray-100"
-                        >
+                    <Card title="" class="bg-white shadow-sm border-0 p-0 overflow-hidden">
+                        <div class="p-4 bg-gradient-to-r from-rose-50 to-orange-50 border-b border-gray-100">
                             <h3 class="text-lg font-semibold text-gray-800">
                                 Perbandingan Skor Self Assessment
                             </h3>
@@ -1353,41 +1306,23 @@ export default {
                             </p>
                         </div>
                         <div class="p-4">
-                            <ApexChart
-                                type="radar"
-                                height="400"
-                                :series="
-                                    prepareSelfComparisonChartData(
-                                        selectedUserData
-                                    ).series
-                                "
-                                :options="
-                                    prepareSelfComparisonChartData(
-                                        selectedUserData
-                                    ).options
-                                "
-                            />
+                            <ApexChart type="radar" height="400" :series="prepareSelfComparisonChartData(
+                                selectedUserData
+                            ).series
+                                " :options="prepareSelfComparisonChartData(
+                                    selectedUserData
+                                ).options
+                                    " />
                         </div>
                     </Card>
                 </div>
 
-                <div
-                    v-else-if="!loading && !error && userIds.length > 0"
-                    class="flex flex-col items-center justify-center h-64 bg-white rounded-lg shadow-sm border-0 p-6"
-                >
-                    <svg
-                        class="w-16 h-16 text-gray-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                        ></path>
+                <div v-else-if="!loading && !error && userIds.length > 0"
+                    class="flex flex-col items-center justify-center h-64 bg-white rounded-lg shadow-sm border-0 p-6">
+                    <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                     </svg>
                     <h3 class="mt-4 text-lg font-medium text-gray-900">
                         Pilih Peserta
@@ -1439,115 +1374,76 @@ export default {
                     </Card>
                 </div> -->
 
-                <div
-                    v-if="loading"
-                    class="flex justify-center items-center p-8"
-                >
-                    <div
-                        class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"
-                    ></div>
+                <div v-if="loading" class="flex justify-center items-center p-8">
+                    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
                     <span class="ml-3 text-gray-600">Memuat...</span>
                 </div>
-                <div
-                    v-else-if="error"
-                    class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mt-4"
-                >
+                <div v-else-if="error" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mt-4">
                     {{ error }}
                 </div>
                 <div v-else-if="selectedUserData">
-                    <Card
-                        :title="`Analisis Jawaban - ${selectedUserData.name}`"
-                        class="mt-4"
-                    >
+                    <Card :title="`Analisis Jawaban - ${selectedUserData.name}`" class="mt-4">
                         <!-- Self Assessment Section -->
-                        <div
-                            v-if="
-                                selectedUserData.self_assessment &&
-                                selectedUserData.self_assessment.length
-                            "
-                        >
-                            <div
-                                class="bg-white rounded-lg shadow-sm overflow-hidden"
-                            >
+                        <div v-if="
+                            selectedUserData.self_assessment &&
+                            selectedUserData.self_assessment.length
+                        ">
+                            <div class="bg-white rounded-lg shadow-sm overflow-hidden">
                                 <div
-                                    class="bg-gradient-to-r from-blue-600 to-blue-700 p-4 flex justify-between items-center"
-                                >
+                                    class="bg-gradient-to-r from-blue-600 to-blue-700 p-4 flex justify-between items-center">
                                     <h3 class="text-white text-lg font-bold">
                                         Self Assessment
                                     </h3>
                                 </div>
                                 <!-- Tombol Simpan di Bagian Atas -->
                                 <div class="mt-3 mb-4 flex justify-end">
-                                    <button
-                                        @click="saveAnswerSelf"
+                                    <button @click="saveAnswerSelf"
                                         class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        :disabled="isLoading"
-                                    >
-                                        <span v-if="isLoading"
-                                            >Menyimpan...</span
-                                        >
-                                        <span v-else
-                                            >Simpan Semua Penilaian</span
-                                        >
+                                        :disabled="isLoading">
+                                        <span v-if="isLoading">Menyimpan...</span>
+                                        <span v-else>Simpan Semua Penilaian</span>
                                     </button>
                                 </div>
 
                                 <div class="p-2">
-                                    <div
-                                        v-for="(
-                                            aspek, index
-                                        ) in selectedUserData.self_assessment"
-                                        :key="index"
-                                        class="mb-6 last:mb-0"
-                                    >
+                                    <div v-for="(
+aspek, index
+                                        ) in selectedUserData.self_assessment" :key="index" class="mb-6 last:mb-0">
                                         <div class="bg-gray-50 p-4 rounded-lg">
                                             <!-- Aspek Header -->
-                                            <div
-                                                class="flex justify-between items-center mb-4"
-                                            >
+                                            <div class="flex justify-between items-center mb-4">
                                                 <div>
-                                                    <h4
-                                                        class="text-lg font-semibold text-gray-800"
-                                                    >
+                                                    <h4 class="text-lg font-semibold text-gray-800">
                                                         {{ aspek.aspek }}
                                                     </h4>
-                                                    <p
-                                                        class="text-sm text-gray-600"
-                                                    >
+                                                    <p class="text-sm text-gray-600">
                                                         {{ aspek.kriteria }}
                                                     </p>
                                                 </div>
-                                                <div
-                                                    class="text-right flex space-x-6"
-                                                >
+                                                <div class="text-right flex space-x-6">
                                                     <!-- Original Total Score -->
                                                     <div>
-                                                        <div
-                                                            class="text-sm text-gray-600"
-                                                        >
+                                                        <div class="text-sm text-gray-600">
                                                             Total Skor Asli
                                                         </div>
-                                                        <div
-                                                            class="text-2xl font-bold"
-                                                            :class="{
-                                                                'text-green-600':
-                                                                    aspek.total_score >=
-                                                                    4,
-                                                                'text-yellow-600':
-                                                                    aspek.total_score >=
-                                                                        3 &&
-                                                                    aspek.total_score <
-                                                                        4,
-                                                                'text-red-600':
-                                                                    aspek.total_score <
-                                                                    2.5,
-                                                            }"
-                                                        >
+                                                        <div class="text-2xl font-bold" :class="{
+                                                            'text-green-600':
+                                                                aspek.total_score >=
+                                                                4,
+                                                            'text-yellow-600':
+                                                                aspek.total_score >=
+                                                                3 &&
+                                                                aspek.total_score <
+                                                                4,
+                                                            'text-red-600':
+                                                                aspek.total_score <
+                                                                2.5,
+                                                        }">
                                                             {{
                                                                 aspek.total_score
                                                                     ? aspek.total_score.toFixed(
-                                                                          2
-                                                                      )
+                                                                        2
+                                                                    )
                                                                     : "N/A"
                                                             }}
                                                         </div>
@@ -1555,127 +1451,85 @@ export default {
 
                                                     <!-- Final Total Score -->
                                                     <div>
-                                                        <div
-                                                            class="text-sm text-gray-600"
-                                                        >
+                                                        <div class="text-sm text-gray-600">
                                                             Total Skor Final
                                                         </div>
-                                                        <div
-                                                            class="text-2xl font-bold"
-                                                            :class="{
-                                                                'text-green-600':
-                                                                    aspek.total_score_final >=
-                                                                    4,
-                                                                'text-yellow-600':
-                                                                    aspek.total_score_final >=
-                                                                        3 &&
-                                                                    aspek.total_score_final <
-                                                                        4,
-                                                                'text-red-600':
-                                                                    aspek.total_score_final <
-                                                                    2.5,
-                                                            }"
-                                                        >
-                                                            {{
-                                                                aspek.total_score_final
-                                                                    ? aspek.total_score_final.toFixed(
-                                                                          2
-                                                                      )
-                                                                    : aspek.total_score.toFixed(
-                                                                          2
-                                                                      )
-                                                            }}
+                                                        <div class="text-2xl font-bold" :class="{
+                                                            'text-green-600':
+                                                                aspek.total_score_final >=
+                                                                4,
+                                                            'text-yellow-600':
+                                                                aspek.total_score_final >=
+                                                                3 &&
+                                                                aspek.total_score_final <
+                                                                4,
+                                                            'text-red-600':
+                                                                aspek.total_score_final <
+                                                                2.5,
+                                                        }">
+                                                            {{ (aspek.total_score_final || aspek.total_score || 0).toFixed(2) }}
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
 
                                             <!-- Questions Table -->
-                                            <div
-                                                class="bg-white rounded-lg border border-gray-200 overflow-hidden"
-                                            >
+                                            <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
                                                 <table class="w-full">
                                                     <thead>
-                                                        <tr
-                                                            class="bg-gray-50 border-b border-gray-200"
-                                                        >
+                                                        <tr class="bg-gray-50 border-b border-gray-200">
                                                             <th
-                                                                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/2"
-                                                            >
+                                                                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/2">
                                                                 Pertanyaan
                                                             </th>
                                                             <th
-                                                                class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24"
-                                                            >
+                                                                class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                                                                 Skor
                                                             </th>
                                                             <th
-                                                                class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24"
-                                                            >
+                                                                class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                                                                 Skor SLA
                                                             </th>
                                                             <th
-                                                                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                                            >
+                                                                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                                 Jawaban
                                                             </th>
                                                         </tr>
                                                     </thead>
-                                                    <tbody
-                                                        class="divide-y divide-gray-200"
-                                                    >
-                                                        <tr
-                                                            v-for="(
-                                                                pertanyaan,
-                                                                qIndex
-                                                            ) in aspek.questions"
-                                                            :key="qIndex"
-                                                            class="hover:bg-gray-50 transition-colors"
-                                                        >
-                                                            <td
-                                                                class="px-4 py-3 text-sm text-gray-900"
-                                                            >
+                                                    <tbody class="divide-y divide-gray-200">
+                                                        <tr v-for="(
+pertanyaan,
+                                                                    qIndex
+                                                            ) in aspek.questions" :key="qIndex"
+                                                            class="hover:bg-gray-50 transition-colors">
+                                                            <td class="px-4 py-3 text-sm text-gray-900">
                                                                 {{
                                                                     pertanyaan.pertanyaan
                                                                 }}
                                                             </td>
-                                                            <td
-                                                                class="px-4 py-3 text-center"
-                                                            >
-                                                                <div
-                                                                    :class="{
-                                                                        'bg-blue-100 p-2 rounded-md':
-                                                                            pertanyaan.final_score ==
-                                                                            pertanyaan.score,
-                                                                    }"
-                                                                >
-                                                                    <input
-                                                                        type="radio"
-                                                                        :name="
-                                                                            'score_' +
-                                                                            pertanyaan.question_id
-                                                                        "
-                                                                        :value="
-                                                                            pertanyaan.score
-                                                                        "
-                                                                        v-model="
-                                                                            pertanyaan.final_score
-                                                                        "
+                                                            <td class="px-4 py-3 text-center">
+                                                                <div :class="{
+                                                                    'bg-blue-100 p-2 rounded-md':
+                                                                        pertanyaan.final_score ==
+                                                                        pertanyaan.score,
+                                                                }">
+                                                                    <input type="radio" :name="'score_' +
+                                                                        pertanyaan.question_id
+                                                                        " :value="pertanyaan.score
+                                                                            " v-model="pertanyaan.final_score
+                                                                            "
                                                                         class="border-2 border-gray-300 rounded-md hover:border-blue-500"
                                                                         @change="
                                                                             aspek.total_score_final =
-                                                                                calculateTotalScoreFinal(
-                                                                                    aspek
-                                                                                )
-                                                                        "
-                                                                    />
-                                                                    <span
-                                                                        :class="{
-                                                                            'font-medium':
-                                                                                pertanyaan.final_score ==
-                                                                                pertanyaan.score,
-                                                                        }"
-                                                                    >
+                                                                            calculateTotalScoreFinal(
+                                                                                aspek
+                                                                            )
+                                                                            " />
+                                                                    <span :class="{
+                                                                        'font-medium':
+                                                                            pertanyaan.final_score ==
+                                                                            pertanyaan.score,
+                                                                    }">
                                                                         {{
                                                                             pertanyaan.score ||
                                                                             "N/A"
@@ -1683,43 +1537,29 @@ export default {
                                                                     </span>
                                                                 </div>
                                                             </td>
-                                                            <td
-                                                                class="px-4 py-3 text-center"
-                                                            >
-                                                                <div
-                                                                    :class="{
-                                                                        'bg-blue-100 p-2 rounded-md':
-                                                                            pertanyaan.final_score ==
-                                                                            pertanyaan.score_SLA,
-                                                                    }"
-                                                                >
-                                                                    <input
-                                                                        type="radio"
-                                                                        :name="
-                                                                            'score_' +
-                                                                            pertanyaan.question_id
-                                                                        "
-                                                                        :value="
-                                                                            pertanyaan.score_SLA
-                                                                        "
-                                                                        v-model="
-                                                                            pertanyaan.final_score
-                                                                        "
+                                                            <td class="px-4 py-3 text-center">
+                                                                <div :class="{
+                                                                    'bg-blue-100 p-2 rounded-md':
+                                                                        pertanyaan.final_score ==
+                                                                        pertanyaan.score_SLA,
+                                                                }">
+                                                                    <input type="radio" :name="'score_' +
+                                                                        pertanyaan.question_id
+                                                                        " :value="pertanyaan.score_SLA
+                                                                            " v-model="pertanyaan.final_score
+                                                                            "
                                                                         class="border-2 border-gray-300 rounded-md hover:border-blue-500"
                                                                         @change="
                                                                             aspek.total_score_final =
-                                                                                calculateTotalScoreFinal(
-                                                                                    aspek
-                                                                                )
-                                                                        "
-                                                                    />
-                                                                    <span
-                                                                        :class="{
-                                                                            'font-medium':
-                                                                                pertanyaan.final_score ==
-                                                                                pertanyaan.score_SLA,
-                                                                        }"
-                                                                    >
+                                                                            calculateTotalScoreFinal(
+                                                                                aspek
+                                                                            )
+                                                                            " />
+                                                                    <span :class="{
+                                                                        'font-medium':
+                                                                            pertanyaan.final_score ==
+                                                                            pertanyaan.score_SLA,
+                                                                    }">
                                                                         {{
                                                                             pertanyaan.score_SLA ||
                                                                             "N/A"
@@ -1727,12 +1567,8 @@ export default {
                                                                     </span>
                                                                 </div>
                                                             </td>
-                                                            <td
-                                                                class="px-4 py-3 text-sm text-gray-500"
-                                                            >
-                                                                <div
-                                                                    class="max-w-xl"
-                                                                >
+                                                            <td class="px-4 py-3 text-sm text-gray-500">
+                                                                <div class="max-w-xl">
                                                                     {{
                                                                         pertanyaan.answer ||
                                                                         "-"
@@ -1754,20 +1590,14 @@ export default {
 
                         <!-- Peer Evaluation Section -->
                         <div class="mt-6">
-                            <div
-                                class="bg-white rounded-lg shadow-sm overflow-hidden"
-                            >
+                            <div class="bg-white rounded-lg shadow-sm overflow-hidden">
                                 <div
-                                    class="bg-gradient-to-r from-purple-600 to-purple-700 p-4 flex justify-between items-center"
-                                >
+                                    class="bg-gradient-to-r from-purple-600 to-purple-700 p-4 flex justify-between items-center">
                                     <h3 class="text-white text-lg font-bold">
                                         Evaluasi dari Peer
                                     </h3>
-                                    <div
-                                        class="bg-white bg-opacity-20 rounded-lg px-4 py-2"
-                                    >
-                                        <span class="text-white text-sm"
-                                            >Total Average:
+                                    <div class="bg-white bg-opacity-20 rounded-lg px-4 py-2">
+                                        <span class="text-white text-sm">Total Average:
                                         </span>
                                         <span class="text-white font-bold">{{
                                             calculateTotalAverage(
@@ -1778,103 +1608,72 @@ export default {
                                 </div>
                                 <!-- Tombol Simpan di Bagian Atas -->
                                 <div class="mt-3 mb-4 flex justify-end">
-                                    <button
-                                        @click="saveAnswerPeer"
+                                    <button @click="saveAnswerPeer"
                                         class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        :disabled="isLoading"
-                                    >
-                                        <span v-if="isLoading"
-                                            >Menyimpan...</span
-                                        >
-                                        <span v-else
-                                            >Simpan Semua Penilaian</span
-                                        >
+                                        :disabled="isLoading">
+                                        <span v-if="isLoading">Menyimpan...</span>
+                                        <span v-else>Simpan Semua Penilaian</span>
                                     </button>
                                 </div>
 
                                 <div class="p-4">
-                                    <div
-                                        v-if="
-                                            selectedUserData.evaluated_by_peers &&
-                                            selectedUserData.evaluated_by_peers
-                                                .length
-                                        "
-                                    >
-                                        <div
-                                            v-for="(
-                                                peerGroup, index
+                                    <div v-if="
+                                        selectedUserData.evaluated_by_peers &&
+                                        selectedUserData.evaluated_by_peers
+                                            .length
+                                    ">
+                                        <div v-for="(
+peerGroup, index
                                             ) in groupPeerEvaluations(
-                                                selectedUserData.evaluated_by_peers
-                                            )"
-                                            :key="index"
-                                            class="mb-6 last:mb-0"
-                                        >
-                                            <div
-                                                class="bg-gray-50 p-4 rounded-lg"
-                                            >
+                                                    selectedUserData.evaluated_by_peers
+                                                )" :key="index" class="mb-6 last:mb-0">
+                                            <div class="bg-gray-50 p-4 rounded-lg">
                                                 <!-- Peer Group Header -->
                                                 <div
-                                                    class="flex flex-wrap md:flex-nowrap justify-between items-start gap-4 mb-4"
-                                                >
+                                                    class="flex flex-wrap md:flex-nowrap justify-between items-start gap-4 mb-4">
                                                     <div>
-                                                        <h4
-                                                            class="text-lg font-semibold text-gray-800"
-                                                        >
+                                                        <h4 class="text-lg font-semibold text-gray-800">
                                                             {{
                                                                 peerGroup.aspek
                                                             }}
                                                         </h4>
-                                                        <p
-                                                            class="text-sm text-gray-600"
-                                                        >
+                                                        <p class="text-sm text-gray-600">
                                                             {{
                                                                 peerGroup.kriteria
                                                             }}
                                                         </p>
-                                                        <div
-                                                            class="mt-2 flex flex-wrap gap-2"
-                                                        >
-                                                            <span
-                                                                v-for="(
-                                                                    name,
-                                                                    nameIdx
-                                                                ) in peerGroup.names"
-                                                                :key="nameIdx"
-                                                                class="inline-flex items-center px-3py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
-                                                            >
+                                                        <div class="mt-2 flex flex-wrap gap-2">
+                                                            <span v-for="(
+name,
+                                                                        nameIdx
+                                                                ) in peerGroup.names" :key="nameIdx"
+                                                                class="inline-flex items-center px-3py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                                                                 {{ name }}
                                                             </span>
                                                         </div>
                                                     </div>
-                                                    <div
-                                                        class="text-right flex-shrink-0"
-                                                    >
-                                                        <div
-                                                            class="text-sm text-gray-600"
-                                                        >
+                                                    <div class="text-right flex-shrink-0">
+                                                        <div class="text-sm text-gray-600">
                                                             Total Skor
                                                         </div>
-                                                        <div
-                                                            class="text-2xl font-bold"
-                                                            :class="{
-                                                                'text-green-600':
-                                                                    peerGroup.total_score >=
-                                                                    4,
-                                                                'text-yellow-600':
-                                                                    peerGroup.total_score >=
-                                                                        3 &&
-                                                                    peerGroup.total_score <
-                                                                        4,
-                                                                'text-red-600':
-                                                                    peerGroup.total_score <
-                                                                    2.5,
-                                                            }"
-                                                        >
+                                                        <div class="text-2xl font-bold" :class="{
+                                                            'text-green-600':
+                                                                peerGroup.total_score >=
+                                                                4,
+                                                            'text-yellow-600':
+                                                                peerGroup.total_score >=
+                                                                3 &&
+                                                                peerGroup.total_score <
+                                                                4,
+                                                            'text-red-600':
+                                                                peerGroup.total_score <
+                                                                2.5,
+                                                        }">
                                                             {{
                                                                 peerGroup.total_score
                                                                     ? peerGroup.total_score.toFixed(
-                                                                          2
-                                                                      )
+                                                                        2
+                                                                    )
                                                                     : "N/A"
                                                             }}
                                                         </div>
@@ -1882,112 +1681,76 @@ export default {
                                                 </div>
 
                                                 <!-- Answers Table -->
-                                                <div
-                                                    class="bg-white rounded-lg border border-gray-200 overflow-hidden"
-                                                >
+                                                <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
                                                     <table class="w-full">
                                                         <thead>
-                                                            <tr
-                                                                class="bg-gray-50 border-b border-gray-200"
-                                                            >
+                                                            <tr class="bg-gray-50 border-b border-gray-200">
                                                                 <th
-                                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                                                >
+                                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                                     Penilai
                                                                 </th>
                                                                 <th
-                                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                                                >
+                                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                                     Pertanyaan
                                                                 </th>
                                                                 <th
-                                                                    class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24"
-                                                                >
+                                                                    class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                                                                     Skor
                                                                 </th>
                                                                 <th
-                                                                    class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24"
-                                                                >
+                                                                    class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                                                                     Skor SLA
                                                                 </th>
                                                                 <th
-                                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                                                >
+                                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                                     Jawaban
                                                                 </th>
                                                             </tr>
                                                         </thead>
-                                                        <tbody
-                                                            class="divide-y divide-gray-200"
-                                                        >
-                                                            <tr
-                                                                v-for="(
-                                                                    answer, idx
-                                                                ) in peerGroup.answers"
-                                                                :key="idx"
-                                                                class="hover:bg-gray-50 transition-colors"
-                                                            >
-                                                                <td
-                                                                    class="px-4 py-3"
-                                                                >
-                                                                    <div
-                                                                        class="text-sm font-medium text-gray-900"
-                                                                    >
+                                                        <tbody class="divide-y divide-gray-200">
+                                                            <tr v-for="(
+answer, idx
+                                                                ) in peerGroup.answers" :key="idx"
+                                                                class="hover:bg-gray-50 transition-colors">
+                                                                <td class="px-4 py-3">
+                                                                    <div class="text-sm font-medium text-gray-900">
                                                                         {{
                                                                             answer.evaluator_name
                                                                         }}
                                                                     </div>
                                                                 </td>
-                                                                <td
-                                                                    class="px-4 py-3"
-                                                                >
-                                                                    <div
-                                                                        class="text-sm text-gray-900"
-                                                                    >
+                                                                <td class="px-4 py-3">
+                                                                    <div class="text-sm text-gray-900">
                                                                         {{
                                                                             answer.pertanyaan
                                                                         }}
                                                                     </div>
                                                                 </td>
-                                                                <td
-                                                                    class="px-4 py-3 text-center"
-                                                                >
-                                                                    <div
-                                                                        :class="{
-                                                                            'p-2 rounded-md':
-                                                                                answer.final_peer ==
-                                                                                answer.score,
-                                                                        }"
-                                                                    >
-                                                                        <input
-                                                                            type="radio"
-                                                                            :name="
-                                                                                'score_' +
-                                                                                answer.question_id +
-                                                                                '_' +
-                                                                                answer.evaluator_name
-                                                                            "
-                                                                            :value="
-                                                                                answer.score
-                                                                            "
-                                                                            v-model="
-                                                                                answer.final_peer
-                                                                            "
+                                                                <td class="px-4 py-3 text-center">
+                                                                    <div :class="{
+                                                                        'p-2 rounded-md':
+                                                                            answer.final_peer ==
+                                                                            answer.score,
+                                                                    }">
+                                                                        <input type="radio" :name="'score_' +
+                                                                            answer.question_id +
+                                                                            '_' +
+                                                                            answer.evaluator_name
+                                                                            " :value="answer.score
+                                                                                " v-model="answer.final_peer
+                                                                                "
                                                                             class="border-2 border-gray-300 rounded-md hover:border-blue-500"
                                                                             @change="
                                                                                 updateFinalPeer(
                                                                                     answer,
                                                                                     answer.score
                                                                                 )
-                                                                            "
-                                                                        />
-                                                                        <span
-                                                                            :class="{
-                                                                                'font-medium':
-                                                                                    answer.final_peer ==
-                                                                                    answer.score,
-                                                                            }"
-                                                                        >
+                                                                                " />
+                                                                        <span :class="{
+                                                                            'font-medium':
+                                                                                answer.final_peer ==
+                                                                                answer.score,
+                                                                        }">
                                                                             {{
                                                                                 answer.score ||
                                                                                 "N/A"
@@ -1995,45 +1758,31 @@ export default {
                                                                         </span>
                                                                     </div>
                                                                 </td>
-                                                                <td
-                                                                    class="px-4 py-3 text-center"
-                                                                >
-                                                                    <div
-                                                                        :class="{
-                                                                            'p-2 rounded-md':
-                                                                                answer.final_peer ==
-                                                                                answer.score_SLA,
-                                                                        }"
-                                                                    >
-                                                                        <input
-                                                                            type="radio"
-                                                                            :name="
-                                                                                'score_' +
-                                                                                answer.question_id +
-                                                                                '_' +
-                                                                                answer.evaluator_name
-                                                                            "
-                                                                            :value="
-                                                                                answer.score_SLA
-                                                                            "
-                                                                            v-model="
-                                                                                answer.final_peer
-                                                                            "
+                                                                <td class="px-4 py-3 text-center">
+                                                                    <div :class="{
+                                                                        'p-2 rounded-md':
+                                                                            answer.final_peer ==
+                                                                            answer.score_SLA,
+                                                                    }">
+                                                                        <input type="radio" :name="'score_' +
+                                                                            answer.question_id +
+                                                                            '_' +
+                                                                            answer.evaluator_name
+                                                                            " :value="answer.score_SLA
+                                                                                " v-model="answer.final_peer
+                                                                                "
                                                                             class="border-2 border-gray-300 rounded-md hover:border-blue-500"
                                                                             @change="
                                                                                 updateFinalPeer(
                                                                                     answer,
                                                                                     answer.score_SLA
                                                                                 )
-                                                                            "
-                                                                        />
-                                                                        <span
-                                                                            :class="{
-                                                                                'font-medium':
-                                                                                    answer.final_peer ==
-                                                                                    answer.score_SLA,
-                                                                            }"
-                                                                        >
+                                                                                " />
+                                                                        <span :class="{
+                                                                            'font-medium':
+                                                                                answer.final_peer ==
+                                                                                answer.score_SLA,
+                                                                        }">
                                                                             {{
                                                                                 answer.score_SLA ||
                                                                                 "N/A"
@@ -2041,12 +1790,8 @@ export default {
                                                                         </span>
                                                                     </div>
                                                                 </td>
-                                                                <td
-                                                                    class="px-4 py-3"
-                                                                >
-                                                                    <div
-                                                                        class="text-sm text-gray-500 max-w-xl"
-                                                                    >
+                                                                <td class="px-4 py-3">
+                                                                    <div class="text-sm text-gray-500 max-w-xl">
                                                                         {{
                                                                             answer.answer ||
                                                                             "-"
@@ -2060,10 +1805,7 @@ export default {
                                             </div>
                                         </div>
                                     </div>
-                                    <p
-                                        v-else
-                                        class="text-center text-gray-500 p-4"
-                                    >
+                                    <p v-else class="text-center text-gray-500 p-4">
                                         Tidak ada data evaluasi peer
                                     </p>
                                 </div>
@@ -2072,12 +1814,8 @@ export default {
 
                         <!-- Analysis Score Section -->
                         <div class="mt-6">
-                            <div
-                                class="bg-white rounded-lg shadow-sm overflow-hidden"
-                            >
-                                <div
-                                    class="bg-gradient-to-r from-indigo-600 to-indigo-700 p-4"
-                                >
+                            <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                                <div class="bg-gradient-to-r from-indigo-600 to-indigo-700 p-4">
                                     <h3 class="text-white text-lg font-bold">
                                         Analysis Score
                                     </h3>
@@ -2086,20 +1824,12 @@ export default {
                                 <div class="p-4">
                                     <div class="bg-gray-50 p-4 rounded-lg">
                                         <!-- Score Summary Cards -->
-                                        <div
-                                            class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"
-                                        >
-                                            <div
-                                                class="bg-green-50 rounded-lg p-4 border border-green-200"
-                                            >
-                                                <div
-                                                    class="text-sm font-medium text-green-600 mb-1"
-                                                >
+                                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                            <div class="bg-green-50 rounded-lg p-4 border border-green-200">
+                                                <div class="text-sm font-medium text-green-600 mb-1">
                                                     Over Estimation
                                                 </div>
-                                                <div
-                                                    class="text-2xl font-bold text-green-700"
-                                                >
+                                                <div class="text-2xl font-bold text-green-700">
                                                     {{
                                                         calculateAnalysisScores(
                                                             selectedUserData
@@ -2110,25 +1840,17 @@ export default {
                                                         ).length
                                                     }}
                                                 </div>
-                                                <div
-                                                    class="text-xs text-green-600 mt-1"
-                                                >
+                                                <div class="text-xs text-green-600 mt-1">
                                                     Aspects where self-score
                                                     More Then peer-score
                                                 </div>
                                             </div>
 
-                                            <div
-                                                class="bg-yellow-50 rounded-lg p-4 border border-yellow-200"
-                                            >
-                                                <div
-                                                    class="text-sm font-medium text-yellow-600 mb-1"
-                                                >
+                                            <div class="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+                                                <div class="text-sm font-medium text-yellow-600 mb-1">
                                                     Matched Estimation
                                                 </div>
-                                                <div
-                                                    class="text-2xl font-bold text-yellow-700"
-                                                >
+                                                <div class="text-2xl font-bold text-yellow-700">
                                                     {{
                                                         calculateAnalysisScores(
                                                             selectedUserData
@@ -2139,25 +1861,17 @@ export default {
                                                         ).length
                                                     }}
                                                 </div>
-                                                <div
-                                                    class="text-xs text-yellow-600 mt-1"
-                                                >
+                                                <div class="text-xs text-yellow-600 mt-1">
                                                     Aspects where self-score
                                                     Same peer-score
                                                 </div>
                                             </div>
 
-                                            <div
-                                                class="bg-red-50 rounded-lg p-4 border border-red-200"
-                                            >
-                                                <div
-                                                    class="text-sm font-medium text-red-600 mb-1"
-                                                >
+                                            <div class="bg-red-50 rounded-lg p-4 border border-red-200">
+                                                <div class="text-sm font-medium text-red-600 mb-1">
                                                     Under Estimation
                                                 </div>
-                                                <div
-                                                    class="text-2xl font-bold text-red-700"
-                                                >
+                                                <div class="text-2xl font-bold text-red-700">
                                                     {{
                                                         calculateAnalysisScores(
                                                             selectedUserData
@@ -2168,9 +1882,7 @@ export default {
                                                         ).length
                                                     }}
                                                 </div>
-                                                <div
-                                                    class="text-xs text-red-600 mt-1"
-                                                >
+                                                <div class="text-xs text-red-600 mt-1">
                                                     Aspects where self-score
                                                     Less Then peer-score
                                                 </div>
@@ -2178,101 +1890,71 @@ export default {
                                         </div>
 
                                         <!-- Detailed Analysis Table -->
-                                        <div
-                                            class="bg-white rounded-lg border border-gray-200 overflow-hidden"
-                                        >
+                                        <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
                                             <table class="w-full">
                                                 <thead>
-                                                    <tr
-                                                        class="bg-gray-50 border-b border-gray-200"
-                                                    >
+                                                    <tr class="bg-gray-50 border-b border-gray-200">
                                                         <th
-                                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                                        >
+                                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                             Aspek
                                                         </th>
                                                         <th
-                                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                                        >
+                                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                             Kriteria
                                                         </th>
                                                         <th
-                                                            class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                                        >
+                                                            class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                             Self Score
                                                         </th>
                                                         <th
-                                                            class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                                        >
+                                                            class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                             Peer Score
                                                         </th>
                                                         <th
-                                                            class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                                        >
+                                                            class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                             Selisih
                                                         </th>
                                                         <th
-                                                            class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                                        >
+                                                            class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                             Status
                                                         </th>
                                                     </tr>
                                                 </thead>
-                                                <tbody
-                                                    class="divide-y divide-gray-200"
-                                                >
-                                                    <tr
-                                                        v-for="(
-                                                            score, index
+                                                <tbody class="divide-y divide-gray-200">
+                                                    <tr v-for="(
+score, index
                                                         ) in calculateAnalysisScores(
-                                                            selectedUserData
-                                                        )"
-                                                        :key="index"
-                                                        class="hover:bg-gray-50 transition-colors"
-                                                    >
+                                                                selectedUserData
+                                                            )" :key="index" class="hover:bg-gray-50 transition-colors">
                                                         <td class="px-4 py-3">
-                                                            <div
-                                                                class="text-sm font-medium text-gray-900"
-                                                            >
+                                                            <div class="text-sm font-medium text-gray-900">
                                                                 {{
                                                                     score.aspek
                                                                 }}
                                                             </div>
                                                         </td>
                                                         <td class="px-4 py-3">
-                                                            <div
-                                                                class="text-sm text-gray-500"
-                                                            >
+                                                            <div class="text-sm text-gray-500">
                                                                 {{
                                                                     score.kriteria
                                                                 }}
                                                             </div>
                                                         </td>
-                                                        <td
-                                                            class="px-4 py-3 text-center"
-                                                        >
-                                                            <div
-                                                                class="text-sm font-semibold text-gray-900"
-                                                            >
+                                                        <td class="px-4 py-3 text-center">
+                                                            <div class="text-sm font-semibold text-gray-900">
                                                                 {{
                                                                     score.selfScore
                                                                 }}
                                                             </div>
                                                         </td>
-                                                        <td
-                                                            class="px-4 py-3 text-center"
-                                                        >
-                                                            <div
-                                                                class="text-sm font-semibold text-gray-900"
-                                                            >
+                                                        <td class="px-4 py-3 text-center">
+                                                            <div class="text-sm font-semibold text-gray-900">
                                                                 {{
                                                                     score.averagePeerScore
                                                                 }}
                                                             </div>
                                                         </td>
-                                                        <td
-                                                            class="px-4 py-3 text-center"
-                                                        >
+                                                        <td class="px-4 py-3 text-center">
                                                             <span
                                                                 class="inline-flex items-center px-3py-1 rounded-full text-xs font-medium"
                                                                 :class="{
@@ -2288,20 +1970,17 @@ export default {
                                                                         parseFloat(
                                                                             score.scoreDifference
                                                                         ) < 0,
-                                                                }"
-                                                            >
+                                                                }">
                                                                 {{
                                                                     score.scoreDifference >=
-                                                                    0
+                                                                        0
                                                                         ? "+" +
-                                                                          score.scoreDifference
+                                                                        score.scoreDifference
                                                                         : score.scoreDifference
                                                                 }}
                                                             </span>
                                                         </td>
-                                                        <td
-                                                            class="px-4 py-3 text-center"
-                                                        >
+                                                        <td class="px-4 py-3 text-center">
                                                             <span
                                                                 class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
                                                                 :class="{
@@ -2314,8 +1993,7 @@ export default {
                                                                     'bg-red-100 text-red-800':
                                                                         score.status ===
                                                                         'Under',
-                                                                }"
-                                                            >
+                                                                }">
                                                                 {{
                                                                     score.status
                                                                 }}
@@ -2327,41 +2005,24 @@ export default {
                                         </div>
 
                                         <!-- Legend -->
-                                        <div
-                                            class="mt-4 flex flex-wrap gap-4 text-xs text-gray-500"
-                                        >
-                                            <div
-                                                class="flex items-center gap-2"
-                                            >
+                                        <div class="mt-4 flex flex-wrap gap-4 text-xs text-gray-500">
+                                            <div class="flex items-center gap-2">
                                                 <span
-                                                    class="w-3 h-3 inline-block bg-green-100 rounded-full border border-green-200"
-                                                ></span>
-                                                <span
-                                                    >Over: Self score lebih
-                                                    tinggi dari peer score</span
-                                                >
+                                                    class="w-3 h-3 inline-block bg-green-100 rounded-full border border-green-200"></span>
+                                                <span>Over: Self score lebih
+                                                    tinggi dari peer score</span>
                                             </div>
-                                            <div
-                                                class="flex items-center gap-2"
-                                            >
+                                            <div class="flex items-center gap-2">
                                                 <span
-                                                    class="w-3 h-3 inline-block bg-yellow-100 rounded-full border border-yellow-200"
-                                                ></span>
-                                                <span
-                                                    >Match: Self score sama
-                                                    dengan peer score</span
-                                                >
+                                                    class="w-3 h-3 inline-block bg-yellow-100 rounded-full border border-yellow-200"></span>
+                                                <span>Match: Self score sama
+                                                    dengan peer score</span>
                                             </div>
-                                            <div
-                                                class="flex items-center gap-2"
-                                            >
+                                            <div class="flex items-center gap-2">
                                                 <span
-                                                    class="w-3 h-3 inline-block bg-red-100 rounded-full border border-red-200"
-                                                ></span>
-                                                <span
-                                                    >Under: Self score lebih
-                                                    rendah dari peer score</span
-                                                >
+                                                    class="w-3 h-3 inline-block bg-red-100 rounded-full border border-red-200"></span>
+                                                <span>Under: Self score lebih
+                                                    rendah dari peer score</span>
                                             </div>
                                         </div>
                                     </div>

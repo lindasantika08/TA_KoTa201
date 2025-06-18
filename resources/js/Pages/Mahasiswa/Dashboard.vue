@@ -220,7 +220,7 @@ export default {
 
             try {
                 const response = await axios.get(
-                    "/sispa/api/project-score-details",
+                    "/api/project-score-details",
                     {
                         params: {
                             batch_year: batchYear,
@@ -264,7 +264,7 @@ export default {
 
         async checkUserStatus() {
             try {
-                const response = await axios.get("/sispa/api/user/status");
+                const response = await axios.get("/api/user/status");
 
         if (response.data.hasOwnProperty("change_password")) {
           const needPasswordChange = !response.data.change_password;
@@ -290,7 +290,7 @@ export default {
         },
         fetchProjectData() {
             axios
-                .get("/sispa/api/projects-user")
+                .get("/api/projects-user")
                 .then((response) => {
                     this.projects = response.data.projects.map((project) => ({
                         project_name: project.project_name,
@@ -308,7 +308,7 @@ export default {
         },
         fetchSelfAssessmentStatus(projectName) {
             axios
-                .get(`/sispa/api/assessment-status`, {
+                .get(`/api/assessment-status`, {
                     params: { project: projectName },
                 })
                 .then((response) => {
@@ -331,7 +331,7 @@ export default {
         },
         fetchPeerAssessmentDetails(projectName) {
             axios
-                .get("/sispa/api/count-peer", {
+                .get("/api/count-peer", {
                     params: { project: projectName },
                 })
                 .then((response) => {
@@ -354,7 +354,7 @@ export default {
             this.feedbackError = null;
 
             axios
-                .get("/sispa/api/feedback-dashboard-mhs", {
+                .get("/api/feedback-dashboard-mhs", {
                     params: { project: projectName },
                 })
                 .then((response) => {
@@ -385,13 +385,13 @@ export default {
             this.showChangePasswordToast = false;
             this.needPasswordChange = false;
             localStorage.removeItem("need_password_change");
-            router.visit("/sispa/mahasiswa/profile");
+            router.visit("/mahasiswa/profile");
         },
         goToDashboardSelf(path) {
-            router.visit("/sispa/mahasiswa/assessment/self");
+            router.visit("/mahasiswa/assessment/self");
         },
         goToDashboardPeer(path) {
-            router.visit("/sispa/mahasiswa/assessment/peer");
+            router.visit("/mahasiswa/assessment/peer");
         },
         goToKelolaProyek(path) {
             router.visit(path);
@@ -489,7 +489,7 @@ export default {
           <!-- Self Assessment Card -->
           <div
             class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300 cursor-pointer"
-            @click="goToDashboardSelf('/sispa/mahasiswa/self-assessment')"
+            @click="goToDashboardSelf('/mahasiswa/self-assessment')"
           >
             <div class="px-6 py-5 border-b border-gray-100">
               <h3 class="text-lg font-medium text-gray-800">Self Assessment</h3>
@@ -559,7 +559,7 @@ export default {
                         class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300 cursor-pointer"
                         @click="
                             goToDashboardPeer(
-                                '/sispa/mahasiswa/peer-assessment'
+                                '/mahasiswa/peer-assessment'
                             )
                         "
                     >

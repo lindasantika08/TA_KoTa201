@@ -87,7 +87,7 @@ const submitFeedbackDosen = async () => {
       .querySelector('meta[name="csrf-token"]')
       ?.getAttribute("content");
 
-    const response = await fetch("/sispa/dosen/feedbacks-store-dosen", {
+    const response = await fetch("/dosen/feedbacks-store-dosen", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -135,7 +135,7 @@ const fetchFeedbackSummary = async (forceRegenerate = false) => {
       force_regenerate: forceRegenerate ? "1" : "0",
     });
 
-    const response = await fetch(`/sispa/api/feedback-summary?${queryParams}`, {
+    const response = await fetch(`/api/feedback-summary?${queryParams}`, {
       method: "GET",
       headers: {
         Accept: "application/json",
@@ -190,7 +190,7 @@ const fetchFeedbacks = async () => {
       kelompok: props.kelompok,
     });
 
-    const response = await fetch(`/sispa/api/feedbacks-get-answer?${queryParams}`);
+    const response = await fetch(`/api/feedbacks-get-answer?${queryParams}`);
 
     if (response.ok) {
       const result = await response.json();

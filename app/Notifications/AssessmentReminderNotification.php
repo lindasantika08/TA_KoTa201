@@ -48,7 +48,7 @@ class AssessmentReminderNotification extends Notification
             'type'          => 'reminder',
             'assessment_id' => $this->assessmentData['assessment_id'],
             'message'       => "⏳ The {$prettyType} for project '{$project}' will close in 2 days. Please make sure to complete it before it closes.",
-            'url'           => "/sispa/mahasiswa/assessment/{$routePart}",  
+            'url'           => "/mahasiswa/assessment/{$routePart}",  
         ];
     }
 

@@ -41,7 +41,7 @@ export default {
         const breadcrumbs = [
             {
                 text: "Reflective Writing",
-                href: "/sispa/dosen/reflectiveWriting",
+                href: "/dosen/reflectiveWriting",
             },
             { text: "Detail", href: null },
         ];
@@ -109,7 +109,7 @@ export default {
         const changeOrder = (newOrder) => {
             loading.value = true;
             router.get(
-                "/sispa/dosen/reflectiveWriting/detail",
+                "/dosen/reflectiveWriting/detail",
                 {
                     batch_year: props.batchYear,
                     project_name: props.projectName,
@@ -127,7 +127,7 @@ export default {
         const handleSubmissions = async () => {
             loading.value = true;
 
-            router.visit("/sispa/dosen/ReflectiveWritingSubmissions", {
+            router.visit("/dosen/ReflectiveWritingSubmissions", {
                 method: "get",
                 data: {
                     batch_year: props.batchYear,
@@ -694,7 +694,7 @@ export default {
                 class="bg-white border-t border-gray-200 p-4 text-center text-gray-500 text-sm"
             >
                 <p>
-                    © {{ new Date().getFullYear() }} SISPA - Reflective Writing
+                    © {{ new Date().getFullYear() }} SAPA - Reflective Writing
                     System
                 </p>
             </footer>

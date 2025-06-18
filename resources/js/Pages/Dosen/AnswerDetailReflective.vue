@@ -49,7 +49,7 @@ export default {
             this.error = null;
 
             axios
-                .get("/sispa/api/answers/get-details-answer-reflective", {
+                .get("/api/answers/get-details-answer-reflective", {
                     params: {
                         mahasiswaId: this.mahasiswaId,
                         batch_year: this.batch_year,
@@ -82,7 +82,7 @@ export default {
             }
 
             axios
-                .get("/sispa/api/reflective/summary", {
+                .get("/api/reflective/summary", {
                     params: {
                         mahasiswa_id: this.mahasiswaId,
                         batch_year: this.batch_year,

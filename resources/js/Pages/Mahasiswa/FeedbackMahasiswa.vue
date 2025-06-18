@@ -20,7 +20,7 @@ export default {
   data() {
     return {
       breadcrumbs: [
-        { text: "Dashboard", href: "/sispa/mahasiswa/dashboard" },
+        { text: "Dashboard", href: "/mahasiswa/dashboard" },
         { text: "Report", href: null },
       ],
       projectList: [],
@@ -40,7 +40,7 @@ export default {
       this.error = null;
       
       try {
-        const response = await axios.get("/sispa/api/mahasiswa/projects");
+        const response = await axios.get("/api/mahasiswa/projects");
         // console.log('Projects API response:', response.data);
         
         if (response.data.success) {
@@ -61,7 +61,7 @@ export default {
 
     async fetchAssessmentStatuses() {
       try {
-        const response = await axios.get("/sispa/api/mahasiswa/feedback");
+        const response = await axios.get("/api/mahasiswa/feedback");
         // console.log('Feedback API response:', response.data);
         
         if (response.data.status === 'success' && response.data.projects) {
@@ -128,7 +128,7 @@ export default {
       }
 
       router.get(
-        "/sispa/mahasiswa/feedback-details",
+        "/mahasiswa/feedback-details",
         {
           tahun_ajaran: project.tahun_ajaran,
           nama_proyek: project.nama_proyek,

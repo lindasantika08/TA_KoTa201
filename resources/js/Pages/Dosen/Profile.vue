@@ -196,7 +196,7 @@ export default {
   },
   data() {
     return {
-      breadcrumbs: [{ text: "Profile", href: "/sispa/dosen/profile" }],
+      breadcrumbs: [{ text: "Profile", href: "/dosen/profile" }],
       isDropdownVisible: false,
       profileImage: "",
       isEditMode: false,
@@ -237,7 +237,7 @@ export default {
   methods: {
     fetchProfile() {
       axios
-        .get("/sispa/api/get-profile-dosen")
+        .get("/api/get-profile-dosen")
         .then((response) => {
           const profileData = response.data;
           this.formData = {
@@ -260,7 +260,7 @@ export default {
       if (this.isEditMode) {
         // Mode Simpan
         axios
-          .put("/sispa/api/dosen/update-profile", this.formData)
+          .put("/api/dosen/update-profile", this.formData)
             .then((response) => {
             Swal.fire({
               icon: "success",
@@ -335,7 +335,7 @@ export default {
         formData.append("photo", file);
 
         axios
-          .post("/sispa/api/dosen/upload-profile-photo", formData, {
+          .post("/api/dosen/upload-profile-photo", formData, {
             headers: {
               "Content-Type": "multipart/form-data",
             },
@@ -376,7 +376,7 @@ export default {
     deleteProfilePhoto() {
       if (confirm("Apakah Anda yakin ingin menghapus foto profil?")) {
         axios
-          .delete("/sispa/api/dosen/delete-profile-photo")
+          .delete("/api/dosen/delete-profile-photo")
           .then(() => {
             this.profileImage = "";
             this.isDropdownVisible = false;
@@ -455,7 +455,7 @@ export default {
         return;
       }
 
-      axios.post('/sispa/api/change-password', this.passwordForm)
+      axios.post('/api/change-password', this.passwordForm)
         .then(response => {
           // Update token baru jika ada
           if (response.data.token) {

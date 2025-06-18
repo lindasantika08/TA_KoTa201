@@ -44,7 +44,7 @@ export default {
     data() {
         return {
             breadcrumbs: [
-                { text: "Assessment", href: "/sispa/mahasiswa/assessment/self" },
+                { text: "Assessment", href: "/mahasiswa/assessment/self" },
                 { text: "Self Assessment", href: null }
             ],
             headers: [
@@ -97,7 +97,7 @@ export default {
             this.error = null;
 
             try {
-                const response = await axios.get('/sispa/api/questions', {
+                const response = await axios.get('/api/questions', {
                     params: {
                         batch_year: this.batch_year,
                         project_name: this.project_name,
@@ -129,7 +129,7 @@ export default {
                 const batch_year = this.$page.props.batch_year || this.$route.query.batch_year;
                 const project_name = this.$page.props.project_name || this.$route.query.project_name;
 
-                const response = await axios.get('/sispa/api/user-info', {
+                const response = await axios.get('/api/user-info', {
                     params: {
                         batch_year: batch_year,
                         project_name: project_name
@@ -163,7 +163,7 @@ export default {
             this.saveTemporaryAnswer();
 
             try {
-                const response = await axios.post('/sispa/api/save-answer-mhs', {
+                const response = await axios.post('/api/save-answer-mhs', {
                     answers: [{
                         question_id: this.currentQuestion.id,
                         answer: this.answer,
@@ -217,7 +217,7 @@ export default {
             if (!this.currentQuestion) return;
 
             try {
-                const response = await axios.get(`/sispa/api/get-answer-mhs/${this.currentQuestion.id}`);
+                const response = await axios.get(`/api/get-answer-mhs/${this.currentQuestion.id}`);
 
                 const tempAnswer = this.temporaryAnswers[this.currentQuestion.id];
                 if (tempAnswer) {
@@ -297,7 +297,7 @@ export default {
                     status: 'submitted'
                 }));
 
-                const response = await axios.post('/sispa/api/save-all-answers', { answers: allAnswers });
+                const response = await axios.post('/api/save-all-answers', { answers: allAnswers });
 
                 if (response.data.success) {
                     this.clearFormFields();
@@ -306,7 +306,7 @@ export default {
                         title: 'Berhasil',
                         text: 'Semua jawaban berhasil disimpan!',
                     });
-                    this.$inertia.visit('/sispa/mahasiswa/assessment/self');
+                    this.$inertia.visit('/mahasiswa/assessment/self');
                 }
             } catch (error) {
                 console.error('Error submitting answers:', error);

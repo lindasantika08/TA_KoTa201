@@ -154,7 +154,7 @@ export default {
         async markAsRead(notification) {
             try {
                 const res = await axios.post(
-                    `/sispa/api/notifications/${notification.id}/read`
+                    `/api/notifications/${notification.id}/read`
                 );
 
                 if (!res.data.success) return;
@@ -168,7 +168,7 @@ export default {
 
                 const type = (notification.type || res.data.type || '').toLowerCase();
 
-                let route = '/sispa/mahasiswa/assessment/';
+                let route = '/mahasiswa/assessment/';
                 if (type.includes('self')) {
                     route += 'self';
                 } else if (type.includes('peer')) {
@@ -187,7 +187,7 @@ export default {
 
         async markAllAsRead() {
             try {
-                const response = await axios.post('/sispa/api/notifications/read-all');
+                const response = await axios.post('/api/notifications/read-all');
                 if (response.data.success) {
                     this.localNotifications.forEach(notification => {
                         notification.read_at = new Date();
@@ -204,7 +204,7 @@ export default {
 
             try {
                 this.loading = true;
-                const response = await axios.get('/sispa/api/notifications/get');
+                const response = await axios.get('/api/notifications/get');
 
                 if (response.data.success) {
                     this.localNotifications = this.processNotifications(response.data.data.notifications);

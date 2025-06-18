@@ -877,7 +877,7 @@ export default {
             breadcrumbs: [
                 {
                     text: "Peer Assessment",
-                    href: "/sispa/dosen/assessment/projects-peer",
+                    href: "/dosen/assessment/projects-peer",
                 },
                 { text: "List Answer", href: null },
             ],
@@ -1098,7 +1098,7 @@ export default {
             this.error = null;
             try {
                 const response = await axios.get(
-                    "/sispa/api/answersPeer/list",
+                    "/api/answersPeer/list",
                     {
                         params: {
                             batch_year: this.batch_year,

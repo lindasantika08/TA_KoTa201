@@ -19,11 +19,11 @@ export default {
             breadcrumbs: [
                 {
                     text: "Reflective Assessment",
-                    href: "/sispa/dosen/assessment/projects-self",
+                    href: "/dosen/assessment/projects-self",
                 },
                 {
                     text: "List Reflective Assessment Answer",
-                    href: "/sispa/dosen/assessment/projects-self",
+                    href: "/dosen/assessment/projects-self",
                 },
             ],
             loading: true,
@@ -54,7 +54,7 @@ export default {
             this.loading = true;
             try {
                 const response = await axios.get(
-                    "/sispa/api/get-reflective-answer",
+                    "/api/get-reflective-answer",
                     {
                         params: {
                             batchYear: this.batch_year,
@@ -113,7 +113,7 @@ export default {
 
             // Make the API call with parameter names matching the controller's validation
             router
-                .get("/sispa/api/reflective-assessment-answer-details", {
+                .get("/api/reflective-assessment-answer-details", {
                     batch_year: this.batch_year,
                     project_name: this.project_name,
                     reflective_assessment_order: this.reflective_order,

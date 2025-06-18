@@ -67,7 +67,7 @@ export default {
                 try {
                     const token = localStorage.getItem("auth_token");
                     const response = await axios.get(
-                        "/sispa/api/export-reflective-assessment",
+                        "/api/export-reflective-assessment",
                         {
                             params: {
                                 batch_year: selectedProject.value.batch_year,
@@ -126,7 +126,7 @@ export default {
             try {
                 const token = localStorage.getItem("auth_token");
                 const response = await axios.post(
-                    "/sispa/dosen/reflectiveAssessment/import",
+                    "/dosen/reflectiveAssessment/import",
                     formData,
                     {
                         headers: {
@@ -146,7 +146,7 @@ export default {
 
         onMounted(async () => {
             try {
-                const response = await axios.get("/sispa/api/projects");
+                const response = await axios.get("/api/projects");
                 projects.value = response.data;
             } catch (error) {
                 console.error("Error fetching projects:", error);
@@ -170,7 +170,7 @@ export default {
             // Handle detail differently based on reflective type
             if (this.listReflectiveType === "Reflective Assessment") {
                 axios
-                    .get("/sispa/dosen/reflectiveAssessment/detail", {
+                    .get("/dosen/reflectiveAssessment/detail", {
                         params: {
                             batch_year: item.batch_year,
                             project_name: item.project_name,
@@ -189,7 +189,7 @@ export default {
             } else {
                 // For Reflective Writing
                 axios
-                    .get("/sispa/dosen/reflectiveWriting/detail", {
+                    .get("/dosen/reflectiveWriting/detail", {
                         params: {
                             batch_year: item.batch_year,
                             project_name: item.project_name,
@@ -211,7 +211,7 @@ export default {
         handleListAnswer(item) {
             if (this.listReflectiveType === "Reflective Assessment") {
                 router.get(
-                    "/sispa/dosen/reflectiveAssessment/detail-answer",
+                    "/dosen/reflectiveAssessment/detail-answer",
                     {
                         batch_year: item.batch_year,
                         project_name: item.project_name,
@@ -224,7 +224,7 @@ export default {
             } else {
                 // For Reflective Writing
                 router.get(
-                    "/sispa/dosen/reflectiveWriting/detail-answer",
+                    "/dosen/reflectiveWriting/detail-answer",
                     {
                         batch_year: item.batch_year,
                         project_name: item.project_name,
@@ -250,8 +250,8 @@ export default {
             // Different API endpoints based on the type
             const endpoint =
                 this.listReflectiveType === "Reflective Assessment"
-                    ? "/sispa/api/toggle-publish-reflective-assessment"
-                    : "/sispa/api/toggle-publish-reflective-writing";
+                    ? "/api/toggle-publish-reflective-assessment"
+                    : "/api/toggle-publish-reflective-writing";
 
             // Different payload based on the type
             const payload = {
@@ -320,8 +320,8 @@ export default {
             // Different API endpoints based on type
             const endpoint =
                 this.listReflectiveType === "Reflective Assessment"
-                    ? "/sispa/api/reflective-assessment-list"
-                    : "/sispa/api/reflective-writing-list";
+                    ? "/api/reflective-assessment-list"
+                    : "/api/reflective-writing-list";
 
             axios
                 .get(endpoint, {
