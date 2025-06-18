@@ -9,7 +9,7 @@ from datetime import datetime
 from nltk.corpus import wordnet as wn
 from nltk.corpus import sentiwordnet as swn
 from nltk.wsd import lesk
-from nltk import word_tokenize
+# from nltk import word_tokenize  # Removed unused import
 from translate import Translator
 
 # Konfigurasi logging

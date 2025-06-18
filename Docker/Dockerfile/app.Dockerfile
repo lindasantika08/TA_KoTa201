@@ -55,7 +55,7 @@ RUN npm install
 
 RUN php artisan config:clear
 
-RUN php artisan storage:link
+# RUN php artisan storage:link
 
 #akses storage
 RUN chmod -R 755 storage bootstrap/cache \
