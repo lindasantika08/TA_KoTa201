@@ -43,8 +43,15 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
     apt-get install -y nodejs
 
-# Copy project ke dalam container
 COPY --chown=www-data:www-data . /var/www/
+
+# Install dependency
+RUN composer install --no-dev --optimize-autoloader
+RUN npm install
+
+RUN php artisan config:clear
+
+# Copy project ke dalam container
 RUN chown -R www-data:www-data /var/www
 RUN chown -R www-data:www-data /var/log/supervisor
 RUN chmod -R 755 /var/log/supervisor
@@ -55,12 +62,6 @@ RUN php artisan storage:link
 RUN chmod -R 755 storage bootstrap/cache \
  && find storage/app/public -type d -exec chmod 755 {} \; \
  && find storage/app/public -type f -exec chmod 644 {} \;
-
-# Install dependency
-RUN composer install --no-dev --optimize-autoloader
-RUN npm install
-
-RUN php artisan config:clear
 
 RUN npm run build
 
