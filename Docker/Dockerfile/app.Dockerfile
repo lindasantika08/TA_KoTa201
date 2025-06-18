@@ -49,6 +49,8 @@ RUN chown -R www-data:www-data /var/www
 RUN chown -R www-data:www-data /var/log/supervisor
 RUN chmod -R 755 /var/log/supervisor
 
+RUN php artisan storage:link
+
 #akses storage
 RUN chmod -R 755 storage bootstrap/cache \
  && find storage/app/public -type d -exec chmod 755 {} \; \
