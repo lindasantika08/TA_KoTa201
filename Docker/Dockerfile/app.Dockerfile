@@ -78,7 +78,7 @@ COPY prod-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/prod-entrypoint.sh
 
 
-# EXPOSE 9000
+EXPOSE 9000
 # Override PHP-FPM configuration
 # COPY Docker/www/www.conf /usr/local/etc/php-fpm.d/www.conf
 # COPY Docker/www//zz-docker.conf /usr/local/etc/php-fpm.d//zz-docker.conf
