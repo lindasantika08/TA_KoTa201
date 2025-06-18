@@ -45,14 +45,14 @@ RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
 
 # Copy project ke dalam container
 COPY --chown=www-data:www-data . /var/www/
-
-# Set permissions
 RUN chown -R www-data:www-data /var/www
 RUN chown -R www-data:www-data /var/log/supervisor
-# RUN chown -R www-data:www-data /var/log/apache2
 RUN chmod -R 755 /var/log/supervisor
-# RUN chmod -R 755 /var/log/apache2
-RUN chmod +x /var/www/artisan
+
+#akses storage
+RUN chmod -R 755 storage bootstrap/cache \
+ && find storage/app/public -type d -exec chmod 755 {} \; \
+ && find storage/app/public -type f -exec chmod 644 {} \;
 
 # Install dependency
 RUN composer install --no-dev --optimize-autoloader
