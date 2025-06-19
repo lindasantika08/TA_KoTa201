@@ -53,6 +53,7 @@ RUN chmod -R 755 /var/log/supervisor
 # Install dependency
 RUN composer install --no-dev --optimize-autoloader
 RUN npm install
+RUN npm run build
 
 RUN php artisan config:clear
 
@@ -60,12 +61,7 @@ RUN chmod -R 755 storage bootstrap/cache \
  && find storage/app/public -type d -exec chmod 755 {} \; \
  && find storage/app/public -type f -exec chmod 644 {} \; \
  && chmod -R 775 /var/www/public \
- && find storage/app/public -type f -exec chmod 644 {} \; \
- && mkdir -p /var/www/public/build \
- && chown -R www-data:www-data /var/www/public/build \
- && chmod -R 775 /var/www/public/build
-
-# RUN npm run build
+ && find storage/app/public -type f -exec chmod 644 {} \;
 
 # Expose port
 # EXPOSE 80
