@@ -49,8 +49,6 @@ RUN chown -R www-data:www-data /var/www
 RUN chown -R www-data:www-data /var/www/public
 RUN chown -R www-data:www-data /var/log/supervisor
 RUN chmod -R 755 /var/log/supervisor
-# Ensure supervisord.log exists and is owned by www-data
-RUN touch /var/www/supervisord.log && chown www-data:www-data /var/www/supervisord.log && chmod 664 /var/www/supervisord.log
 
 # Install dependency
 RUN composer install --no-dev --optimize-autoloader
