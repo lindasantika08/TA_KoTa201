@@ -13,6 +13,11 @@ if [ "$RUN_MIGRATIONS" = "true" ]; then
   php artisan migrate:fresh --seed --force
 fi
 
+echo "Fixing permissions for build..."
+mkdir -p /var/www/public/build
+chown -R www-data:www-data /var/www/public
+chmod -R 775 /var/www/public
+
 if [ ! -d /var/www/public/build ]; then
   echo "Running npm build..."
   npm install
