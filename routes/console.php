@@ -13,3 +13,4 @@ Schedule::command('assessment:reminder')
         ->dailyAt('08:00');
 Schedule::command('assessment:reminder-lecturer')
         ->dailyAt('08:00');
+        
