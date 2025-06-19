@@ -13,6 +13,12 @@ if [ "$RUN_MIGRATIONS" = "true" ]; then
   php artisan migrate:fresh --seed --force
 fi
 
+if [ ! -d /var/www/public/build ]; then
+  echo "Running npm build..."
+  npm install
+  npm run build
+fi
+
 # Start supervisord
 
 exec /usr/bin/supervisord -c /etc/supervisord.conf
