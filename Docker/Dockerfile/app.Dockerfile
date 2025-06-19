@@ -74,7 +74,7 @@ COPY Docker/supervisor/ /etc/
 COPY prod-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/prod-entrypoint.sh
 
-
+RUN chown -R www-data:www-data /var/www /var/log/supervisor
 EXPOSE 9000
 # Override PHP-FPM configuration
 # COPY Docker/www/www.conf /usr/local/etc/php-fpm.d/www.conf
