@@ -46,6 +46,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
 COPY --chown=www-data:www-data . /var/www/
 
 RUN chown -R www-data:www-data /var/www
+RUN chown -R www-data:www-data /var/www/public
 RUN chown -R www-data:www-data /var/log/supervisor
 RUN chmod -R 755 /var/log/supervisor
 
@@ -55,9 +56,10 @@ RUN npm install
 
 RUN php artisan config:clear
 
-#akses storage
 RUN chmod -R 755 storage bootstrap/cache \
  && find storage/app/public -type d -exec chmod 755 {} \; \
+ && find storage/app/public -type f -exec chmod 644 {} \; \
+ && chmod -R 775 /var/www/public \
  && find storage/app/public -type f -exec chmod 644 {} \;
 
 RUN npm run build
