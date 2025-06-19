@@ -1,4 +1,4 @@
-FROM php:8.3-fpm AS builder
+FROM php:8.3-fpm
 
 # Set working directory
 WORKDIR /var/www/
