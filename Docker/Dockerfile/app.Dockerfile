@@ -62,7 +62,7 @@ RUN chmod -R 755 storage bootstrap/cache \
  && chmod -R 775 /var/www/public \
  && find storage/app/public -type f -exec chmod 644 {} \;
 
-RUN npm run build
+# RUN npm run build
 
 # Expose port
 # EXPOSE 80
