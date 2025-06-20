@@ -46,23 +46,22 @@ RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
 COPY --chown=www-data:www-data . /var/www/
 
 RUN chown -R www-data:www-data /var/www
+RUN chown -R www-data:www-data /var/www/public
 RUN chown -R www-data:www-data /var/log/supervisor
 RUN chmod -R 755 /var/log/supervisor
 
 # Install dependency
 RUN composer install --no-dev --optimize-autoloader
 RUN npm install
+RUN npm run build
 
 RUN php artisan config:clear
 
-# RUN php artisan storage:link
-
-#akses storage
 RUN chmod -R 755 storage bootstrap/cache \
  && find storage/app/public -type d -exec chmod 755 {} \; \
+ && find storage/app/public -type f -exec chmod 644 {} \; \
+ && chmod -R 775 /var/www/public \
  && find storage/app/public -type f -exec chmod 644 {} \;
-
-RUN npm run build
 
 # Expose port
 # EXPOSE 80
@@ -76,7 +75,7 @@ COPY Docker/supervisor/ /etc/
 COPY prod-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/prod-entrypoint.sh
 
-
+RUN chown -R www-data:www-data /var/www /var/log/supervisor
 EXPOSE 9000
 # Override PHP-FPM configuration
 # COPY Docker/www/www.conf /usr/local/etc/php-fpm.d/www.conf
