@@ -25,7 +25,7 @@ class ReportController extends Controller
         return Inertia::render('Dosen/Report');
     }
 
-    public function getDropdownOptions(Request $request): JsonResponse
+   public function getDropdownOptions(Request $request): JsonResponse
     {
         // Ambil data batch_year yang unik
         $batchYearOptions = Project::select('batch_year')->distinct()->pluck('batch_year');
@@ -479,215 +479,232 @@ class ReportController extends Controller
         });
     }
 
-    public function getStudentPeerData(Request $request)
-    {
-        $tahunAjaran = $request->input('batch_year');
-        $namaProyek = $request->input('project_name');
+public function getStudentPeerData(Request $request)
+{
+    $tahunAjaran = $request->input('batch_year');
+    $namaProyek = $request->input('project_name');
 
-        try {
-            // Get project
-            $project = Project::where('batch_year', $tahunAjaran)
-                ->where('project_name', $namaProyek)
-                ->first();
+    try {
+        // Get project
+        $project = Project::where('batch_year', $tahunAjaran)
+            ->where('project_name', $namaProyek)
+            ->first();
 
-            if (!$project) {
-                return response()->json(['message' => 'Project not found'], 404);
+        if (!$project) {
+            return response()->json(['message' => 'Project not found'], 404);
+        }
+
+        // Get all mahasiswa IDs for this project
+        $mahasiswaIds = Group::where('batch_year', $tahunAjaran)
+            ->where('project_id', $project->id)
+            ->pluck('mahasiswa_id');
+
+        if ($mahasiswaIds->isEmpty()) {
+            return response()->json(['message' => 'No students found'], 404);
+        }
+
+        // Collect all selisih values for range calculation
+        $allSelisih = collect();
+
+        $studentsData = $mahasiswaIds->map(function ($mahasiswaId) use ($tahunAjaran, $project, &$allSelisih) {
+            // Get student details
+            $student = Mahasiswa::with(['user', 'group' => function ($query) use ($project) {
+                $query->where('project_id', $project->id);
+            }])->find($mahasiswaId);
+
+            if (!$student) {
+                return null;
             }
 
-            // Get all mahasiswa IDs for this project
-            $mahasiswaIds = Group::where('batch_year', $tahunAjaran)
+            $group = $student->group->first();
+
+            // Self Assessments
+            $selfAssessments = Assessment::where('batch_year', $tahunAjaran)
                 ->where('project_id', $project->id)
-                ->pluck('mahasiswa_id');
+                ->where('type', 'selfAssessment')
+                ->with('typeCriteria')
+                ->get();
 
-            if ($mahasiswaIds->isEmpty()) {
-                return response()->json(['message' => 'No students found'], 404);
+            $selfAspekKriteriaAnalysis = $this->analyzeAssessmentsReportRingkasan($selfAssessments, $mahasiswaId, 'self', $project->id);
+
+            // Peer Assessments
+            $peerAssessments = Assessment::where('batch_year', $tahunAjaran)
+                ->where('project_id', $project->id)
+                ->where('type', 'peerAssessment')
+                ->with('typeCriteria')
+                ->get();
+
+            $peerAspekKriteriaAnalysis = $this->analyzeAssessmentsReportRingkasan($peerAssessments, $mahasiswaId, 'peer', $project->id);
+
+            // Calculate average scores and differences
+            $result = $this->calculateAverages($selfAspekKriteriaAnalysis, $peerAspekKriteriaAnalysis);
+
+            // Cek apakah ada data self atau peer
+            $hasData = ($result['self_score'] > 0 || $result['peer_score'] > 0);
+
+            if ($hasData) {
+                $allSelisih->push($result['selisih']);
             }
 
-            // Collect all selisih values for range calculation
-            $allSelisih = collect();
-
-            // Process each mahasiswa's assessments
-            $studentsData = $mahasiswaIds->map(function ($mahasiswaId) use ($tahunAjaran, $project, &$allSelisih) {
-                // Get student details
-                $student = Mahasiswa::with(['user', 'group' => function ($query) use ($project) {
-                    $query->where('project_id', $project->id);
-                }])->find($mahasiswaId);
-
-                if (!$student) {
-                    return null;
-                }
-
-                $group = $student->group->first();
-
-                // Self Assessments
-                $selfAssessments = Assessment::where('batch_year', $tahunAjaran)
-                    ->where('project_id', $project->id)
-                    ->where('type', 'selfAssessment')
-                    ->with('typeCriteria')
-                    ->get();
-
-                $selfAspekKriteriaAnalysis = $this->analyzeAssessmentsReport($selfAssessments, $mahasiswaId, 'self', $project->id);
-
-                // Peer Assessments
-                $peerAssessments = Assessment::where('batch_year', $tahunAjaran)
-                    ->where('project_id', $project->id)
-                    ->where('type', 'peerAssessment')
-                    ->with('typeCriteria')
-                    ->get();
-
-                $peerAspekKriteriaAnalysis = $this->analyzeAssessmentsReport($peerAssessments, $mahasiswaId, 'peer', $project->id);
-
-                // Calculate average scores and differences
-                $result = $this->calculateAverages($selfAspekKriteriaAnalysis, $peerAspekKriteriaAnalysis);
-                $allSelisih->push($result['selisih']);
-
-                // Save to Report table if group exists
-                if ($group) {
-                    // Get all assessments to map typeCriteria IDs
-                    $allAssessments = $selfAssessments->concat($peerAssessments);
-                    $typeCriteriaMap = $allAssessments->pluck('typeCriteria')->unique('id')->keyBy(function ($criteria) {
-                        return $criteria->aspect . '_' . $criteria->criteria;
-                    });
-
-                    foreach ($result['aspect_details'] as $detail) {
-                        $typeCriteria = $typeCriteriaMap->get($detail['aspek'] . '_' . $detail['kriteria']);
-
-                        if ($typeCriteria) {
-                            Report::updateOrCreate(
-                                [
-                                    'project_id' => $project->id,
-                                    'group_id' => $group->id,
-                                    'mahasiswa_id' => $mahasiswaId,
-                                    'typeCriteria_id' => $typeCriteria->id
-                                ],
-                                [
-                                    'skor_self' => $detail['self_score'],
-                                    'skor_peer' => $detail['peer_score'],
-                                    'selisih' => $detail['selisih'],
-                                    'nilai_total' => 60, // Default value, will be updated later
-                                ]
-                            );
-                        }
-                    }
-                }
-
-                return [
-                    'id' => $mahasiswaId,
-                    'name' => $student->user->name,
-                    'nim' => $student->nim,
-                    'kelompok' => $group ? $group->group : 'Unknown',
-                    'skor_self' => $result['self_score'],
-                    'skor_peer' => $result['peer_score'],
-                    'selisih' => $result['selisih'],
-                    'aspect_details' => $result['aspect_details']
-                ];
-            })->filter()->values();
-
-            // Calculate ranges and final scores
-            $minSelisih = $allSelisih->min();
-            $maxSelisih = $allSelisih->max();
-            $range = $maxSelisih > $minSelisih ? ($maxSelisih - $minSelisih) / 4 : 0;
-
-            // Define the ranges
-            $ranges = [
-                ['min' => $minSelisih, 'max' => $minSelisih + $range, 'score' => 100],
-                ['min' => $minSelisih + $range, 'max' => $minSelisih + (2 * $range), 'score' => 90],
-                ['min' => $minSelisih + (2 * $range), 'max' => $minSelisih + (3 * $range), 'score' => 80],
-                ['min' => $minSelisih + (3 * $range), 'max' => $minSelisih + (4 * $range), 'score' => 70],
-                ['min' => $maxSelisih, 'max' => $maxSelisih, 'score' => 60]
+            return [
+                'id' => $mahasiswaId,
+                'name' => $student->user->name,
+                'nim' => $student->nim,
+                'kelompok' => $group ? $group->group : 'Unknown',
+                'skor_self' => $result['self_score'],
+                'skor_peer' => $result['peer_score'],
+                'selisih' => $hasData ? $result['selisih'] : null,
+                'aspect_details' => $result['aspect_details'], // Sudah include criteria
+                'keterangan' => $hasData ? null : 'Belum ada data self atau peer'
             ];
+        })->filter()->values();
 
-            // Apply final scores to each student and update Report table
-            $studentsData = $studentsData->map(function ($student) use ($ranges, $project) {
-                $nilaiTotal = 60; // Default value
+        // Calculate ranges and final scores
+        $minSelisih = $allSelisih->min();
+        $maxSelisih = $allSelisih->max();
+        $range = $maxSelisih > $minSelisih ? ($maxSelisih - $minSelisih) / 4 : 0;
+
+        // Define the ranges
+        $ranges = [
+            ['min' => $minSelisih, 'max' => $minSelisih + $range, 'score' => 100],
+            ['min' => $minSelisih + $range, 'max' => $minSelisih + (2 * $range), 'score' => 90],
+            ['min' => $minSelisih + (2 * $range), 'max' => $minSelisih + (3 * $range), 'score' => 80],
+            ['min' => $minSelisih + (3 * $range), 'max' => $minSelisih + (4 * $range), 'score' => 70],
+            ['min' => $maxSelisih, 'max' => $maxSelisih, 'score' => 60]
+        ];
+
+        $studentsData = $studentsData->map(function ($student) use ($ranges) {
+            $nilaiTotal = 60; // Default value
+            if ($student['selisih'] !== null) {
                 foreach ($ranges as $range) {
                     if ($student['selisih'] >= $range['min'] && $student['selisih'] <= $range['max']) {
                         $nilaiTotal = $range['score'];
                         break;
                     }
                 }
-
-                // Update nilai_total in Report table for this student
-                if (isset($student['kelompok']) && $student['kelompok'] !== 'Unknown') {
-                    $group = Group::where('project_id', $project->id)
-                        ->where('mahasiswa_id', $student['id'])
-                        ->first();
-
-                    if ($group) {
-                        Report::where('project_id', $project->id)
-                            ->where('group_id', $group->id)
-                            ->where('mahasiswa_id', $student['id'])
-                            ->update(['nilai_total' => $nilaiTotal]);
-                    }
-                }
-
-                return array_merge($student, [
-                    'nilai_total' => $nilaiTotal
-                ]);
-            });
-
-            // Sort students by nilai_total (descending) and then by selisih (ascending)
-            $sortedStudentsData = $studentsData->sortBy([
-                ['nilai_total', 'desc'],
-                ['selisih', 'asc']
-            ])->values();
-
-            return response()->json([
-                'success' => true,
-                'students' => $sortedStudentsData,
-                'ranges' => $ranges
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Error in getStudentPeerData: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Terjadi kesalahan saat memproses data.',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    private function calculateAverages($selfAnalysis, $peerAnalysis)
-    {
-        $totalSelfScore = 0;
-        $totalPeerScore = 0;
-        $totalSelisih = 0;
-        $aspectCount = 0;
-        $aspectDetails = [];
-
-        foreach ($selfAnalysis as $key => $selfData) {
-            $peerData = $peerAnalysis->get($key);
-            if ($peerData) {
-                $selfScore = $selfData['total_score'] ?? 0;
-                $peerScore = $peerData['total_score'] ?? 0;
-
-                $totalSelfScore += $selfScore;
-                $totalPeerScore += $peerScore;
-                $aspectSelisih = abs($selfScore - $peerScore);
-                $totalSelisih += $aspectSelisih;
-                $aspectCount++;
-
-                $aspectDetails[] = [
-                    'aspek' => $selfData['aspek'],
-                    'kriteria' => $selfData['kriteria'],
-                    'self_score' => $selfScore,
-                    'peer_score' => $peerScore,
-                    'selisih' => $aspectSelisih
-                ];
             }
+            return array_merge($student, [
+                'nilai_total' => $student['selisih'] !== null ? $nilaiTotal : null
+            ]);
+        });
+
+        // Pisahkan yang punya data dan yang belum
+        $studentsWithData = $studentsData->filter(function ($student) {
+            return $student['selisih'] !== null;
+        });
+        $studentsWithoutData = $studentsData->filter(function ($student) {
+            return $student['selisih'] === null;
+        });
+
+        // Urutkan yang punya data
+        $studentsWithData = $studentsWithData->sortBy([
+            ['nilai_total', 'desc'],
+            ['selisih', 'asc']
+        ])->values();
+
+        // Gabungkan
+        $sortedStudentsData = $studentsWithData->concat($studentsWithoutData->values())->values();
+
+        return response()->json([
+            'success' => true,
+            'students' => $sortedStudentsData,
+            'ranges' => $ranges
+        ]);
+    } catch (\Exception $e) {
+        \Log::error('Error in getStudentPeerData: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Terjadi kesalahan saat memproses data.',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
+
+/**
+ * Contoh fungsi analyzeAssessmentsReport yang mengembalikan aspek dan kriteria
+ */
+protected function analyzeAssessmentsReportRingkasan($assessments, $mahasiswaId, $type, $projectId)
+{
+    $details = [];
+    $totalScore = 0;
+    $count = 0;
+
+    foreach ($assessments as $assessment) {
+        // Ambil jawaban dari tabel Answers atau AnswersPeer sesuai $type
+        if ($type === 'self') {
+            $answer = \App\Models\Answers::where('mahasiswa_id', $mahasiswaId)
+                ->where('question_id', $assessment->id)
+                ->first();
+        } else {
+            $answer = \App\Models\AnswersPeer::where('mahasiswa_id', $mahasiswaId)
+                ->where('question_id', $assessment->id)
+                ->first();
         }
 
-        $avgSelfScore = $aspectCount > 0 ? $totalSelfScore / $aspectCount : 0;
-        $avgPeerScore = $aspectCount > 0 ? $totalPeerScore / $aspectCount : 0;
+        $score = $answer ? $answer->score : 0;
+        $totalScore += $score;
+        $count++;
 
-        return [
-            'self_score' => round($avgSelfScore, 2),
-            'peer_score' => round($avgPeerScore, 2),
-            'selisih' => round($totalSelisih, 2), // Now this is the sum of all differences
-            'aspect_details' => $aspectDetails
+        $details[] = [
+            'assessment_id' => $assessment->id,
+            'criteria' => $assessment->typeCriteria ? $assessment->typeCriteria->toArray() : null,
+            'question' => $assessment->question,
+            'score' => $score,
         ];
     }
 
+    $averageScore = $count > 0 ? round($totalScore / $count, 2) : 0;
+
+    return [
+        'average_score' => $averageScore,
+        'aspect_details' => $details,
+        'total_score' => $totalScore,
+        'count' => $count,
+    ];
+}
+
+protected function calculateAverages($self, $peer)
+{
+    $selfScore = $self['average_score'] ?? 0;
+    $peerScore = $peer['average_score'] ?? 0;
+    $selisih = abs($selfScore - $peerScore);
+
+    // Gabungkan aspek/kriteria berdasarkan assessment_id
+    $details = [];
+    $selfDetails = collect($self['aspect_details'] ?? []);
+    $peerDetails = collect($peer['aspect_details'] ?? []);
+
+    // Gabungkan berdasarkan assessment_id
+    $allAssessmentIds = $selfDetails->pluck('assessment_id')
+        ->merge($peerDetails->pluck('assessment_id'))
+        ->unique();
+
+    foreach ($allAssessmentIds as $assessmentId) {
+        $selfItem = $selfDetails->firstWhere('assessment_id', $assessmentId);
+        $peerItem = $peerDetails->firstWhere('assessment_id', $assessmentId);
+
+        $aspek = $selfItem['criteria']['aspect'] ?? $peerItem['criteria']['aspect'] ?? '-';
+        $kriteria = $selfItem['criteria']['criteria'] ?? $peerItem['criteria']['criteria'] ?? '-';
+
+        $self_score = $selfItem['score'] ?? 0;
+        $peer_score = $peerItem['score'] ?? 0;
+
+        $details[] = [
+            'aspek' => $aspek,
+            'kriteria' => $kriteria,
+            'self_score' => $self_score,
+            'peer_score' => $peer_score,
+            'selisih' => abs($self_score - $peer_score),
+        ];
+    }
+
+    return [
+        'self_score' => $selfScore,
+        'peer_score' => $peerScore,
+        'selisih' => $selisih,
+        'aspect_details' => $details, // <-- array sesuai kebutuhan frontend
+    ];
+}
     private function analyzeAssessmentsReport($assessments, $mahasiswaId, $assessmentType, $projectId)
     {
         if ($assessments->isEmpty()) {

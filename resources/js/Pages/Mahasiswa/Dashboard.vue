@@ -99,6 +99,13 @@ export default {
                 };
             });
         },
+        progressColor() {
+            if (this.peerGroupSize === 0) return "bg-gray-300";
+            const percent = this.peerCompletedCount / this.peerGroupSize;
+            if (percent === 0) return "bg-red-500";
+            if (percent < 1) return "bg-yellow-400";
+            return "bg-green-600";
+        },
         radarChartOptions() {
             return {
                 chart: {
@@ -592,18 +599,18 @@ export default {
                                 </div>
                                 <div class="flex-1">
                                     <div
-                                        class="flex justify-between items-center mb-1"
+                                        class="w-full bg-gray-200 rounded-full h-2.5"
                                     >
-                                        <span
-                                            class="text-sm font-medium text-gray-700"
-                                            >Progress</span
-                                        >
-                                        <span
-                                            class="text-sm font-medium text-gray-700"
-                                            >{{ peerCompletedCount }}/{{
-                                                peerGroupSize
-                                            }}</span
-                                        >
+                                        <div
+                                            :class="`h-2.5 rounded-full ${progressColor}`"
+                                            :style="`width: ${
+                                                peerGroupSize > 0
+                                                    ? (peerCompletedCount /
+                                                          peerGroupSize) *
+                                                      100
+                                                    : 0
+                                            }%`"
+                                        ></div>
                                     </div>
                                     <div
                                         class="w-full bg-green-600 rounded-full h-2.5"

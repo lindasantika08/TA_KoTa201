@@ -109,7 +109,7 @@ const handleReportKelompokDetail = (kelompok) => {
     const classId = firstMember?.class_id;
 
     // console.log("firstmember :", kelompok.anggota[0]);
-    window.location.href = `/dosen/kelompok/report-detail?batch_year=${selectedOption.value.batch_year}&project_name=${encodeURIComponent(selectedOption.value.project_name)}&kelompok=${encodeURIComponent(kelompok.nama_kelompok)}&class_id=${classId}`;
+    window.location.href = `/dosen/kelompok/report-detail?batch_year=${selectedOption.value.batch_year}&project_name=${selectedOption.value.project_name}&kelompok=${kelompok.nama_kelompok}&class_id=${classId}`;
 };
 
 const fetchStudentData = async () => {
@@ -339,6 +339,7 @@ onMounted(() => {
         </div>
 
         <!-- Modal -->
+        <!-- Modal -->
         <div v-if="showModal" class="fixed inset-0 z-50 overflow-y-auto">
             <div class="flex items-center justify-center min-h-screen px-4">
                 <!-- Modal Backdrop -->
@@ -346,12 +347,12 @@ onMounted(() => {
 
                 <!-- Modal Content -->
                 <div
-                    class="relative bg-white rounded-lg max-w-4xl w-full mx-4 p-6"
+                    class="relative bg-white rounded-lg max-w-3xl w-full mx-4 p-6"
                 >
                     <!-- Modal Header -->
                     <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-xl font-semibold text-gray-900">
-                            Data Mahasiswa dan Selisih Penilaian
+                        <h3 class="text-2xl font-semibold text-gray-900">
+                            Ringkasan Penilaian Mahasiswa
                         </h3>
                         <button
                             @click="closeModal"
@@ -359,7 +360,7 @@ onMounted(() => {
                         >
                             <span class="sr-only">Close</span>
                             <svg
-                                class="h-6 w-6"
+                                class="h-7 w-7"
                                 fill="none"
                                 viewBox="0 0 24 24"
                                 stroke="currentColor"
@@ -375,95 +376,108 @@ onMounted(() => {
                     </div>
 
                     <!-- Modal Body -->
-                    <div class="mt-4">
+                    <div>
                         <!-- Loading State -->
                         <div
                             v-if="modalLoading"
                             class="flex justify-center items-center py-12"
                         >
                             <div
-                                class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"
+                                class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"
                             ></div>
                         </div>
 
                         <!-- Data Table -->
                         <div v-else>
+                            <!-- Score Ranges -->
+                            <div class="mt-6 bg-gray-50 p-4 rounded-lg">
+                                <div class="flex flex-wrap gap-3">
+                                    <div
+                                        v-for="(
+                                            range, index
+                                        ) in modalData.ranges"
+                                        :key="index"
+                                        class="bg-white px-4 py-2 rounded shadow text-sm"
+                                    >
+                                        <span class="font-semibold"
+                                            >Nilai {{ range.score }}</span
+                                        >
+                                        <span class="ml-2 text-gray-500">
+                                        ({{ range.min !== null && range.min !== undefined ? range.min.toFixed(2) : '-' }} -
+                                        {{ range.max !== null && range.max !== undefined ? range.max.toFixed(2) : '-' }})
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="overflow-x-auto">
-                                <table
-                                    class="min-w-full divide-y divide-gray-200"
-                                >
-                                    <thead class="bg-gray-50">
-                                        <tr>
+                                <table class="min-w-full text-sm">
+                                    <thead>
+                                        <tr class="bg-gray-50">
                                             <th
-                                                class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                                class="px-4 py-3 text-center font-medium text-gray-500"
                                             >
                                                 No
                                             </th>
                                             <th
-                                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                                class="px-4 py-3 text-left font-medium text-gray-500"
                                             >
-                                                Nama Mahasiswa
+                                                Nama
                                             </th>
                                             <th
-                                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                                class="px-4 py-3 text-center font-medium text-gray-500"
                                             >
                                                 NIM
                                             </th>
                                             <th
-                                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                                class="px-4 py-3 text-center font-medium text-gray-500"
                                             >
                                                 Kelompok
                                             </th>
                                             <th
-                                                class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                                class="px-4 py-3 text-center font-medium text-gray-500"
                                             >
-                                                Total Selisih
+                                                Selisih
                                             </th>
                                             <th
-                                                class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                                class="px-4 py-3 text-center font-medium text-gray-500"
                                             >
-                                                Nilai Akhir
+                                                Nilai
                                             </th>
                                             <th
-                                                class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                                class="px-4 py-3 text-center font-medium text-gray-500"
                                             >
                                                 Detail
                                             </th>
                                         </tr>
                                     </thead>
-                                    <tbody
-                                        class="bg-white divide-y divide-gray-200"
-                                    >
+                                    <tbody>
                                         <template
                                             v-for="(
                                                 student, index
                                             ) in modalData.students"
                                             :key="student.id"
                                         >
-                                            <!-- Main Student Row -->
                                             <tr>
                                                 <td
-                                                    class="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-900"
+                                                    class="px-4 py-3 text-center"
                                                 >
                                                     {{ index + 1 }}
                                                 </td>
-                                                <td
-                                                    class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
-                                                >
+                                                <td class="px-4 py-3">
                                                     {{ student.name }}
                                                 </td>
                                                 <td
-                                                    class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+                                                    class="px-4 py-3 text-center"
                                                 >
                                                     {{ student.nim }}
                                                 </td>
                                                 <td
-                                                    class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+                                                    class="px-4 py-3 text-center"
                                                 >
                                                     {{ student.kelompok }}
                                                 </td>
                                                 <td
-                                                    class="px-6 py-4 whitespace-nowrap text-sm text-center"
+                                                    class="px-4 py-3 text-center"
                                                     :class="
                                                         getSelisihClass(
                                                             student.selisih
@@ -473,7 +487,7 @@ onMounted(() => {
                                                     {{ student.selisih }}
                                                 </td>
                                                 <td
-                                                    class="px-6 py-4 whitespace-nowrap text-sm font-medium text-center"
+                                                    class="px-4 py-3 text-center font-semibold"
                                                     :class="
                                                         getNilaiClass(
                                                             student.nilai_total
@@ -483,7 +497,7 @@ onMounted(() => {
                                                     {{ student.nilai_total }}
                                                 </td>
                                                 <td
-                                                    class="px-6 py-4 whitespace-nowrap text-sm text-center"
+                                                    class="px-4 py-3 text-center"
                                                 >
                                                     <button
                                                         @click="
@@ -491,7 +505,7 @@ onMounted(() => {
                                                                 student.id
                                                             )
                                                         "
-                                                        class="text-blue-600 hover:text-blue-800"
+                                                        class="text-blue-600 hover:underline"
                                                     >
                                                         {{
                                                             expandedStudents[
@@ -503,7 +517,6 @@ onMounted(() => {
                                                     </button>
                                                 </td>
                                             </tr>
-                                            <!-- Detailed Scores Row -->
                                             <tr
                                                 v-if="
                                                     expandedStudents[student.id]
@@ -511,134 +524,95 @@ onMounted(() => {
                                             >
                                                 <td
                                                     colspan="7"
-                                                    class="px-6 py-4 bg-gray-50"
+                                                    class="bg-gray-50 px-4 py-3"
                                                 >
-                                                    <div
-                                                        class="border rounded-lg overflow-hidden"
+                                                    <table
+                                                        class="w-full text-sm"
                                                     >
-                                                        <table
-                                                            class="min-w-full divide-y divide-gray-200"
-                                                        >
-                                                            <thead
+                                                        <thead>
+                                                            <tr
                                                                 class="bg-gray-100"
                                                             >
-                                                                <tr>
-                                                                    <th
-                                                                        class="px-4 py-2 text-left text-xs font-medium text-gray-500"
-                                                                    >
-                                                                        Aspek
-                                                                    </th>
-                                                                    <th
-                                                                        class="px-4 py-2 text-left text-xs font-medium text-gray-500"
-                                                                    >
-                                                                        Kriteria
-                                                                    </th>
-                                                                    <th
-                                                                        class="px-4 py-2 text-center text-xs font-medium text-gray-500"
-                                                                    >
-                                                                        Self
-                                                                        Score
-                                                                    </th>
-                                                                    <th
-                                                                        class="px-4 py-2 text-center text-xs font-medium text-gray-500"
-                                                                    >
-                                                                        Peer
-                                                                        Score
-                                                                    </th>
-                                                                    <th
-                                                                        class="px-4 py-2 text-center text-xs font-medium text-gray-500"
-                                                                    >
-                                                                        Selisih
-                                                                    </th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody
-                                                                class="bg-white divide-y divide-gray-200"
-                                                            >
-                                                                <tr
-                                                                    v-for="detail in student.aspect_details"
-                                                                    :key="`${detail.aspek}_${detail.kriteria}`"
+                                                                <th
+                                                                    class="px-3 py-2 text-left"
                                                                 >
-                                                                    <td
-                                                                        class="px-4 py-2 text-sm text-gray-900"
-                                                                    >
-                                                                        {{
-                                                                            detail.aspek
-                                                                        }}
-                                                                    </td>
-                                                                    <td
-                                                                        class="px-4 py-2 text-sm text-gray-900"
-                                                                    >
-                                                                        {{
-                                                                            detail.kriteria
-                                                                        }}
-                                                                    </td>
-                                                                    <td
-                                                                        class="px-4 py-2 text-sm text-center text-gray-900"
-                                                                    >
-                                                                        {{
-                                                                            detail.self_score
-                                                                        }}
-                                                                    </td>
-                                                                    <td
-                                                                        class="px-4 py-2 text-sm text-center text-gray-900"
-                                                                    >
-                                                                        {{
-                                                                            detail.peer_score
-                                                                        }}
-                                                                    </td>
-                                                                    <td
-                                                                        class="px-4 py-2 text-sm text-center"
-                                                                        :class="
-                                                                            getSelisihClass(
-                                                                                detail.selisih
-                                                                            )
-                                                                        "
-                                                                    >
-                                                                        {{
+                                                                    Aspek
+                                                                </th>
+                                                                <th
+                                                                    class="px-3 py-2 text-left"
+                                                                >
+                                                                    Kriteria
+                                                                </th>
+                                                                <th
+                                                                    class="px-3 py-2 text-center"
+                                                                >
+                                                                    Self
+                                                                </th>
+                                                                <th
+                                                                    class="px-3 py-2 text-center"
+                                                                >
+                                                                    Peer
+                                                                </th>
+                                                                <th
+                                                                    class="px-3 py-2 text-center"
+                                                                >
+                                                                    Selisih
+                                                                </th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr
+                                                                v-for="detail in student.aspect_details"
+                                                                :key="`${detail.aspek}_${detail.kriteria}`"
+                                                            >
+                                                                <td
+                                                                    class="px-3 py-2"
+                                                                >
+                                                                    {{
+                                                                        detail.aspek
+                                                                    }}
+                                                                </td>
+                                                                <td
+                                                                    class="px-3 py-2"
+                                                                >
+                                                                    {{
+                                                                        detail.kriteria
+                                                                    }}
+                                                                </td>
+                                                                <td
+                                                                    class="px-3 py-2 text-center"
+                                                                >
+                                                                    {{
+                                                                        detail.self_score
+                                                                    }}
+                                                                </td>
+                                                                <td
+                                                                    class="px-3 py-2 text-center"
+                                                                >
+                                                                    {{
+                                                                        detail.peer_score
+                                                                    }}
+                                                                </td>
+                                                                <td
+                                                                    class="px-3 py-2 text-center"
+                                                                    :class="
+                                                                        getSelisihClass(
                                                                             detail.selisih
-                                                                        }}
-                                                                    </td>
-                                                                </tr>
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
+                                                                        )
+                                                                    "
+                                                                >
+                                                                    {{
+                                                                        detail.selisih
+                                                                    }}
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
                                                 </td>
                                             </tr>
                                         </template>
                                     </tbody>
                                 </table>
-                            </div>
-
-                            <!-- Score Ranges -->
-                            <div class="mt-6 bg-gray-50 p-4 rounded-lg">
-                                <h4
-                                    class="text-sm font-medium text-gray-700 mb-3"
-                                >
-                                    Rentang Nilai Berdasarkan Selisih:
-                                </h4>
-                                <div
-                                    class="grid grid-cols-1 md:grid-cols-5 gap-4"
-                                >
-                                    <div
-                                        v-for="(
-                                            range, index
-                                        ) in modalData.ranges"
-                                        :key="index"
-                                        class="bg-white p-3 rounded-lg shadow-sm"
-                                    >
-                                        <div
-                                            class="text-sm font-medium text-gray-700"
-                                        >
-                                            Nilai {{ range.score }}
-                                        </div>
-                                        <div class="text-xs text-gray-500 mt-1">
-                                            Selisih:
-                                            {{ range.min.toFixed(2) }} -
-                                            {{ range.max.toFixed(2) }}
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>
