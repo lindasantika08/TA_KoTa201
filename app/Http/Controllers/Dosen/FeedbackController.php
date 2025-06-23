@@ -136,19 +136,13 @@ class FeedbackController extends Controller
             $mahasiswaIds = $groups->pluck('mahasiswa_id')->unique();
             $dosenIds = $groups->pluck('dosen_id')->unique();
 
-            // Get all feedbacks with eager loading
+            // Ambil semua feedback pada group terkait (baik dari mahasiswa, dosen, maupun peer)
             $feedbacks = Feedback::with([
                 'mahasiswa.user',
                 'dosen.user',
                 'peer.user'
             ])
-                ->where(function ($query) use ($groupIds, $mahasiswaIds, $dosenIds) {
-                    $query->whereIn('group_id', $groupIds)
-                        ->where(function ($q) use ($mahasiswaIds, $dosenIds) {
-                            $q->whereIn('mahasiswa_id', $mahasiswaIds)
-                                ->orWhereIn('dosen_id', $dosenIds);
-                        });
-                })
+                ->whereIn('group_id', $groupIds)
                 ->orderBy('created_at', 'desc')
                 ->get();
 
