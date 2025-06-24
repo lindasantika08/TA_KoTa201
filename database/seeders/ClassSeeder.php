@@ -49,7 +49,6 @@ class ClassSeeder extends Seeder
                 'prodi_id' => $prodiIdD3,
                 'angkatan' => '2024',
             ],
-
         ]);
     }
 }
