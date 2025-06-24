@@ -21,7 +21,6 @@ class ReportMahasiswa extends Controller
 {
     public function reportMahasiswa()
     {
-
         return Inertia::render('Mahasiswa/ReportMahasiswa');
     }
 
@@ -29,7 +28,6 @@ class ReportMahasiswa extends Controller
     {
         return Inertia::render('Mahasiswa/ReportScoreMahasiswa');
     }
-
 
     public function getProjects()
     {
@@ -51,15 +49,13 @@ class ReportMahasiswa extends Controller
                 ->where('mahasiswa_id', $mahasiswa->id)
                 ->get();
 
-            // Format the response to match your frontend expectations
             $projects = $groups->map(function ($group) {
                 return [
                     'id' => $group->id,
                     'nama_proyek' => $group->project->project_name,
                     'tahun_ajaran' => $group->project->batch_year,
-                    'nama_kelompok' => $group->group, // Using the 'group' field from your model
+                    'nama_kelompok' => $group->group,
                     'status' => $group->project->status ?? 'Tidak Diketahui',
-                    // Add semester if needed in frontend
                     'semester' => $group->project->semester
                 ];
             });
@@ -78,14 +74,12 @@ class ReportMahasiswa extends Controller
 
     public function getProjectScoreDetailsView(Request $request)
     {
-        // Validasi input request untuk memastikan data yang diterima benar
         $validatedData = $request->validate([
             'tahun_ajaran' => 'required|string|max:10',
             'nama_proyek' => 'required|string|max:255',
             'kelompok' => 'required|string|max:10',
         ]);
 
-        // Ambil parameter dari request
         $batchYear = $validatedData['tahun_ajaran'];
         $projectName = $validatedData['nama_proyek'];
         $kelompok = $validatedData['kelompok'];
@@ -106,7 +100,7 @@ class ReportMahasiswa extends Controller
         return Inertia::render('Mahasiswa/ReportScoreMahasiswa', [
             'batchYear' => $batchYear,
             'projectId' => $project->id,
-            'projectName' => $project->project_name,  // Add this line
+            'projectName' => $project->project_name,
             'kelompok' => $kelompok,
             'userName' => auth()->user()->name,
         ]);
@@ -211,6 +205,7 @@ class ReportMahasiswa extends Controller
             ], 500);
         }
     }
+
     private function analyzeAssessments($assessments, $mahasiswaId, $assessmentType, $batchYear, $projectId, $groupId)
     {
         Log::info('Starting analyzeAssessments', [
@@ -271,8 +266,15 @@ class ReportMahasiswa extends Controller
                     ->where('typeCriteria_id', $assessment->typeCriteria->id)
                     ->first();
 
-                $finalScoreSelf = ($assessmentType === 'selfAssessment' && $relatedReport) ? $relatedReport->final_score_self : null;
-                $finalScorePeer = ($assessmentType === 'peerAssessment' && $relatedReport) ? $relatedReport->final_score_peer : null;
+                // Ambil final_score jika ada, jika tidak pakai skor_self/skor_peer
+                $finalScoreSelf = null;
+                $finalScorePeer = null;
+                if ($assessmentType === 'selfAssessment' && $relatedReport) {
+                    $finalScoreSelf = $relatedReport->final_score_self ?? $relatedReport->skor_self ?? null;
+                }
+                if ($assessmentType === 'peerAssessment' && $relatedReport) {
+                    $finalScorePeer = $relatedReport->final_score_peer ?? $relatedReport->skor_peer ?? null;
+                }
 
                 return [
                     'question_id' => $assessment->id,

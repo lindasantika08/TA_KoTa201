@@ -52,19 +52,30 @@ const analysisScores = computed(() => {
         return [];
 
     return scoreData.value.self_assessment.map((selfAspect) => {
+        // Cari peer aspect yang sama
         const peerEvaluations = scoreData.value.peer_assessment.filter(
             (peer) => peer.aspek === selfAspect.aspek
         );
 
+        // Gunakan total_score_peer jika ada, fallback ke total_score
         const averagePeerScore =
             peerEvaluations.length > 0
                 ? peerEvaluations.reduce(
-                      (sum, peer) => sum + (peer.total_score || 0),
+                      (sum, peer) =>
+                          sum +
+                          (peer.total_score_peer != null
+                              ? peer.total_score_peer
+                              : peer.total_score || 0),
                       0
                   ) / peerEvaluations.length
                 : 0;
 
-        const selfScore = selfAspect.total_score || 0;
+        // Gunakan total_score_self jika ada, fallback ke total_score
+        const selfScore =
+            selfAspect.total_score_self != null
+                ? selfAspect.total_score_self
+                : selfAspect.total_score || 0;
+
         const scoreDifference = selfScore - averagePeerScore;
 
         return {
