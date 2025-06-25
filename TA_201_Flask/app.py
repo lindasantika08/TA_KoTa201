@@ -18,8 +18,6 @@ from nltk.tokenize import word_tokenize, sent_tokenize
 from nltk.stem import WordNetLemmatizer
 from nltk.tag import pos_tag
 from translate import Translator
-from googletrans import Translator as GoogleTranslator
-from mtranslate import translate as mtranslate
 
 # Initialize translator
 translator = Translator(to_lang="en", from_lang="id")
@@ -507,30 +505,13 @@ def preprocess_text(text):
     text = re.sub(r'\s+', ' ', text).strip()
     return text
 
+# Translation function
 def translate_text(text):
-    # 1. Coba library utama (translate)
     try:
         translated_text = translator.translate(text)
-        if translated_text and translated_text != text:
-            return translated_text
-    except Exception:
-        pass
-    # 2. Fallback ke googletrans
-    try:
-        google_translator = GoogleTranslator()
-        translated = google_translator.translate(text, src='id', dest='en')
-        if hasattr(translated, 'text'):
-            return translated.text
-        return translated
-    except Exception:
-        pass
-    # 4. Fallback ke mtranslate
-    try:
-        return mtranslate(text, 'en', 'id')
-    except Exception:
-        pass
-    # 5. Jika semua gagal, kembalikan teks asli
-    return text
+        return translated_text
+    except Exception as e:
+        return text  # Return original text if translation fails
 
 # Similarity calculation using the prototype's methodology
 def compute_similarity_results(answer, criteria_dict):
