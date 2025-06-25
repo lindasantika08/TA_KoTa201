@@ -77,7 +77,7 @@ class ReportMahasiswa extends Controller
         $validatedData = $request->validate([
             'tahun_ajaran' => 'required|string|max:10',
             'nama_proyek' => 'required|string|max:255',
-            'kelompok' => 'required|string|max:10',
+            'kelompok' => 'required|string|max:50',
         ]);
 
         $batchYear = $validatedData['tahun_ajaran'];
