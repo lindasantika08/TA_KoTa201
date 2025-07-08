@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Dosen;
 
 use App\Http\Controllers\Controller;
+use App\Notifications\AssessmentNotifications;
 use Illuminate\Support\Facades\DB;
 use App\Models\Project;
 use App\Models\Assessment;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Models\Mahasiswa;
 use Illuminate\Support\Facades\Validator;
 
 class ProjectController extends Controller
@@ -28,10 +30,12 @@ class ProjectController extends Controller
             $query->where('type', 'selfAssessment');
         })
             ->select('id', 'batch_year', 'project_name', 'status', 'created_at')
-            ->with(['assessments' => function ($query) {
-                $query->where('type', 'selfAssessment')
-                    ->with('typeCriteria');
-            }])
+            ->with([
+                'assessments' => function ($query) {
+                    $query->where('type', 'selfAssessment')
+                        ->with('typeCriteria');
+                }
+            ])
             ->distinct()
             ->get();
 
@@ -46,10 +50,12 @@ class ProjectController extends Controller
             $query->where('type', 'peerAssessment');
         })
             ->select('id', 'batch_year', 'project_name', 'status', 'created_at')
-            ->with(['assessments' => function ($query) {
-                $query->where('type', 'peerAssessment')
-                    ->with('typeCriteria');
-            }])
+            ->with([
+                'assessments' => function ($query) {
+                    $query->where('type', 'peerAssessment')
+                        ->with('typeCriteria');
+                }
+            ])
             ->distinct()
             ->get();
 
@@ -321,15 +327,75 @@ class ProjectController extends Controller
 
             $updatedCount = 0;
 
+            // foreach ($assessments as $assessment) {
+            //     $assessment->is_published = $request->is_published ? 1 : 0;
+            //     if ($assessment->isDirty('is_published')) {
+            //         $assessment->save(); // This triggers the observer
+            //         $updatedCount++;
+            //     }
+            // }
+
+            $countMhs = 0;
+            $mahasiswas = []; // Initialize to avoid undefined variable error
+
             foreach ($assessments as $assessment) {
+                $oldPublished = $assessment->is_published;
+
                 $assessment->is_published = $request->is_published ? 1 : 0;
+
                 if ($assessment->isDirty('is_published')) {
-                    $assessment->save(); // This triggers the observer
+                    $assessment->save();
                     $updatedCount++;
+
+                    if (!$oldPublished && $assessment->is_published) {
+                        // langsung kirim notifikasi di sini
+                        $assessment->load('project');
+
+                        $mahasiswaIds = DB::table('groups')
+                            ->where('project_id', $assessment->project_id)
+                            ->pluck('mahasiswa_id')
+                            ->unique()
+                            ->toArray();
+
+                        // \Log::info('Jumlah mahasiswa:', ['count' => count($mahasiswaIds)]);
+
+                        // \Log::info('Mahasiswa IDs:', count($mahasiswaIds));
+
+                        $mahasiswas = Mahasiswa::with('user')
+                            ->whereIn('id', $mahasiswaIds)
+                            ->get();
+                    }
                 }
             }
-            
-            \Log::info('Updated count:', ['updated_count' => $updatedCount]);
+
+            $notificationData = [
+                'assessment_id' => $assessment->id,
+                'assessment_order' => $assessment->project_id . '_' . strtolower($assessment->type),
+                'project_name' => $assessment->project->project_name ?? 'Unknown Project',
+                'type' => $assessment->type,
+                'end_date' => $assessment->end_date,
+                'project_id' => $assessment->project_id,
+            ];
+
+            set_time_limit(1800);
+
+            foreach ($mahasiswas as $mhs) {
+                // $countMhs++;
+                if ($mhs->user) {
+                    $exists = $mhs->user->notifications()
+                        ->where('type', AssessmentNotifications::class)
+                        ->where('data->assessment_id', $assessment->id)
+                        ->exists();
+
+                    if (!$exists) {
+                        $notif = new AssessmentNotifications($notificationData);
+                        $mhs->user->notify($notif);
+                    }
+                }
+            }
+
+            // \Log::info('Updated count:', ['updated_count' => $updatedCount]);
+            // \Log::info('Mhs:', ['mhs' => $countMhs]);
 
             return response()->json([
                 'success' => true,
@@ -371,24 +437,80 @@ class ProjectController extends Controller
                 'assessment_order' => $request->assessment_order
             ])->get();
 
-            $updatedCount = 0;  
-
             foreach ($assessments as $assessment) {
+                $oldPublished = $assessment->is_published;
+
                 $assessment->is_published = $request->is_published ? 1 : 0;
+
                 if ($assessment->isDirty('is_published')) {
-                    $assessment->save(); // This triggers the observer
-                    $updatedCount++;
+                    $assessment->save();
+                    // $updatedCount++;
+
+                    if (!$oldPublished && $assessment->is_published) {
+                        // langsung kirim notifikasi di sini
+                        $assessment->load('project');
+
+                        $mahasiswaIds = DB::table('groups')
+                            ->where('project_id', $assessment->project_id)
+                            ->pluck('mahasiswa_id')
+                            ->unique()
+                            ->toArray();
+
+                        // \Log::info('Jumlah mahasiswa:', ['count' => count($mahasiswaIds)]);
+
+                        // \Log::info('Mahasiswa IDs:', count($mahasiswaIds));
+
+                        $mahasiswas = Mahasiswa::with('user')
+                            ->whereIn('id', $mahasiswaIds)
+                            ->get();
+                    }
                 }
             }
-            
-            \Log::info('Updated count:', ['updated_count' => $updatedCount]);
+
+            $notificationData = [
+                'assessment_id' => $assessment->id,
+                'assessment_order' => $assessment->project_id . '_' . strtolower($assessment->type),
+                'project_name' => $assessment->project->project_name ?? 'Unknown Project',
+                'type' => $assessment->type,
+                'end_date' => $assessment->end_date,
+                'project_id' => $assessment->project_id,
+            ];
+
+            set_time_limit(1800);
+
+            foreach ($mahasiswas as $mhs) {
+                // $countMhs++;
+                if ($mhs->user) {
+                    $exists = $mhs->user->notifications()
+                        ->where('type', AssessmentNotifications::class)
+                        ->where('data->assessment_id', $assessment->id)
+                        ->exists();
+
+                    if (!$exists) {
+                        $notif = new AssessmentNotifications($notificationData);
+                        $mhs->user->notify($notif);
+                    }
+                }
+            }
+
+            // $updatedCount = 0;
+
+            // foreach ($assessments as $assessment) {
+            //     $assessment->is_published = $request->is_published ? 1 : 0;
+            //     if ($assessment->isDirty('is_published')) {
+            //         $assessment->save(); // This triggers the observer
+            //         $updatedCount++;
+            //     }
+            // }
+
+            // \Log::info('Updated count:', ['updated_count' => $updatedCount]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Peer assessment publish status updated successfully',
                 'data' => [
                     'is_published' => $request->is_published,
-                    'updated_count' => $updatedCount,
+                    // 'updated_count' => $updatedCount,
                 ]
             ]);
         } catch (\Exception $e) {

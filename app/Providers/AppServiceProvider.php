@@ -31,7 +31,7 @@ class AppServiceProvider extends ServiceProvider
 
         // URL::forceRootUrl(config('app.url'));
 
-        Assessment::observe(AssessmentObserver::class);
+        // Assessment::observe(AssessmentObserver::class);
         // Assessment::observe(AssessmentReminderObserver::class);
     }
 }

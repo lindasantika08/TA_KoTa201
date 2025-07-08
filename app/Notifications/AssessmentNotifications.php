@@ -6,12 +6,9 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 
-class AssessmentNotifications extends Notification implements ShouldQueue
+class AssessmentNotifications extends Notification
 {
-    use Queueable;
     
     protected $assessmentData;
 
@@ -67,5 +64,4 @@ class AssessmentNotifications extends Notification implements ShouldQueue
             'end_date'          => $this->assessmentData['end_date'],
         ];
     }
-
 }
