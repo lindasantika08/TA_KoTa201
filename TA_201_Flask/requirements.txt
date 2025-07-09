@@ -2,3 +2,5 @@ Flask
 nltk
 spacy
 translate
+googletrans
+mtranslate
