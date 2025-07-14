@@ -218,7 +218,7 @@ export default {
 
 <template>
   <nav class="bg-white text-black py-4 px-6 flex justify-between items-center sticky top-0 w-full z-10 shadow-md">
-    <div class="text-xl font-bold">Assessment App</div>
+    <div class="text-xl font-bold">SAPA</div>
     <div class="flex items-center space-x-4">
       <button aria-label="Notifications" class="relative group focus:outline-none" @click="goToNotifications">
         <font-awesome-icon icon="fa-solid fa-bell" class="w-6 h-6 text-black group-hover:text-gray-200" />

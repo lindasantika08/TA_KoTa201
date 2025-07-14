@@ -359,18 +359,42 @@ class ReportController extends Controller
                     $selisih = abs($skorSelf - $skorPeer);
 
                     $evaluatorGroups = $groupAnswers->groupBy('mahasiswa_id');
-                    $evaluatedBy = $evaluatorGroups->map(function ($answers, $evaluatorId) use ($mahasiswaDetails) {
+                    $evaluatedBy = $evaluatorGroups->map(function ($answers, $evaluatorId) use ($mahasiswaDetails, $mahasiswaId) {
                         return [
                             'name' => $mahasiswaDetails[$evaluatorId]['name'] ?? 'Unknown',
                             'total_score' => $answers->avg('score'),
-                            'answers' => $answers->map(function ($answer) {
-                                return [
+                            'answers' => $answers->map(function ($answer) use ($mahasiswaId, $evaluatorId) {
+                                // Cari report untuk answer ini berdasarkan question_id, mahasiswa_id, dan peer_id
+                                // peer_id adalah evaluatorId (yang menilai)
+                                $report = \App\Models\Report::where('question_id', $answer->assessment_id)
+                                    ->where('mahasiswa_id', $mahasiswaId)
+                                    ->where('peer_id', $evaluatorId)
+                                    ->where('assessment_type', 'peerAssessment')
+                                    ->first();
+
+                                Log::info("Loading peer report for question {$answer->assessment_id}, mahasiswa {$mahasiswaId}, peer {$evaluatorId}: " . ($report ? "found with final_score_peer={$report->final_score_peer}" : "not found"));
+
+                                $result = [
                                     'question_id' => $answer->assessment_id,
                                     'pertanyaan' => $answer->question,
                                     'score' => $answer->score,
                                     'score_SLA' => $answer->score_SLA,
-                                    'answer' => $answer->answer
+                                    'answer' => $answer->answer,
+                                    'peer_id' => $evaluatorId, // peer_id adalah yang menilai
+                                    'evaluator_name' => $mahasiswaDetails[$evaluatorId]['name'] ?? 'Unknown',
+                                    'final_score_peer' => $report ? $report->final_score_peer : null,
+                                    'report' => $report ? [
+                                        'final_score_peer' => $report->final_score_peer,
+                                        'skor_peer' => $report->skor_peer,
+                                    ] : null,
                                 ];
+
+                                // Untuk debugging, bandingkan score dengan report
+                                if ($report) {
+                                    Log::info("Comparing data for highlight - Question {$answer->assessment_id}: score={$answer->score}, score_SLA={$answer->score_SLA}, final_score_peer={$report->final_score_peer}");
+                                }
+
+                                return $result;
                             })->values()
                         ];
                     });
@@ -421,46 +445,69 @@ class ReportController extends Controller
                 ->where('mahasiswa_id', $mahasiswaId)
                 ->get()
                 : \App\Models\AnswersPeer::whereIn('question_id', $questionIds)
-                ->where('peer_id', $mahasiswaId)
+                ->where('mahasiswa_id', $mahasiswaId)
                 ->get();
 
             return [
                 'aspek' => $groupAssessments->first()->typeCriteria->aspect,
                 'kriteria' => $groupAssessments->first()->typeCriteria->criteria,
+                'typeCriteria_id' => $typeCriteriaId, // Add this for frontend reference
                 'total_score' => $answers->avg('score'),
                 'total_score_SLA' => $answers->avg('score_SLA'),
                 'total_answers' => $answers->count(),
                 'questions' => $groupAssessments->map(function ($assessment) use ($answers, $mahasiswaId, $assessmentType, $projectId, $groupId, $typeCriteriaId) {
                     $relatedAnswer = $answers->where('question_id', $assessment->id)->first();
-                    $report = \App\Models\Report::where('project_id', $projectId)
-                        ->where('group_id', $groupId)
-                        ->where('mahasiswa_id', $mahasiswaId)
-                        ->where('typeCriteria_id', $typeCriteriaId)
-                        ->where('question_id', $assessment->id);
 
+                    // Cari report berdasarkan question_id dan mahasiswa_id saja
                     if ($assessmentType === 'self') {
-                        $report = $report->whereNull('peer_id')->first();
+                        $report = \App\Models\Report::where('question_id', $assessment->id)
+                            ->where('mahasiswa_id', $mahasiswaId)
+                            ->where('assessment_type', 'selfAssessment')
+                            ->first();
                     } else {
-                        $report = $report->whereNotNull('peer_id')->first();
+                        // Untuk peer assessment, cari berdasarkan question_id, mahasiswa_id, dan peer_id dari answer
+                        $report = null;
+                        if ($relatedAnswer && isset($relatedAnswer->peer_id)) {
+                            Log::info("Searching peer report for question {$assessment->id}, mahasiswa {$mahasiswaId}, peer {$relatedAnswer->peer_id}");
+                            $report = \App\Models\Report::where('question_id', $assessment->id)
+                                ->where('mahasiswa_id', $mahasiswaId)
+                                ->where('peer_id', $relatedAnswer->peer_id)
+                                ->where('assessment_type', 'peerAssessment')
+                                ->first();
+
+                            if ($report) {
+                                Log::info("Found peer report: final_score_peer={$report->final_score_peer}");
+                            } else {
+                                Log::info("No peer report found for this combination");
+                            }
+                        } else {
+                            Log::info("No peer_id found in relatedAnswer for question {$assessment->id}");
+                        }
                     }
 
                     $final_score_self = null;
                     $final_score_peer = null;
+
                     if ($assessmentType === 'self') {
-                        $final_score_self = $report && $report->final_score_self !== null
-                            ? $report->final_score_self
-                            : ($report && $report->skor_self !== null
-                                ? $report->skor_self
-                                : ($relatedAnswer ? $relatedAnswer->score : null));
+                        if ($report && $report->final_score_self !== null) {
+                            // Prioritas utama: gunakan final_score_self dari report
+                            $final_score_self = $report->final_score_self;
+                        } elseif ($relatedAnswer) {
+                            // Gunakan score berdasarkan selected_score_type dari tabel answers
+                            if ($relatedAnswer->selected_score_type === 'score_SLA' && $relatedAnswer->score_SLA !== null) {
+                                $final_score_self = $relatedAnswer->score_SLA;
+                            } else {
+                                $final_score_self = $relatedAnswer->score;
+                            }
+                        }
                     }
+
                     if ($assessmentType === 'peer') {
-                        $final_score_peer = $report && $report->final_score_peer !== null
-                            ? $report->final_score_peer
-                            : ($report && $report->skor_peer !== null
-                                ? $report->skor_peer
-                                : ($relatedAnswer
-                                    ? ($relatedAnswer->score_SLA ?? $relatedAnswer->score)
-                                    : null));
+                        if ($report && $report->final_score_peer !== null) {
+                            $final_score_peer = $report->final_score_peer;
+                        } elseif ($relatedAnswer) {
+                            $final_score_peer = $relatedAnswer->score_SLA ?? $relatedAnswer->score;
+                        }
                     }
 
                     return [
@@ -468,9 +515,17 @@ class ReportController extends Controller
                         'pertanyaan' => $assessment->question,
                         'score' => $relatedAnswer ? $relatedAnswer->score : null,
                         'score_SLA' => $relatedAnswer ? $relatedAnswer->score_SLA : null,
+                        'answer' => $relatedAnswer ? $relatedAnswer->answer : null,
+                        'peer_id' => $relatedAnswer ? $relatedAnswer->peer_id : null, // Add peer_id for debugging
+                        'typeCriteria_id' => $typeCriteriaId, // Add this for frontend reference
                         'final_score_self' => $final_score_self,
                         'final_score_peer' => $final_score_peer,
-                        'answer' => $relatedAnswer ? $relatedAnswer->answer : null
+                        'report' => $report ? [
+                            'final_score_self' => $report->final_score_self,
+                            'final_score_peer' => $report->final_score_peer,
+                            'skor_self' => $report->skor_self,
+                            'skor_peer' => $report->skor_peer,
+                        ] : null,
                     ];
                 })
             ];
@@ -734,6 +789,9 @@ class ReportController extends Controller
 
     public function saveFinalScoresSelf(Request $request)
     {
+        // Log data yang diterima dari frontend
+        Log::info('Data received in saveFinalScoresSelf:', $request->all());
+
         // Validasi data
         $validated = $request->validate([
             'answers' => 'required|array',
@@ -742,6 +800,8 @@ class ReportController extends Controller
             'answers.*.question_id' => 'required',
             'answers.*.final_score_self' => 'required|integer|min:1|max:5',
         ]);
+
+        Log::info('Validated data:', $validated);
 
         DB::beginTransaction();
 
@@ -752,10 +812,14 @@ class ReportController extends Controller
             $assessmentTypeMap = []; // Untuk menyimpan tipe assessment
 
             foreach ($validated['answers'] as $answer) {
+                Log::info("Processing answer:", $answer);
+
                 $mahasiswaId = $answer['mahasiswa_id'];
                 $typeCriteriaId = $answer['typeCriteria_id'];
                 $questionId = $answer['question_id'];
                 $finalScoreSelf = $answer['final_score_self'];
+
+                Log::info("Processing - Mahasiswa: $mahasiswaId, TypeCriteria: $typeCriteriaId, Question: $questionId, Score: $finalScoreSelf");
 
                 // Cek dan mapping typeCriteria_id jika itu adalah string nama kriteria (bukan UUID)
                 if (!isset($typeCriteriaMap[$typeCriteriaId]) && !preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $typeCriteriaId)) {
@@ -895,6 +959,7 @@ class ReportController extends Controller
                     ->first();
 
                 if ($groupId) {
+                    // Update table reports
                     if ($report) {
                         $report->final_score_self = $finalScoreSelf;
                         $report->question_id = $questionId;
@@ -932,6 +997,9 @@ class ReportController extends Controller
 
     public function saveFinalScoresPeer(Request $request)
     {
+        // Log data yang diterima dari frontend
+        Log::info('Data received in saveFinalScoresPeer:', $request->all());
+
         // Validasi data - project_id and group_id are no longer required from frontend
         $validated = $request->validate([
             'answersPeer' => 'required|array',
@@ -941,6 +1009,8 @@ class ReportController extends Controller
             'answersPeer.*.peer_id' => 'required',
             'answersPeer.*.final_score_peer' => 'required|integer|min:1|max:5',
         ]);
+
+        Log::info('Validated data:', $validated);
 
         DB::beginTransaction();
 
@@ -952,6 +1022,8 @@ class ReportController extends Controller
             $assessmentTypeMap = []; // Untuk menyimpan tipe assessment
 
             foreach ($validated['answersPeer'] as $answerPeer) {
+                Log::info("Processing peer answer:", $answerPeer);
+
                 $mahasiswaId = $answerPeer['mahasiswa_id'];
                 $typeCriteriaId = $answerPeer['typeCriteria_id'];
                 $questionId = $answerPeer['question_id'];
