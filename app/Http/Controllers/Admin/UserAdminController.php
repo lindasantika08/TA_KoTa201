@@ -169,6 +169,23 @@ class UserAdminController extends Controller
         return response()->json(['message' => 'Delete successfully'], 201);
     }
 
+    public function getDosenName($nip)
+    {
+        $dosen = Dosen::where('nip', $nip)->first();
+        
+        if (!$dosen) {
+            return response()->json(['message' => 'Dosen not found'], 404);
+        }
+
+        $user = User::where('id', $dosen->user_id)->first();
+        
+        return response()->json([
+            'nip' => $dosen->nip,
+            'nama' => $dosen->nama ?? ($user->name ?? 'Nama tidak tersedia'),
+            'user_id' => $dosen->user_id
+        ], 200);
+    }
+
     public function editDosen(Request $request)
     {
         $request->validate([
