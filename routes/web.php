@@ -119,6 +119,7 @@ use Illuminate\Support\Facades\Route;
             //Feedback
             Route::get('/feedback-detail', [FeedbackController::class, 'feedbackDetailView']);
             Route::post('/feedbacks-store-dosen', [FeedbackController::class, 'storeFeedback']);
+            Route::get('/report/export-groups', [ReportController::class, 'exportGroupReport'])->name('report.export.groups');
         });
 
         //Route untuk Mahasiswa

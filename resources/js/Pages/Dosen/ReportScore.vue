@@ -2142,12 +2142,12 @@ export default {
                                                                 class="bg-gray-50 border-b border-gray-200"
                                                             >
                                                                 <th
-                                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32"
+                                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48"
                                                                 >
                                                                     Penilai
                                                                 </th>
                                                                 <th
-                                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-64"
                                                                 >
                                                                     Pertanyaan
                                                                 </th>
@@ -2162,7 +2162,7 @@ export default {
                                                                     Skor SLA
                                                                 </th>
                                                                 <th
-                                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40"
+                                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                                                                 >
                                                                     Jawaban
                                                                 </th>
@@ -2179,13 +2179,10 @@ export default {
                                                                 class="hover:bg-gray-50 transition-colors"
                                                             >
                                                                 <td
-                                                                    class="px-4 py-3 w-32"
+                                                                    class="px-4 py-3 w-48"
                                                                 >
                                                                     <div
-                                                                        class="text-sm font-medium text-gray-900 truncate"
-                                                                        :title="
-                                                                            answer.evaluator_name
-                                                                        "
+                                                                        class="text-sm font-medium text-gray-900 break-words leading-relaxed"
                                                                     >
                                                                         {{
                                                                             answer.evaluator_name
@@ -2193,10 +2190,10 @@ export default {
                                                                     </div>
                                                                 </td>
                                                                 <td
-                                                                    class="px-4 py-3"
+                                                                    class="px-4 py-3 w-64"
                                                                 >
                                                                     <div
-                                                                        class="text-sm text-gray-900"
+                                                                        class="text-sm text-gray-900 break-words leading-relaxed"
                                                                     >
                                                                         {{
                                                                             answer.pertanyaan
@@ -2306,14 +2303,10 @@ export default {
                                                                     </div>
                                                                 </td>
                                                                 <td
-                                                                    class="px-4 py-3 w-40"
+                                                                    class="px-4 py-3"
                                                                 >
                                                                     <div
-                                                                        class="text-sm text-gray-500 truncate"
-                                                                        :title="
-                                                                            answer.answer ||
-                                                                            '-'
-                                                                        "
+                                                                        class="text-sm text-gray-500 break-words leading-relaxed max-w-md"
                                                                     >
                                                                         {{
                                                                             answer.answer ||
@@ -2673,5 +2666,30 @@ export default {
 
 .hover\:bg-gray-50:hover {
     background-color: #f9fafb;
+}
+
+/* Improved table readability */
+.break-words {
+    word-wrap: break-word;
+    word-break: break-word;
+}
+
+.leading-relaxed {
+    line-height: 1.625;
+}
+
+.max-w-md {
+    max-width: 28rem;
+}
+
+/* Table cell padding adjustment for better text display */
+table td {
+    vertical-align: top;
+    padding: 12px 16px;
+}
+
+/* Better table row spacing */
+table tr {
+    transition: background-color 0.15s ease-in-out;
 }
 </style>

@@ -1191,4 +1191,57 @@ class ReportController extends Controller
             ], 500);
         }
     }
+
+    public function exportGroupReport(Request $request)
+    {
+        $batchYear = $request->query('batch_year');
+        $projectName = $request->query('project_name');
+
+        Log::info('Export request received', [
+            'batch_year' => $batchYear,
+            'project_name' => $projectName
+        ]);
+
+        if (!$batchYear || !$projectName) {
+            Log::warning('Missing parameters in export request');
+            return response()->json([
+                'error' => 'Missing parameters',
+                'message' => 'batch_year and project_name are required'
+            ], 400);
+        }
+
+        try {
+            // Validate that project exists
+            $project = Project::where('batch_year', $batchYear)
+                ->where('project_name', $projectName)
+                ->first();
+
+            if (!$project) {
+                Log::warning('Project not found', [
+                    'batch_year' => $batchYear,
+                    'project_name' => $projectName
+                ]);
+                return response()->json([
+                    'error' => 'Project not found',
+                    'message' => 'Project with specified batch year and name not found'
+                ], 404);
+            }
+
+            Log::info('Project found, creating export', ['project_id' => $project->id]);
+
+            $export = new \App\Exports\GroupReportExport($batchYear, $projectName);
+            $fileName = 'Group_Report_' . str_replace(['/', ' '], '_', $batchYear) . '_' . str_replace(' ', '_', $projectName) . '_' . date('Y-m-d_H-i-s') . '.xlsx';
+
+            Log::info('Starting Excel download', ['fileName' => $fileName]);
+
+            return \Maatwebsite\Excel\Facades\Excel::download($export, $fileName);
+        } catch (\Exception $e) {
+            Log::error('Error exporting group report: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            return response()->json([
+                'error' => 'Export failed',
+                'message' => 'An error occurred while generating the export file: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

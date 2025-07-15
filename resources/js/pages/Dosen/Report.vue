@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import axios from "axios";
+import Swal from "sweetalert2";
 import Sidebar from "@/Components/Sidebar.vue";
 import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
@@ -185,6 +186,122 @@ const toggleDetails = (studentId) => {
     expandedStudents.value[studentId] = !expandedStudents.value[studentId];
 };
 
+const exportGroupReport = async () => {
+    if (!selectedOption.value) {
+        await Swal.fire({
+            icon: "warning",
+            title: "Project Not Selected",
+            text: "Please select a project first",
+            confirmButtonColor: "#3B82F6",
+        });
+        return;
+    }
+
+    // Show loading confirmation
+    const result = await Swal.fire({
+        title: "Export Group Report",
+        text: `Export group report for ${selectedOption.value.project_name} (${selectedOption.value.batch_year})?`,
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonColor: "#3B82F6",
+        cancelButtonColor: "#6B7280",
+        confirmButtonText: "Yes, Export",
+        cancelButtonText: "Cancel",
+    });
+
+    if (!result.isConfirmed) {
+        return;
+    }
+
+    // Show loading
+    Swal.fire({
+        title: "Exporting...",
+        text: "Please wait while we prepare your Excel file",
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        willOpen: () => {
+            Swal.showLoading();
+        },
+    });
+
+    try {
+        isLoading.value = true;
+        const url = `/dosen/report/export-groups?batch_year=${encodeURIComponent(
+            selectedOption.value.batch_year
+        )}&project_name=${encodeURIComponent(
+            selectedOption.value.project_name
+        )}`;
+
+        const response = await fetch(url, {
+            method: "GET",
+            headers: {
+                Accept: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "X-CSRF-TOKEN": document
+                    .querySelector('meta[name="csrf-token"]')
+                    .getAttribute("content"),
+            },
+        });
+
+        if (!response.ok) {
+            let errorMessage = "Export failed";
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.message || errorMessage;
+            } catch (e) {
+                // If response is not JSON, use default message
+                errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+            }
+            throw new Error(errorMessage);
+        }
+
+        // Get the blob from response
+        const blob = await response.blob();
+
+        // Create download link
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = downloadUrl;
+        link.download = `Group_Report_${selectedOption.value.batch_year.replace(
+            "/",
+            "_"
+        )}_${selectedOption.value.project_name.replace(" ", "_")}_${new Date()
+            .toISOString()
+            .slice(0, 19)
+            .replace(/:/g, "-")}.xlsx`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Clean up
+        window.URL.revokeObjectURL(downloadUrl);
+
+        console.log("Export completed successfully");
+
+        // Show success message
+        await Swal.fire({
+            icon: "success",
+            title: "Export Successful!",
+            text: "Your group report has been downloaded successfully",
+            confirmButtonColor: "#10B981",
+            timer: 3000,
+            timerProgressBar: true,
+        });
+    } catch (error) {
+        console.error("Error exporting group report:", error);
+
+        // Show error message
+        await Swal.fire({
+            icon: "error",
+            title: "Export Failed",
+            text: `Failed to export group report: ${error.message}`,
+            confirmButtonColor: "#EF4444",
+        });
+    } finally {
+        isLoading.value = false;
+    }
+};
+
 onMounted(() => {
     fetchDropdownOptions();
 });
@@ -236,28 +353,55 @@ onMounted(() => {
                                 </div>
                             </div>
 
-                            <!-- Report Summary Button -->
-                            <button
-                                class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-                                @click="fetchStudentData"
-                                :disabled="!selectedOption"
-                            >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    class="h-5 w-5 mr-2"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
+                            <!-- Action Buttons -->
+                            <div class="flex space-x-3">
+                                <!-- Export Excel Button -->
+                                <button
+                                    class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                                    @click="exportGroupReport"
+                                    :disabled="!selectedOption || isLoading"
                                 >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                    />
-                                </svg>
-                                Lihat Ringkasan Penilaian
-                            </button>
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        class="h-5 w-5 mr-2"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                        />
+                                    </svg>
+                                    <span v-if="isLoading">Exporting...</span>
+                                    <span v-else>Export Excel</span>
+                                </button>
+
+                                <!-- Report Summary Button -->
+                                <button
+                                    class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                                    @click="fetchStudentData"
+                                    :disabled="!selectedOption"
+                                >
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        class="h-5 w-5 mr-2"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                        />
+                                    </svg>
+                                    Lihat Ringkasan Penilaian
+                                </button>
+                            </div>
                         </div>
 
                         <!-- Loading State -->
@@ -339,7 +483,6 @@ onMounted(() => {
         </div>
 
         <!-- Modal -->
-        <!-- Modal -->
         <div v-if="showModal" class="fixed inset-0 z-50 overflow-y-auto">
             <div class="flex items-center justify-center min-h-screen px-4">
                 <!-- Modal Backdrop -->
@@ -402,10 +545,10 @@ onMounted(() => {
                                         <span class="font-semibold"
                                             >Nilai {{ range.score }}</span
                                         >
-                                        <span class="ml-2 text-gray-500">
-                                        ({{ range.min !== null && range.min !== undefined ? range.min.toFixed(2) : '-' }} -
-                                        {{ range.max !== null && range.max !== undefined ? range.max.toFixed(2) : '-' }})
-                                        </span>
+                                        <span class="ml-2 text-gray-500"
+                                            >({{ range.min.toFixed(2) }} -
+                                            {{ range.max.toFixed(2) }})</span
+                                        >
                                     </div>
                                 </div>
                             </div>
