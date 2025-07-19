@@ -99,6 +99,13 @@ export default {
                 };
             });
         },
+        progressColor() {
+            if (this.peerGroupSize === 0) return "bg-gray-300";
+            const percent = this.peerCompletedCount / this.peerGroupSize;
+            if (percent === 0) return "bg-red-500";
+            if (percent < 1) return "bg-yellow-400";
+            return "bg-green-600";
+        },
         radarChartOptions() {
             return {
                 chart: {
@@ -624,7 +631,7 @@ export default {
                                         >
                                     </div>
                                     <div
-                                        class="w-full bg-green-600 rounded-full h-2.5"
+                                        class="w-full bg-gray-200 rounded-full h-2.5"
                                     >
                                         <div
                                             :class="`h-2.5 rounded-full ${progressColor}`"

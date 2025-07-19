@@ -64,7 +64,7 @@ export default {
             this.stats.totalProjects = this.projectList.length;
             // Adjust status check based on your actual status values
             this.stats.activeProjects = this.projectList.filter(
-                (p) => p.status.toLowerCase() === "Active"
+                (p) => p.status.toLowerCase() === "active"
             ).length;
             this.stats.completedProjects = this.projectList.filter(
                 (p) => p.status.toLowerCase() === "NonActive"
@@ -72,11 +72,6 @@ export default {
         },
 
         handleProjectDetail(project) {
-            // console.log("Batch Year:", project.tahun_ajaran);
-            // console.log("Project Name:", project.nama_proyek);
-            // console.log("Group:", project.nama_kelompok);
-
-            // Navigasi menggunakan Vue Router dari Inertia.js
             router.get(
                 "/sispa/mahasiswa/project-score-details",
                 {
@@ -93,7 +88,7 @@ export default {
 
         getStatusColor(status) {
             const normalizedStatus = status.toLowerCase();
-            return normalizedStatus === "Active"
+            return normalizedStatus === "active"
                 ? "bg-green-100 text-green-800"
                 : "bg-red-100 text-red-800";
         },

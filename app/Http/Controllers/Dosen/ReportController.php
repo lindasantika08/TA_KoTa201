@@ -359,18 +359,42 @@ class ReportController extends Controller
                     $selisih = abs($skorSelf - $skorPeer);
 
                     $evaluatorGroups = $groupAnswers->groupBy('mahasiswa_id');
-                    $evaluatedBy = $evaluatorGroups->map(function ($answers, $evaluatorId) use ($mahasiswaDetails) {
+                    $evaluatedBy = $evaluatorGroups->map(function ($answers, $evaluatorId) use ($mahasiswaDetails, $mahasiswaId) {
                         return [
                             'name' => $mahasiswaDetails[$evaluatorId]['name'] ?? 'Unknown',
                             'total_score' => $answers->avg('score'),
-                            'answers' => $answers->map(function ($answer) {
-                                return [
+                            'answers' => $answers->map(function ($answer) use ($mahasiswaId, $evaluatorId) {
+                                // Cari report untuk answer ini berdasarkan question_id, mahasiswa_id, dan peer_id
+                                // peer_id adalah evaluatorId (yang menilai)
+                                $report = \App\Models\Report::where('question_id', $answer->assessment_id)
+                                    ->where('mahasiswa_id', $mahasiswaId)
+                                    ->where('peer_id', $evaluatorId)
+                                    ->where('assessment_type', 'peerAssessment')
+                                    ->first();
+
+                                Log::info("Loading peer report for question {$answer->assessment_id}, mahasiswa {$mahasiswaId}, peer {$evaluatorId}: " . ($report ? "found with final_score_peer={$report->final_score_peer}" : "not found"));
+
+                                $result = [
                                     'question_id' => $answer->assessment_id,
                                     'pertanyaan' => $answer->question,
                                     'score' => $answer->score,
                                     'score_SLA' => $answer->score_SLA,
-                                    'answer' => $answer->answer
+                                    'answer' => $answer->answer,
+                                    'peer_id' => $evaluatorId, // peer_id adalah yang menilai
+                                    'evaluator_name' => $mahasiswaDetails[$evaluatorId]['name'] ?? 'Unknown',
+                                    'final_score_peer' => $report ? $report->final_score_peer : null,
+                                    'report' => $report ? [
+                                        'final_score_peer' => $report->final_score_peer,
+                                        'skor_peer' => $report->skor_peer,
+                                    ] : null,
                                 ];
+
+                                // Untuk debugging, bandingkan score dengan report
+                                if ($report) {
+                                    Log::info("Comparing data for highlight - Question {$answer->assessment_id}: score={$answer->score}, score_SLA={$answer->score_SLA}, final_score_peer={$report->final_score_peer}");
+                                }
+
+                                return $result;
                             })->values()
                         ];
                     });
@@ -410,69 +434,98 @@ class ReportController extends Controller
         if ($assessments->isEmpty()) {
             return collect([]);
         }
-        Log::info("Analyzing assessments for mahasiswa: {$mahasiswaId}, type: {$assessmentType}, project: {$projectId}, group: {$groupId}");
 
         return $assessments->groupBy(function ($assessment) {
             return $assessment->typeCriteria->aspect . '_' . $assessment->typeCriteria->criteria;
         })->map(function ($groupAssessments) use ($mahasiswaId, $assessmentType, $projectId, $groupId) {
             $questionIds = $groupAssessments->pluck('id');
             $typeCriteriaId = $groupAssessments->first()->typeCriteria->id;
-            Log::info("Processing typeCriteria ID: {$typeCriteriaId}");
             $answers = $assessmentType === 'self'
-                ? Answers::whereIn('question_id', $questionIds)
+                ? \App\Models\Answers::whereIn('question_id', $questionIds)
                 ->where('mahasiswa_id', $mahasiswaId)
                 ->get()
-                : AnswersPeer::whereIn('question_id', $questionIds)
-                ->where('peer_id', $mahasiswaId)
+                : \App\Models\AnswersPeer::whereIn('question_id', $questionIds)
+                ->where('mahasiswa_id', $mahasiswaId)
                 ->get();
 
             return [
                 'aspek' => $groupAssessments->first()->typeCriteria->aspect,
                 'kriteria' => $groupAssessments->first()->typeCriteria->criteria,
+                'typeCriteria_id' => $typeCriteriaId, // Add this for frontend reference
                 'total_score' => $answers->avg('score'),
                 'total_score_SLA' => $answers->avg('score_SLA'),
                 'total_answers' => $answers->count(),
                 'questions' => $groupAssessments->map(function ($assessment) use ($answers, $mahasiswaId, $assessmentType, $projectId, $groupId, $typeCriteriaId) {
                     $relatedAnswer = $answers->where('question_id', $assessment->id)->first();
-                    // Ambil final_score dari tabel Report berdasarkan question_id dan typeCriteria_id
-                    Log::info("Query Report Parameters", [
-                        'project_id' => $projectId,
-                        'group_id' => $groupId,
-                        'mahasiswa_id' => $mahasiswaId,
-                        'typeCriteria_id' => $typeCriteriaId,
-                        'question_id' => $assessment->id,
-                        'assessment_type' => $assessmentType
-                    ]);
-                    $report = Report::where('project_id', $projectId)
-                        ->where('group_id', $groupId)
-                        ->where('mahasiswa_id', $mahasiswaId)
-                        ->where('typeCriteria_id', $typeCriteriaId)
-                        ->where('question_id', $assessment->id);
+
+                    // Cari report berdasarkan question_id dan mahasiswa_id saja
+                    if ($assessmentType === 'self') {
+                        $report = \App\Models\Report::where('question_id', $assessment->id)
+                            ->where('mahasiswa_id', $mahasiswaId)
+                            ->where('assessment_type', 'selfAssessment')
+                            ->first();
+                    } else {
+                        // Untuk peer assessment, cari berdasarkan question_id, mahasiswa_id, dan peer_id dari answer
+                        $report = null;
+                        if ($relatedAnswer && isset($relatedAnswer->peer_id)) {
+                            Log::info("Searching peer report for question {$assessment->id}, mahasiswa {$mahasiswaId}, peer {$relatedAnswer->peer_id}");
+                            $report = \App\Models\Report::where('question_id', $assessment->id)
+                                ->where('mahasiswa_id', $mahasiswaId)
+                                ->where('peer_id', $relatedAnswer->peer_id)
+                                ->where('assessment_type', 'peerAssessment')
+                                ->first();
+
+                            if ($report) {
+                                Log::info("Found peer report: final_score_peer={$report->final_score_peer}");
+                            } else {
+                                Log::info("No peer report found for this combination");
+                            }
+                        } else {
+                            Log::info("No peer_id found in relatedAnswer for question {$assessment->id}");
+                        }
+                    }
+
+                    $final_score_self = null;
+                    $final_score_peer = null;
 
                     if ($assessmentType === 'self') {
-                        $report = $report->whereNull('peer_id')->first();
-                    } else {
-                        // Untuk peer assessment, mungkin perlu disesuaikan berdasarkan struktur data
-                        $report = $report->whereNotNull('peer_id')->first();
+                        if ($report && $report->final_score_self !== null) {
+                            // Prioritas utama: gunakan final_score_self dari report
+                            $final_score_self = $report->final_score_self;
+                        } elseif ($relatedAnswer) {
+                            // Gunakan score berdasarkan selected_score_type dari tabel answers
+                            if ($relatedAnswer->selected_score_type === 'score_SLA' && $relatedAnswer->score_SLA !== null) {
+                                $final_score_self = $relatedAnswer->score_SLA;
+                            } else {
+                                $final_score_self = $relatedAnswer->score;
+                            }
+                        }
                     }
-                    // Logging untuk debug
-                    Log::info("Report Query Result", [
-                        'mahasiswa_id' => $mahasiswaId,
-                        'question_id' => $assessment->id,
-                        'typeCriteria_id' => $typeCriteriaId,
-                        'assessment_type' => $assessmentType,
-                        'final_score_self' => $report ? $report->final_score_self : 'NULL',
-                        'final_score_peer' => $report ? $report->final_score_peer : 'NULL',
-                        'report_exists' => $report !== null
-                    ]);
+
+                    if ($assessmentType === 'peer') {
+                        if ($report && $report->final_score_peer !== null) {
+                            $final_score_peer = $report->final_score_peer;
+                        } elseif ($relatedAnswer) {
+                            $final_score_peer = $relatedAnswer->score_SLA ?? $relatedAnswer->score;
+                        }
+                    }
+
                     return [
                         'question_id' => $assessment->id,
                         'pertanyaan' => $assessment->question,
                         'score' => $relatedAnswer ? $relatedAnswer->score : null,
                         'score_SLA' => $relatedAnswer ? $relatedAnswer->score_SLA : null,
-                        'nilai_akhir_self' => $assessmentType === 'self' && $report ? $report->final_score_self : null,
-                        'nilai_akhir_peer' => $assessmentType === 'peer' && $report ? $report->final_score_peer : null,
-                        'answer' => $relatedAnswer ? $relatedAnswer->answer : null
+                        'answer' => $relatedAnswer ? $relatedAnswer->answer : null,
+                        'peer_id' => $relatedAnswer ? $relatedAnswer->peer_id : null, // Add peer_id for debugging
+                        'typeCriteria_id' => $typeCriteriaId, // Add this for frontend reference
+                        'final_score_self' => $final_score_self,
+                        'final_score_peer' => $final_score_peer,
+                        'report' => $report ? [
+                            'final_score_self' => $report->final_score_self,
+                            'final_score_peer' => $report->final_score_peer,
+                            'skor_self' => $report->skor_self,
+                            'skor_peer' => $report->skor_peer,
+                        ] : null,
                     ];
                 })
             ];
@@ -506,7 +559,6 @@ class ReportController extends Controller
             // Collect all selisih values for range calculation
             $allSelisih = collect();
 
-            // Process each mahasiswa's assessments
             $studentsData = $mahasiswaIds->map(function ($mahasiswaId) use ($tahunAjaran, $project, &$allSelisih) {
                 // Get student details
                 $student = Mahasiswa::with(['user', 'group' => function ($query) use ($project) {
@@ -539,36 +591,12 @@ class ReportController extends Controller
 
                 // Calculate average scores and differences
                 $result = $this->calculateAverages($selfAspekKriteriaAnalysis, $peerAspekKriteriaAnalysis);
-                $allSelisih->push($result['selisih']);
 
-                // Save to Report table if group exists
-                if ($group) {
-                    // Get all assessments to map typeCriteria IDs
-                    $allAssessments = $selfAssessments->concat($peerAssessments);
-                    $typeCriteriaMap = $allAssessments->pluck('typeCriteria')->unique('id')->keyBy(function ($criteria) {
-                        return $criteria->aspect . '_' . $criteria->criteria;
-                    });
+                // Cek apakah ada data self atau peer
+                $hasData = ($result['self_score'] > 0 || $result['peer_score'] > 0);
 
-                    foreach ($result['aspect_details'] as $detail) {
-                        $typeCriteria = $typeCriteriaMap->get($detail['aspek'] . '_' . $detail['kriteria']);
-
-                        if ($typeCriteria) {
-                            Report::updateOrCreate(
-                                [
-                                    'project_id' => $project->id,
-                                    'group_id' => $group->id,
-                                    'mahasiswa_id' => $mahasiswaId,
-                                    'typeCriteria_id' => $typeCriteria->id
-                                ],
-                                [
-                                    'skor_self' => $detail['self_score'],
-                                    'skor_peer' => $detail['peer_score'],
-                                    'selisih' => $detail['selisih'],
-                                    'nilai_total' => 60, // Default value, will be updated later
-                                ]
-                            );
-                        }
-                    }
+                if ($hasData) {
+                    $allSelisih->push($result['selisih']);
                 }
 
                 return [
@@ -578,11 +606,13 @@ class ReportController extends Controller
                     'kelompok' => $group ? $group->group : 'Unknown',
                     'skor_self' => $result['self_score'],
                     'skor_peer' => $result['peer_score'],
-                    'selisih' => $result['selisih'],
-                    'aspect_details' => $result['aspect_details']
+                    'selisih' => $hasData ? $result['selisih'] : null,
+                    'aspect_details' => $result['aspect_details'],
+                    'keterangan' => $hasData ? null : 'Belum ada data self atau peer'
                 ];
             })->filter()->values();
 
+            // ...lanjutkan kode seperti sebelumnya...
             // Calculate ranges and final scores
             $minSelisih = $allSelisih->min();
             $maxSelisih = $allSelisih->max();
@@ -597,40 +627,37 @@ class ReportController extends Controller
                 ['min' => $maxSelisih, 'max' => $maxSelisih, 'score' => 60]
             ];
 
-            // Apply final scores to each student and update Report table
-            $studentsData = $studentsData->map(function ($student) use ($ranges, $project) {
+            $studentsData = $studentsData->map(function ($student) use ($ranges) {
                 $nilaiTotal = 60; // Default value
-                foreach ($ranges as $range) {
-                    if ($student['selisih'] >= $range['min'] && $student['selisih'] <= $range['max']) {
-                        $nilaiTotal = $range['score'];
-                        break;
+                if ($student['selisih'] !== null) {
+                    foreach ($ranges as $range) {
+                        if ($student['selisih'] >= $range['min'] && $student['selisih'] <= $range['max']) {
+                            $nilaiTotal = $range['score'];
+                            break;
+                        }
                     }
                 }
-
-                // Update nilai_total in Report table for this student
-                if (isset($student['kelompok']) && $student['kelompok'] !== 'Unknown') {
-                    $group = Group::where('project_id', $project->id)
-                        ->where('mahasiswa_id', $student['id'])
-                        ->first();
-
-                    if ($group) {
-                        Report::where('project_id', $project->id)
-                            ->where('group_id', $group->id)
-                            ->where('mahasiswa_id', $student['id'])
-                            ->update(['nilai_total' => $nilaiTotal]);
-                    }
-                }
-
                 return array_merge($student, [
-                    'nilai_total' => $nilaiTotal
+                    'nilai_total' => $student['selisih'] !== null ? $nilaiTotal : null
                 ]);
             });
 
-            // Sort students by nilai_total (descending) and then by selisih (ascending)
-            $sortedStudentsData = $studentsData->sortBy([
+            // Pisahkan yang punya data dan yang belum
+            $studentsWithData = $studentsData->filter(function ($student) {
+                return $student['selisih'] !== null;
+            });
+            $studentsWithoutData = $studentsData->filter(function ($student) {
+                return $student['selisih'] === null;
+            });
+
+            // Urutkan yang punya data
+            $studentsWithData = $studentsWithData->sortBy([
                 ['nilai_total', 'desc'],
                 ['selisih', 'asc']
             ])->values();
+
+            // Gabungkan
+            $sortedStudentsData = $studentsWithData->concat($studentsWithoutData->values())->values();
 
             return response()->json([
                 'success' => true,
@@ -670,9 +697,9 @@ class ReportController extends Controller
                 $aspectDetails[] = [
                     'aspek' => $selfData['aspek'],
                     'kriteria' => $selfData['kriteria'],
-                    'self_score' => $selfScore,
-                    'peer_score' => $peerScore,
-                    'selisih' => $aspectSelisih
+                    'self_score' => round($selfScore, 2),
+                    'peer_score' => round($peerScore, 2),
+                    'selisih' => round($aspectSelisih, 2)
                 ];
             }
         }
@@ -683,11 +710,10 @@ class ReportController extends Controller
         return [
             'self_score' => round($avgSelfScore, 2),
             'peer_score' => round($avgPeerScore, 2),
-            'selisih' => round($totalSelisih, 2), // Now this is the sum of all differences
+            'selisih' => round($totalSelisih, 2), // sum of all differences
             'aspect_details' => $aspectDetails
         ];
     }
-
     private function analyzeAssessmentsReport($assessments, $mahasiswaId, $assessmentType, $projectId)
     {
         if ($assessments->isEmpty()) {
@@ -763,6 +789,9 @@ class ReportController extends Controller
 
     public function saveFinalScoresSelf(Request $request)
     {
+        // Log data yang diterima dari frontend
+        Log::info('Data received in saveFinalScoresSelf:', $request->all());
+
         // Validasi data
         $validated = $request->validate([
             'answers' => 'required|array',
@@ -771,6 +800,8 @@ class ReportController extends Controller
             'answers.*.question_id' => 'required',
             'answers.*.final_score_self' => 'required|integer|min:1|max:5',
         ]);
+
+        Log::info('Validated data:', $validated);
 
         DB::beginTransaction();
 
@@ -781,10 +812,14 @@ class ReportController extends Controller
             $assessmentTypeMap = []; // Untuk menyimpan tipe assessment
 
             foreach ($validated['answers'] as $answer) {
+                Log::info("Processing answer:", $answer);
+
                 $mahasiswaId = $answer['mahasiswa_id'];
                 $typeCriteriaId = $answer['typeCriteria_id'];
                 $questionId = $answer['question_id'];
                 $finalScoreSelf = $answer['final_score_self'];
+
+                Log::info("Processing - Mahasiswa: $mahasiswaId, TypeCriteria: $typeCriteriaId, Question: $questionId, Score: $finalScoreSelf");
 
                 // Cek dan mapping typeCriteria_id jika itu adalah string nama kriteria (bukan UUID)
                 if (!isset($typeCriteriaMap[$typeCriteriaId]) && !preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $typeCriteriaId)) {
@@ -924,6 +959,7 @@ class ReportController extends Controller
                     ->first();
 
                 if ($groupId) {
+                    // Update table reports
                     if ($report) {
                         $report->final_score_self = $finalScoreSelf;
                         $report->question_id = $questionId;
@@ -961,6 +997,9 @@ class ReportController extends Controller
 
     public function saveFinalScoresPeer(Request $request)
     {
+        // Log data yang diterima dari frontend
+        Log::info('Data received in saveFinalScoresPeer:', $request->all());
+
         // Validasi data - project_id and group_id are no longer required from frontend
         $validated = $request->validate([
             'answersPeer' => 'required|array',
@@ -970,6 +1009,8 @@ class ReportController extends Controller
             'answersPeer.*.peer_id' => 'required',
             'answersPeer.*.final_score_peer' => 'required|integer|min:1|max:5',
         ]);
+
+        Log::info('Validated data:', $validated);
 
         DB::beginTransaction();
 
@@ -981,6 +1022,8 @@ class ReportController extends Controller
             $assessmentTypeMap = []; // Untuk menyimpan tipe assessment
 
             foreach ($validated['answersPeer'] as $answerPeer) {
+                Log::info("Processing peer answer:", $answerPeer);
+
                 $mahasiswaId = $answerPeer['mahasiswa_id'];
                 $typeCriteriaId = $answerPeer['typeCriteria_id'];
                 $questionId = $answerPeer['question_id'];
@@ -1145,6 +1188,59 @@ class ReportController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan saat menyimpan jawaban: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function exportGroupReport(Request $request)
+    {
+        $batchYear = $request->query('batch_year');
+        $projectName = $request->query('project_name');
+
+        Log::info('Export request received', [
+            'batch_year' => $batchYear,
+            'project_name' => $projectName
+        ]);
+
+        if (!$batchYear || !$projectName) {
+            Log::warning('Missing parameters in export request');
+            return response()->json([
+                'error' => 'Missing parameters',
+                'message' => 'batch_year and project_name are required'
+            ], 400);
+        }
+
+        try {
+            // Validate that project exists
+            $project = Project::where('batch_year', $batchYear)
+                ->where('project_name', $projectName)
+                ->first();
+
+            if (!$project) {
+                Log::warning('Project not found', [
+                    'batch_year' => $batchYear,
+                    'project_name' => $projectName
+                ]);
+                return response()->json([
+                    'error' => 'Project not found',
+                    'message' => 'Project with specified batch year and name not found'
+                ], 404);
+            }
+
+            Log::info('Project found, creating export', ['project_id' => $project->id]);
+
+            $export = new \App\Exports\GroupReportExport($batchYear, $projectName);
+            $fileName = 'Group_Report_' . str_replace(['/', ' '], '_', $batchYear) . '_' . str_replace(' ', '_', $projectName) . '_' . date('Y-m-d_H-i-s') . '.xlsx';
+
+            Log::info('Starting Excel download', ['fileName' => $fileName]);
+
+            return \Maatwebsite\Excel\Facades\Excel::download($export, $fileName);
+        } catch (\Exception $e) {
+            Log::error('Error exporting group report: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            return response()->json([
+                'error' => 'Export failed',
+                'message' => 'An error occurred while generating the export file: ' . $e->getMessage()
             ], 500);
         }
     }

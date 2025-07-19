@@ -6,6 +6,7 @@ import Card from "@/Components/Card.vue";
 import Breadcrumb from "@/Components/Breadcrumb.vue";
 import ApexChart from "apexcharts";
 import VueApexCharts from "vue3-apexcharts";
+import Swal from "sweetalert2";
 
 export default {
     props: {
@@ -77,44 +78,33 @@ export default {
         }
     },
     methods: {
-        // Add new method to calculate total_score_final
-        calculateTotalScoreFinal(aspek) {
-            if (
-                !aspek.questions ||
-                !Array.isArray(aspek.questions) ||
-                aspek.questions.length === 0
-            ) {
-                return 0;
-            }
-
-            // Filter questions that have a final_score and calculate the average
-            const questionsWithFinalScore = aspek.questions.filter(
-                (q) => q.final_score !== undefined && q.final_score !== null
-            );
-
-            if (questionsWithFinalScore.length === 0) {
-                return 0;
-            }
-
-            const sum = questionsWithFinalScore.reduce(
-                (total, question) => total + parseFloat(question.final_score),
-                0
-            );
-
-            return sum / questionsWithFinalScore.length;
-        },
-
         async saveAnswerSelf() {
             if (this.isLoading) {
-                alert("Permintaan sedang diproses, mohon tunggu...");
+                Swal.fire({
+                    icon: "warning",
+                    title: "Mohon Tunggu",
+                    text: "Permintaan sedang diproses, mohon tunggu...",
+                    showConfirmButton: false,
+                    timer: 2000,
+                });
                 return;
             }
 
             this.isLoading = true;
 
             try {
+                if (!this.selectedUserId || !this.selectedUserData) {
+                    Swal.fire({
+                        icon: "warning",
+                        title: "Pilih Mahasiswa",
+                        text: "Mohon pilih mahasiswa terlebih dahulu",
+                        confirmButtonColor: "#3085d6",
+                    });
+                    this.isLoading = false;
+                    return;
+                }
+
                 const mahasiswaId = this.selectedUserData.mahasiswa_id;
-                console.log("Selected User Data:", this.selectedUserData);
                 const answers = [];
 
                 this.selectedUserData.self_assessment.forEach((aspek) => {
@@ -123,15 +113,50 @@ export default {
                     }
 
                     aspek.questions.forEach((pertanyaan) => {
-                        const finalScore =
-                            pertanyaan.final_score || pertanyaan.score;
+                        // Determine the final score based on user selection
+                        let finalScore;
+
+                        if (pertanyaan._userSelected === "score_SLA") {
+                            finalScore = pertanyaan.score_SLA;
+                        } else if (pertanyaan._userSelected === "score") {
+                            finalScore = pertanyaan.score;
+                        } else {
+                            // If no explicit selection, use final_score or default logic
+                            finalScore = pertanyaan.final_score;
+
+                            if (!finalScore) {
+                                if (pertanyaan.score == pertanyaan.score_SLA) {
+                                    // If scores are equal, default to score
+                                    finalScore = pertanyaan.score;
+                                } else {
+                                    // If scores are different, use score as default
+                                    finalScore = pertanyaan.score;
+                                }
+                            }
+                        }
 
                         if (finalScore) {
+                            // Get the typeCriteria_id from the aspek data
+                            let typeCriteriaId = aspek.typeCriteria_id;
+
+                            // If not available, try to get from question data or use criteria name
+                            if (!typeCriteriaId) {
+                                typeCriteriaId =
+                                    pertanyaan.typeCriteria_id ||
+                                    aspek.kriteria;
+                            }
+
+                            console.log(
+                                `Preparing to save - Question ID: ${pertanyaan.question_id}, _userSelected: ${pertanyaan._userSelected}, finalScore: ${finalScore}, SKOR: ${pertanyaan.score}, SKOR SLA: ${pertanyaan.score_SLA}, mahasiswa_id: ${mahasiswaId}`
+                            );
+
                             answers.push({
                                 mahasiswa_id: mahasiswaId,
-                                typeCriteria_id: aspek.kriteria,
+                                typeCriteria_id: typeCriteriaId,
                                 question_id: pertanyaan.question_id,
                                 final_score_self: parseInt(finalScore),
+                                selected_score_type:
+                                    pertanyaan._userSelected || "score", // Tambahkan informasi pilihan user
                             });
 
                             // Update the final_score_self value for this question directly
@@ -142,18 +167,35 @@ export default {
                             }
                         }
                     });
-                    // Calculate and update total_score_final for this aspect
-                    aspek.total_score_final =
-                        this.calculateTotalScoreFinal(aspek);
                 });
 
                 if (answers.length === 0) {
-                    alert("Mohon pilih minimal satu skor untuk disimpan");
+                    Swal.fire({
+                        icon: "warning",
+                        title: "Tidak Ada Data",
+                        text: "Mohon pilih minimal satu skor untuk disimpan",
+                        confirmButtonColor: "#3085d6",
+                    });
                     this.isLoading = false;
                     return;
                 }
 
-                console.log("Answers Data:", answers);
+                console.log(
+                    "Final answers array being sent to backend:",
+                    answers
+                );
+
+                // Show loading alert
+                Swal.fire({
+                    title: "Menyimpan Data...",
+                    text: "Mohon tunggu sebentar",
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    },
+                });
 
                 const response = await axios.post(
                     "/sispa/api/report/save-final-scores-self",
@@ -161,29 +203,53 @@ export default {
                 );
 
                 if (response.data.success) {
-                    alert(response.data.message || "Jawaban berhasil disimpan");
+                    Swal.fire({
+                        icon: "success",
+                        title: "Berhasil Disimpan!",
+                        text:
+                            response.data.message ||
+                            "Jawaban Self Assessment berhasil disimpan",
+                        confirmButtonColor: "#28a745",
+                        timer: 3000,
+                        timerProgressBar: true,
+                    });
+                    // Refresh data setelah berhasil simpan
+                    await this.fetchKelompokAnalysis();
+                    // Recalculate total scores after save
+                    this.setupFinalScoresSelf();
                 } else {
-                    alert(
-                        response.data.message ||
-                            "Terjadi kesalahan saat menyimpan jawaban"
-                    );
+                    Swal.fire({
+                        icon: "error",
+                        title: "Gagal Menyimpan",
+                        text:
+                            response.data.message ||
+                            "Terjadi kesalahan saat menyimpan jawaban",
+                        confirmButtonColor: "#dc3545",
+                    });
                 }
             } catch (error) {
                 console.error("Error saving answers:", error);
 
+                let errorMessage = "Terjadi kesalahan yang tidak diketahui";
+
                 if (error.response) {
-                    alert(
+                    errorMessage =
                         "Terjadi kesalahan pada server: " +
-                            (error.response.data.message ||
-                                error.response.statusText)
-                    );
+                        (error.response.data.message ||
+                            error.response.statusText);
                 } else if (error.request) {
-                    alert(
-                        "Tidak dapat terhubung ke server. Periksa koneksi internet Anda."
-                    );
+                    errorMessage =
+                        "Tidak dapat terhubung ke server. Periksa koneksi internet Anda.";
                 } else {
-                    alert("Terjadi kesalahan: " + error.message);
+                    errorMessage = "Terjadi kesalahan: " + error.message;
                 }
+
+                Swal.fire({
+                    icon: "error",
+                    title: "Terjadi Kesalahan",
+                    text: errorMessage,
+                    confirmButtonColor: "#dc3545",
+                });
             } finally {
                 this.isLoading = false;
             }
@@ -197,76 +263,100 @@ export default {
                 return;
             }
 
+            console.log(
+                "Setting up final scores for user:",
+                this.selectedUserData
+            );
+
             this.selectedUserData.self_assessment.forEach((aspek) => {
                 if (!aspek.questions || !Array.isArray(aspek.questions)) {
                     return;
                 }
 
                 aspek.questions.forEach((pertanyaan) => {
-                    // Check for the value in report object first (more reliable source)
+                    // Skip if user has already made an explicit selection
+                    if (
+                        pertanyaan._userSelected &&
+                        pertanyaan._userExplicitlySelected
+                    ) {
+                        console.log(
+                            `Skipping question ${pertanyaan.question_id} - user already selected`
+                        );
+                        return; // Don't override user's choice
+                    }
+
+                    // Tentukan pilihan berdasarkan data yang tersimpan
+                    let savedScore = null;
+                    let dataSource = "none";
+
+                    // Cek data dari report object terlebih dahulu (prioritas utama)
                     if (
                         pertanyaan.report &&
                         typeof pertanyaan.report.final_score_self !==
-                            "undefined"
+                            "undefined" &&
+                        pertanyaan.report.final_score_self !== null
                     ) {
-                        pertanyaan.final_score =
-                            pertanyaan.report.final_score_self;
-                        console.log(
-                            `Setting final_score from report: ${pertanyaan.question_id} = ${pertanyaan.final_score}`
-                        );
+                        savedScore = pertanyaan.report.final_score_self;
+                        dataSource = "report";
                     }
-                    // Fallback to final_score_self if available directly on the question
+                    // Fallback ke final_score_self jika tersedia
                     else if (
                         typeof pertanyaan.final_score_self !== "undefined" &&
                         pertanyaan.final_score_self !== null
                     ) {
-                        pertanyaan.final_score = pertanyaan.final_score_self;
-                        console.log(
-                            `Setting final_score from final_score_self: ${pertanyaan.question_id} = ${pertanyaan.final_score}`
-                        );
+                        savedScore = pertanyaan.final_score_self;
+                        dataSource = "fallback";
                     }
-                    // Default to score as last resort
-                    else if (!pertanyaan.final_score) {
-                        pertanyaan.final_score = pertanyaan.score;
+
+                    // Logika sederhana untuk menentukan pilihan
+                    if (savedScore !== null) {
+                        pertanyaan.final_score = savedScore;
+
+                        // Jika saved score sama dengan SKOR SLA DAN berbeda dengan SKOR biasa
+                        // maka pilih SKOR SLA
+                        if (
+                            savedScore == pertanyaan.score_SLA &&
+                            savedScore != pertanyaan.score
+                        ) {
+                            pertanyaan._userSelected = "score_SLA";
+                        } else {
+                            // Untuk semua kasus lainnya, pilih SKOR
+                            // Termasuk:
+                            // - saved score sama dengan SKOR biasa
+                            // - saved score sama dengan keduanya
+                            // - saved score tidak sama dengan keduanya
+                            pertanyaan._userSelected = "score";
+                        }
+
                         console.log(
-                            `Setting default final_score: ${pertanyaan.question_id} = ${pertanyaan.final_score}`
+                            `Loading from ${dataSource} - Question ID: ${pertanyaan.question_id}, Saved Score: ${savedScore}, SKOR: ${pertanyaan.score}, SKOR SLA: ${pertanyaan.score_SLA}, Selected: ${pertanyaan._userSelected}`
                         );
+                    } else {
+                        // Jika tidak ada data tersimpan di tabel report, default ke SKOR
+                        if (pertanyaan.score) {
+                            pertanyaan.final_score = pertanyaan.score;
+                            pertanyaan._userSelected = "score";
+                            console.log(
+                                `No saved data - Question ID: ${pertanyaan.question_id}, Defaulting to SKOR: ${pertanyaan.score}, Selected: ${pertanyaan._userSelected}`
+                            );
+                        }
                     }
                 });
-                aspek.total_score_final = this.calculateTotalScoreFinal(aspek);
+
+                // Recalculate total score for this aspek after setup
+                this.recalculateAspekTotalScore(aspek);
             });
-        },
-
-        updateFinalPeer(answer, value) {
-            if (this.$set) {
-                this.$set(answer, "final_peer", Number(value));
-            } else {
-                answer.final_peer = Number(value);
-            }
-
-            // Tambahkan flag untuk menandai bahwa jawaban ini sudah diubah
-            answer._modified = true;
-
-            console.log(
-                "Nilai final_peer diperbarui:",
-                answer.final_peer,
-                "untuk pertanyaan:",
-                answer.question_id
-            );
-
-            // Simpan referensi ke jawaban yang telah diubah
-            if (!this._modifiedAnswers) {
-                this._modifiedAnswers = new Map();
-            }
-
-            // Gunakan kombinasi question_id dan evaluator_name sebagai kunci unik
-            const key = answer.question_id + "_" + answer.evaluator_name;
-            this._modifiedAnswers.set(key, answer);
         },
 
         async saveAnswerPeer() {
             if (this.isLoading) {
-                alert("Permintaan sedang diproses, mohon tunggu...");
+                Swal.fire({
+                    icon: "warning",
+                    title: "Mohon Tunggu",
+                    text: "Permintaan sedang diproses, mohon tunggu...",
+                    showConfirmButton: false,
+                    timer: 2000,
+                });
                 return;
             }
 
@@ -274,14 +364,7 @@ export default {
 
             try {
                 const mahasiswaId = this.selectedUserData.mahasiswa_id;
-                console.log("Selected User Data:", this.selectedUserData);
                 const answersPeer = [];
-
-                // Log penting untuk debugging
-                console.log(
-                    "Peer assessment structure:",
-                    this.selectedUserData.peer_assessment
-                );
 
                 // Process data from evaluated_by_peers which has the structure we need
                 if (
@@ -319,62 +402,9 @@ export default {
                                             // Ganti dengan kode ini:
                                             actualEvaluator.answers.forEach(
                                                 (answer) => {
-                                                    // Debug log untuk melihat nilai yang ingin kita cari
-
-                                                    let finalPeer = null;
-
-                                                    // Cek di map jawaban yang sudah dimodifikasi
-                                                    if (this._modifiedAnswers) {
-                                                        const key =
-                                                            answer.question_id +
-                                                            "_" +
-                                                            actualEvaluator.name;
-                                                        const modifiedAnswer =
-                                                            this._modifiedAnswers.get(
-                                                                key
-                                                            );
-
-                                                        if (
-                                                            modifiedAnswer &&
-                                                            modifiedAnswer.final_peer !==
-                                                                undefined
-                                                        ) {
-                                                            finalPeer =
-                                                                modifiedAnswer.final_peer;
-                                                            console.log(
-                                                                "Menggunakan nilai yang dipilih user:",
-                                                                finalPeer,
-                                                                "untuk pertanyaan:",
-                                                                answer.question_id
-                                                            );
-                                                        }
-                                                    }
-
-                                                    // Jika tidak ditemukan di jawaban yang dimodifikasi, coba periksa jawaban saat ini
-                                                    if (
-                                                        finalPeer === null &&
-                                                        answer.final_peer !==
-                                                            undefined
-                                                    ) {
-                                                        finalPeer =
-                                                            answer.final_peer;
-                                                        console.log(
-                                                            "Menggunakan nilai final_peer yang ada:",
-                                                            finalPeer
-                                                        );
-                                                    }
-                                                    // Gunakan score sebagai fallback
-                                                    else if (
-                                                        finalPeer === null &&
-                                                        answer.score
-                                                    ) {
-                                                        finalPeer =
-                                                            answer.score;
-                                                        console.log(
-                                                            "Menggunakan nilai default (score):",
-                                                            finalPeer
-                                                        );
-                                                    }
+                                                    // Gunakan final_peer berdasarkan pilihan user
+                                                    let finalPeer =
+                                                        answer.final_peer;
 
                                                     // Only add to save list if we have a valid score
                                                     if (finalPeer) {
@@ -414,10 +444,6 @@ export default {
                                                                     if (
                                                                         matchingQuestion
                                                                     ) {
-                                                                        console.log(
-                                                                            "Found matching question in peer_assessment:",
-                                                                            peerAspek
-                                                                        );
                                                                         // Jika ditemukan, ambil kriteria_id dari aspek
                                                                         if (
                                                                             peerAspek.kriteria_id
@@ -445,14 +471,6 @@ export default {
                                                                 undefined
                                                         ) {
                                                             // Gunakan peer ID dari structure evaluated_by
-                                                            console.log(
-                                                                "Adding answer with criteriaId:",
-                                                                criteriaId,
-                                                                "and peerId:",
-                                                                actualPeerId,
-                                                                "final_score_peer:",
-                                                                finalPeer
-                                                            );
 
                                                             answersPeer.push({
                                                                 mahasiswa_id:
@@ -482,12 +500,15 @@ export default {
                 }
 
                 if (answersPeer.length === 0) {
-                    alert("Mohon pilih minimal satu skor untuk disimpan");
+                    Swal.fire({
+                        icon: "warning",
+                        title: "Tidak Ada Data",
+                        text: "Mohon pilih minimal satu skor untuk disimpan",
+                        confirmButtonColor: "#3085d6",
+                    });
                     this.isLoading = false;
                     return;
                 }
-
-                console.log("Answers Data Peer to save:", answersPeer);
 
                 // Periksa jika ada data yang tidak memiliki typeCriteria_id atau peer_id
                 const incompletePeers = answersPeer.filter(
@@ -508,6 +529,23 @@ export default {
                     }
                 }
 
+                console.log(
+                    "Final answersPeer array being sent to backend:",
+                    answersPeer
+                );
+
+                // Show loading alert
+                Swal.fire({
+                    title: "Menyimpan Data...",
+                    text: "Mohon tunggu sebentar",
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    },
+                });
+
                 const response = await axios.post(
                     "/sispa/api/report/save-final-scores-peer",
                     { answersPeer }
@@ -516,99 +554,215 @@ export default {
                 if (response.data.success) {
                     this.successMessage =
                         response.data.message || "Jawaban berhasil disimpan";
-                    alert(this.successMessage);
+                    Swal.fire({
+                        icon: "success",
+                        title: "Berhasil Disimpan!",
+                        text:
+                            response.data.message ||
+                            "Jawaban Peer Assessment berhasil disimpan",
+                        confirmButtonColor: "#28a745",
+                        timer: 3000,
+                        timerProgressBar: true,
+                    });
+                    // Refresh data setelah berhasil simpan
+                    await this.fetchKelompokAnalysis();
+                    // Recalculate peer scores after save
+                    this.setupFinalScoresPeer();
                 } else {
-                    alert(
-                        response.data.message ||
-                            "Terjadi kesalahan saat menyimpan jawaban"
-                    );
+                    Swal.fire({
+                        icon: "error",
+                        title: "Gagal Menyimpan",
+                        text:
+                            response.data.message ||
+                            "Terjadi kesalahan saat menyimpan jawaban",
+                        confirmButtonColor: "#dc3545",
+                    });
                 }
             } catch (error) {
                 console.error("Error saving answers:", error);
 
-                // Penanganan error sederhana
+                let errorMessage = "Terjadi kesalahan yang tidak diketahui";
+
                 if (error.response) {
-                    alert(
+                    errorMessage =
                         "Terjadi kesalahan pada server: " +
-                            (error.response.data.message ||
-                                error.response.statusText)
-                    );
+                        (error.response.data.message ||
+                            error.response.statusText);
                 } else if (error.request) {
-                    alert(
-                        "Tidak dapat terhubung ke server. Periksa koneksi internet Anda."
-                    );
+                    errorMessage =
+                        "Tidak dapat terhubung ke server. Periksa koneksi internet Anda.";
                 } else {
-                    alert("Terjadi kesalahan: " + error.message);
+                    errorMessage = "Terjadi kesalahan: " + error.message;
                 }
+
+                Swal.fire({
+                    icon: "error",
+                    title: "Terjadi Kesalahan",
+                    text: errorMessage,
+                    confirmButtonColor: "#dc3545",
+                });
             } finally {
                 this.isLoading = false;
             }
         },
 
-        setupFinalScoresSelf() {
-            if (
-                !this.selectedUserData ||
-                !this.selectedUserData.self_assessment
-            ) {
-                return;
-            }
-
-            this.selectedUserData.self_assessment.forEach((aspek) => {
-                if (!aspek.questions || !Array.isArray(aspek.questions)) {
-                    return;
-                }
-
-                aspek.questions.forEach((pertanyaan) => {
-                    // Cek jika pertanyaan memiliki nilai final_score_self dari server
-                    if (pertanyaan.final_score_self) {
-                        pertanyaan.final_score = pertanyaan.final_score_self;
-                    } else if (
-                        pertanyaan.report &&
-                        pertanyaan.report.final_score_self
-                    ) {
-                        pertanyaan.final_score =
-                            pertanyaan.report.final_score_self;
-                    }
-                    // Jika tidak ada nilai yang disimpan, gunakan skor default
-                    else if (!pertanyaan.final_score) {
-                        pertanyaan.final_score = pertanyaan.score;
-                    }
-                });
-            });
-        },
-
         setupFinalScoresPeer() {
             if (
                 !this.selectedUserData ||
-                !this.selectedUserData.peer_assessment
+                !this.selectedUserData.evaluated_by_peers
             ) {
                 return;
             }
 
-            this.selectedUserData.peer_assessment.forEach((peerGroup) => {
-                if (
-                    !peerGroup.questions ||
-                    !Array.isArray(peerGroup.questions)
-                ) {
-                    return;
-                }
+            console.log("Setting up final scores for peer assessment");
 
-                peerGroup.questions.forEach((answer) => {
-                    // Cek jika pertanyaan memiliki nilai final_score_self dari server
-                    if (answer.final_score_peer) {
-                        answer.final_peer = answer.final_score_peer;
-                    } else if (
-                        answer.report &&
-                        answer.report.final_score_peer
-                    ) {
-                        answer.final_peer = answer.report.final_score_peer;
-                    }
-                    // Jika tidak ada nilai yang disimpan, gunakan skor default
-                    else if (!answer.final_peer) {
-                        answer.final_peer = answer.score;
-                    }
+            this.selectedUserData.evaluated_by_peers.forEach((group) => {
+                if (!group.evaluated_by) return;
+                Object.values(group.evaluated_by).forEach((evaluator) => {
+                    const evaluators = evaluator.evaluated_by
+                        ? Object.values(evaluator.evaluated_by)
+                        : [evaluator];
+                    evaluators.forEach((actualEvaluator) => {
+                        if (!actualEvaluator.answers) return;
+                        actualEvaluator.answers.forEach((answer) => {
+                            // Skip if user has already made an explicit selection
+                            if (
+                                answer._userSelected &&
+                                answer._userExplicitlySelected
+                            ) {
+                                console.log(
+                                    `Skipping peer answer ${answer.question_id}_${answer.evaluator_name} - user already selected`
+                                );
+                                return;
+                            }
+
+                            // Tentukan pilihan berdasarkan data yang tersimpan
+                            let savedScore = null;
+                            let dataSource = "none";
+
+                            // Cek data dari report object terlebih dahulu (prioritas utama)
+                            if (
+                                answer.report &&
+                                typeof answer.report.final_score_peer !==
+                                    "undefined" &&
+                                answer.report.final_score_peer !== null
+                            ) {
+                                savedScore = answer.report.final_score_peer;
+                                dataSource = "report";
+                            }
+                            // Fallback ke final_score_peer jika tersedia
+                            else if (
+                                typeof answer.final_score_peer !==
+                                    "undefined" &&
+                                answer.final_score_peer !== null
+                            ) {
+                                savedScore = answer.final_score_peer;
+                                dataSource = "fallback";
+                            }
+
+                            // Logika sederhana untuk menentukan pilihan
+                            if (savedScore !== null) {
+                                answer.final_peer = savedScore;
+
+                                // Jika saved score sama dengan SKOR SLA DAN berbeda dengan SKOR biasa
+                                // maka pilih SKOR SLA
+                                if (
+                                    savedScore == answer.score_SLA &&
+                                    savedScore != answer.score
+                                ) {
+                                    answer._userSelected = "score_SLA";
+                                } else {
+                                    // Untuk semua kasus lainnya, pilih SKOR
+                                    answer._userSelected = "score";
+                                }
+
+                                console.log(
+                                    `Loading peer from ${dataSource} - Question ID: ${answer.question_id}, Evaluator: ${answer.evaluator_name}, Saved Score: ${savedScore}, SKOR: ${answer.score}, SKOR SLA: ${answer.score_SLA}, Selected: ${answer._userSelected}`
+                                );
+                            } else {
+                                // Jika tidak ada data tersimpan di tabel report, default ke SKOR
+                                if (answer.score) {
+                                    answer.final_peer = answer.score;
+                                    answer._userSelected = "score";
+                                    console.log(
+                                        `No saved peer data - Question ID: ${answer.question_id}, Evaluator: ${answer.evaluator_name}, Defaulting to SKOR: ${answer.score}, Selected: ${answer._userSelected}`
+                                    );
+                                }
+                            }
+                        });
+                    });
                 });
+
+                // Recalculate total score for this peer group after setup
+                this.recalculatePeerGroupTotalScore(group);
             });
+
+            // Force update untuk memastikan perubahan terlihat
+            this.$forceUpdate();
+        },
+
+        shouldHighlightPeerScore(answer) {
+            return answer._userSelected === "score";
+        },
+
+        shouldHighlightPeerScoreSLA(answer) {
+            return answer._userSelected === "score_SLA";
+        },
+
+        onPeerScoreRadioChange(answer, scoreType, peerGroup) {
+            // Mark that user explicitly selected this option
+            answer._userSelected = scoreType;
+            // Add a flag to indicate this was explicitly set by user
+            answer._userExplicitlySelected = true;
+
+            // Update final_peer based on selection
+            if (scoreType === "score") {
+                answer.final_peer = answer.score;
+            } else if (scoreType === "score_SLA") {
+                answer.final_peer = answer.score_SLA;
+            }
+
+            // Get the actual selected value based on scoreType
+            const selectedValue =
+                scoreType === "score" ? answer.score : answer.score_SLA;
+
+            console.log(
+                `Peer Score Selection - Question ID: ${answer.question_id}, Evaluator: ${answer.evaluator_name}, Selected: ${scoreType}, Value: ${selectedValue}, SKOR: ${answer.score}, SKOR SLA: ${answer.score_SLA}, final_peer: ${answer.final_peer}`
+            );
+
+            // Force reactivity update untuk total score
+            this.$forceUpdate();
+        },
+
+        recalculatePeerGroupTotalScore(peerGroup) {
+            if (!peerGroup.answers || !Array.isArray(peerGroup.answers)) {
+                return;
+            }
+
+            // Hitung total score berdasarkan final_peer dari setiap answer
+            let totalScore = 0;
+            let answerCount = 0;
+
+            peerGroup.answers.forEach((answer) => {
+                if (
+                    answer.final_peer !== null &&
+                    answer.final_peer !== undefined
+                ) {
+                    totalScore += answer.final_peer;
+                    answerCount++;
+                }
+            });
+
+            // Hitung rata-rata
+            if (answerCount > 0) {
+                peerGroup.total_score = totalScore / answerCount;
+            } else {
+                peerGroup.total_score = 0;
+            }
+
+            console.log(
+                `Recalculated peer total score for group ${peerGroup.aspek} - ${peerGroup.kriteria}: ${peerGroup.total_score} (based on ${answerCount} answers)`
+            );
         },
 
         async fetchKelompokAnalysis() {
@@ -626,7 +780,6 @@ export default {
                         },
                     }
                 );
-                console.log("Data dari API kelompok/answers:", response.data);
                 this.userAnalysis = response.data;
             } catch (error) {
                 this.error = "Gagal memuat data";
@@ -701,20 +854,38 @@ export default {
                 );
 
                 const processedAnswers = evaluatorDetails.flatMap((evaluator) =>
-                    evaluator.answers.map((answer) => ({
-                        ...answer,
-                        evaluator_name: evaluator.name,
-                        pertanyaan: this.getPeerQuestionText(
+                    evaluator.answers.map((answer) => {
+                        // Jangan spread, gunakan reference langsung agar perubahan tersimpan
+                        answer.evaluator_name = evaluator.name;
+                        answer.pertanyaan = this.getPeerQuestionText(
                             answer.question_id
-                        ),
-                    }))
+                        );
+                        return answer;
+                    })
                 );
+
+                // Hitung ulang total score berdasarkan final_peer
+                let totalScore = 0;
+                let answerCount = 0;
+
+                processedAnswers.forEach((answer) => {
+                    if (
+                        answer.final_peer !== null &&
+                        answer.final_peer !== undefined
+                    ) {
+                        totalScore += answer.final_peer;
+                        answerCount++;
+                    }
+                });
+
+                const calculatedTotalScore =
+                    answerCount > 0 ? totalScore / answerCount : 0;
 
                 return {
                     aspek: group.aspek,
                     kriteria: group.kriteria,
                     names: names,
-                    total_score: group.total_score,
+                    total_score: calculatedTotalScore, // Gunakan calculated total score
                     answers: processedAnswers,
                 };
             });
@@ -728,7 +899,11 @@ export default {
             )
                 return "N/A";
 
-            const totalScores = userData.evaluated_by_peers.map(
+            // Gunakan groupPeerEvaluations untuk mendapatkan total score yang sudah dihitung ulang
+            const groupedPeerEvaluations = this.groupPeerEvaluations(
+                userData.evaluated_by_peers
+            );
+            const totalScores = groupedPeerEvaluations.map(
                 (group) => group.total_score || 0
             );
             const averageTotal =
@@ -777,14 +952,18 @@ export default {
             if (!userData.self_assessment || !userData.evaluated_by_peers)
                 return [];
 
+            // Gunakan groupPeerEvaluations untuk mendapatkan total score yang sudah dihitung ulang
+            const groupedPeerEvaluations = this.groupPeerEvaluations(
+                userData.evaluated_by_peers
+            );
+
             return userData.self_assessment.map((selfAspect) => {
                 // Filter peer evaluations for matching aspect AND criteria
-                const matchingPeerEvaluations =
-                    userData.evaluated_by_peers.filter(
-                        (peer) =>
-                            peer.aspek === selfAspect.aspek &&
-                            peer.kriteria === selfAspect.kriteria
-                    );
+                const matchingPeerEvaluations = groupedPeerEvaluations.filter(
+                    (peer) =>
+                        peer.aspek === selfAspect.aspek &&
+                        peer.kriteria === selfAspect.kriteria
+                );
 
                 // Calculate average peer score only from matching evaluations
                 const averagePeerScore =
@@ -1201,6 +1380,99 @@ export default {
                 status: score.status,
             };
         },
+
+        // Check if score and score_SLA are the same
+        scoresAreEqual(pertanyaan) {
+            return (
+                pertanyaan.score == pertanyaan.score_SLA &&
+                pertanyaan.score !== null &&
+                pertanyaan.score_SLA !== null
+            );
+        },
+
+        // Check if should highlight score radio
+        shouldHighlightScore(pertanyaan) {
+            // Priority: use _userSelected if available
+            if (pertanyaan._userSelected) {
+                return pertanyaan._userSelected === "score";
+            }
+
+            // Fallback: check if final_score matches score
+            return pertanyaan.final_score == pertanyaan.score;
+        },
+
+        // Check if should highlight score_SLA radio
+        shouldHighlightScoreSLA(pertanyaan) {
+            // Priority: use _userSelected if available
+            if (pertanyaan._userSelected) {
+                return pertanyaan._userSelected === "score_SLA";
+            }
+
+            // Fallback: check if final_score matches score_SLA
+            return pertanyaan.final_score == pertanyaan.score_SLA;
+        },
+
+        // Helper method to check if user explicitly selected score_SLA
+        userExplicitlySelectedScoreSLA(pertanyaan) {
+            return pertanyaan._userSelected === "score_SLA";
+        },
+
+        // Add method to track user selection
+        onScoreRadioChange(pertanyaan, scoreType, aspek) {
+            // Mark that user explicitly selected this option
+            pertanyaan._userSelected = scoreType;
+            // Add a flag to indicate this was explicitly set by user
+            pertanyaan._userExplicitlySelected = true;
+
+            // Update final_score based on selection
+            if (scoreType === "score") {
+                pertanyaan.final_score = pertanyaan.score;
+            } else if (scoreType === "score_SLA") {
+                pertanyaan.final_score = pertanyaan.score_SLA;
+            }
+
+            // Get the actual selected value based on scoreType
+            const selectedValue =
+                scoreType === "score" ? pertanyaan.score : pertanyaan.score_SLA;
+
+            console.log(
+                `Score Selection - Question ID: ${pertanyaan.question_id}, Selected: ${scoreType}, Value: ${selectedValue}, SKOR: ${pertanyaan.score}, SKOR SLA: ${pertanyaan.score_SLA}, final_score: ${pertanyaan.final_score}`
+            );
+
+            // Recalculate total score for this aspek
+            this.recalculateAspekTotalScore(aspek);
+        },
+
+        recalculateAspekTotalScore(aspek) {
+            if (!aspek.questions || !Array.isArray(aspek.questions)) {
+                return;
+            }
+
+            // Hitung total score berdasarkan final_score dari setiap pertanyaan
+            let totalScore = 0;
+            let questionCount = 0;
+
+            aspek.questions.forEach((pertanyaan) => {
+                if (
+                    pertanyaan.final_score !== null &&
+                    pertanyaan.final_score !== undefined
+                ) {
+                    totalScore += pertanyaan.final_score;
+                    questionCount++;
+                }
+            });
+
+            // Hitung rata-rata
+            if (questionCount > 0) {
+                aspek.total_score = totalScore / questionCount;
+            } else {
+                aspek.total_score = 0;
+            }
+
+            console.log(
+                `Recalculated total score for aspek ${aspek.aspek}: ${aspek.total_score} (based on ${questionCount} questions)`
+            );
+        },
     },
 };
 </script>
@@ -1292,6 +1564,7 @@ export default {
                     <div
                         class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"
                     ></div>
+                    <span class="ml-3 text-gray-600">Memuat data...</span>
                 </div>
 
                 <!-- Error State -->
@@ -1520,15 +1793,13 @@ export default {
                                                         {{ aspek.kriteria }}
                                                     </p>
                                                 </div>
-                                                <div
-                                                    class="text-right flex space-x-6"
-                                                >
+                                                <div class="text-right">
                                                     <!-- Original Total Score -->
                                                     <div>
                                                         <div
                                                             class="text-sm text-gray-600"
                                                         >
-                                                            Total Skor Asli
+                                                            Total Skor
                                                         </div>
                                                         <div
                                                             class="text-2xl font-bold"
@@ -1552,41 +1823,6 @@ export default {
                                                                           2
                                                                       )
                                                                     : "N/A"
-                                                            }}
-                                                        </div>
-                                                    </div>
-
-                                                    <!-- Final Total Score -->
-                                                    <div>
-                                                        <div
-                                                            class="text-sm text-gray-600"
-                                                        >
-                                                            Total Skor Final
-                                                        </div>
-                                                        <div
-                                                            class="text-2xl font-bold"
-                                                            :class="{
-                                                                'text-green-600':
-                                                                    aspek.total_score_final >=
-                                                                    4,
-                                                                'text-yellow-600':
-                                                                    aspek.total_score_final >=
-                                                                        3 &&
-                                                                    aspek.total_score_final <
-                                                                        4,
-                                                                'text-red-600':
-                                                                    aspek.total_score_final <
-                                                                    2.5,
-                                                            }"
-                                                        >
-                                                            {{
-                                                                aspek.total_score_final
-                                                                    ? aspek.total_score_final.toFixed(
-                                                                          2
-                                                                      )
-                                                                    : aspek.total_score.toFixed(
-                                                                          2
-                                                                      )
                                                             }}
                                                         </div>
                                                     </div>
@@ -1648,8 +1884,9 @@ export default {
                                                                 <div
                                                                     :class="{
                                                                         'bg-blue-100 p-2 rounded-md':
-                                                                            pertanyaan.final_score ==
-                                                                            pertanyaan.score,
+                                                                            shouldHighlightScore(
+                                                                                pertanyaan
+                                                                            ),
                                                                     }"
                                                                 >
                                                                     <input
@@ -1661,22 +1898,26 @@ export default {
                                                                         :value="
                                                                             pertanyaan.score
                                                                         "
-                                                                        v-model="
-                                                                            pertanyaan.final_score
+                                                                        :checked="
+                                                                            shouldHighlightScore(
+                                                                                pertanyaan
+                                                                            )
                                                                         "
-                                                                        class="border-2 border-gray-300 rounded-md hover:border-blue-500"
+                                                                        class="border-2 border-gray-300 rounded-md hover:border-blue-500 mr-2"
                                                                         @change="
-                                                                            aspek.total_score_final =
-                                                                                calculateTotalScoreFinal(
-                                                                                    aspek
-                                                                                )
+                                                                            onScoreRadioChange(
+                                                                                pertanyaan,
+                                                                                'score',
+                                                                                aspek
+                                                                            )
                                                                         "
                                                                     />
                                                                     <span
                                                                         :class="{
                                                                             'font-medium':
-                                                                                pertanyaan.final_score ==
-                                                                                pertanyaan.score,
+                                                                                shouldHighlightScore(
+                                                                                    pertanyaan
+                                                                                ),
                                                                         }"
                                                                     >
                                                                         {{
@@ -1692,8 +1933,9 @@ export default {
                                                                 <div
                                                                     :class="{
                                                                         'bg-blue-100 p-2 rounded-md':
-                                                                            pertanyaan.final_score ==
-                                                                            pertanyaan.score_SLA,
+                                                                            shouldHighlightScoreSLA(
+                                                                                pertanyaan
+                                                                            ),
                                                                     }"
                                                                 >
                                                                     <input
@@ -1705,22 +1947,26 @@ export default {
                                                                         :value="
                                                                             pertanyaan.score_SLA
                                                                         "
-                                                                        v-model="
-                                                                            pertanyaan.final_score
+                                                                        :checked="
+                                                                            shouldHighlightScoreSLA(
+                                                                                pertanyaan
+                                                                            )
                                                                         "
-                                                                        class="border-2 border-gray-300 rounded-md hover:border-blue-500"
+                                                                        class="border-2 border-gray-300 rounded-md hover:border-blue-500 mr-2"
                                                                         @change="
-                                                                            aspek.total_score_final =
-                                                                                calculateTotalScoreFinal(
-                                                                                    aspek
-                                                                                )
+                                                                            onScoreRadioChange(
+                                                                                pertanyaan,
+                                                                                'score_SLA',
+                                                                                aspek
+                                                                            )
                                                                         "
                                                                     />
                                                                     <span
                                                                         :class="{
                                                                             'font-medium':
-                                                                                pertanyaan.final_score ==
-                                                                                pertanyaan.score_SLA,
+                                                                                shouldHighlightScoreSLA(
+                                                                                    pertanyaan
+                                                                                ),
                                                                         }"
                                                                     >
                                                                         {{
@@ -1888,28 +2134,30 @@ export default {
                                                 <div
                                                     class="bg-white rounded-lg border border-gray-200 overflow-hidden"
                                                 >
-                                                    <table class="w-full">
+                                                    <table
+                                                        class="w-full table-fixed"
+                                                    >
                                                         <thead>
                                                             <tr
                                                                 class="bg-gray-50 border-b border-gray-200"
                                                             >
                                                                 <th
-                                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48"
                                                                 >
                                                                     Penilai
                                                                 </th>
                                                                 <th
-                                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-64"
                                                                 >
                                                                     Pertanyaan
                                                                 </th>
                                                                 <th
-                                                                    class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24"
+                                                                    class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20"
                                                                 >
                                                                     Skor
                                                                 </th>
                                                                 <th
-                                                                    class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24"
+                                                                    class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20"
                                                                 >
                                                                     Skor SLA
                                                                 </th>
@@ -1931,10 +2179,10 @@ export default {
                                                                 class="hover:bg-gray-50 transition-colors"
                                                             >
                                                                 <td
-                                                                    class="px-4 py-3"
+                                                                    class="px-4 py-3 w-48"
                                                                 >
                                                                     <div
-                                                                        class="text-sm font-medium text-gray-900"
+                                                                        class="text-sm font-medium text-gray-900 break-words leading-relaxed"
                                                                     >
                                                                         {{
                                                                             answer.evaluator_name
@@ -1942,10 +2190,10 @@ export default {
                                                                     </div>
                                                                 </td>
                                                                 <td
-                                                                    class="px-4 py-3"
+                                                                    class="px-4 py-3 w-64"
                                                                 >
                                                                     <div
-                                                                        class="text-sm text-gray-900"
+                                                                        class="text-sm text-gray-900 break-words leading-relaxed"
                                                                     >
                                                                         {{
                                                                             answer.pertanyaan
@@ -1953,13 +2201,14 @@ export default {
                                                                     </div>
                                                                 </td>
                                                                 <td
-                                                                    class="px-4 py-3 text-center"
+                                                                    class="px-4 py-3 text-center w-20"
                                                                 >
                                                                     <div
                                                                         :class="{
-                                                                            'p-2 rounded-md':
-                                                                                answer.final_peer ==
-                                                                                answer.score,
+                                                                            'bg-blue-100 p-2 rounded-md':
+                                                                                shouldHighlightPeerScore(
+                                                                                    answer
+                                                                                ),
                                                                         }"
                                                                     >
                                                                         <input
@@ -1973,22 +2222,26 @@ export default {
                                                                             :value="
                                                                                 answer.score
                                                                             "
-                                                                            v-model="
-                                                                                answer.final_peer
+                                                                            :checked="
+                                                                                shouldHighlightPeerScore(
+                                                                                    answer
+                                                                                )
                                                                             "
-                                                                            class="border-2 border-gray-300 rounded-md hover:border-blue-500"
+                                                                            class="border-2 border-gray-300 rounded-md hover:border-blue-500 mr-2"
                                                                             @change="
-                                                                                updateFinalPeer(
+                                                                                onPeerScoreRadioChange(
                                                                                     answer,
-                                                                                    answer.score
+                                                                                    'score',
+                                                                                    peerGroup
                                                                                 )
                                                                             "
                                                                         />
                                                                         <span
                                                                             :class="{
                                                                                 'font-medium':
-                                                                                    answer.final_peer ==
-                                                                                    answer.score,
+                                                                                    shouldHighlightPeerScore(
+                                                                                        answer
+                                                                                    ),
                                                                             }"
                                                                         >
                                                                             {{
@@ -1999,13 +2252,14 @@ export default {
                                                                     </div>
                                                                 </td>
                                                                 <td
-                                                                    class="px-4 py-3 text-center"
+                                                                    class="px-4 py-3 text-center w-20"
                                                                 >
                                                                     <div
                                                                         :class="{
-                                                                            'p-2 rounded-md':
-                                                                                answer.final_peer ==
-                                                                                answer.score_SLA,
+                                                                            'bg-blue-100 p-2 rounded-md':
+                                                                                shouldHighlightPeerScoreSLA(
+                                                                                    answer
+                                                                                ),
                                                                         }"
                                                                     >
                                                                         <input
@@ -2019,22 +2273,26 @@ export default {
                                                                             :value="
                                                                                 answer.score_SLA
                                                                             "
-                                                                            v-model="
-                                                                                answer.final_peer
+                                                                            :checked="
+                                                                                shouldHighlightPeerScoreSLA(
+                                                                                    answer
+                                                                                )
                                                                             "
-                                                                            class="border-2 border-gray-300 rounded-md hover:border-blue-500"
+                                                                            class="border-2 border-gray-300 rounded-md hover:border-blue-500 mr-2"
                                                                             @change="
-                                                                                updateFinalPeer(
+                                                                                onPeerScoreRadioChange(
                                                                                     answer,
-                                                                                    answer.score_SLA
+                                                                                    'score_SLA',
+                                                                                    peerGroup
                                                                                 )
                                                                             "
                                                                         />
                                                                         <span
                                                                             :class="{
                                                                                 'font-medium':
-                                                                                    answer.final_peer ==
-                                                                                    answer.score_SLA,
+                                                                                    shouldHighlightPeerScoreSLA(
+                                                                                        answer
+                                                                                    ),
                                                                             }"
                                                                         >
                                                                             {{
@@ -2048,7 +2306,7 @@ export default {
                                                                     class="px-4 py-3"
                                                                 >
                                                                     <div
-                                                                        class="text-sm text-gray-500 max-w-xl"
+                                                                        class="text-sm text-gray-500 break-words leading-relaxed max-w-md"
                                                                     >
                                                                         {{
                                                                             answer.answer ||
@@ -2408,5 +2666,30 @@ export default {
 
 .hover\:bg-gray-50:hover {
     background-color: #f9fafb;
+}
+
+/* Improved table readability */
+.break-words {
+    word-wrap: break-word;
+    word-break: break-word;
+}
+
+.leading-relaxed {
+    line-height: 1.625;
+}
+
+.max-w-md {
+    max-width: 28rem;
+}
+
+/* Table cell padding adjustment for better text display */
+table td {
+    vertical-align: top;
+    padding: 12px 16px;
+}
+
+/* Better table row spacing */
+table tr {
+    transition: background-color 0.15s ease-in-out;
 }
 </style>

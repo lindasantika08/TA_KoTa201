@@ -121,6 +121,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/answers/statistics', [AnswerController::class, 'getStatistics']);
     Route::get('/answers/statistics-dashboard', [DashboardDosen::class, 'getStatistics']);
     Route::get('/answers/statistics-peer', [AnswerController::class, 'getStatisticsPeer']);
+    Route::get('/class-comparison', [DashboardDosen::class, 'getClassComparison']);
     Route::get('projects/active', [DashboardDosen::class, 'getActiveProjects']);
     Route::post('/changeStatus', [ProjectController::class, 'changeStatus']);
     Route::get('/answers/get-details', [AnswerController::class, 'getDetailsAnswer']);

@@ -20,9 +20,14 @@ class CreateReportsTable extends Migration
             $table->foreignUuid('group_id')->constrained('groups');
             $table->foreignUuid('mahasiswa_id')->constrained('mahasiswa');
             $table->foreignUuid('typeCriteria_id')->constrained('type_criteria');
-            $table->decimal('skor_self', 5, 2);
-            $table->decimal('skor_peer', 5, 2);
-            $table->decimal('selisih', 5, 2);
+            $table->float('final_score_self')->nullable();
+            $table->float('final_score_peer')->nullable();
+            $table->foreignUuid('question_id')->constrained('assessment');
+            $table->foreignUuid('peer_id')->nullable()->constrained('mahasiswa');
+            $table->string('assessment_type')->nullable();
+            $table->decimal('skor_self', 5, 2)->nullable();
+            $table->decimal('skor_peer', 5, 2)->nullable();
+            $table->decimal('selisih', 5, 2)->nullable();
             $table->decimal('nilai_total', 5, 2)->nullable();
             $table->timestamps();
         });

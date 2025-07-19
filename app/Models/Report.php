@@ -26,12 +26,11 @@ class Report extends Model
         'skor_peer',
         'selisih',
         'nilai_total',
-
     ];
 
     public function project()
     {
-        return $this->belongsTo(Project::class, 'group_id', 'id');
+        return $this->belongsTo(Project::class, 'project_id', 'id');
     }
 
     public function group()
@@ -47,6 +46,16 @@ class Report extends Model
     public function typeCriteria()
     {
         return $this->belongsTo(TypeCriteria::class, 'typeCriteria_id', 'id');
+    }
+
+    public function question()
+    {
+        return $this->belongsTo(Assessment::class, 'question_id', 'id');
+    }
+
+    public function peer()
+    {
+        return $this->belongsTo(Mahasiswa::class, 'peer_id', 'id');
     }
 
     public function setKeysForSaveQuery($query)

@@ -4,6 +4,7 @@ import { router } from "@inertiajs/vue3";
 import Sidebar from "@/Components/Sidebar.vue";
 import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
+import VueApexCharts from "vue3-apexcharts";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import {
     faChevronUp,
@@ -13,6 +14,8 @@ import {
     faProjectDiagram,
     faCheckCircle,
     faHourglassHalf,
+    faChartBar,
+    faSpider,
 } from "@fortawesome/free-solid-svg-icons";
 import { library } from "@fortawesome/fontawesome-svg-core";
 
@@ -24,7 +27,9 @@ library.add(
     faUsers,
     faProjectDiagram,
     faCheckCircle,
-    faHourglassHalf
+    faHourglassHalf,
+    faChartBar,
+    faSpider
 );
 
 export default {
@@ -34,6 +39,7 @@ export default {
         Navbar,
         Card,
         FontAwesomeIcon,
+        ApexChart: VueApexCharts,
     },
     data() {
         return {
@@ -50,6 +56,12 @@ export default {
             showChangePasswordToast: false, // Tambahkan state untuk notifikasi
             needPasswordChange: false,
             toastTimeout: null,
+            // Class comparison chart data
+            classComparisonData: [],
+            chartType: "radar", // 'radar' or 'bar'
+            selectedChartType: "radar",
+            scoreType: "peer", // 'self', 'peer', or 'combined'
+            loadingChart: false,
         };
     },
     mounted() {
@@ -82,6 +94,248 @@ export default {
         peerAssessmentProgressWidth() {
             if (!this.totalGroups || this.totalGroups <= 0) return "0%";
             return `${(this.completedGroups / this.totalGroups) * 100}%`;
+        },
+
+        // Chart data untuk class comparison
+        chartData() {
+            if (
+                !this.classComparisonData ||
+                this.classComparisonData.length === 0
+            ) {
+                return { series: [], labels: [] };
+            }
+
+            const aspects = this.classComparisonData.aspects || [];
+            const classes = this.classComparisonData.class_comparison || [];
+
+            if (this.chartType === "radar") {
+                return {
+                    series: classes.map((classData) => ({
+                        name: classData.class_name,
+                        data: aspects.map((aspect) => {
+                            const score = classData.aspect_scores[aspect];
+                            return score
+                                ? score.avg_score || score.peer_avg || 0
+                                : 0;
+                        }),
+                    })),
+                    labels: aspects,
+                };
+            } else {
+                // Bar chart format
+                return {
+                    series: aspects.map((aspect) => ({
+                        name: aspect,
+                        data: classes.map((classData) => {
+                            const score = classData.aspect_scores[aspect];
+                            return score
+                                ? score.avg_score || score.peer_avg || 0
+                                : 0;
+                        }),
+                    })),
+                    labels: classes.map((classData) => classData.class_name),
+                };
+            }
+        },
+
+        // Check if chart has real data (not just dummy/empty data)
+        hasChartData() {
+            if (
+                !this.classComparisonData ||
+                !this.classComparisonData.class_comparison
+            ) {
+                return false;
+            }
+
+            const classes = this.classComparisonData.class_comparison;
+            const aspects = this.classComparisonData.aspects || [];
+
+            // Check if any class has actual data (non-zero scores)
+            return classes.some((classData) => {
+                return aspects.some((aspect) => {
+                    const score = classData.aspect_scores[aspect];
+                    return (
+                        score &&
+                        (score.avg_score > 0 || score.peer_avg > 0) &&
+                        score.total_assessments > 0
+                    );
+                });
+            });
+        },
+
+        // Chart options berdasarkan tipe
+        chartOptions() {
+            const baseColors = [
+                "#3B82F6", // Blue
+                "#EF4444", // Red
+                "#10B981", // Green
+                "#F59E0B", // Yellow
+                "#8B5CF6", // Purple
+                "#F97316", // Orange
+                "#06B6D4", // Cyan
+                "#84CC16", // Lime
+            ];
+
+            const baseOptions = {
+                colors: baseColors,
+                legend: {
+                    show: true,
+                    position: "bottom",
+                    horizontalAlign: "center",
+                    offsetY: 10,
+                },
+                tooltip: {
+                    y: {
+                        formatter: function (val) {
+                            return val ? val.toFixed(2) : "0.00";
+                        },
+                    },
+                },
+                noData: {
+                    text: "No data available",
+                    align: "center",
+                    verticalAlign: "middle",
+                    offsetX: 0,
+                    offsetY: 0,
+                    style: {
+                        color: "#999",
+                        fontSize: "14px",
+                    },
+                },
+            };
+
+            if (this.chartType === "radar") {
+                return {
+                    ...baseOptions,
+                    chart: {
+                        type: "radar",
+                        height: 400,
+                        toolbar: { show: false },
+                        dropShadow: {
+                            enabled: true,
+                            blur: 8,
+                            left: 0,
+                            top: 0,
+                            opacity: 0.2,
+                        },
+                    },
+                    plotOptions: {
+                        radar: {
+                            size: 140,
+                            polygons: {
+                                strokeColors: "#e8e8e8",
+                                strokeWidth: 1,
+                                fill: {
+                                    colors: ["#f8f9fa", "#ffffff"],
+                                },
+                            },
+                        },
+                    },
+                    xaxis: {
+                        categories: this.chartData.labels || [],
+                    },
+                    yaxis: {
+                        show: true,
+                        min: 0,
+                        max: 5,
+                        tickAmount: 5,
+                        labels: {
+                            formatter: function (val) {
+                                return val ? val.toFixed(1) : "0.0";
+                            },
+                        },
+                    },
+                    markers: {
+                        size: 4,
+                        colors: ["#fff"],
+                        strokeColors: baseColors,
+                        strokeWidth: 2,
+                    },
+                    fill: {
+                        opacity: 0.25,
+                        type: "solid",
+                    },
+                    stroke: {
+                        show: true,
+                        width: 2,
+                    },
+                };
+            } else {
+                return {
+                    ...baseOptions,
+                    chart: {
+                        type: "bar",
+                        height: 400,
+                        toolbar: { show: false },
+                        stacked: false,
+                    },
+                    plotOptions: {
+                        bar: {
+                            horizontal: false,
+                            columnWidth: "70%",
+                            endingShape: "rounded",
+                            borderRadius: 4,
+                        },
+                    },
+                    xaxis: {
+                        categories: this.chartData.labels || [],
+                        title: {
+                            text: "Kelas",
+                            style: {
+                                fontSize: "14px",
+                                fontWeight: 600,
+                                color: "#374151",
+                            },
+                        },
+                        labels: {
+                            style: {
+                                fontSize: "12px",
+                                colors: "#6B7280",
+                            },
+                        },
+                    },
+                    yaxis: {
+                        title: {
+                            text: `Skor Rata-rata (${this.getScoreTypeLabel()})`,
+                            style: {
+                                fontSize: "14px",
+                                fontWeight: 600,
+                                color: "#374151",
+                            },
+                        },
+                        min: 0,
+                        max: 5,
+                        tickAmount: 5,
+                        labels: {
+                            formatter: function (val) {
+                                return val ? val.toFixed(1) : "0.0";
+                            },
+                            style: {
+                                fontSize: "12px",
+                                colors: "#6B7280",
+                            },
+                        },
+                    },
+                    dataLabels: {
+                        enabled: false,
+                    },
+                    grid: {
+                        show: true,
+                        borderColor: "#F3F4F6",
+                        strokeDashArray: 3,
+                        xaxis: {
+                            lines: {
+                                show: false,
+                            },
+                        },
+                        yaxis: {
+                            lines: {
+                                show: true,
+                            },
+                        },
+                    },
+                };
+            }
         },
     },
     methods: {
@@ -155,6 +409,7 @@ export default {
                     this.selectedProject = JSON.parse(savedProject);
                     this.fetchStatistics();
                     this.fetchPeerStatistics();
+                    this.fetchClassComparison();
                 } catch (error) {
                     console.error("Error parsing saved project:", error);
                     localStorage.removeItem("selectedProject");
@@ -311,6 +566,7 @@ export default {
                 // Fetch updated statistics
                 this.fetchStatistics();
                 this.fetchPeerStatistics();
+                this.fetchClassComparison();
             }
         },
         handleListAnswer() {
@@ -347,6 +603,58 @@ export default {
             this.needPasswordChange = false;
             localStorage.removeItem("need_password_change");
             router.visit("/sispa/dosen/profile");
+        },
+        async fetchClassComparison() {
+            if (!this.selectedProject) return;
+
+            this.loadingChart = true;
+            try {
+                const response = await axios.get(
+                    "/sispa/api/class-comparison",
+                    {
+                        params: {
+                            batch_year: this.selectedProject.batch_year,
+                            project_name: this.selectedProject.project_name,
+                            score_type: this.scoreType,
+                        },
+                    }
+                );
+
+                console.log("Class comparison response:", response.data);
+                this.classComparisonData = response.data;
+
+                // If no real data exists, keep the response as is (don't create dummy data)
+                // The hasChartData computed property will determine if we show the "no data" message
+            } catch (error) {
+                console.error("Error fetching class comparison:", error);
+                console.log("Response data:", error.response?.data);
+                console.log("Response status:", error.response?.status);
+
+                // Set empty data structure on error
+                this.classComparisonData = {
+                    aspects: [],
+                    class_comparison: [],
+                };
+            } finally {
+                this.loadingChart = false;
+            }
+        },
+        handleScoreTypeChange() {
+            // Fetch new data when score type changes
+            this.fetchClassComparison();
+        },
+
+        getScoreTypeLabel() {
+            switch (this.scoreType) {
+                case "self":
+                    return "Self Assessment";
+                case "peer":
+                    return "Peer Assessment";
+                case "combined":
+                    return "Combined Assessment";
+                default:
+                    return "Assessment";
+            }
         },
     },
 };
@@ -720,6 +1028,176 @@ export default {
                             <p class="text-gray-500">
                                 Please select a project to view summary
                             </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Class Comparison Chart Section -->
+                <div v-if="selectedProject" class="mt-8">
+                    <div class="bg-white rounded-xl shadow-md p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-800">
+                                    Class Comparison Chart
+                                </h3>
+                                <p class="text-sm text-gray-600 mt-1">
+                                    Perbandingan performa antar kelas
+                                    berdasarkan assessment
+                                </p>
+                            </div>
+
+                            <!-- Chart Controls -->
+                            <div class="flex items-center space-x-4">
+                                <!-- Score Type Selector -->
+                                <div class="flex items-center space-x-2">
+                                    <label
+                                        class="text-sm font-medium text-gray-700"
+                                        >Score Type:</label
+                                    >
+                                    <select
+                                        v-model="scoreType"
+                                        @change="handleScoreTypeChange"
+                                        class="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    >
+                                        <option value="self">
+                                            Self Assessment
+                                        </option>
+                                        <option value="peer">
+                                            Peer Assessment
+                                        </option>
+                                        <option value="combined">
+                                            Combined
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <!-- Chart Type Selector -->
+                                <div class="flex items-center space-x-2">
+                                    <label
+                                        class="text-sm font-medium text-gray-700"
+                                        >Chart Type:</label
+                                    >
+                                    <select
+                                        v-model="chartType"
+                                        class="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    >
+                                        <option value="radar">
+                                            <font-awesome-icon
+                                                icon="fa-solid fa-spider"
+                                                class="mr-1"
+                                            />
+                                            Radar Chart
+                                        </option>
+                                        <option value="bar">
+                                            <font-awesome-icon
+                                                icon="fa-solid fa-chart-bar"
+                                                class="mr-1"
+                                            />
+                                            Bar Chart
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Chart Container -->
+                        <div class="mt-6">
+                            <div
+                                v-if="loadingChart"
+                                class="flex justify-center items-center h-64"
+                            >
+                                <div
+                                    class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"
+                                ></div>
+                                <span class="ml-2 text-gray-600"
+                                    >Loading chart...</span
+                                >
+                            </div>
+
+                            <!-- No Data Message -->
+                            <div
+                                v-else-if="!hasChartData"
+                                class="flex flex-col justify-center items-center h-64 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300"
+                            >
+                                <div class="text-center">
+                                    <svg
+                                        class="mx-auto h-16 w-16 text-gray-400 mb-4"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="1"
+                                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                                        />
+                                    </svg>
+                                    <h3
+                                        class="text-lg font-medium text-gray-900 mb-2"
+                                    >
+                                        Belum Ada Data Report
+                                    </h3>
+                                    <p class="text-sm text-gray-600 mb-4">
+                                        Data perbandingan antar kelas belum
+                                        tersedia untuk proyek ini.
+                                    </p>
+                                    <p class="text-xs text-gray-500">
+                                        Pastikan mahasiswa sudah melakukan peer
+                                        assessment untuk proyek ini.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Chart Display -->
+                            <div v-else class="chart-container">
+                                <ApexChart
+                                    :type="chartType"
+                                    height="400"
+                                    :series="chartData.series"
+                                    :options="chartOptions"
+                                />
+                            </div>
+                        </div>
+
+                        <!-- Chart Legend Info -->
+                        <div
+                            v-if="hasChartData && !loadingChart"
+                            class="mt-4 p-4 bg-gray-50 rounded-lg"
+                        >
+                            <p class="text-sm text-gray-600 mb-2">
+                                <strong>Legend:</strong>
+                            </p>
+                            <div class="flex flex-wrap gap-4">
+                                <div
+                                    v-for="(
+                                        classData, index
+                                    ) in classComparisonData.class_comparison"
+                                    :key="classData.class_name"
+                                    class="flex items-center space-x-2"
+                                >
+                                    <div
+                                        class="w-4 h-4 rounded"
+                                        :style="{
+                                            backgroundColor:
+                                                chartOptions.colors[
+                                                    index %
+                                                        chartOptions.colors
+                                                            .length
+                                                ],
+                                        }"
+                                    ></div>
+                                    <span class="text-sm text-gray-700">{{
+                                        classData.class_name
+                                    }}</span>
+                                    <span class="text-xs text-gray-500"
+                                        >({{
+                                            classData.total_students || 0
+                                        }}
+                                        students)</span
+                                    >
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

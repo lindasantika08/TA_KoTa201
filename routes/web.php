@@ -119,6 +119,7 @@ Route::prefix('sispa')->group(function () {
             //REPORT
             Route::get('/report', [ReportController::class, 'report'])->name('report');
             Route::get('/kelompok/report-detail', [ReportController::class, 'getScoreKelompok']);
+            Route::get('/report/export-groups', [ReportController::class, 'exportGroupReport'])->name('report.export.groups');
 
             //Feedback
             Route::get('/feedback-detail', [FeedbackController::class, 'feedbackDetailView']);
