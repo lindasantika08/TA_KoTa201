@@ -45,6 +45,11 @@ export default {
             selectedUserId: null,
             successMessage: null,
             isLoading: false,
+            collapsedSections: {
+                selfAssessment: false,
+                peerAssessment: false,
+            },
+            typeCriteriaData: {}, // Cache for TypeCriteria bobot data
         };
     },
     computed: {
@@ -146,10 +151,6 @@ export default {
                                     aspek.kriteria;
                             }
 
-                            console.log(
-                                `Preparing to save - Question ID: ${pertanyaan.question_id}, _userSelected: ${pertanyaan._userSelected}, finalScore: ${finalScore}, SKOR: ${pertanyaan.score}, SKOR SLA: ${pertanyaan.score_SLA}, mahasiswa_id: ${mahasiswaId}`
-                            );
-
                             answers.push({
                                 mahasiswa_id: mahasiswaId,
                                 typeCriteria_id: typeCriteriaId,
@@ -179,11 +180,6 @@ export default {
                     this.isLoading = false;
                     return;
                 }
-
-                console.log(
-                    "Final answers array being sent to backend:",
-                    answers
-                );
 
                 // Show loading alert
                 Swal.fire({
@@ -263,11 +259,6 @@ export default {
                 return;
             }
 
-            console.log(
-                "Setting up final scores for user:",
-                this.selectedUserData
-            );
-
             this.selectedUserData.self_assessment.forEach((aspek) => {
                 if (!aspek.questions || !Array.isArray(aspek.questions)) {
                     return;
@@ -279,9 +270,6 @@ export default {
                         pertanyaan._userSelected &&
                         pertanyaan._userExplicitlySelected
                     ) {
-                        console.log(
-                            `Skipping question ${pertanyaan.question_id} - user already selected`
-                        );
                         return; // Don't override user's choice
                     }
 
@@ -327,18 +315,11 @@ export default {
                             // - saved score tidak sama dengan keduanya
                             pertanyaan._userSelected = "score";
                         }
-
-                        console.log(
-                            `Loading from ${dataSource} - Question ID: ${pertanyaan.question_id}, Saved Score: ${savedScore}, SKOR: ${pertanyaan.score}, SKOR SLA: ${pertanyaan.score_SLA}, Selected: ${pertanyaan._userSelected}`
-                        );
                     } else {
                         // Jika tidak ada data tersimpan di tabel report, default ke SKOR
                         if (pertanyaan.score) {
                             pertanyaan.final_score = pertanyaan.score;
                             pertanyaan._userSelected = "score";
-                            console.log(
-                                `No saved data - Question ID: ${pertanyaan.question_id}, Defaulting to SKOR: ${pertanyaan.score}, Selected: ${pertanyaan._userSelected}`
-                            );
                         }
                     }
                 });
@@ -529,11 +510,6 @@ export default {
                     }
                 }
 
-                console.log(
-                    "Final answersPeer array being sent to backend:",
-                    answersPeer
-                );
-
                 // Show loading alert
                 Swal.fire({
                     title: "Menyimpan Data...",
@@ -614,8 +590,6 @@ export default {
                 return;
             }
 
-            console.log("Setting up final scores for peer assessment");
-
             this.selectedUserData.evaluated_by_peers.forEach((group) => {
                 if (!group.evaluated_by) return;
                 Object.values(group.evaluated_by).forEach((evaluator) => {
@@ -630,9 +604,6 @@ export default {
                                 answer._userSelected &&
                                 answer._userExplicitlySelected
                             ) {
-                                console.log(
-                                    `Skipping peer answer ${answer.question_id}_${answer.evaluator_name} - user already selected`
-                                );
                                 return;
                             }
 
@@ -675,18 +646,11 @@ export default {
                                     // Untuk semua kasus lainnya, pilih SKOR
                                     answer._userSelected = "score";
                                 }
-
-                                console.log(
-                                    `Loading peer from ${dataSource} - Question ID: ${answer.question_id}, Evaluator: ${answer.evaluator_name}, Saved Score: ${savedScore}, SKOR: ${answer.score}, SKOR SLA: ${answer.score_SLA}, Selected: ${answer._userSelected}`
-                                );
                             } else {
                                 // Jika tidak ada data tersimpan di tabel report, default ke SKOR
                                 if (answer.score) {
                                     answer.final_peer = answer.score;
                                     answer._userSelected = "score";
-                                    console.log(
-                                        `No saved peer data - Question ID: ${answer.question_id}, Evaluator: ${answer.evaluator_name}, Defaulting to SKOR: ${answer.score}, Selected: ${answer._userSelected}`
-                                    );
                                 }
                             }
                         });
@@ -726,10 +690,6 @@ export default {
             const selectedValue =
                 scoreType === "score" ? answer.score : answer.score_SLA;
 
-            console.log(
-                `Peer Score Selection - Question ID: ${answer.question_id}, Evaluator: ${answer.evaluator_name}, Selected: ${scoreType}, Value: ${selectedValue}, SKOR: ${answer.score}, SKOR SLA: ${answer.score_SLA}, final_peer: ${answer.final_peer}`
-            );
-
             // Force reactivity update untuk total score
             this.$forceUpdate();
         },
@@ -759,10 +719,6 @@ export default {
             } else {
                 peerGroup.total_score = 0;
             }
-
-            console.log(
-                `Recalculated peer total score for group ${peerGroup.aspek} - ${peerGroup.kriteria}: ${peerGroup.total_score} (based on ${answerCount} answers)`
-            );
         },
 
         async fetchKelompokAnalysis() {
@@ -887,6 +843,12 @@ export default {
                     names: names,
                     total_score: calculatedTotalScore, // Gunakan calculated total score
                     answers: processedAnswers,
+                    // Tambahkan bobot data dari backend
+                    bobot_1: group.bobot_1,
+                    bobot_2: group.bobot_2,
+                    bobot_3: group.bobot_3,
+                    bobot_4: group.bobot_4,
+                    bobot_5: group.bobot_5,
                 };
             });
         },
@@ -1435,10 +1397,6 @@ export default {
             const selectedValue =
                 scoreType === "score" ? pertanyaan.score : pertanyaan.score_SLA;
 
-            console.log(
-                `Score Selection - Question ID: ${pertanyaan.question_id}, Selected: ${scoreType}, Value: ${selectedValue}, SKOR: ${pertanyaan.score}, SKOR SLA: ${pertanyaan.score_SLA}, final_score: ${pertanyaan.final_score}`
-            );
-
             // Recalculate total score for this aspek
             this.recalculateAspekTotalScore(aspek);
         },
@@ -1468,10 +1426,188 @@ export default {
             } else {
                 aspek.total_score = 0;
             }
+        },
 
-            console.log(
-                `Recalculated total score for aspek ${aspek.aspek}: ${aspek.total_score} (based on ${questionCount} questions)`
-            );
+        // Method untuk menentukan warna berdasarkan nilai score
+        getScoreColorClass(pertanyaan, scoreType) {
+            const score = pertanyaan.score || 0;
+            const scoreSLA = pertanyaan.score_SLA || 0;
+            const isSelected =
+                (scoreType === "score" &&
+                    this.shouldHighlightScore(pertanyaan)) ||
+                (scoreType === "score_SLA" &&
+                    this.shouldHighlightScoreSLA(pertanyaan));
+
+            let currentValue = scoreType === "score" ? score : scoreSLA;
+            let otherValue = scoreType === "score" ? scoreSLA : score;
+
+            let colorClass = "";
+
+            // Tentukan warna berdasarkan perbandingan nilai
+            if (currentValue === otherValue) {
+                // Jika nilai sama, warna abu-abu
+                colorClass = "bg-gray-200 border-gray-300";
+            } else if (currentValue > otherValue) {
+                // Jika nilai lebih besar, warna hijau
+                colorClass = "bg-green-300 border-green-400";
+            } else {
+                // Jika nilai lebih kecil, warna orange
+                colorClass = "bg-orange-300 border-orange-400";
+            }
+
+            // Jika terpilih, buat border lebih tebal
+            if (isSelected) {
+                colorClass = colorClass
+                    .replace("border-gray-300", "border-gray-500")
+                    .replace("border-green-400", "border-green-500")
+                    .replace("border-orange-400", "border-orange-500");
+            }
+
+            return colorClass;
+        },
+
+        // Method untuk peer assessment - warnai berdasarkan nilai score
+        getPeerScoreColorClass(answer, scoreType) {
+            const score = answer.score || 0;
+            const scoreSLA = answer.score_SLA || 0;
+            const isSelected =
+                (scoreType === "score" &&
+                    this.shouldHighlightPeerScore(answer)) ||
+                (scoreType === "score_SLA" &&
+                    this.shouldHighlightPeerScoreSLA(answer));
+
+            let currentValue = scoreType === "score" ? score : scoreSLA;
+            let otherValue = scoreType === "score" ? scoreSLA : score;
+
+            let colorClass = "";
+
+            // Tentukan warna berdasarkan perbandingan nilai
+            if (currentValue === otherValue) {
+                // Jika nilai sama, warna abu-abu
+                colorClass = "bg-gray-200 border-gray-300";
+            } else if (currentValue > otherValue) {
+                // Jika nilai lebih besar, warna hijau
+                colorClass = "bg-green-300 border-green-400";
+            } else {
+                // Jika nilai lebih kecil, warna orange
+                colorClass = "bg-orange-300 border-orange-400";
+            }
+
+            // Jika terpilih, buat border lebih tebal
+            if (isSelected) {
+                colorClass = colorClass
+                    .replace("border-gray-300", "border-gray-500")
+                    .replace("border-green-400", "border-green-500")
+                    .replace("border-orange-400", "border-orange-500");
+            }
+
+            return colorClass;
+        },
+
+        // Method untuk toggle collapse/expand sections
+        toggleSection(section) {
+            this.collapsedSections[section] = !this.collapsedSections[section];
+        },
+
+        // Method untuk mendapatkan data bobot dari TypeCriteria
+        getCriteriaWeights(aspek) {
+            // Initialize default weights
+            let weights = {
+                bobot_1: "N/A",
+                bobot_2: "N/A",
+                bobot_3: "N/A",
+                bobot_4: "N/A",
+                bobot_5: "N/A",
+            };
+
+            // Try different possible structures for the bobot data
+            let bobotData = null;
+
+            // PRIORITY 1: Check if bobot data is directly in aspek (works for both self and peer assessment)
+            if (aspek.bobot_1 !== undefined && aspek.bobot_1 !== null) {
+                bobotData = aspek;
+            }
+            // PRIORITY 2: Check if bobot data is in typeCriteria nested object
+            else if (
+                aspek.typeCriteria &&
+                aspek.typeCriteria.bobot_1 !== undefined &&
+                aspek.typeCriteria.bobot_1 !== null
+            ) {
+                bobotData = aspek.typeCriteria;
+            }
+            // PRIORITY 3: Check if bobot data is in questions array (for self assessment)
+            else if (aspek.questions && aspek.questions.length > 0) {
+                // Try to find bobot data in any question
+                for (let question of aspek.questions) {
+                    if (
+                        question.typeCriteria &&
+                        question.typeCriteria.bobot_1 !== undefined &&
+                        question.typeCriteria.bobot_1 !== null
+                    ) {
+                        bobotData = question.typeCriteria;
+                        break;
+                    }
+                    // Also check directly in question
+                    if (
+                        question.bobot_1 !== undefined &&
+                        question.bobot_1 !== null
+                    ) {
+                        bobotData = question;
+                        break;
+                    }
+                }
+            }
+
+            // PRIORITY 4: For peer assessment, check evaluated_by structure
+            if (!bobotData && aspek.evaluated_by) {
+                const evaluators = Object.values(aspek.evaluated_by);
+                for (let evaluator of evaluators) {
+                    if (evaluator.answers && evaluator.answers.length > 0) {
+                        const answer = evaluator.answers[0];
+                        if (
+                            answer.typeCriteria &&
+                            answer.typeCriteria.bobot_1 !== undefined &&
+                            answer.typeCriteria.bobot_1 !== null
+                        ) {
+                            bobotData = answer.typeCriteria;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // If we found bobot data, update the weights
+            if (bobotData) {
+                weights = {
+                    bobot_1:
+                        bobotData.bobot_1 && bobotData.bobot_1 !== null
+                            ? bobotData.bobot_1
+                            : "N/A",
+                    bobot_2:
+                        bobotData.bobot_2 && bobotData.bobot_2 !== null
+                            ? bobotData.bobot_2
+                            : "N/A",
+                    bobot_3:
+                        bobotData.bobot_3 && bobotData.bobot_3 !== null
+                            ? bobotData.bobot_3
+                            : "N/A",
+                    bobot_4:
+                        bobotData.bobot_4 && bobotData.bobot_4 !== null
+                            ? bobotData.bobot_4
+                            : "N/A",
+                    bobot_5:
+                        bobotData.bobot_5 && bobotData.bobot_5 !== null
+                            ? bobotData.bobot_5
+                            : "N/A",
+                };
+            }
+
+            return weights;
+        },
+
+        // Method untuk toggle collapse/expand sections
+        toggleSection(section) {
+            this.collapsedSections[section] = !this.collapsedSections[section];
         },
     },
 };
@@ -1746,251 +1882,384 @@ export default {
                                 class="bg-white rounded-lg shadow-sm overflow-hidden"
                             >
                                 <div
-                                    class="bg-gradient-to-r from-blue-600 to-blue-700 p-4 flex justify-between items-center"
+                                    class="bg-gradient-to-r from-blue-600 to-blue-700 p-4 flex justify-between items-center cursor-pointer"
+                                    @click="toggleSection('selfAssessment')"
                                 >
                                     <h3 class="text-white text-lg font-bold">
                                         Self Assessment
                                     </h3>
-                                </div>
-                                <!-- Tombol Simpan di Bagian Atas -->
-                                <div class="mt-3 mb-4 flex justify-end">
                                     <button
-                                        @click="saveAnswerSelf"
-                                        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        :disabled="isLoading"
+                                        class="text-white hover:text-gray-200 transition-transform duration-200"
                                     >
-                                        <span v-if="isLoading"
-                                            >Menyimpan...</span
+                                        <svg
+                                            :class="{
+                                                'rotate-180':
+                                                    collapsedSections.selfAssessment,
+                                            }"
+                                            class="w-5 h-5 transform transition-transform duration-200"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
                                         >
-                                        <span v-else
-                                            >Simpan Semua Penilaian</span
-                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M19 9l-7 7-7-7"
+                                            />
+                                        </svg>
                                     </button>
                                 </div>
 
-                                <div class="p-2">
-                                    <div
-                                        v-for="(
-                                            aspek, index
-                                        ) in selectedUserData.self_assessment"
-                                        :key="index"
-                                        class="mb-6 last:mb-0"
-                                    >
-                                        <div class="bg-gray-50 p-4 rounded-lg">
-                                            <!-- Aspek Header -->
-                                            <div
-                                                class="flex justify-between items-center mb-4"
+                                <!-- Collapsible Content -->
+                                <div v-show="!collapsedSections.selfAssessment">
+                                    <!-- Tombol Simpan di Bagian Atas -->
+                                    <div class="mt-3 mb-4 flex justify-end">
+                                        <button
+                                            @click="saveAnswerSelf"
+                                            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            :disabled="isLoading"
+                                        >
+                                            <span v-if="isLoading"
+                                                >Menyimpan...</span
                                             >
-                                                <div>
-                                                    <h4
-                                                        class="text-lg font-semibold text-gray-800"
-                                                    >
-                                                        {{ aspek.aspek }}
-                                                    </h4>
-                                                    <p
-                                                        class="text-sm text-gray-600"
-                                                    >
-                                                        {{ aspek.kriteria }}
-                                                    </p>
-                                                </div>
-                                                <div class="text-right">
-                                                    <!-- Original Total Score -->
+                                            <span v-else
+                                                >Simpan Semua Penilaian</span
+                                            >
+                                        </button>
+                                    </div>
+
+                                    <div class="p-2">
+                                        <div
+                                            v-for="(
+                                                aspek, index
+                                            ) in selectedUserData.self_assessment"
+                                            :key="index"
+                                            class="mb-6 last:mb-0"
+                                        >
+                                            <div
+                                                class="bg-gray-50 p-4 rounded-lg"
+                                            >
+                                                <!-- Aspek Header -->
+                                                <div
+                                                    class="flex justify-between items-center mb-4"
+                                                >
                                                     <div>
-                                                        <div
+                                                        <h4
+                                                            class="text-lg font-semibold text-gray-800"
+                                                        >
+                                                            {{ aspek.aspek }}
+                                                        </h4>
+                                                        <p
                                                             class="text-sm text-gray-600"
                                                         >
-                                                            Total Skor
-                                                        </div>
-                                                        <div
-                                                            class="text-2xl font-bold"
-                                                            :class="{
-                                                                'text-green-600':
-                                                                    aspek.total_score >=
-                                                                    4,
-                                                                'text-yellow-600':
-                                                                    aspek.total_score >=
-                                                                        3 &&
-                                                                    aspek.total_score <
+                                                            {{ aspek.kriteria }}
+                                                        </p>
+                                                    </div>
+                                                    <div class="text-right">
+                                                        <!-- Original Total Score -->
+                                                        <div>
+                                                            <div
+                                                                class="text-sm text-gray-600"
+                                                            >
+                                                                Total Skor
+                                                            </div>
+                                                            <div
+                                                                class="text-2xl font-bold"
+                                                                :class="{
+                                                                    'text-green-600':
+                                                                        aspek.total_score >=
                                                                         4,
-                                                                'text-red-600':
-                                                                    aspek.total_score <
-                                                                    2.5,
-                                                            }"
-                                                        >
-                                                            {{
-                                                                aspek.total_score
-                                                                    ? aspek.total_score.toFixed(
-                                                                          2
-                                                                      )
-                                                                    : "N/A"
-                                                            }}
+                                                                    'text-yellow-600':
+                                                                        aspek.total_score >=
+                                                                            3 &&
+                                                                        aspek.total_score <
+                                                                            4,
+                                                                    'text-red-600':
+                                                                        aspek.total_score <
+                                                                        2.5,
+                                                                }"
+                                                            >
+                                                                {{
+                                                                    aspek.total_score
+                                                                        ? aspek.total_score.toFixed(
+                                                                              2
+                                                                          )
+                                                                        : "N/A"
+                                                                }}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
 
-                                            <!-- Questions Table -->
-                                            <div
-                                                class="bg-white rounded-lg border border-gray-200 overflow-hidden"
-                                            >
-                                                <table class="w-full">
-                                                    <thead>
-                                                        <tr
-                                                            class="bg-gray-50 border-b border-gray-200"
-                                                        >
-                                                            <th
-                                                                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/2"
-                                                            >
-                                                                Pertanyaan
-                                                            </th>
-                                                            <th
-                                                                class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24"
-                                                            >
-                                                                Skor
-                                                            </th>
-                                                            <th
-                                                                class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24"
-                                                            >
-                                                                Skor SLA
-                                                            </th>
-                                                            <th
-                                                                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                                            >
-                                                                Jawaban
-                                                            </th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody
-                                                        class="divide-y divide-gray-200"
+                                                <!-- Weights Display for Self Assessment -->
+                                                <div class="mt-3 mb-4">
+                                                    <p
+                                                        class="text-sm font-medium text-gray-700 mb-2"
                                                     >
-                                                        <tr
-                                                            v-for="(
-                                                                pertanyaan,
-                                                                qIndex
-                                                            ) in aspek.questions"
-                                                            :key="qIndex"
-                                                            class="hover:bg-gray-50 transition-colors"
+                                                        Bobot Kriteria:
+                                                    </p>
+                                                    <div
+                                                        class="grid grid-cols-5 gap-2"
+                                                    >
+                                                        <div
+                                                            class="text-center"
                                                         >
-                                                            <td
-                                                                class="px-4 py-3 text-sm text-gray-900"
+                                                            <div
+                                                                class="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded"
+                                                            >
+                                                                Bobot 1
+                                                            </div>
+                                                            <div
+                                                                class="text-xs text-gray-600 mt-1"
                                                             >
                                                                 {{
-                                                                    pertanyaan.pertanyaan
+                                                                    getCriteriaWeights(
+                                                                        aspek
+                                                                    ).bobot_1
                                                                 }}
-                                                            </td>
-                                                            <td
-                                                                class="px-4 py-3 text-center"
+                                                            </div>
+                                                        </div>
+                                                        <div
+                                                            class="text-center"
+                                                        >
+                                                            <div
+                                                                class="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded"
                                                             >
-                                                                <div
-                                                                    :class="{
-                                                                        'bg-blue-100 p-2 rounded-md':
-                                                                            shouldHighlightScore(
-                                                                                pertanyaan
-                                                                            ),
-                                                                    }"
+                                                                Bobot 2
+                                                            </div>
+                                                            <div
+                                                                class="text-xs text-gray-600 mt-1"
+                                                            >
+                                                                {{
+                                                                    getCriteriaWeights(
+                                                                        aspek
+                                                                    ).bobot_2
+                                                                }}
+                                                            </div>
+                                                        </div>
+                                                        <div
+                                                            class="text-center"
+                                                        >
+                                                            <div
+                                                                class="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded"
+                                                            >
+                                                                Bobot 3
+                                                            </div>
+                                                            <div
+                                                                class="text-xs text-gray-600 mt-1"
+                                                            >
+                                                                {{
+                                                                    getCriteriaWeights(
+                                                                        aspek
+                                                                    ).bobot_3
+                                                                }}
+                                                            </div>
+                                                        </div>
+                                                        <div
+                                                            class="text-center"
+                                                        >
+                                                            <div
+                                                                class="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded"
+                                                            >
+                                                                Bobot 4
+                                                            </div>
+                                                            <div
+                                                                class="text-xs text-gray-600 mt-1"
+                                                            >
+                                                                {{
+                                                                    getCriteriaWeights(
+                                                                        aspek
+                                                                    ).bobot_4
+                                                                }}
+                                                            </div>
+                                                        </div>
+                                                        <div
+                                                            class="text-center"
+                                                        >
+                                                            <div
+                                                                class="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded"
+                                                            >
+                                                                Bobot 5
+                                                            </div>
+                                                            <div
+                                                                class="text-xs text-gray-600 mt-1"
+                                                            >
+                                                                {{
+                                                                    getCriteriaWeights(
+                                                                        aspek
+                                                                    ).bobot_5
+                                                                }}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Questions Table -->
+                                                <div
+                                                    class="bg-white rounded-lg border border-gray-200 overflow-hidden"
+                                                >
+                                                    <table class="w-full">
+                                                        <thead>
+                                                            <tr
+                                                                class="bg-gray-50 border-b border-gray-200"
+                                                            >
+                                                                <th
+                                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/2"
                                                                 >
-                                                                    <input
-                                                                        type="radio"
-                                                                        :name="
-                                                                            'score_' +
-                                                                            pertanyaan.question_id
-                                                                        "
-                                                                        :value="
-                                                                            pertanyaan.score
-                                                                        "
-                                                                        :checked="
-                                                                            shouldHighlightScore(
-                                                                                pertanyaan
-                                                                            )
-                                                                        "
-                                                                        class="border-2 border-gray-300 rounded-md hover:border-blue-500 mr-2"
-                                                                        @change="
-                                                                            onScoreRadioChange(
-                                                                                pertanyaan,
-                                                                                'score',
-                                                                                aspek
-                                                                            )
-                                                                        "
-                                                                    />
-                                                                    <span
-                                                                        :class="{
-                                                                            'font-medium':
-                                                                                shouldHighlightScore(
-                                                                                    pertanyaan
-                                                                                ),
-                                                                        }"
-                                                                    >
-                                                                        {{
-                                                                            pertanyaan.score ||
-                                                                            "N/A"
-                                                                        }}
-                                                                    </span>
-                                                                </div>
-                                                            </td>
-                                                            <td
-                                                                class="px-4 py-3 text-center"
-                                                            >
-                                                                <div
-                                                                    :class="{
-                                                                        'bg-blue-100 p-2 rounded-md':
-                                                                            shouldHighlightScoreSLA(
-                                                                                pertanyaan
-                                                                            ),
-                                                                    }"
+                                                                    Pertanyaan
+                                                                </th>
+                                                                <th
+                                                                    class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24"
                                                                 >
-                                                                    <input
-                                                                        type="radio"
-                                                                        :name="
-                                                                            'score_' +
-                                                                            pertanyaan.question_id
-                                                                        "
-                                                                        :value="
-                                                                            pertanyaan.score_SLA
-                                                                        "
-                                                                        :checked="
-                                                                            shouldHighlightScoreSLA(
-                                                                                pertanyaan
-                                                                            )
-                                                                        "
-                                                                        class="border-2 border-gray-300 rounded-md hover:border-blue-500 mr-2"
-                                                                        @change="
-                                                                            onScoreRadioChange(
-                                                                                pertanyaan,
-                                                                                'score_SLA',
-                                                                                aspek
-                                                                            )
-                                                                        "
-                                                                    />
-                                                                    <span
-                                                                        :class="{
-                                                                            'font-medium':
-                                                                                shouldHighlightScoreSLA(
-                                                                                    pertanyaan
-                                                                                ),
-                                                                        }"
-                                                                    >
-                                                                        {{
-                                                                            pertanyaan.score_SLA ||
-                                                                            "N/A"
-                                                                        }}
-                                                                    </span>
-                                                                </div>
-                                                            </td>
-                                                            <td
-                                                                class="px-4 py-3 text-sm text-gray-500"
+                                                                    Skor
+                                                                </th>
+                                                                <th
+                                                                    class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24"
+                                                                >
+                                                                    Skor SLA
+                                                                </th>
+                                                                <th
+                                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                                                >
+                                                                    Jawaban
+                                                                </th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody
+                                                            class="divide-y divide-gray-200"
+                                                        >
+                                                            <tr
+                                                                v-for="(
+                                                                    pertanyaan,
+                                                                    qIndex
+                                                                ) in aspek.questions"
+                                                                :key="qIndex"
+                                                                class="hover:bg-gray-50 transition-colors"
                                                             >
-                                                                <div
-                                                                    class="max-w-xl"
+                                                                <td
+                                                                    class="px-4 py-3 text-sm text-gray-900"
                                                                 >
                                                                     {{
-                                                                        pertanyaan.answer ||
-                                                                        "-"
+                                                                        pertanyaan.pertanyaan
                                                                     }}
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
+                                                                </td>
+                                                                <td
+                                                                    class="px-4 py-3 text-center"
+                                                                >
+                                                                    <div
+                                                                        class="p-2 rounded-md border-2"
+                                                                        :class="
+                                                                            getScoreColorClass(
+                                                                                pertanyaan,
+                                                                                'score'
+                                                                            )
+                                                                        "
+                                                                    >
+                                                                        <input
+                                                                            type="radio"
+                                                                            :name="
+                                                                                'score_' +
+                                                                                pertanyaan.question_id
+                                                                            "
+                                                                            :value="
+                                                                                pertanyaan.score
+                                                                            "
+                                                                            :checked="
+                                                                                shouldHighlightScore(
+                                                                                    pertanyaan
+                                                                                )
+                                                                            "
+                                                                            class="border-2 border-gray-300 rounded-md hover:border-blue-500 mr-2"
+                                                                            @change="
+                                                                                onScoreRadioChange(
+                                                                                    pertanyaan,
+                                                                                    'score',
+                                                                                    aspek
+                                                                                )
+                                                                            "
+                                                                        />
+                                                                        <span
+                                                                            :class="{
+                                                                                'font-medium':
+                                                                                    shouldHighlightScore(
+                                                                                        pertanyaan
+                                                                                    ),
+                                                                            }"
+                                                                        >
+                                                                            {{
+                                                                                pertanyaan.score ||
+                                                                                "N/A"
+                                                                            }}
+                                                                        </span>
+                                                                    </div>
+                                                                </td>
+                                                                <td
+                                                                    class="px-4 py-3 text-center"
+                                                                >
+                                                                    <div
+                                                                        class="p-2 rounded-md border-2"
+                                                                        :class="
+                                                                            getScoreColorClass(
+                                                                                pertanyaan,
+                                                                                'score_SLA'
+                                                                            )
+                                                                        "
+                                                                    >
+                                                                        <input
+                                                                            type="radio"
+                                                                            :name="
+                                                                                'score_' +
+                                                                                pertanyaan.question_id
+                                                                            "
+                                                                            :value="
+                                                                                pertanyaan.score_SLA
+                                                                            "
+                                                                            :checked="
+                                                                                shouldHighlightScoreSLA(
+                                                                                    pertanyaan
+                                                                                )
+                                                                            "
+                                                                            class="border-2 border-gray-300 rounded-md hover:border-blue-500 mr-2"
+                                                                            @change="
+                                                                                onScoreRadioChange(
+                                                                                    pertanyaan,
+                                                                                    'score_SLA',
+                                                                                    aspek
+                                                                                )
+                                                                            "
+                                                                        />
+                                                                        <span
+                                                                            :class="{
+                                                                                'font-medium':
+                                                                                    shouldHighlightScoreSLA(
+                                                                                        pertanyaan
+                                                                                    ),
+                                                                            }"
+                                                                        >
+                                                                            {{
+                                                                                pertanyaan.score_SLA ||
+                                                                                "N/A"
+                                                                            }}
+                                                                        </span>
+                                                                    </div>
+                                                                </td>
+                                                                <td
+                                                                    class="px-4 py-3 text-sm text-gray-500"
+                                                                >
+                                                                    <div
+                                                                        class="max-w-xl"
+                                                                    >
+                                                                        {{
+                                                                            pertanyaan.answer ||
+                                                                            "-"
+                                                                        }}
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -2007,326 +2276,481 @@ export default {
                                 class="bg-white rounded-lg shadow-sm overflow-hidden"
                             >
                                 <div
-                                    class="bg-gradient-to-r from-purple-600 to-purple-700 p-4 flex justify-between items-center"
+                                    class="bg-gradient-to-r from-purple-600 to-purple-700 p-4 flex justify-between items-center cursor-pointer"
+                                    @click="toggleSection('peerAssessment')"
                                 >
-                                    <h3 class="text-white text-lg font-bold">
-                                        Evaluasi dari Peer
-                                    </h3>
-                                    <div
-                                        class="bg-white bg-opacity-20 rounded-lg px-4 py-2"
-                                    >
-                                        <span class="text-white text-sm"
-                                            >Total Average:
-                                        </span>
-                                        <span class="text-white font-bold">{{
-                                            calculateTotalAverage(
-                                                selectedUserId
-                                            )
-                                        }}</span>
+                                    <div class="flex items-center space-x-4">
+                                        <h3
+                                            class="text-white text-lg font-bold"
+                                        >
+                                            Evaluasi dari Peer
+                                        </h3>
+                                        <div
+                                            class="bg-white bg-opacity-20 rounded-lg px-4 py-2"
+                                        >
+                                            <span class="text-white text-sm"
+                                                >Total Average:
+                                            </span>
+                                            <span
+                                                class="text-white font-bold"
+                                                >{{
+                                                    calculateTotalAverage(
+                                                        selectedUserId
+                                                    )
+                                                }}</span
+                                            >
+                                        </div>
                                     </div>
-                                </div>
-                                <!-- Tombol Simpan di Bagian Atas -->
-                                <div class="mt-3 mb-4 flex justify-end">
                                     <button
-                                        @click="saveAnswerPeer"
-                                        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        :disabled="isLoading"
+                                        class="text-white hover:text-gray-200 transition-transform duration-200"
                                     >
-                                        <span v-if="isLoading"
-                                            >Menyimpan...</span
+                                        <svg
+                                            :class="{
+                                                'rotate-180':
+                                                    collapsedSections.peerAssessment,
+                                            }"
+                                            class="w-5 h-5 transform transition-transform duration-200"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
                                         >
-                                        <span v-else
-                                            >Simpan Semua Penilaian</span
-                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M19 9l-7 7-7-7"
+                                            />
+                                        </svg>
                                     </button>
                                 </div>
 
-                                <div class="p-4">
-                                    <div
-                                        v-if="
-                                            selectedUserData.evaluated_by_peers &&
-                                            selectedUserData.evaluated_by_peers
-                                                .length
-                                        "
-                                    >
+                                <!-- Collapsible Content -->
+                                <div v-show="!collapsedSections.peerAssessment">
+                                    <!-- Tombol Simpan di Bagian Atas -->
+                                    <div class="mt-3 mb-4 flex justify-end">
+                                        <button
+                                            @click="saveAnswerPeer"
+                                            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            :disabled="isLoading"
+                                        >
+                                            <span v-if="isLoading"
+                                                >Menyimpan...</span
+                                            >
+                                            <span v-else
+                                                >Simpan Semua Penilaian</span
+                                            >
+                                        </button>
+                                    </div>
+
+                                    <div class="p-4">
                                         <div
-                                            v-for="(
-                                                peerGroup, index
-                                            ) in groupPeerEvaluations(
-                                                selectedUserData.evaluated_by_peers
-                                            )"
-                                            :key="index"
-                                            class="mb-6 last:mb-0"
+                                            v-if="
+                                                selectedUserData.evaluated_by_peers &&
+                                                selectedUserData
+                                                    .evaluated_by_peers.length
+                                            "
                                         >
                                             <div
-                                                class="bg-gray-50 p-4 rounded-lg"
+                                                v-for="(
+                                                    peerGroup, index
+                                                ) in groupPeerEvaluations(
+                                                    selectedUserData.evaluated_by_peers
+                                                )"
+                                                :key="index"
+                                                class="mb-6 last:mb-0"
                                             >
-                                                <!-- Peer Group Header -->
                                                 <div
-                                                    class="flex flex-wrap md:flex-nowrap justify-between items-start gap-4 mb-4"
+                                                    class="bg-gray-50 p-4 rounded-lg"
                                                 >
-                                                    <div>
-                                                        <h4
-                                                            class="text-lg font-semibold text-gray-800"
-                                                        >
-                                                            {{
-                                                                peerGroup.aspek
-                                                            }}
-                                                        </h4>
-                                                        <p
-                                                            class="text-sm text-gray-600"
-                                                        >
-                                                            {{
-                                                                peerGroup.kriteria
-                                                            }}
-                                                        </p>
-                                                        <div
-                                                            class="mt-2 flex flex-wrap gap-2"
-                                                        >
-                                                            <span
-                                                                v-for="(
-                                                                    name,
-                                                                    nameIdx
-                                                                ) in peerGroup.names"
-                                                                :key="nameIdx"
-                                                                class="inline-flex items-center px-3py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
-                                                            >
-                                                                {{ name }}
-                                                            </span>
-                                                        </div>
-                                                    </div>
+                                                    <!-- Peer Group Header -->
                                                     <div
-                                                        class="text-right flex-shrink-0"
+                                                        class="flex flex-wrap md:flex-nowrap justify-between items-start gap-4 mb-4"
                                                     >
-                                                        <div
-                                                            class="text-sm text-gray-600"
-                                                        >
-                                                            Total Skor
-                                                        </div>
-                                                        <div
-                                                            class="text-2xl font-bold"
-                                                            :class="{
-                                                                'text-green-600':
-                                                                    peerGroup.total_score >=
-                                                                    4,
-                                                                'text-yellow-600':
-                                                                    peerGroup.total_score >=
-                                                                        3 &&
-                                                                    peerGroup.total_score <
-                                                                        4,
-                                                                'text-red-600':
-                                                                    peerGroup.total_score <
-                                                                    2.5,
-                                                            }"
-                                                        >
-                                                            {{
-                                                                peerGroup.total_score
-                                                                    ? peerGroup.total_score.toFixed(
-                                                                          2
-                                                                      )
-                                                                    : "N/A"
-                                                            }}
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                                        <div>
+                                                            <h4
+                                                                class="text-lg font-semibold text-gray-800"
+                                                            >
+                                                                {{
+                                                                    peerGroup.aspek
+                                                                }}
+                                                            </h4>
+                                                            <p
+                                                                class="text-sm text-gray-600"
+                                                            >
+                                                                {{
+                                                                    peerGroup.kriteria
+                                                                }}
+                                                            </p>
 
-                                                <!-- Answers Table -->
-                                                <div
-                                                    class="bg-white rounded-lg border border-gray-200 overflow-hidden"
-                                                >
-                                                    <table
-                                                        class="w-full table-fixed"
-                                                    >
-                                                        <thead>
-                                                            <tr
-                                                                class="bg-gray-50 border-b border-gray-200"
+                                                            <!-- Weights Display for Peer Assessment -->
+                                                            <div
+                                                                class="mt-3 mb-4"
                                                             >
-                                                                <th
-                                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48"
+                                                                <p
+                                                                    class="text-sm font-medium text-gray-700 mb-2"
                                                                 >
-                                                                    Penilai
-                                                                </th>
-                                                                <th
-                                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-64"
-                                                                >
-                                                                    Pertanyaan
-                                                                </th>
-                                                                <th
-                                                                    class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20"
-                                                                >
-                                                                    Skor
-                                                                </th>
-                                                                <th
-                                                                    class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20"
-                                                                >
-                                                                    Skor SLA
-                                                                </th>
-                                                                <th
-                                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                                                >
-                                                                    Jawaban
-                                                                </th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody
-                                                            class="divide-y divide-gray-200"
-                                                        >
-                                                            <tr
-                                                                v-for="(
-                                                                    answer, idx
-                                                                ) in peerGroup.answers"
-                                                                :key="idx"
-                                                                class="hover:bg-gray-50 transition-colors"
-                                                            >
-                                                                <td
-                                                                    class="px-4 py-3 w-48"
+                                                                    Bobot
+                                                                    Kriteria:
+                                                                </p>
+                                                                <div
+                                                                    class="grid grid-cols-5 gap-2"
                                                                 >
                                                                     <div
-                                                                        class="text-sm font-medium text-gray-900 break-words leading-relaxed"
+                                                                        class="text-center"
                                                                     >
-                                                                        {{
-                                                                            answer.evaluator_name
-                                                                        }}
-                                                                    </div>
-                                                                </td>
-                                                                <td
-                                                                    class="px-4 py-3 w-64"
-                                                                >
-                                                                    <div
-                                                                        class="text-sm text-gray-900 break-words leading-relaxed"
-                                                                    >
-                                                                        {{
-                                                                            answer.pertanyaan
-                                                                        }}
-                                                                    </div>
-                                                                </td>
-                                                                <td
-                                                                    class="px-4 py-3 text-center w-20"
-                                                                >
-                                                                    <div
-                                                                        :class="{
-                                                                            'bg-blue-100 p-2 rounded-md':
-                                                                                shouldHighlightPeerScore(
-                                                                                    answer
-                                                                                ),
-                                                                        }"
-                                                                    >
-                                                                        <input
-                                                                            type="radio"
-                                                                            :name="
-                                                                                'score_' +
-                                                                                answer.question_id +
-                                                                                '_' +
-                                                                                answer.evaluator_name
-                                                                            "
-                                                                            :value="
-                                                                                answer.score
-                                                                            "
-                                                                            :checked="
-                                                                                shouldHighlightPeerScore(
-                                                                                    answer
-                                                                                )
-                                                                            "
-                                                                            class="border-2 border-gray-300 rounded-md hover:border-blue-500 mr-2"
-                                                                            @change="
-                                                                                onPeerScoreRadioChange(
-                                                                                    answer,
-                                                                                    'score',
+                                                                        <div
+                                                                            class="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded"
+                                                                        >
+                                                                            Bobot
+                                                                            1
+                                                                        </div>
+                                                                        <div
+                                                                            class="text-xs text-gray-600 mt-1"
+                                                                        >
+                                                                            {{
+                                                                                getCriteriaWeights(
                                                                                     peerGroup
                                                                                 )
+                                                                                    .bobot_1
+                                                                            }}
+                                                                        </div>
+                                                                    </div>
+                                                                    <div
+                                                                        class="text-center"
+                                                                    >
+                                                                        <div
+                                                                            class="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded"
+                                                                        >
+                                                                            Bobot
+                                                                            2
+                                                                        </div>
+                                                                        <div
+                                                                            class="text-xs text-gray-600 mt-1"
+                                                                        >
+                                                                            {{
+                                                                                getCriteriaWeights(
+                                                                                    peerGroup
+                                                                                )
+                                                                                    .bobot_2
+                                                                            }}
+                                                                        </div>
+                                                                    </div>
+                                                                    <div
+                                                                        class="text-center"
+                                                                    >
+                                                                        <div
+                                                                            class="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded"
+                                                                        >
+                                                                            Bobot
+                                                                            3
+                                                                        </div>
+                                                                        <div
+                                                                            class="text-xs text-gray-600 mt-1"
+                                                                        >
+                                                                            {{
+                                                                                getCriteriaWeights(
+                                                                                    peerGroup
+                                                                                )
+                                                                                    .bobot_3
+                                                                            }}
+                                                                        </div>
+                                                                    </div>
+                                                                    <div
+                                                                        class="text-center"
+                                                                    >
+                                                                        <div
+                                                                            class="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded"
+                                                                        >
+                                                                            Bobot
+                                                                            4
+                                                                        </div>
+                                                                        <div
+                                                                            class="text-xs text-gray-600 mt-1"
+                                                                        >
+                                                                            {{
+                                                                                getCriteriaWeights(
+                                                                                    peerGroup
+                                                                                )
+                                                                                    .bobot_4
+                                                                            }}
+                                                                        </div>
+                                                                    </div>
+                                                                    <div
+                                                                        class="text-center"
+                                                                    >
+                                                                        <div
+                                                                            class="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded"
+                                                                        >
+                                                                            Bobot
+                                                                            5
+                                                                        </div>
+                                                                        <div
+                                                                            class="text-xs text-gray-600 mt-1"
+                                                                        >
+                                                                            {{
+                                                                                getCriteriaWeights(
+                                                                                    peerGroup
+                                                                                )
+                                                                                    .bobot_5
+                                                                            }}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            <div
+                                                                class="mt-2 flex flex-wrap gap-2"
+                                                            >
+                                                                <span
+                                                                    v-for="(
+                                                                        name,
+                                                                        nameIdx
+                                                                    ) in peerGroup.names"
+                                                                    :key="
+                                                                        nameIdx
+                                                                    "
+                                                                    class="inline-flex items-center px-3py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
+                                                                >
+                                                                    {{ name }}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <div
+                                                            class="text-right flex-shrink-0"
+                                                        >
+                                                            <div
+                                                                class="text-sm text-gray-600"
+                                                            >
+                                                                Total Skor
+                                                            </div>
+                                                            <div
+                                                                class="text-2xl font-bold"
+                                                                :class="{
+                                                                    'text-green-600':
+                                                                        peerGroup.total_score >=
+                                                                        4,
+                                                                    'text-yellow-600':
+                                                                        peerGroup.total_score >=
+                                                                            3 &&
+                                                                        peerGroup.total_score <
+                                                                            4,
+                                                                    'text-red-600':
+                                                                        peerGroup.total_score <
+                                                                        2.5,
+                                                                }"
+                                                            >
+                                                                {{
+                                                                    peerGroup.total_score
+                                                                        ? peerGroup.total_score.toFixed(
+                                                                              2
+                                                                          )
+                                                                        : "N/A"
+                                                                }}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Answers Table -->
+                                                    <div
+                                                        class="bg-white rounded-lg border border-gray-200 overflow-hidden"
+                                                    >
+                                                        <table
+                                                            class="w-full table-fixed"
+                                                        >
+                                                            <thead>
+                                                                <tr
+                                                                    class="bg-gray-50 border-b border-gray-200"
+                                                                >
+                                                                    <th
+                                                                        class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48"
+                                                                    >
+                                                                        Penilai
+                                                                    </th>
+                                                                    <th
+                                                                        class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-64"
+                                                                    >
+                                                                        Pertanyaan
+                                                                    </th>
+                                                                    <th
+                                                                        class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20"
+                                                                    >
+                                                                        Skor
+                                                                    </th>
+                                                                    <th
+                                                                        class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20"
+                                                                    >
+                                                                        Skor SLA
+                                                                    </th>
+                                                                    <th
+                                                                        class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                                                    >
+                                                                        Jawaban
+                                                                    </th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody
+                                                                class="divide-y divide-gray-200"
+                                                            >
+                                                                <tr
+                                                                    v-for="(
+                                                                        answer,
+                                                                        idx
+                                                                    ) in peerGroup.answers"
+                                                                    :key="idx"
+                                                                    class="hover:bg-gray-50 transition-colors"
+                                                                >
+                                                                    <td
+                                                                        class="px-4 py-3 w-48"
+                                                                    >
+                                                                        <div
+                                                                            class="text-sm font-medium text-gray-900 break-words leading-relaxed"
+                                                                        >
+                                                                            {{
+                                                                                answer.evaluator_name
+                                                                            }}
+                                                                        </div>
+                                                                    </td>
+                                                                    <td
+                                                                        class="px-4 py-3 w-64"
+                                                                    >
+                                                                        <div
+                                                                            class="text-sm text-gray-900 break-words leading-relaxed"
+                                                                        >
+                                                                            {{
+                                                                                answer.pertanyaan
+                                                                            }}
+                                                                        </div>
+                                                                    </td>
+                                                                    <td
+                                                                        class="px-4 py-3 text-center w-20"
+                                                                    >
+                                                                        <div
+                                                                            class="p-2 rounded-md border-2"
+                                                                            :class="
+                                                                                getPeerScoreColorClass(
+                                                                                    answer,
+                                                                                    'score'
+                                                                                )
                                                                             "
-                                                                        />
-                                                                        <span
-                                                                            :class="{
-                                                                                'font-medium':
+                                                                        >
+                                                                            <input
+                                                                                type="radio"
+                                                                                :name="
+                                                                                    'score_' +
+                                                                                    answer.question_id +
+                                                                                    '_' +
+                                                                                    answer.evaluator_name
+                                                                                "
+                                                                                :value="
+                                                                                    answer.score
+                                                                                "
+                                                                                :checked="
                                                                                     shouldHighlightPeerScore(
                                                                                         answer
-                                                                                    ),
-                                                                            }"
-                                                                        >
-                                                                            {{
-                                                                                answer.score ||
-                                                                                "N/A"
-                                                                            }}
-                                                                        </span>
-                                                                    </div>
-                                                                </td>
-                                                                <td
-                                                                    class="px-4 py-3 text-center w-20"
-                                                                >
-                                                                    <div
-                                                                        :class="{
-                                                                            'bg-blue-100 p-2 rounded-md':
-                                                                                shouldHighlightPeerScoreSLA(
-                                                                                    answer
-                                                                                ),
-                                                                        }"
+                                                                                    )
+                                                                                "
+                                                                                class="border-2 border-gray-300 rounded-md hover:border-blue-500 mr-2"
+                                                                                @change="
+                                                                                    onPeerScoreRadioChange(
+                                                                                        answer,
+                                                                                        'score',
+                                                                                        peerGroup
+                                                                                    )
+                                                                                "
+                                                                            />
+                                                                            <span
+                                                                                :class="{
+                                                                                    'font-medium':
+                                                                                        shouldHighlightPeerScore(
+                                                                                            answer
+                                                                                        ),
+                                                                                }"
+                                                                            >
+                                                                                {{
+                                                                                    answer.score ||
+                                                                                    "N/A"
+                                                                                }}
+                                                                            </span>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td
+                                                                        class="px-4 py-3 text-center w-20"
                                                                     >
-                                                                        <input
-                                                                            type="radio"
-                                                                            :name="
-                                                                                'score_' +
-                                                                                answer.question_id +
-                                                                                '_' +
-                                                                                answer.evaluator_name
-                                                                            "
-                                                                            :value="
-                                                                                answer.score_SLA
-                                                                            "
-                                                                            :checked="
-                                                                                shouldHighlightPeerScoreSLA(
-                                                                                    answer
-                                                                                )
-                                                                            "
-                                                                            class="border-2 border-gray-300 rounded-md hover:border-blue-500 mr-2"
-                                                                            @change="
-                                                                                onPeerScoreRadioChange(
+                                                                        <div
+                                                                            class="p-2 rounded-md border-2"
+                                                                            :class="
+                                                                                getPeerScoreColorClass(
                                                                                     answer,
-                                                                                    'score_SLA',
-                                                                                    peerGroup
+                                                                                    'score_SLA'
                                                                                 )
                                                                             "
-                                                                        />
-                                                                        <span
-                                                                            :class="{
-                                                                                'font-medium':
+                                                                        >
+                                                                            <input
+                                                                                type="radio"
+                                                                                :name="
+                                                                                    'score_' +
+                                                                                    answer.question_id +
+                                                                                    '_' +
+                                                                                    answer.evaluator_name
+                                                                                "
+                                                                                :value="
+                                                                                    answer.score_SLA
+                                                                                "
+                                                                                :checked="
                                                                                     shouldHighlightPeerScoreSLA(
                                                                                         answer
-                                                                                    ),
-                                                                            }"
+                                                                                    )
+                                                                                "
+                                                                                class="border-2 border-gray-300 rounded-md hover:border-blue-500 mr-2"
+                                                                                @change="
+                                                                                    onPeerScoreRadioChange(
+                                                                                        answer,
+                                                                                        'score_SLA',
+                                                                                        peerGroup
+                                                                                    )
+                                                                                "
+                                                                            />
+                                                                            <span
+                                                                                :class="{
+                                                                                    'font-medium':
+                                                                                        shouldHighlightPeerScoreSLA(
+                                                                                            answer
+                                                                                        ),
+                                                                                }"
+                                                                            >
+                                                                                {{
+                                                                                    answer.score_SLA ||
+                                                                                    "N/A"
+                                                                                }}
+                                                                            </span>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td
+                                                                        class="px-4 py-3"
+                                                                    >
+                                                                        <div
+                                                                            class="text-sm text-gray-500 break-words leading-relaxed max-w-md"
                                                                         >
                                                                             {{
-                                                                                answer.score_SLA ||
-                                                                                "N/A"
+                                                                                answer.answer ||
+                                                                                "-"
                                                                             }}
-                                                                        </span>
-                                                                    </div>
-                                                                </td>
-                                                                <td
-                                                                    class="px-4 py-3"
-                                                                >
-                                                                    <div
-                                                                        class="text-sm text-gray-500 break-words leading-relaxed max-w-md"
-                                                                    >
-                                                                        {{
-                                                                            answer.answer ||
-                                                                            "-"
-                                                                        }}
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
+                                        <p
+                                            v-else
+                                            class="text-center text-gray-500 p-4"
+                                        >
+                                            Tidak ada data evaluasi peer
+                                        </p>
                                     </div>
-                                    <p
-                                        v-else
-                                        class="text-center text-gray-500 p-4"
-                                    >
-                                        Tidak ada data evaluasi peer
-                                    </p>
                                 </div>
                             </div>
                         </div>

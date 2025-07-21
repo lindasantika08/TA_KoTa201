@@ -326,7 +326,12 @@ class FeedbackController extends Controller
        - Skor numerik dengan komentar kualitatif
        - Berbagai perspektif dari rekan sejawat
     
-    Hasilkan ringkasan professional, mendalam, dan bermakna yang menggabungkan semua aspek penilaian untuk membantu mahasiswa dalam pengembangan diri."
+    5. Format Khusus:
+       - Gunakan **bold** untuk kata kunci penting seperti kekuatan utama, area pengembangan, kompetensi spesifik
+       - Buat kata kunci yang menonjol dari hasil summary berdasarkan syarat point nomor 1 sampai 4
+       - Bold juga untuk aspek positif dan negatif yang perlu ditekankan
+    
+    Hasilkan ringkasan professional, mendalam, dan bermakna yang menggabungkan semua aspek penilaian untuk membantu mahasiswa dalam pengembangan diri dengan kata kunci penting yang di-bold."
                         );
 
                         if ($existingFeedback) {
@@ -336,14 +341,14 @@ class FeedbackController extends Controller
                         $newFeedbackAi = feedback_ai::create([
                             'mahasiswa_id' => $group->mahasiswa_id,
                             'group_id' => $group->id,
-                            'summary' => Str::limit($response, 65535, '...')
+                            'summary' => Str::limit($this->formatSummaryText($response), 65535, '...')
                         ]);
 
                         $summaries[] = [
                             'peer_id' => $group->mahasiswa_id,
                             'peer_name' => $group->mahasiswa->user->name,
                             'peer_nim' => $group->mahasiswa->nim,
-                            'summary' => $response,
+                            'summary' => $this->formatSummaryText($response),
                             'source' => 'gemini',
                             'data_sources' => [
                                 'feedbacks_count' => $feedbacks->count(),
@@ -370,7 +375,7 @@ class FeedbackController extends Controller
                         'peer_id' => $group->mahasiswa_id,
                         'peer_name' => $group->mahasiswa->user->name,
                         'peer_nim' => $group->mahasiswa->nim,
-                        'summary' => $existingFeedback->summary,
+                        'summary' => $this->formatSummaryText($existingFeedback->summary),
                         'source' => 'database'
                     ];
                 }
@@ -478,5 +483,24 @@ class FeedbackController extends Controller
                 'message' => 'Failed to store feedback: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    private function formatSummaryText($text)
+    {
+        // Keep markdown format for frontend processing
+        // Ensure consistent double asterisk formatting for bold
+        $text = preg_replace('/\*([^*\s][^*]*[^*\s])\*/', '**$1**', $text); // Convert single * to double ** (avoiding single chars)
+
+        // Clean up any triple or more asterisks
+        $text = preg_replace('/\*{3,}([^*]+)\*{3,}/', '**$1**', $text);
+
+        // Ensure proper spacing around bold text (but don't add excessive spaces)
+        $text = preg_replace('/\*\*\s*([^*]+?)\s*\*\*/', '**$1**', $text);
+
+        // Clean up multiple spaces
+        $text = preg_replace('/\s+/', ' ', $text);
+        $text = trim($text);
+
+        return $text;
     }
 }

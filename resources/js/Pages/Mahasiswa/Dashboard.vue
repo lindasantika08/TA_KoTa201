@@ -411,6 +411,11 @@ export default {
                 year: "numeric",
             });
         },
+        formatFeedbackText(text) {
+            if (!text) return "";
+            // Convert **bold** to <strong>bold</strong>
+            return text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+        },
     },
 };
 </script>
@@ -722,9 +727,12 @@ export default {
                     <!-- Feedback Section -->
                     <div class="lg:col-span-1">
                         <div
-                            class="bg-white rounded-xl shadow-sm overflow-hidden h-full"
+                            class="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col"
+                            style="height: 700px"
                         >
-                            <div class="px-6 py-5 border-b border-gray-100">
+                            <div
+                                class="px-6 py-5 border-b border-gray-100 flex-shrink-0"
+                            >
                                 <h3 class="text-lg font-medium text-gray-800">
                                     Feedback
                                 </h3>
@@ -734,7 +742,7 @@ export default {
                             </div>
 
                             <!-- Tabs untuk Feedback -->
-                            <div class="px-4 pt-4">
+                            <div class="px-4 pt-4 flex-shrink-0">
                                 <div class="border-b border-gray-200">
                                     <nav class="-mb-px flex" aria-label="Tabs">
                                         <button
@@ -766,11 +774,11 @@ export default {
                             <!-- Konten Tab Peer Feedback -->
                             <div
                                 v-if="activeTab === 'peer'"
-                                class="p-4 max-h-64 overflow-y-auto"
+                                class="p-4 flex-1 overflow-y-auto"
                             >
                                 <div
                                     v-if="feedbackLoading"
-                                    class="flex items-center justify-center h-32"
+                                    class="flex items-center justify-center h-full"
                                 >
                                     <div
                                         class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"
@@ -784,7 +792,7 @@ export default {
                                 </div>
                                 <div
                                     v-else-if="feedback?.peerFeedback?.length"
-                                    class="space-y-3"
+                                    class="space-y-3 h-full"
                                 >
                                     <div
                                         v-for="(
@@ -793,12 +801,15 @@ export default {
                                         :key="index"
                                         class="p-3 bg-blue-50 rounded-lg border border-blue-100"
                                     >
-                                        <p class="text-sm text-gray-700">
-                                            {{
-                                                item.feedback ||
-                                                "Peer memberikan penilaian positif terhadap kontribusi Anda."
-                                            }}
-                                        </p>
+                                        <p
+                                            class="text-sm text-gray-700 formatted-feedback"
+                                            v-html="
+                                                formatFeedbackText(
+                                                    item.feedback ||
+                                                        'Peer memberikan penilaian positif terhadap kontribusi Anda.'
+                                                )
+                                            "
+                                        ></p>
                                         <div
                                             class="mt-2 flex items-center justify-between text-xs text-gray-500"
                                         >
@@ -815,7 +826,7 @@ export default {
                                 </div>
                                 <div
                                     v-else
-                                    class="flex flex-col items-center justify-center h-32 text-gray-500"
+                                    class="flex flex-col items-center justify-center h-full text-gray-500"
                                 >
                                     <svg
                                         class="w-10 h-10 text-gray-300 mb-2"
@@ -836,11 +847,11 @@ export default {
 
                             <div
                                 v-if="activeTab === 'dosen'"
-                                class="p-4 max-h-64 overflow-y-auto"
+                                class="p-4 flex-1 overflow-y-auto"
                             >
                                 <div
                                     v-if="feedbackLoading"
-                                    class="flex items-center justify-center h-32"
+                                    class="flex items-center justify-center h-full"
                                 >
                                     <div
                                         class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"
@@ -858,7 +869,7 @@ export default {
                                         feedback.lecturerFeedback &&
                                         feedback.lecturerFeedback.length > 0
                                     "
-                                    class="space-y-3"
+                                    class="space-y-3 h-full"
                                 >
                                     <div
                                         v-for="(
@@ -867,9 +878,14 @@ export default {
                                         :key="index"
                                         class="p-3 bg-gray-50 rounded-lg border border-gray-100"
                                     >
-                                        <p class="text-sm text-gray-700">
-                                            {{ item.feedback }}
-                                        </p>
+                                        <p
+                                            class="text-sm text-gray-700 formatted-feedback"
+                                            v-html="
+                                                formatFeedbackText(
+                                                    item.feedback
+                                                )
+                                            "
+                                        ></p>
                                         <div
                                             class="mt-2 flex items-center justify-between text-xs text-gray-500"
                                         >
@@ -884,7 +900,7 @@ export default {
                                 </div>
                                 <div
                                     v-else
-                                    class="flex flex-col items-center justify-center h-32 text-gray-500"
+                                    class="flex flex-col items-center justify-center h-full text-gray-500"
                                 >
                                     <svg
                                         class="w-10 h-10 text-gray-300 mb-2"
@@ -933,5 +949,10 @@ export default {
     justify-content: center;
     align-items: center;
     height: 700px;
+}
+
+.formatted-feedback strong {
+    font-weight: 700;
+    color: #1f2937;
 }
 </style>
