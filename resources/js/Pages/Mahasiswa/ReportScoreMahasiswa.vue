@@ -262,6 +262,14 @@ const fetchFeedback = async () => {
     }
 };
 
+// Method to format feedback text with bold markdown
+const formatFeedbackText = (text) => {
+    if (!text) return "";
+
+    // Convert **bold** to HTML <strong> tags
+    return text.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+};
+
 // Lifecycle hooks
 onMounted(() => {
     fetchProjectScoreDetails();
@@ -755,13 +763,14 @@ onMounted(() => {
                                                     />
                                                 </svg>
                                                 <div class="flex-1">
-                                                    <p
-                                                        class="whitespace-pre-line"
-                                                    >
-                                                        {{
-                                                            feedback.aiFeedback
-                                                        }}
-                                                    </p>
+                                                    <div
+                                                        class="whitespace-pre-line formatted-feedback"
+                                                        v-html="
+                                                            formatFeedbackText(
+                                                                feedback.aiFeedback
+                                                            )
+                                                        "
+                                                    ></div>
                                                 </div>
                                             </div>
                                         </div>
@@ -879,9 +888,14 @@ onMounted(() => {
                                             <div
                                                 class="mt-4 text-sm text-gray-700"
                                             >
-                                                <p class="whitespace-pre-line">
-                                                    {{ item.feedback }}
-                                                </p>
+                                                <div
+                                                    class="whitespace-pre-line formatted-feedback"
+                                                    v-html="
+                                                        formatFeedbackText(
+                                                            item.feedback
+                                                        )
+                                                    "
+                                                ></div>
                                             </div>
                                         </div>
                                     </div>
@@ -938,5 +952,17 @@ onMounted(() => {
 }
 .hover\:bg-gray-50:hover {
     background-color: #f9fafb;
+}
+
+.formatted-feedback {
+    line-height: 1.6;
+}
+
+.formatted-feedback strong {
+    font-weight: 600;
+    color: #1f2937;
+    background-color: #f3f4f6;
+    padding: 1px 4px;
+    border-radius: 3px;
 }
 </style>

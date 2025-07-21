@@ -297,6 +297,11 @@ class ReportController extends Controller
                     'type_criteria.aspect',
                     'type_criteria.criteria',
                     'type_criteria.id as typeCriteria_id',
+                    'type_criteria.bobot_1',
+                    'type_criteria.bobot_2',
+                    'type_criteria.bobot_3',
+                    'type_criteria.bobot_4',
+                    'type_criteria.bobot_5',
                     'answers_peer.score_SLA',
                 )
                     ->join('assessment', 'answers_peer.question_id', '=', 'assessment.id')
@@ -372,8 +377,6 @@ class ReportController extends Controller
                                     ->where('assessment_type', 'peerAssessment')
                                     ->first();
 
-                                Log::info("Loading peer report for question {$answer->assessment_id}, mahasiswa {$mahasiswaId}, peer {$evaluatorId}: " . ($report ? "found with final_score_peer={$report->final_score_peer}" : "not found"));
-
                                 $result = [
                                     'question_id' => $answer->assessment_id,
                                     'pertanyaan' => $answer->question,
@@ -389,19 +392,23 @@ class ReportController extends Controller
                                     ] : null,
                                 ];
 
-                                // Untuk debugging, bandingkan score dengan report
-                                if ($report) {
-                                    Log::info("Comparing data for highlight - Question {$answer->assessment_id}: score={$answer->score}, score_SLA={$answer->score_SLA}, final_score_peer={$report->final_score_peer}");
-                                }
-
                                 return $result;
                             })->values()
                         ];
                     });
 
+                    // Get TypeCriteria data directly from the first item (since all items in group have same typeCriteria)
+                    $firstItem = $groupAnswers->first();
+
                     return [
                         'aspek' => $aspek,
                         'kriteria' => $kriteria,
+                        'typeCriteria_id' => $typeCriteriaId,
+                        'bobot_1' => $firstItem->bobot_1 ?? null,
+                        'bobot_2' => $firstItem->bobot_2 ?? null,
+                        'bobot_3' => $firstItem->bobot_3 ?? null,
+                        'bobot_4' => $firstItem->bobot_4 ?? null,
+                        'bobot_5' => $firstItem->bobot_5 ?? null,
                         'total_score' => $skorPeer,
                         'evaluated_by' => $evaluatedBy
                     ];
@@ -420,7 +427,6 @@ class ReportController extends Controller
 
             return response()->json($mahasiswaResults);
         } catch (\Exception $e) {
-            Log::error('Error in getKelompokAnswers: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan saat memproses data.',
@@ -452,6 +458,11 @@ class ReportController extends Controller
                 'aspek' => $groupAssessments->first()->typeCriteria->aspect,
                 'kriteria' => $groupAssessments->first()->typeCriteria->criteria,
                 'typeCriteria_id' => $typeCriteriaId, // Add this for frontend reference
+                'bobot_1' => $groupAssessments->first()->typeCriteria->bobot_1,
+                'bobot_2' => $groupAssessments->first()->typeCriteria->bobot_2,
+                'bobot_3' => $groupAssessments->first()->typeCriteria->bobot_3,
+                'bobot_4' => $groupAssessments->first()->typeCriteria->bobot_4,
+                'bobot_5' => $groupAssessments->first()->typeCriteria->bobot_5,
                 'total_score' => $answers->avg('score'),
                 'total_score_SLA' => $answers->avg('score_SLA'),
                 'total_answers' => $answers->count(),
@@ -468,20 +479,11 @@ class ReportController extends Controller
                         // Untuk peer assessment, cari berdasarkan question_id, mahasiswa_id, dan peer_id dari answer
                         $report = null;
                         if ($relatedAnswer && isset($relatedAnswer->peer_id)) {
-                            Log::info("Searching peer report for question {$assessment->id}, mahasiswa {$mahasiswaId}, peer {$relatedAnswer->peer_id}");
                             $report = \App\Models\Report::where('question_id', $assessment->id)
                                 ->where('mahasiswa_id', $mahasiswaId)
                                 ->where('peer_id', $relatedAnswer->peer_id)
                                 ->where('assessment_type', 'peerAssessment')
                                 ->first();
-
-                            if ($report) {
-                                Log::info("Found peer report: final_score_peer={$report->final_score_peer}");
-                            } else {
-                                Log::info("No peer report found for this combination");
-                            }
-                        } else {
-                            Log::info("No peer_id found in relatedAnswer for question {$assessment->id}");
                         }
                     }
 
@@ -665,7 +667,6 @@ class ReportController extends Controller
                 'ranges' => $ranges
             ]);
         } catch (\Exception $e) {
-            Log::error('Error in getStudentPeerData: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan saat memproses data.',
@@ -789,9 +790,6 @@ class ReportController extends Controller
 
     public function saveFinalScoresSelf(Request $request)
     {
-        // Log data yang diterima dari frontend
-        Log::info('Data received in saveFinalScoresSelf:', $request->all());
-
         // Validasi data
         $validated = $request->validate([
             'answers' => 'required|array',
@@ -800,8 +798,6 @@ class ReportController extends Controller
             'answers.*.question_id' => 'required',
             'answers.*.final_score_self' => 'required|integer|min:1|max:5',
         ]);
-
-        Log::info('Validated data:', $validated);
 
         DB::beginTransaction();
 
@@ -812,14 +808,10 @@ class ReportController extends Controller
             $assessmentTypeMap = []; // Untuk menyimpan tipe assessment
 
             foreach ($validated['answers'] as $answer) {
-                Log::info("Processing answer:", $answer);
-
                 $mahasiswaId = $answer['mahasiswa_id'];
                 $typeCriteriaId = $answer['typeCriteria_id'];
                 $questionId = $answer['question_id'];
                 $finalScoreSelf = $answer['final_score_self'];
-
-                Log::info("Processing - Mahasiswa: $mahasiswaId, TypeCriteria: $typeCriteriaId, Question: $questionId, Score: $finalScoreSelf");
 
                 // Cek dan mapping typeCriteria_id jika itu adalah string nama kriteria (bukan UUID)
                 if (!isset($typeCriteriaMap[$typeCriteriaId]) && !preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $typeCriteriaId)) {
@@ -868,7 +860,6 @@ class ReportController extends Controller
 
                     if ($typeCriteria) {
                         $typeCriteriaMap[$typeCriteriaId] = $typeCriteria->id;
-                        Log::info("Menemukan ID kriteria: {$typeCriteria->id} untuk nama: {$typeCriteriaId}");
                     } else {
                         // Jika tidak ditemukan, lempar exception
                         throw new \Exception("Kriteria dengan nama '{$typeCriteriaId}' tidak ditemukan di database");
@@ -888,7 +879,7 @@ class ReportController extends Controller
 
                         // Validasi tipe assessment
                         if ($assessment->type !== 'selfAssessment' && $assessment->type !== 'selfAssessment') {
-                            Log::warning("Question ID: {$questionId} bukan tipe selfAssessment, melainkan: {$assessment->type}");
+                            // Warning: type is not self assessment
                         }
                     }
                 }
@@ -939,16 +930,13 @@ class ReportController extends Controller
                     if ($group) {
                         $groupId = $group->id;
                     } else {
-                        Log::warning("Mahasiswa ID $mahasiswaId tidak memiliki grup untuk project ID $projectId");
-
                         $latestGroup = $mahasiswa->group()->latest()->first();
                         if ($latestGroup) {
                             $groupId = $latestGroup->id;
-                            Log::info("Menggunakan grup terbaru dengan ID: $groupId untuk mahasiswa: $mahasiswaId");
                         }
                     }
                 } else {
-                    Log::warning("Mahasiswa dengan ID $mahasiswaId tidak ditemukan");
+                    // Mahasiswa not found
                 }
 
                 $report = Report::where('mahasiswa_id', $mahasiswaId)
@@ -965,7 +953,6 @@ class ReportController extends Controller
                         $report->question_id = $questionId;
                         $report->group_id = $groupId;
                         $report->save();
-                        Log::info("Report diupdate untuk mahasiswa ID: $mahasiswaId, kriteria ID: $typeCriteriaIdValid");
                     } else {
                         $newReport = Report::create([
                             'mahasiswa_id' => $mahasiswaId,
@@ -976,7 +963,6 @@ class ReportController extends Controller
                             'question_id' => $questionId,
                             'assessment_type' => 'selfAssessment',
                         ]);
-                        Log::info("Report baru dibuat dengan ID: {$newReport->id} untuk mahasiswa ID: $mahasiswaId, kriteria ID: $typeCriteriaIdValid");
                     }
                 } else {
                     throw new \Exception("Mahasiswa dengan ID {$mahasiswaId} tidak memiliki grup untuk project ID {$projectId}");
@@ -987,7 +973,6 @@ class ReportController extends Controller
             return response()->json(['success' => true, 'message' => 'Jawaban self-assessment berhasil disimpan!']);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error in saveFinalScoresSelf: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan saat menyimpan jawaban: ' . $e->getMessage()
@@ -997,9 +982,6 @@ class ReportController extends Controller
 
     public function saveFinalScoresPeer(Request $request)
     {
-        // Log data yang diterima dari frontend
-        Log::info('Data received in saveFinalScoresPeer:', $request->all());
-
         // Validasi data - project_id and group_id are no longer required from frontend
         $validated = $request->validate([
             'answersPeer' => 'required|array',
@@ -1009,8 +991,6 @@ class ReportController extends Controller
             'answersPeer.*.peer_id' => 'required',
             'answersPeer.*.final_score_peer' => 'required|integer|min:1|max:5',
         ]);
-
-        Log::info('Validated data:', $validated);
 
         DB::beginTransaction();
 
@@ -1022,8 +1002,6 @@ class ReportController extends Controller
             $assessmentTypeMap = []; // Untuk menyimpan tipe assessment
 
             foreach ($validated['answersPeer'] as $answerPeer) {
-                Log::info("Processing peer answer:", $answerPeer);
-
                 $mahasiswaId = $answerPeer['mahasiswa_id'];
                 $typeCriteriaId = $answerPeer['typeCriteria_id'];
                 $questionId = $answerPeer['question_id'];
@@ -1048,10 +1026,8 @@ class ReportController extends Controller
 
                     // Validasi tipe assessment
                     if ($assessment->type !== 'peerAssessment' && $assessment->type !== 'peerAssessment') {
-                        Log::warning("Question ID: {$questionId} bukan tipe peerAssessment, melainkan: {$assessment->type}");
+                        // Warning: type is not peer assessment
                     }
-
-                    Log::info("Question ID: {$questionId} terkait dengan Project ID: {$assessment->project_id}");
                 }
 
                 $projectId = $projectMap[$questionId];
@@ -1068,7 +1044,6 @@ class ReportController extends Controller
                     }
 
                     $groupMap[$cacheKey] = $group->id;
-                    Log::info("Menemukan Group ID: {$group->id} untuk Mahasiswa ID: {$mahasiswaId} di Project ID: {$projectId}");
                 }
 
                 $groupId = $groupMap[$cacheKey];
@@ -1120,7 +1095,6 @@ class ReportController extends Controller
 
                     if ($typeCriteria) {
                         $typeCriteriaMap[$typeCriteriaId] = $typeCriteria->id;
-                        Log::info("Menemukan ID kriteria: {$typeCriteria->id} untuk nama: {$typeCriteriaId}");
                     } else {
                         // Jika tidak ditemukan, lempar exception
                         throw new \Exception("Kriteria dengan nama '{$typeCriteriaId}' tidak ditemukan di database");
@@ -1139,7 +1113,6 @@ class ReportController extends Controller
                     // Ambil key pertama dari objek sebagai peer_id
                     // atau gunakan JSON jika memang perlu menyimpan semua
                     $peerIdValid = is_object($peerId) ? json_encode($peerId) : key($peerId);
-                    Log::info("Mengkonversi peer_id kompleks menjadi: {$peerIdValid}");
                 }
 
                 // Update atau buat report
@@ -1159,7 +1132,6 @@ class ReportController extends Controller
                     $report->peer_id = $peerIdValid;
                     $report->assessment_type = $assessmentTypeMap[$questionId] ?? 'peerAssessment';
                     $report->save();
-                    Log::info("Report diupdate untuk mahasiswa ID: $mahasiswaId, kriteria ID: $typeCriteriaIdValid");
                 } else {
                     // Buat report baru
                     $newReport = Report::create([
@@ -1176,7 +1148,6 @@ class ReportController extends Controller
                         // 'selisih' => 0,
                         // 'nilai_total' => 0,
                     ]);
-                    Log::info("Report baru dibuat dengan ID: {$newReport->id} untuk mahasiswa ID: $mahasiswaId, kriteria ID: $typeCriteriaIdValid");
                 }
             }
 
@@ -1184,7 +1155,6 @@ class ReportController extends Controller
             return response()->json(['success' => true, 'message' => 'Jawaban penilaian peer berhasil disimpan!']);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error in saveFinalScoresPeer: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan saat menyimpan jawaban: ' . $e->getMessage()
@@ -1197,13 +1167,7 @@ class ReportController extends Controller
         $batchYear = $request->query('batch_year');
         $projectName = $request->query('project_name');
 
-        Log::info('Export request received', [
-            'batch_year' => $batchYear,
-            'project_name' => $projectName
-        ]);
-
         if (!$batchYear || !$projectName) {
-            Log::warning('Missing parameters in export request');
             return response()->json([
                 'error' => 'Missing parameters',
                 'message' => 'batch_year and project_name are required'
@@ -1217,27 +1181,17 @@ class ReportController extends Controller
                 ->first();
 
             if (!$project) {
-                Log::warning('Project not found', [
-                    'batch_year' => $batchYear,
-                    'project_name' => $projectName
-                ]);
                 return response()->json([
                     'error' => 'Project not found',
                     'message' => 'Project with specified batch year and name not found'
                 ], 404);
             }
 
-            Log::info('Project found, creating export', ['project_id' => $project->id]);
-
             $export = new \App\Exports\GroupReportExport($batchYear, $projectName);
             $fileName = 'Group_Report_' . str_replace(['/', ' '], '_', $batchYear) . '_' . str_replace(' ', '_', $projectName) . '_' . date('Y-m-d_H-i-s') . '.xlsx';
 
-            Log::info('Starting Excel download', ['fileName' => $fileName]);
-
             return \Maatwebsite\Excel\Facades\Excel::download($export, $fileName);
         } catch (\Exception $e) {
-            Log::error('Error exporting group report: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
             return response()->json([
                 'error' => 'Export failed',
                 'message' => 'An error occurred while generating the export file: ' . $e->getMessage()
