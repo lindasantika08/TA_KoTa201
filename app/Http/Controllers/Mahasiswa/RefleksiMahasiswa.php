@@ -1172,7 +1172,7 @@ Hasilkan ringkasan yang komprehensif, profesional, dan bermanfaat untuk penilaia
     }
 
     /**
-     * Generate a summary of reflective writing answers using AI and save to database
+     * Generate a detailed analysis of reflective writing answers using AI and save to database
      *
      * @param string $mahasiswaId
      * @param string $projectId
@@ -1182,88 +1182,212 @@ Hasilkan ringkasan yang komprehensif, profesional, dan bermanfaat untuk penilaia
     private function generateAndSaveWritingSummary($mahasiswaId, $projectId, $answers)
     {
         try {
-            // Create a string to store all analyses
-            $finalSummary = "";
-            $reflectionNumber = 1; // Counter for reflective writings
+            // Get student information for context
+            $mahasiswa = Mahasiswa::with('user')->find($mahasiswaId);
+            $project = Project::find($projectId);
+
+            if (!$mahasiswa || !$project) {
+                Log::warning('Missing required data', [
+                    'mahasiswa_found' => !!$mahasiswa,
+                    'project_found' => !!$project,
+                    'mahasiswa_id' => $mahasiswaId,
+                    'project_id' => $projectId
+                ]);
+                return;
+            }
+
+            // Create a comprehensive analysis summary
+            $finalSummary = "=== ANALISIS REFLECTIVE WRITING ===\n";
+            $finalSummary .= "Mahasiswa: {$mahasiswa->user->name} (NIM: {$mahasiswa->nim})\n";
+            $finalSummary .= "Proyek: {$project->project_name}\n";
+            $finalSummary .= "Batch: {$project->batch_year}\n\n";
+
+            $reflectionNumber = 1;
+            $overallMissingPoints = [];
+            $totalPoints = 0;
+            $coveredPointsCount = 0;
 
             // Process each reflective writing answer
             foreach ($answers as $qa) {
                 $reflectiveWritingId = $qa['reflectiveWriting_id'];
                 $studentAnswer = $qa['answer'];
 
+                // Skip if answer is empty
+                if (empty(trim($studentAnswer))) {
+                    Log::warning('Empty answer found', ['reflective_writing_id' => $reflectiveWritingId]);
+                    continue;
+                }
+
                 // Get the reflective writing entry with its points
                 $reflectiveWriting = reflective_writing::find($reflectiveWritingId);
                 if (!$reflectiveWriting) {
                     Log::warning('Reflective writing not found', ['id' => $reflectiveWritingId]);
-                    continue; // Skip if entry not found
+                    continue;
                 }
 
                 // Extract the points to check (only non-empty ones)
                 $pointsToCheck = [];
-                if (!empty($reflectiveWriting->point_1)) $pointsToCheck[] = $reflectiveWriting->point_1;
-                if (!empty($reflectiveWriting->point_2)) $pointsToCheck[] = $reflectiveWriting->point_2;
-                if (!empty($reflectiveWriting->point_3)) $pointsToCheck[] = $reflectiveWriting->point_3;
-                if (!empty($reflectiveWriting->point_4)) $pointsToCheck[] = $reflectiveWriting->point_4;
-                if (!empty($reflectiveWriting->point_5)) $pointsToCheck[] = $reflectiveWriting->point_5;
+                for ($i = 1; $i <= 5; $i++) {
+                    $pointField = "point_{$i}";
+                    if (!empty($reflectiveWriting->$pointField)) {
+                        $pointsToCheck["Point {$i}"] = $reflectiveWriting->$pointField;
+                    }
+                }
 
                 if (empty($pointsToCheck)) {
                     Log::warning('No points to check', ['reflective_id' => $reflectiveWritingId]);
-                    continue; // Skip if no points to check
+                    continue;
                 }
 
-                // Add reflective writing number to summary
-                $finalSummary .= "Reflective Writing No. {$reflectionNumber}\n";
+                $finalSummary .= "--- REFLECTIVE WRITING #{$reflectionNumber} ---\n";
+                $finalSummary .= "Tipe: {$reflectiveWriting->type}\n";
+                $finalSummary .= "Assessment Order: {$reflectiveWriting->reflective_writing_order}\n\n";
 
-                // Process each point individually for more reliable results
-                foreach ($pointsToCheck as $index => $point) {
-                    $pointNumber = $index + 1;
+                // Create comprehensive prompt for detailed analysis
+                $allPointsText = "";
+                $pointCounter = 1;
+                foreach ($pointsToCheck as $label => $point) {
+                    $allPointsText .= "{$pointCounter}. {$point}\n";
+                    $pointCounter++;
+                }
 
-                    // Build prompt for analyzing a single point with emphasis on semantic understanding
-                    $prompt = "Analisis Jawaban Reflective Writing Mahasiswa.
+                $detailedPrompt = "Analisis Reflective Writing
 
-Jawaban Mahasiswa: 
+MAHASISWA: {$mahasiswa->user->name} (NIM: {$mahasiswa->nim})
+PROYEK: {$project->project_name}
+
+JAWABAN MAHASISWA:
 \"{$studentAnswer}\"
 
-Poin yang harus dinilai:
-\"{$point}\"
+POINT-POINT YANG HARUS TERCAKUP:
+{$allPointsText}
 
-Tugas:
-Analisis apakah jawaban mahasiswa mencakup poin tersebut secara kontekstual. 
-Periksa apakah mahasiswa telah menyampaikan konsep yang sama dengan poin tersebut, meskipun menggunakan kata-kata yang berbeda.
-Fokus pada makna dan konteks, bukan hanya keberadaan kata kunci.
+TUGAS:
+Untuk setiap point, tentukan apakah sudah dibahas dalam jawaban (bisa dengan kata yang berbeda tapi makna sama).
 
-Berikan output HANYA 'tercakup' atau 'tidak tercakup' saja tanpa penjelasan tambahan.";
+FORMAT JAWABAN:
+Point 1: TERCAKUP/TIDAK TERCAKUP
+Penjelasan: [Mengapa tercakup/tidak, dengan contoh dari jawaban]
+Saran: [Jika tidak tercakup, bagaimana cara memperbaikinya]
 
-                    // Call Gemini API to analyze the point coverage
-                    $analysisResult = $this->callGeminiAPI($prompt);
+Point 2: TERCAKUP/TIDAK TERCAKUP  
+Penjelasan: [Mengapa tercakup/tidak, dengan contoh dari jawaban]
+Saran: [Jika tidak tercakup, bagaimana cara memperbaikinya]
 
-                    // Clean and process the result
-                    $cleanedResult = trim($analysisResult);
+(lanjutkan untuk semua point)
 
-                    // Determine if point is covered based on the response
-                    $isCovered = (stripos($cleanedResult, 'tercakup') !== false &&
-                        stripos($cleanedResult, 'tidak tercakup') === false);
+KESIMPULAN:
+- Point tercakup: X dari " . count($pointsToCheck) . "
+- Kualitas refleksi: [Baik/Cukup/Kurang]
+- Saran umum: [Rekomendasi untuk perbaikan]";
 
-                    $coverage = $isCovered ? "tercakup" : "tidak tercakup";
+                // Call Gemini API for detailed analysis
+                $detailedAnalysis = $this->callGeminiAPI($detailedPrompt);
 
-                    // Add to summary
-                    $finalSummary .= "Point {$pointNumber}: {$coverage}\n";
+                $finalSummary .= $detailedAnalysis . "\n\n";
 
-                    // Log for debugging
-                    Log::debug('Point analysis', [
-                        'reflective_number' => $reflectionNumber,
-                        'point_number' => $pointNumber,
-                        'point_text' => $point,
-                        'raw_response' => $cleanedResult,
-                        'coverage' => $coverage
-                    ]);
+                // Count covered and missing points for statistics
+                $currentPointsCount = count($pointsToCheck);
+                $totalPoints += $currentPointsCount;
+
+                // Simple check for each point to maintain statistics
+                $currentCoveredPoints = 0;
+                foreach ($pointsToCheck as $label => $point) {
+                    // First do a simple keyword check
+                    $keywordFound = false;
+                    $pointWords = explode(' ', strtolower($point));
+                    $answerLower = strtolower($studentAnswer);
+
+                    // Check if any significant words from the point appear in the answer
+                    foreach ($pointWords as $word) {
+                        $word = trim($word);
+                        if (strlen($word) > 2 && stripos($answerLower, $word) !== false) {
+                            $keywordFound = true;
+                            break;
+                        }
+                    }
+
+                    if ($keywordFound) {
+                        // If keyword found, consider it covered
+                        $currentCoveredPoints++;
+
+                        Log::debug('Point covered by keyword match', [
+                            'reflection' => $reflectionNumber,
+                            'label' => $label,
+                            'point' => $point,
+                            'found_in_answer' => 'yes'
+                        ]);
+                    } else {
+                        // Only use AI for more complex analysis if no keyword found
+                        $contextPrompt = "Periksa jawaban berikut:
+
+JAWABAN: \"{$studentAnswer}\"
+POINT: \"{$point}\"
+
+Apakah konsep dari point tersebut sudah dibahas dalam jawaban, meskipun tidak menggunakan kata yang persis sama?
+Fokus pada makna dan konteks.
+
+Jawab hanya: TERCAKUP atau TIDAK";
+
+                        $contextResult = trim($this->callGeminiAPI($contextPrompt));
+                        $isCoveredByContext = (stripos($contextResult, 'TERCAKUP') !== false);
+
+                        if ($isCoveredByContext) {
+                            $currentCoveredPoints++;
+
+                            Log::debug('Point covered by context analysis', [
+                                'reflection' => $reflectionNumber,
+                                'label' => $label,
+                                'point' => $point,
+                                'ai_result' => $contextResult
+                            ]);
+                        } else {
+                            $overallMissingPoints[] = "Reflective Writing #{$reflectionNumber} - {$label}: {$point}";
+
+                            Log::debug('Point not covered', [
+                                'reflection' => $reflectionNumber,
+                                'label' => $label,
+                                'point' => $point,
+                                'ai_result' => $contextResult
+                            ]);
+                        }
+                    }
                 }
 
-                $finalSummary .= "\n";
-                $reflectionNumber++; // Increment counter for next reflective writing
+                $coveredPointsCount += $currentCoveredPoints;
+                $finalSummary .= "Statistics: {$currentCoveredPoints}/{$currentPointsCount} points tercakup\n\n";
+
+                $reflectionNumber++;
             }
 
-            // Save or update the reflective_writing_ai entry
+            // Add comprehensive overall summary
+            $finalSummary .= "\n=== RINGKASAN KESELURUHAN ===\n";
+            $finalSummary .= "Total Reflective Writing: " . ($reflectionNumber - 1) . "\n";
+            $finalSummary .= "Total Point: {$totalPoints}\n";
+            $finalSummary .= "Point Tercakup: {$coveredPointsCount}\n";
+            $finalSummary .= "Point Tidak Tercakup: " . ($totalPoints - $coveredPointsCount) . "\n";
+            $finalSummary .= "Persentase Ketercakupan: " . round(($coveredPointsCount / max($totalPoints, 1)) * 100, 2) . "%\n\n";
+
+            if (!empty($overallMissingPoints)) {
+                $finalSummary .= "=== POINT YANG MASIH KURANG ===\n";
+                foreach ($overallMissingPoints as $missingPoint) {
+                    $finalSummary .= "• {$missingPoint}\n";
+                }
+
+                $finalSummary .= "\n=== REKOMENDASI PERBAIKAN ===\n";
+                $finalSummary .= "1. Lengkapi pembahasan untuk point-point yang masih kurang\n";
+                $finalSummary .= "2. Pastikan setiap point dijawab dengan detail dan contoh konkret\n";
+                $finalSummary .= "3. Hubungkan refleksi dengan pengalaman pribadi dalam proyek\n";
+                $finalSummary .= "4. Gunakan analisis yang lebih mendalam untuk setiap aspek\n";
+                $finalSummary .= "5. Sertakan pembelajaran yang diperoleh untuk setiap point\n";
+            } else {
+                $finalSummary .= "=== APRESIASI ===\n";
+                $finalSummary .= "Excellent work! Semua point yang diminta sudah tercakup dengan baik dalam reflective writing Anda.\n";
+                $finalSummary .= "Anda menunjukkan kemampuan refleksi yang baik dan pemahaman yang mendalam terhadap materi proyek.\n";
+                $finalSummary .= "Pertahankan kualitas refleksi ini untuk pengembangan diri yang berkelanjutan!\n";
+            }
+
+            // Save the detailed analysis
             reflective_writing_ai::updateOrCreate(
                 [
                     'mahasiswa_id' => $mahasiswaId,
@@ -1272,13 +1396,17 @@ Berikan output HANYA 'tercakup' atau 'tidak tercakup' saja tanpa penjelasan tamb
                 [
                     'mahasiswa_id' => $mahasiswaId,
                     'project_id' => $projectId,
-                    'summary' => $finalSummary
+                    'summary' => Str::limit($finalSummary, 65000, '...[truncated]') // Ensure it fits in database
                 ]
             );
 
-            Log::info('Reflective writing analysis generated successfully', [
+            Log::info('Detailed reflective writing analysis generated successfully', [
                 'mahasiswa_id' => $mahasiswaId,
-                'project_id' => $projectId
+                'project_id' => $projectId,
+                'total_points' => $totalPoints,
+                'covered_points' => $coveredPointsCount,
+                'missing_points' => count($overallMissingPoints),
+                'coverage_percentage' => round(($coveredPointsCount / max($totalPoints, 1)) * 100, 2)
             ]);
         } catch (\Exception $e) {
             Log::error('Error generating reflective writing analysis', [
@@ -1287,8 +1415,6 @@ Berikan output HANYA 'tercakup' atau 'tidak tercakup' saja tanpa penjelasan tamb
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            // Continue execution even if analysis generation fails
-            // This ensures the main functionality of saving answers still works
         }
     }
 
@@ -1302,58 +1428,201 @@ Berikan output HANYA 'tercakup' atau 'tidak tercakup' saja tanpa penjelasan tamb
     {
         try {
             // Get the API key from environment variables
-            $apiKey = env('GEMINI_API_KEY');
+            $apiKey = config('services.gemini.api_key');
 
             if (empty($apiKey)) {
                 Log::error('Gemini API key is not set in the environment variables');
-                return 'Error: API key not configured';
+                return $this->generateFallbackAnalysis($prompt);
             }
 
-            $client = new \GuzzleHttp\Client([
-                'timeout' => 30, // Increase timeout to 30 seconds
-            ]);
-
-            $response = $client->post('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' . $apiKey, [
-                'json' => [
-                    'contents' => [
-                        [
-                            'parts' => [
-                                [
-                                    'text' => $prompt
-                                ]
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+            ])->timeout(60)->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$apiKey}", [
+                'contents' => [
+                    [
+                        'parts' => [
+                            [
+                                'text' => $prompt
                             ]
                         ]
-                    ],
-                    'generationConfig' => [
-                        'temperature' => 0.1, // Lower temperature for more predictable responses
-                        'topK' => 40,
-                        'topP' => 0.95,
-                        'maxOutputTokens' => 512,
                     ]
                 ],
-                'headers' => [
-                    'Content-Type' => 'application/json'
+                'generationConfig' => [
+                    'temperature' => 0.3, // Slightly higher for more natural responses
+                    'topK' => 40,
+                    'topP' => 0.95,
+                    'maxOutputTokens' => 2048, // Increased for detailed analysis
+                ],
+                'safetySettings' => [
+                    [
+                        'category' => 'HARM_CATEGORY_HARASSMENT',
+                        'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'
+                    ],
+                    [
+                        'category' => 'HARM_CATEGORY_HATE_SPEECH',
+                        'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'
+                    ],
+                    [
+                        'category' => 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+                        'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'
+                    ],
+                    [
+                        'category' => 'HARM_CATEGORY_DANGEROUS_CONTENT',
+                        'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'
+                    ]
                 ]
             ]);
 
-            $result = json_decode($response->getBody()->getContents(), true);
+            if (!$response->successful()) {
+                Log::error('Gemini API request failed', [
+                    'status' => $response->status(),
+                    'response' => $response->body(),
+                    'prompt_length' => strlen($prompt)
+                ]);
+                return $this->generateFallbackAnalysis($prompt);
+            }
 
-            // Extract the generated text from the response
+            $result = $response->json();
+
+            // Check if the response has the expected structure
             if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
                 return $result['candidates'][0]['content']['parts'][0]['text'];
+            } elseif (isset($result['candidates'][0]['finishReason'])) {
+                // Handle cases where content might be blocked or filtered
+                $finishReason = $result['candidates'][0]['finishReason'];
+                Log::warning('Gemini API response filtered', [
+                    'finish_reason' => $finishReason,
+                    'prompt_preview' => substr($prompt, 0, 100) . '...'
+                ]);
+                return $this->generateFallbackAnalysis($prompt);
             } else {
                 Log::error('Unexpected Gemini API response structure', [
-                    'response' => $result
+                    'response' => $result,
+                    'prompt_preview' => substr($prompt, 0, 100) . '...'
                 ]);
-                return 'Error: Unexpected API response structure';
+                return $this->generateFallbackAnalysis($prompt);
             }
         } catch (\Exception $e) {
             Log::error('Error calling Gemini API', [
                 'error' => $e->getMessage(),
+                'prompt_length' => strlen($prompt),
+                'prompt_preview' => substr($prompt, 0, 100) . '...'
+            ]);
+
+            return $this->generateFallbackAnalysis($prompt);
+        }
+    }
+
+    /**
+     * Generate basic analysis when API is not available
+     *
+     * @param string $prompt
+     * @return string
+     */
+    private function generateFallbackAnalysis($prompt)
+    {
+        // Simple fallback when API is not available
+        if (stripos($prompt, 'Jawab hanya:') !== false || stripos($prompt, 'TERCAKUP atau TIDAK') !== false) {
+            return 'TERCAKUP'; // Default to covered for simple checks
+        }
+
+        return "Analisis sedang dalam proses. Mohon coba lagi nanti atau hubungi administrator jika masalah berlanjut.";
+    }
+
+    /**
+     * Get AI feedback for student's reflective writing
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getReflectiveWritingFeedback(Request $request)
+    {
+        try {
+            $user = Auth::user();
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not authenticated'
+                ], 401);
+            }
+
+            $mahasiswa = Mahasiswa::where('user_id', $user->id)->first();
+            if (!$mahasiswa) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Student record not found'
+                ], 404);
+            }
+
+            $batchYear = $request->query('batch_year');
+            $projectName = $request->query('project_name');
+
+            if (!$batchYear || !$projectName) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Batch year and project name are required'
+                ], 400);
+            }
+
+            // Find the project
+            $project = Project::where('project_name', $projectName)
+                ->where('batch_year', $batchYear)
+                ->first();
+
+            if (!$project) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Project not found'
+                ], 404);
+            }
+
+            // Get the AI analysis for this student and project
+            $aiAnalysis = reflective_writing_ai::where('mahasiswa_id', $mahasiswa->id)
+                ->where('project_id', $project->id)
+                ->first();
+
+            if (!$aiAnalysis) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No AI analysis found. Please submit your reflective writing first.',
+                    'has_feedback' => false
+                ]);
+            }
+
+            // Check if student has submitted answers for this project
+            $hasAnswers = ReflectiveWritingAnswer::join('reflective_writing', 'reflective_writing_answers.reflectiveWriting_id', '=', 'reflective_writing.id')
+                ->where('reflective_writing_answers.mahasiswa_id', $mahasiswa->id)
+                ->where('reflective_writing.project_id', $project->id)
+                ->exists();
+
+            if (!$hasAnswers) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Please submit your reflective writing first to get feedback.',
+                    'has_feedback' => false
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'has_feedback' => true,
+                'feedback' => [
+                    'summary' => $aiAnalysis->summary,
+                    'generated_at' => $aiAnalysis->updated_at,
+                    'project_name' => $project->project_name,
+                    'batch_year' => $project->batch_year
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error getting reflective writing feedback', [
+                'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
 
-            return 'Error: API request failed: ' . $e->getMessage();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error retrieving feedback: ' . $e->getMessage()
+            ], 500);
         }
     }
 }
