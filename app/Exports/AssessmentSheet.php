@@ -7,11 +7,12 @@ use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\AfterSheet;
+use Maatwebsite\Excel\Concerns\WithTitle;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
 
-class AssessmentSheet implements FromCollection, WithHeadings, WithEvents, ShouldAutoSize
+class AssessmentSheet implements FromCollection, WithHeadings, WithEvents, WithTitle, ShouldAutoSize
 {
     protected $batchYear;
     protected $projectName;
@@ -37,8 +38,8 @@ class AssessmentSheet implements FromCollection, WithHeadings, WithEvents, Shoul
                     'project_name' => $this->projectName,
                     'type' => '',
                     'question' => '',
-                    'skill_type'=> '',
-                    'aspect' => '',   
+                    'skill_type' => '',
+                    'aspect' => '',
                     'criteria' => ''
                 ];
             }
@@ -125,5 +126,10 @@ class AssessmentSheet implements FromCollection, WithHeadings, WithEvents, Shoul
                 }
             }
         ];
+    }
+
+    public function title(): string
+    {
+        return 'Pertanyaan Assessment';
     }
 }

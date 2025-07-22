@@ -124,6 +124,6 @@ class TypeCriteriaSheet implements FromCollection, WithHeadings, WithEvents, Wit
 
     public function title(): string
     {
-        return 'Type Criteria';
+        return 'Rubrik Assessment';
     }
 }

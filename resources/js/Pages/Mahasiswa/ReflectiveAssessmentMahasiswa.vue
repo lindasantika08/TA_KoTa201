@@ -4,7 +4,7 @@ import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
 import SidebarMahasiswa from "@/Components/SidebarMahasiswa.vue";
 import Breadcrumb from "@/Components/Breadcrumb.vue";
-import ConfirmModal from "@/Components/ConfirmModal.vue";
+import Swal from "sweetalert2";
 
 export default {
     components: {
@@ -12,7 +12,6 @@ export default {
         Card,
         SidebarMahasiswa,
         Breadcrumb,
-        ConfirmModal,
     },
     props: {
         batch_year: {
@@ -52,7 +51,6 @@ export default {
             error: null,
             studentInfo: {},
             temporaryAnswers: {},
-            showConfirmModal: false,
             isSubmitting: false,
         };
     },
@@ -175,7 +173,16 @@ export default {
                         JSON.stringify(this.temporaryAnswers)
                     );
 
-                    alert("Jawaban berhasil disimpan!");
+                    // Show success toast
+                    Swal.fire({
+                        toast: true,
+                        position: "top-end",
+                        icon: "success",
+                        title: "Jawaban berhasil disimpan!",
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true,
+                    });
 
                     if (this.currentQuestionIndex < this.questions.length - 1) {
                         this.currentQuestionIndex++;
@@ -187,7 +194,15 @@ export default {
                 const errorMessage =
                     error.response?.data?.error ||
                     "Gagal menyimpan jawaban. Silakan coba lagi.";
-                alert(errorMessage);
+
+                // Show error alert
+                Swal.fire({
+                    title: "Error!",
+                    text: errorMessage,
+                    icon: "error",
+                    confirmButtonColor: "#ef4444",
+                    confirmButtonText: "OK",
+                });
             }
         },
         async nextQuestion() {
@@ -248,15 +263,51 @@ export default {
             this.saveTemporaryAnswer();
 
             if (!this.canSubmitAll) {
-                alert("Mohon lengkapi semua jawaban terlebih dahulu");
+                Swal.fire({
+                    title: "Perhatian!",
+                    text: "Mohon lengkapi semua jawaban terlebih dahulu",
+                    icon: "warning",
+                    confirmButtonColor: "#f59e0b",
+                    confirmButtonText: "OK",
+                });
                 return;
             }
 
-            this.showConfirmModal = true;
+            // Show SweetAlert confirmation
+            const result = await Swal.fire({
+                title: "Konfirmasi Pengiriman",
+                text: "Apakah Anda yakin semua jawaban sudah sesuai? Setelah dikirim, jawaban tidak dapat diubah kembali.",
+                icon: "question",
+                showCancelButton: true,
+                confirmButtonColor: "#10b981",
+                cancelButtonColor: "#ef4444",
+                confirmButtonText: "Ya, Kirim!",
+                cancelButtonText: "Batal",
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+            });
+
+            if (result.isConfirmed) {
+                await this.submitAllAnswers();
+            }
         },
 
         async submitAllAnswers() {
             try {
+                this.isSubmitting = true;
+
+                // Show loading alert
+                Swal.fire({
+                    title: "Mengirim Jawaban...",
+                    text: "Mohon tunggu, jawaban sedang diproses.",
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    },
+                });
+
                 const allAnswers = this.questions.map((question) => ({
                     question_id: question.id,
                     answer: this.temporaryAnswers[question.id]?.answer || "",
@@ -270,17 +321,34 @@ export default {
 
                 if (response.data.success) {
                     this.clearFormFields();
-                    alert("Semua jawaban berhasil disimpan!");
-                    this.$inertia.visit(
-                        "/mahasiswa/reflective-assessment "
-                    );
+
+                    // Show success alert
+                    await Swal.fire({
+                        title: "Berhasil!",
+                        text: "Semua jawaban berhasil disimpan!",
+                        icon: "success",
+                        confirmButtonColor: "#10b981",
+                        confirmButtonText: "OK",
+                        timer: 3000,
+                        timerProgressBar: true,
+                    });
+
+                    // Redirect to previous page
+                    this.redirectToPreviousPage();
                 }
             } catch (error) {
                 console.error("Error submitting answers:", error);
-                alert("Gagal menyimpan jawaban. Silakan coba lagi.");
+
+                // Show error alert
+                Swal.fire({
+                    title: "Error!",
+                    text: "Gagal menyimpan jawaban. Silakan coba lagi.",
+                    icon: "error",
+                    confirmButtonColor: "#ef4444",
+                    confirmButtonText: "OK",
+                });
             } finally {
                 this.isSubmitting = false;
-                this.showConfirmModal = false;
             }
         },
 
@@ -288,6 +356,17 @@ export default {
             this.answer = "";
             this.temporaryAnswers = {};
             localStorage.removeItem("reflectiveTemporaryAnswers");
+        },
+
+        // Method to redirect to previous page
+        redirectToPreviousPage() {
+            // Use history.back() for better user experience or fallback to specific page
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                // Fallback to reflective assessment page
+                this.$inertia.visit("/mahasiswa/reflective-assessment");
+            }
         },
 
         mounted() {
@@ -480,14 +559,6 @@ export default {
                                         Next
                                     </button>
                                 </div>
-
-                                <ConfirmModal
-                                    :show="showConfirmModal"
-                                    title="Konfirmasi Pengiriman"
-                                    message="Apakah Anda yakin semua jawaban sudah sesuai? Setelah dikirim, jawaban tidak dapat diubah kembali."
-                                    @close="showConfirmModal = false"
-                                    @confirm="submitAllAnswers"
-                                />
                             </form>
                         </div>
 

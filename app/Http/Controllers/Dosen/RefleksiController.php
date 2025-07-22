@@ -1323,4 +1323,72 @@ Hasilkan ringkasan yang komprehensif, profesional, dan bermanfaat untuk penilaia
         $data = $response->json();
         return $data['candidates'][0]['content']['parts'][0]['text'] ?? "Gagal menghasilkan ringkasan.";
     }
+
+    /**
+     * Get AI summary for reflective writing
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getReflectiveWritingAISummary(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'mahasiswaId' => 'required|string',
+                'batch_year' => 'required|string',
+                'project_name' => 'required|string',
+            ]);
+
+            // Find mahasiswa
+            $mahasiswa = Mahasiswa::findOrFail($validated['mahasiswaId']);
+
+            // Find project
+            $project = Project::where('project_name', $validated['project_name'])
+                ->where('batch_year', $validated['batch_year'])
+                ->first();
+
+            if (!$project) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Project not found'
+                ], 404);
+            }
+
+            // Get AI summary
+            $aiSummary = \App\Models\reflective_writing_ai::where('mahasiswa_id', $mahasiswa->id)
+                ->where('project_id', $project->id)
+                ->first();
+
+            if (!$aiSummary) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No AI summary found for this student and project',
+                    'has_summary' => false
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'has_summary' => true,
+                'data' => [
+                    'summary' => $aiSummary->summary,
+                    'generated_at' => $aiSummary->updated_at,
+                    'mahasiswa_name' => $mahasiswa->user->name,
+                    'mahasiswa_nim' => $mahasiswa->nim,
+                    'project_name' => $project->project_name,
+                    'batch_year' => $project->batch_year
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error getting reflective writing AI summary', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error retrieving AI summary: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

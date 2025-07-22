@@ -217,7 +217,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/submit-all-reflective-writing', [RefleksiMahasiswa::class, 'submitAllReflectiveWriting']);
     Route::get('/detail-answer-reflective', [RefleksiMahasiswa::class, 'getAnswerReflective']);
     Route::get('/detail-answer-reflective-writing', [RefleksiMahasiswa::class, 'getDetailAnswerReflectiveWriting']);
-
+    Route::get('/reflective-writing/ai-summary', [RefleksiController::class, 'getReflectiveWritingAISummary']);
 
 
     // detail assessment

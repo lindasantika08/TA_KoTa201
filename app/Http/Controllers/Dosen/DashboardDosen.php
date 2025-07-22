@@ -16,6 +16,7 @@ use App\Models\AnswersPeer;
 use App\Models\Report;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardDosen extends Controller
 {
@@ -62,12 +63,28 @@ class DashboardDosen extends Controller
 
     public function getDosensInSameMajor()
     {
-        $dosenData = auth()->user()->dosen;
-        $sameMajorDosen = Dosen::where('major_id', $dosenData->major_id)->get();
+        try {
+            $user = Auth::user();
+            if (!$user || !$user->dosen) {
+                return response()->json([
+                    'error' => 'Unauthorized or user not found',
+                    'data' => []
+                ], 401);
+            }
 
-        return response()->json([
-            'data' => $sameMajorDosen
-        ]);
+            $dosenData = $user->dosen;
+            $sameMajorDosen = Dosen::where('major_id', $dosenData->major_id)->get();
+
+            return response()->json([
+                'data' => $sameMajorDosen
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error getting dosens in same major: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Internal server error',
+                'data' => []
+            ], 500);
+        }
     }
 
     public function getStatistics(Request $request)
@@ -287,16 +304,28 @@ class DashboardDosen extends Controller
                 ];
             }
 
-            // Get all unique aspects for chart labels from type_criteria table
+            // Get all unique aspects for chart labels from type_criteria table SPECIFIC TO THIS PROJECT
             try {
-                $allAspects = DB::table('type_criteria')
+                // Log project info for debugging
+                Log::info("Getting aspects for project", [
+                    'project_id' => $project->id,
+                    'project_name' => $projectName,
+                    'batch_year' => $batchYear
+                ]);
+
+                // First try to get aspects from assessments related to this project
+                $allAspects = DB::table('assessment')
+                    ->join('type_criteria', 'assessment.criteria_id', '=', 'type_criteria.id')
+                    ->where('assessment.project_id', $project->id)
                     ->distinct()
-                    ->pluck('aspect')
+                    ->pluck('type_criteria.aspect')
                     ->filter()
                     ->values()
                     ->toArray();
 
-                // If no aspects found in type_criteria, try from reports
+                Log::info("Aspects from assessment table", ['aspects' => $allAspects]);
+
+                // If no aspects found from assessments, try from reports for this project
                 if (empty($allAspects)) {
                     $allAspects = DB::table('reports')
                         ->join('type_criteria', 'reports.typeCriteria_id', '=', 'type_criteria.id')
@@ -306,14 +335,59 @@ class DashboardDosen extends Controller
                         ->filter()
                         ->values()
                         ->toArray();
+
+                    Log::info("Aspects from reports table", ['aspects' => $allAspects]);
                 }
 
-                // If still no aspects, provide default ones
+                // If still no aspects, get from type_criteria that have been used in this project  
                 if (empty($allAspects)) {
-                    $allAspects = ['Komunikasi', 'Kerjasama', 'Kreativitas', 'Kepemimpinan'];
+                    $usedTypeCriteriaIds = DB::table('assessment')
+                        ->where('project_id', $project->id)
+                        ->distinct()
+                        ->pluck('criteria_id')
+                        ->toArray();
+
+                    Log::info("Used type criteria IDs for project from assessment", ['ids' => $usedTypeCriteriaIds]);
+
+                    if (!empty($usedTypeCriteriaIds)) {
+                        $allAspects = DB::table('type_criteria')
+                            ->whereIn('id', $usedTypeCriteriaIds)
+                            ->distinct()
+                            ->pluck('aspect')
+                            ->filter()
+                            ->values()
+                            ->toArray();
+
+                        Log::info("Aspects from type_criteria with specific IDs", ['aspects' => $allAspects]);
+                    }
                 }
+
+                // If STILL no aspects found for this project, get ALL aspects from type_criteria
+                // This ensures we don't lose data and show all available aspects
+                if (empty($allAspects)) {
+                    $allAspects = DB::table('type_criteria')
+                        ->distinct()
+                        ->pluck('aspect')
+                        ->filter()
+                        ->values()
+                        ->toArray();
+
+                    Log::info("Using ALL aspects from type_criteria as fallback", ['aspects' => $allAspects]);
+                }
+
+                // Only use default aspects as very last resort if database has no data at all
+                if (empty($allAspects)) {
+                    $allAspects = ['Komunikasi', 'Kerjasama', 'Kreativitas', 'Kepemimpinan', 'Inisiatif', 'Kemandirian', 'Tanggung Jawab', 'Adaptasi', 'Problem Solving'];
+                    Log::info("Using comprehensive default aspects", ['aspects' => $allAspects]);
+                }
+
+                Log::info("Final aspects for project", [
+                    'project_id' => $project->id,
+                    'aspects' => $allAspects,
+                    'count' => count($allAspects)
+                ]);
             } catch (\Exception $e) {
-                Log::error("Error getting aspects: " . $e->getMessage());
+                Log::error("Error getting aspects for project {$project->id}: " . $e->getMessage());
                 $allAspects = ['Komunikasi', 'Kerjasama', 'Kreativitas', 'Kepemimpinan'];
             }
 

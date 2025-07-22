@@ -85,7 +85,7 @@ class AssessmentController extends Controller
 
             $spreadsheet = IOFactory::load($request->file('file'));
 
-            $sheet2 = $spreadsheet->getSheetByName('Type Criteria');
+            $sheet2 = $spreadsheet->getSheetByName('Rubrik Assessment');
             $highestRow2 = $sheet2->getHighestRow();
 
             for ($row = 5; $row <= $highestRow2; $row++) {
@@ -109,7 +109,7 @@ class AssessmentController extends Controller
                 }
             }
 
-            $sheet1 = $spreadsheet->getSheet(0);
+            $sheet1 = $spreadsheet->getSheetByName('Pertanyaan Assessment');
             $highestRow1 = $sheet1->getHighestRow();
 
             $projectsInImport = [];

@@ -4,7 +4,7 @@ import Navbar from "@/Components/Navbar.vue";
 import Card from "@/Components/Card.vue";
 import SidebarMahasiswa from "@/Components/SidebarMahasiswa.vue";
 import Breadcrumb from "@/Components/Breadcrumb.vue";
-import ConfirmModal from "@/Components/ConfirmModal.vue";
+import Swal from "sweetalert2";
 
 export default {
     components: {
@@ -12,7 +12,6 @@ export default {
         Card,
         SidebarMahasiswa,
         Breadcrumb,
-        ConfirmModal,
     },
     props: {
         batch_year: {
@@ -51,9 +50,13 @@ export default {
             error: null,
             studentInfo: {},
             temporaryAnswers: {},
-            showConfirmModal: false,
             isSubmitting: false,
             totalAssessmentOrders: 0,
+            // AI Feedback related
+            showFeedbackModal: false,
+            aiFeedback: null,
+            loadingFeedback: false,
+            hasFeedback: false,
         };
     },
     computed: {
@@ -83,6 +86,7 @@ export default {
         await this.fetchAllWritingData();
         await this.fetchStudentsInfo();
         await this.loadExistingAnswers();
+        await this.checkFeedbackAvailability();
     },
     methods: {
         async fetchAllWritingData() {
@@ -208,11 +212,18 @@ export default {
                 );
 
                 if (response.data.success) {
-                    alert(
-                        `Jawaban #${
+                    // Show success alert
+                    Swal.fire({
+                        toast: true,
+                        position: "top-end",
+                        icon: "success",
+                        title: `Jawaban #${
                             item.assessment_order
-                        } (${this.getQuestionNumber(item)}) berhasil disimpan!`
-                    );
+                        } (${this.getQuestionNumber(item)}) berhasil disimpan!`,
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true,
+                    });
 
                     // Remove from temporary storage after successful save
                     delete this.temporaryAnswers[itemId];
@@ -226,7 +237,15 @@ export default {
                 const errorMessage =
                     error.response?.data?.error ||
                     "Gagal menyimpan jawaban. Silakan coba lagi.";
-                alert(errorMessage);
+
+                // Show error alert
+                Swal.fire({
+                    title: "Error!",
+                    text: errorMessage,
+                    icon: "error",
+                    confirmButtonColor: "#ef4444",
+                    confirmButtonText: "OK",
+                });
             }
         },
 
@@ -302,13 +321,40 @@ export default {
             }
         },
         async submitAllAnswers() {
-            // Show confirmation modal directly without saving each answer first
-            this.showConfirmModal = true;
+            // Show SweetAlert confirmation instead of modal
+            const result = await Swal.fire({
+                title: "Konfirmasi Pengiriman",
+                text: "Apakah Anda yakin tulisan reflektif Anda sudah sesuai? Setelah dikirim, tulisan tidak dapat diubah kembali.",
+                icon: "question",
+                showCancelButton: true,
+                confirmButtonColor: "#10b981",
+                cancelButtonColor: "#ef4444",
+                confirmButtonText: "Ya, Kirim!",
+                cancelButtonText: "Batal",
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+            });
+
+            if (result.isConfirmed) {
+                await this.submitConfirmed();
+            }
         },
 
         async submitConfirmed() {
             try {
                 this.isSubmitting = true;
+
+                // Show loading alert
+                Swal.fire({
+                    title: "Mengirim Jawaban...",
+                    text: "Mohon tunggu, jawaban sedang diproses.",
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    },
+                });
 
                 // Prepare all answers for submission
                 const allAnswers = [];
@@ -334,17 +380,73 @@ export default {
 
                 if (response.data.success) {
                     this.clearFormFields();
-                    alert("Semua reflective writing berhasil disimpan!");
-                    this.$inertia.visit(
-                        "/mahasiswa/reflective-assessment"
-                    );
+
+                    // Show success alert with feedback option
+                    const successResult = await Swal.fire({
+                        title: "Berhasil!",
+                        text: "Semua reflective writing berhasil disimpan!",
+                        icon: "success",
+                        confirmButtonColor: "#10b981",
+                        confirmButtonText: "OK",
+                        timer: 3000,
+                        timerProgressBar: true,
+                    });
+
+                    // Check for feedback availability after successful submission
+                    await this.checkFeedbackAvailability();
+
+                    if (this.hasFeedback) {
+                        const feedbackResult = await Swal.fire({
+                            title: "Analisis AI Tersedia!",
+                            text: "Sistem AI telah menganalisis jawaban Anda. Apakah ingin melihat feedback sekarang?",
+                            icon: "info",
+                            showCancelButton: true,
+                            confirmButtonColor: "#3b82f6",
+                            cancelButtonColor: "#6b7280",
+                            confirmButtonText: "Lihat Feedback",
+                            cancelButtonText: "Nanti Saja",
+                        });
+
+                        if (feedbackResult.isConfirmed) {
+                            await this.fetchAIFeedback();
+                            return; // Don't redirect yet if showing feedback
+                        }
+                    } else {
+                        // Give AI more time to process, then check again
+                        setTimeout(async () => {
+                            await this.checkFeedbackAvailability();
+                            if (this.hasFeedback) {
+                                // Show toast notification about available feedback
+                                Swal.fire({
+                                    toast: true,
+                                    position: "top-end",
+                                    icon: "info",
+                                    title: "Feedback AI sudah tersedia!",
+                                    text: "Anda dapat melihatnya dari halaman utama.",
+                                    showConfirmButton: false,
+                                    timer: 5000,
+                                    timerProgressBar: true,
+                                });
+                            }
+                        }, 5000);
+                    }
+
+                    // Redirect to previous page
+                    this.redirectToPreviousPage();
                 }
             } catch (error) {
                 console.error("Error submitting answers:", error);
-                alert("Gagal menyimpan jawaban. Silakan coba lagi.");
+
+                // Show error alert
+                Swal.fire({
+                    title: "Error!",
+                    text: "Gagal menyimpan jawaban. Silakan coba lagi.",
+                    icon: "error",
+                    confirmButtonColor: "#ef4444",
+                    confirmButtonText: "OK",
+                });
             } finally {
                 this.isSubmitting = false;
-                this.showConfirmModal = false;
             }
         },
 
@@ -354,6 +456,80 @@ export default {
             localStorage.removeItem("reflectiveWritingTemporaryAnswers");
         },
 
+        async fetchAIFeedback() {
+            this.loadingFeedback = true;
+            try {
+                const response = await axios.get(
+                    "/api/reflective-writing-feedback",
+                    {
+                        params: {
+                            batch_year: this.batch_year,
+                            project_name: this.project_name,
+                        },
+                    }
+                );
+
+                if (response.data.success && response.data.has_feedback) {
+                    this.aiFeedback = response.data.feedback;
+                    this.hasFeedback = true;
+                    this.showFeedbackModal = true;
+                } else {
+                    this.hasFeedback = false;
+                    Swal.fire({
+                        title: "Info",
+                        text:
+                            response.data.message ||
+                            "No feedback available yet. Please submit your reflective writing first.",
+                        icon: "info",
+                        confirmButtonColor: "#3b82f6",
+                        confirmButtonText: "OK",
+                    });
+                }
+            } catch (error) {
+                console.error("Error fetching AI feedback:", error);
+                Swal.fire({
+                    title: "Error!",
+                    text:
+                        "Error loading feedback: " +
+                        (error.response?.data?.message || error.message),
+                    icon: "error",
+                    confirmButtonColor: "#ef4444",
+                    confirmButtonText: "OK",
+                });
+            } finally {
+                this.loadingFeedback = false;
+            }
+        },
+
+        closeFeedbackModal() {
+            this.showFeedbackModal = false;
+
+            // After closing feedback modal, redirect to previous page
+            setTimeout(() => {
+                this.redirectToPreviousPage();
+            }, 300); // Small delay to allow modal to close smoothly
+        },
+
+        async checkFeedbackAvailability() {
+            try {
+                const response = await axios.get(
+                    "/api/reflective-writing-feedback",
+                    {
+                        params: {
+                            batch_year: this.batch_year,
+                            project_name: this.project_name,
+                        },
+                    }
+                );
+
+                this.hasFeedback =
+                    response.data.success && response.data.has_feedback;
+            } catch (error) {
+                console.error("Error checking feedback availability:", error);
+                this.hasFeedback = false;
+            }
+        },
+
         // Helper method to get the question number within an assessment order
         getQuestionNumber(item) {
             if (!item || !item.assessment_order) return "";
@@ -361,6 +537,77 @@ export default {
             const orderItems = this.writingItems[item.assessment_order] || [];
             const index = orderItems.findIndex((i) => i.id === item.id);
             return `Pertanyaan ${index + 1} dari ${orderItems.length}`;
+        },
+
+        // Helper method to format feedback into sections for better display
+        formatFeedbackSections(summary) {
+            if (!summary) return [];
+
+            const sections = [];
+            const lines = summary.split("\n");
+            let currentSection = null;
+            let currentContent = [];
+
+            for (let line of lines) {
+                // Check if line is a section header
+                if (line.startsWith("===") && line.endsWith("===")) {
+                    // Save previous section
+                    if (currentSection) {
+                        sections.push({
+                            title: currentSection,
+                            content: currentContent.join("\n").trim(),
+                        });
+                    }
+
+                    // Start new section
+                    currentSection = line.replace(/===/g, "").trim();
+                    currentContent = [];
+                } else if (line.startsWith("---") && line.endsWith("---")) {
+                    // Save previous section
+                    if (currentSection) {
+                        sections.push({
+                            title: currentSection,
+                            content: currentContent.join("\n").trim(),
+                        });
+                    }
+
+                    // Start new section
+                    currentSection = line.replace(/---/g, "").trim();
+                    currentContent = [];
+                } else {
+                    // Add line to current content
+                    currentContent.push(line);
+                }
+            }
+
+            // Don't forget the last section
+            if (currentSection) {
+                sections.push({
+                    title: currentSection,
+                    content: currentContent.join("\n").trim(),
+                });
+            }
+
+            // If no sections found, return the whole summary as one section
+            if (sections.length === 0) {
+                sections.push({
+                    title: "Analisis AI",
+                    content: summary,
+                });
+            }
+
+            return sections;
+        },
+
+        // Method to redirect to previous page
+        redirectToPreviousPage() {
+            // Use history.back() for better user experience or fallback to specific page
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                // Fallback to reflective assessment page
+                this.$inertia.visit("/mahasiswa/reflective-assessment");
+            }
         },
     },
     mounted() {
@@ -529,7 +776,9 @@ export default {
                         </template>
 
                         <!-- Submit all button at the bottom -->
-                        <div class="flex justify-center items-center pt-8 pb-4">
+                        <div
+                            class="flex justify-center items-center gap-4 pt-8 pb-4"
+                        >
                             <button
                                 type="button"
                                 @click="submitAllAnswers"
@@ -542,6 +791,35 @@ export default {
                                         : "Kirim Semua Jawaban"
                                 }}
                             </button>
+
+                            <!-- AI Feedback Button -->
+                            <button
+                                v-if="hasFeedback"
+                                type="button"
+                                @click="fetchAIFeedback"
+                                :disabled="loadingFeedback"
+                                class="px-6 py-3 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 font-medium flex items-center gap-2"
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    class="h-5 w-5"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                                    />
+                                </svg>
+                                {{
+                                    loadingFeedback
+                                        ? "Loading..."
+                                        : "Lihat Feedback AI"
+                                }}
+                            </button>
                         </div>
                     </div>
 
@@ -551,13 +829,271 @@ export default {
                         </p>
                     </Card>
 
-                    <ConfirmModal
-                        :show="showConfirmModal"
-                        title="Konfirmasi Pengiriman"
-                        message="Apakah Anda yakin tulisan reflektif Anda sudah sesuai? Setelah dikirim, tulisan tidak dapat diubah kembali."
-                        @close="showConfirmModal = false"
-                        @confirm="submitConfirmed"
-                    />
+                    <!-- AI Feedback Modal -->
+                    <div
+                        v-if="showFeedbackModal"
+                        class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+                        @click.self="closeFeedbackModal"
+                    >
+                        <div
+                            class="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden"
+                        >
+                            <div
+                                class="flex items-center justify-between p-6 border-b"
+                            >
+                                <div class="flex items-center gap-3">
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        class="h-6 w-6 text-blue-500"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                                        />
+                                    </svg>
+                                    <h3
+                                        class="text-xl font-semibold text-gray-900"
+                                    >
+                                        Analisis AI - Feedback Reflective
+                                        Writing
+                                    </h3>
+                                </div>
+                                <button
+                                    @click="closeFeedbackModal"
+                                    class="text-gray-400 hover:text-gray-600 transition-colors"
+                                >
+                                    <svg
+                                        class="w-6 h-6"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M6 18L18 6M6 6l12 12"
+                                        ></path>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <div class="p-6 overflow-y-auto max-h-[70vh]">
+                                <div v-if="aiFeedback" class="space-y-6">
+                                    <!-- Project Info -->
+                                    <div
+                                        class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-400"
+                                    >
+                                        <div
+                                            class="flex items-center gap-2 mb-2"
+                                        >
+                                            <svg
+                                                class="w-5 h-5 text-blue-600"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                                ></path>
+                                            </svg>
+                                            <h4
+                                                class="font-medium text-blue-800"
+                                            >
+                                                Informasi Analisis
+                                            </h4>
+                                        </div>
+                                        <div
+                                            class="grid grid-cols-2 gap-4 text-sm"
+                                        >
+                                            <div>
+                                                <span
+                                                    class="font-medium text-blue-700"
+                                                    >Proyek:</span
+                                                >
+                                                <span
+                                                    class="text-blue-600 ml-2"
+                                                    >{{
+                                                        aiFeedback.project_name
+                                                    }}</span
+                                                >
+                                            </div>
+                                            <div>
+                                                <span
+                                                    class="font-medium text-blue-700"
+                                                    >Tahun Angkatan:</span
+                                                >
+                                                <span
+                                                    class="text-blue-600 ml-2"
+                                                    >{{
+                                                        aiFeedback.batch_year
+                                                    }}</span
+                                                >
+                                            </div>
+                                            <div class="col-span-2">
+                                                <span
+                                                    class="font-medium text-blue-700"
+                                                    >Dianalisis pada:</span
+                                                >
+                                                <span
+                                                    class="text-blue-600 ml-2"
+                                                    >{{
+                                                        new Date(
+                                                            aiFeedback.generated_at
+                                                        ).toLocaleString(
+                                                            "id-ID"
+                                                        )
+                                                    }}</span
+                                                >
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- AI Analysis Content -->
+                                    <div class="bg-white border rounded-lg">
+                                        <div
+                                            class="bg-gray-50 px-4 py-3 border-b"
+                                        >
+                                            <h4
+                                                class="font-medium text-gray-800 flex items-center gap-2"
+                                            >
+                                                <svg
+                                                    class="w-5 h-5 text-green-600"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                                    ></path>
+                                                </svg>
+                                                Hasil Analisis AI
+                                            </h4>
+                                        </div>
+                                        <div class="p-4">
+                                            <div class="prose max-w-none">
+                                                <!-- Format the summary for better readability -->
+                                                <div class="space-y-4">
+                                                    <div
+                                                        v-for="(
+                                                            section, index
+                                                        ) in formatFeedbackSections(
+                                                            aiFeedback.summary
+                                                        )"
+                                                        :key="index"
+                                                        class="border rounded-lg"
+                                                    >
+                                                        <div
+                                                            class="bg-gray-50 px-3 py-2 border-b"
+                                                        >
+                                                            <h5
+                                                                class="font-medium text-gray-700 text-sm"
+                                                            >
+                                                                {{
+                                                                    section.title
+                                                                }}
+                                                            </h5>
+                                                        </div>
+                                                        <div class="p-3">
+                                                            <pre
+                                                                class="whitespace-pre-wrap font-sans text-sm text-gray-600 leading-relaxed"
+                                                                >{{
+                                                                    section.content
+                                                                }}</pre
+                                                            >
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Action Tips -->
+                                    <div
+                                        class="bg-amber-50 border border-amber-200 rounded-lg p-4"
+                                    >
+                                        <div
+                                            class="flex items-center gap-2 mb-2"
+                                        >
+                                            <svg
+                                                class="w-5 h-5 text-amber-600"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.728-.833-2.498 0L3.316 16.5c-.77.833.192 2.5 1.732 2.5z"
+                                                ></path>
+                                            </svg>
+                                            <h4
+                                                class="font-medium text-amber-800"
+                                            >
+                                                Tips untuk Perbaikan
+                                            </h4>
+                                        </div>
+                                        <div
+                                            class="text-sm text-amber-700 space-y-2"
+                                        >
+                                            <p>
+                                                • Perhatikan poin-poin yang
+                                                belum tercakup dalam analisis di
+                                                atas
+                                            </p>
+                                            <p>
+                                                • Gunakan saran spesifik yang
+                                                diberikan AI untuk memperbaiki
+                                                jawaban
+                                            </p>
+                                            <p>
+                                                • Pastikan setiap poin reflektif
+                                                dijawab dengan lengkap dan
+                                                sesuai konteks
+                                            </p>
+                                            <p>
+                                                • Jika ada poin yang tidak
+                                                tercakup, tambahkan pembahasan
+                                                yang relevan
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div v-else class="text-center py-8">
+                                    <div
+                                        class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"
+                                    ></div>
+                                    <p class="mt-2 text-gray-600">
+                                        Loading feedback...
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div
+                                class="border-t p-4 bg-gray-50 flex justify-end"
+                            >
+                                <button
+                                    @click="closeFeedbackModal"
+                                    class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+                                >
+                                    Tutup
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </Card>
             </main>
         </div>
