@@ -367,7 +367,7 @@ export default {
         async checkUserStatus() {
             // console.log('Checking user status from API...'); // Debugging
             try {
-                const response = await axios.get("/sispa/api/user/status");
+                const response = await axios.get("/api/user/status");
                 // console.log('User status response:', response.data);
 
                 // Pastikan properti change_password ada
@@ -418,7 +418,7 @@ export default {
         },
         async fetchDropdownOptions() {
             try {
-                const response = await axios.get("/sispa/api/dropdown-options");
+                const response = await axios.get("/api/dropdown-options");
                 this.combinedOptions = response.data.options || [];
 
                 const storedOption = localStorage.getItem("selectedOption");
@@ -463,7 +463,7 @@ export default {
             this.groupStatistics = [];
 
             axios
-                .get("/sispa/api/answers/statistics-peer", {
+                .get("/api/answers/statistics-peer", {
                     params: {
                         batch_year: this.selectedProject.batch_year,
                         project_name: this.selectedProject.project_name,
@@ -516,7 +516,7 @@ export default {
             this.totalUsers = 0;
 
             axios
-                .get("/sispa/api/answers/statistics-dashboard", {
+                .get("/api/answers/statistics-dashboard", {
                     params: {
                         batch_year: this.selectedProject.batch_year,
                         project_name: this.selectedProject.project_name,
@@ -572,7 +572,7 @@ export default {
         handleListAnswer() {
             if (this.selectedProject) {
                 router.get(
-                    "/sispa/dosen/answers-self-assessment",
+                    "/dosen/answers-self-assessment",
                     {
                         batch_year: this.selectedProject.batch_year,
                         project_name: this.selectedProject.project_name,
@@ -586,7 +586,7 @@ export default {
         handleListAnswerPeer() {
             if (this.selectedProject) {
                 router.get(
-                    "/sispa/dosen/answers-peer-assessment",
+                    "/dosen/answers-peer-assessment",
                     {
                         batch_year: this.selectedProject.batch_year,
                         project_name: this.selectedProject.project_name,
@@ -602,7 +602,7 @@ export default {
             this.showChangePasswordToast = false;
             this.needPasswordChange = false;
             localStorage.removeItem("need_password_change");
-            router.visit("/sispa/dosen/profile");
+            router.visit("/dosen/profile");
         },
         async fetchClassComparison() {
             if (!this.selectedProject) return;
@@ -610,7 +610,7 @@ export default {
             this.loadingChart = true;
             try {
                 const response = await axios.get(
-                    "/sispa/api/class-comparison",
+                    "/api/class-comparison",
                     {
                         params: {
                             batch_year: this.selectedProject.batch_year,
