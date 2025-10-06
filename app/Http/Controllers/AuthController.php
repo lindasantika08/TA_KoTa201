@@ -110,6 +110,7 @@ class AuthController extends Controller
         return response()->json(['message' => 'Logout Berhasil']);
     }
 
+    // change password
     public function changePassword(Request $request)
     {
         $request->validate([
