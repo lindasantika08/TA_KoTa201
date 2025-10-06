@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('group');
             $table->foreignUuid('dosen_id')->constrained('dosen');
             $table->timestamps();
-            $table->softDeletes();
+            // $table->softDeletes();
 
             // $table->unique(['mahasiswa_id', 'project_id']);
         });

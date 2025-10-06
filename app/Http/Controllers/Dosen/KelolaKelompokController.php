@@ -60,55 +60,57 @@ class KelolaKelompokController extends Controller
             'dosen.user',
             'project'
         ])
-        ->whereHas('project', function ($query) {
-            $query->where('status', 'active'); 
-        })
-        ->get()
-        ->groupBy('project_id')
-        ->map(function ($projectGroups) {
-            return $projectGroups->groupBy(function ($item) {
-                return optional($item->mahasiswa->classRoom)->class_name . '-' . $item->group;
+            ->whereHas('project', function ($query) {
+                $query->where('status', 'active');
             })
-            ->sortKeys()
-            ->map(function ($sameGroupItems) {
-                $firstGroup = $sameGroupItems->first();
-                $members = $sameGroupItems->map(function ($group) {
-                    return [
-                        'name' => optional($group->mahasiswa->user)->name ?? 'Unnamed',
-                        'nim' => optional($group->mahasiswa)->nim ?? 'N/A',
-                        'user_id' => optional($group->mahasiswa->user)->id ?? null,
-                        'class' => optional($group->mahasiswa->classRoom)->class_name ?? 'N/A'
-                    ];
-                })->unique('nim')->values();
-        
-                // Ambil angkatan dari classroom mahasiswa di group
-                $angkatan = optional($firstGroup->mahasiswa->classRoom)->angkatan ?? 'N/A';
-                $class = optional($firstGroup->mahasiswa->classRoom)->class_name ?? 'N/A';
-                $project = $firstGroup->project;
-        
-                return [
-                    'dosen_name' => optional($firstGroup->dosen->user)->name ?? 'Unnamed Dosen',
-                    'projects' => [[
-                        'id' => $project->id ?? null, // Add this line
-                        'project_id' => $project->id ?? null, // Add this line to ensure project_id is set
-                        'project_name' => $project->project_name ?? 'N/A',
-                        'batch_year' => $project->batch_year ?? 'N/A',
-                        'group' => $firstGroup->group,
-                        'anggota' => $members,
-                        'angkatan' => $angkatan,
-                        'class' => $class,
-                        'classroom' => [
-                            'angkatan' => $angkatan,
-                            'class_name' => $class
-                        ]
-                    ]]
-                ];
+            ->get()
+            ->groupBy('project_id')
+            ->map(function ($projectGroups) {
+                return $projectGroups->groupBy(function ($item) {
+                    return optional($item->mahasiswa->classRoom)->class_name . '-' . $item->group;
+                })
+                    ->sortKeys()
+                    ->map(function ($sameGroupItems) {
+                        $firstGroup = $sameGroupItems->first();
+                        $members = $sameGroupItems->map(function ($group) {
+                            return [
+                                'name' => optional($group->mahasiswa->user)->name ?? 'Unnamed',
+                                'nim' => optional($group->mahasiswa)->nim ?? 'N/A',
+                                'user_id' => optional($group->mahasiswa->user)->id ?? null,
+                                'class' => optional($group->mahasiswa->classRoom)->class_name ?? 'N/A'
+                            ];
+                        })->unique('nim')->values();
+
+                        // Ambil angkatan dari classroom mahasiswa di group
+                        $angkatan = optional($firstGroup->mahasiswa->classRoom)->angkatan ?? 'N/A';
+                        $class = optional($firstGroup->mahasiswa->classRoom)->class_name ?? 'N/A';
+                        $project = $firstGroup->project;
+
+                        return [
+                            'dosen_name' => optional($firstGroup->dosen->user)->name ?? 'Unnamed Dosen',
+                            'projects' => [
+                                [
+                                    'id' => $project->id ?? null, // Add this line
+                                    'project_id' => $project->id ?? null, // Add this line to ensure project_id is set
+                                    'project_name' => $project->project_name ?? 'N/A',
+                                    'batch_year' => $project->batch_year ?? 'N/A',
+                                    'group' => $firstGroup->group,
+                                    'anggota' => $members,
+                                    'angkatan' => $angkatan,
+                                    'class' => $class,
+                                    'classroom' => [
+                                        'angkatan' => $angkatan,
+                                        'class_name' => $class
+                                    ]
+                                ]
+                            ]
+                        ];
+                    })
+                    ->values();
             })
+            ->flatten(1)
+            ->filter()
             ->values();
-        })
-        ->flatten(1)
-        ->filter()
-        ->values();
 
         return Inertia::render('Dosen/KelolaKelompok', [
             'kelompok' => $kelompokData,
@@ -141,10 +143,10 @@ class KelolaKelompokController extends Controller
     public function getProfile($user_id)
     {
         $mahasiswa = Mahasiswa::with([
-            'user',          
-            'classRoom.prodi.major', 
+            'user',
+            'classRoom.prodi.major',
         ])
-            ->where('user_id', $user_id) 
+            ->where('user_id', $user_id)
             ->first();
 
         if (!$mahasiswa) {
@@ -159,7 +161,7 @@ class KelolaKelompokController extends Controller
             'prodi' => $mahasiswa->classRoom->prodi->prodi_name,
             'jurusan' => $mahasiswa->classRoom->prodi->major->major_name,
             'email' => $mahasiswa->user->email,
-            'telepon' => $mahasiswa->user->phone, 
+            'telepon' => $mahasiswa->user->phone,
             // 'photo' => $mahasiswa->user->photo,
             'photo' => $photoUrl,
         ]);
@@ -241,16 +243,16 @@ class KelolaKelompokController extends Controller
         $request->validate([
             'file' => 'required|mimes:xlsx,xls',
         ]);
-    
+
         $file = $request->file('file');
-    
+
         try {
             Log::info('File uploaded', ['file_name' => $file->getClientOriginalName()]);
-    
+
             Log::info('File contents', ['contents' => file_get_contents($file->getRealPath())]);
-    
+
             Excel::import(new KelompokImport, $file);
-    
+
             return response()->json(['message' => 'Data kelompok berhasil diimpor'], 200);
         } catch (\Exception $e) {
             Log::error('Import error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
@@ -259,91 +261,91 @@ class KelolaKelompokController extends Controller
     }
 
     public function checkGroupDeletion(Request $request)
-{
-    $validator = Validator::make($request->all(), [
-        'project_id' => [
-            'required', 
-            'string', 
-            function($attribute, $value, $fail) {
-                if (!$value) {
-                    $fail('The project ID cannot be empty.');
+    {
+        $validator = Validator::make($request->all(), [
+            'project_id' => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) {
+                    if (!$value) {
+                        $fail('The project ID cannot be empty.');
+                    }
+
+                    $projectExists = DB::table('groups')
+                        ->where('project_id', $value)
+                        ->exists();
+
+                    if (!$projectExists) {
+                        $fail('The selected project does not exist.');
+                    }
                 }
-                
-                $projectExists = DB::table('groups')
-                    ->where('project_id', $value)
-                    ->exists();
-                
-                if (!$projectExists) {
-                    $fail('The selected project does not exist.');
-                }
-            }
-        ],
-        'group_name' => 'required|string'
-    ]);
-
-    if ($validator->fails()) {
-        return response()->json([
-            'errors' => $validator->errors(),
-            'message' => 'Validation failed',
-            'request_data' => $request->all()
-        ], 422);
-    }
-
-    $validated = $validator->validated();
-
-    // Check related data in answers_peer
-    $relatedAnswersPeer = DB::table('answers_peer')
-        ->join('mahasiswa', 'answers_peer.mahasiswa_id', '=', 'mahasiswa.id')
-        ->join('groups', 'mahasiswa.id', '=', 'groups.mahasiswa_id')
-        ->where('groups.project_id', $validated['project_id'])
-        ->where('groups.group', $validated['group_name'])
-        ->exists();
-
-    // Check related data in answers table
-    $relatedAnswers = DB::table('answers')
-        ->join('mahasiswa', 'answers.mahasiswa_id', '=', 'mahasiswa.id')
-        ->join('groups', 'mahasiswa.id', '=', 'groups.mahasiswa_id')
-        ->where('groups.project_id', $validated['project_id'])
-        ->where('groups.group', $validated['group_name'])
-        ->exists();
-
-    // Check related data in reports table
-    $relatedReports = DB::table('reports')
-        ->join('groups', 'reports.group_id', '=', 'groups.id')
-        ->where('groups.project_id', $validated['project_id'])
-        ->where('groups.group', $validated['group_name'])
-        ->exists();
-
-    // If any related data exists, require confirmation
-    if ($relatedAnswersPeer || $relatedAnswers || $relatedReports) {
-        $warningMessage = 'This group has related data. Deleting the group will remove all associated data';
-        
-        $relatedDataTypes = [];
-        
-        if ($relatedAnswersPeer) {
-            $relatedDataTypes[] = 'peer assessment answers';
-        }
-        
-        if ($relatedAnswers) {
-            $relatedDataTypes[] = 'regular answers';
-        }
-        
-        if ($relatedReports) {
-            $relatedDataTypes[] = 'reports';
-        }
-        
-        $warningMessage .= ' including ' . implode(', ', $relatedDataTypes) . '.';
-
-        return response()->json([
-            'warning' => $warningMessage,
-            'requires_confirmation' => true
+            ],
+            'group_name' => 'required|string'
         ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'errors' => $validator->errors(),
+                'message' => 'Validation failed',
+                'request_data' => $request->all()
+            ], 422);
+        }
+
+        $validated = $validator->validated();
+
+        // Check related data in answers_peer
+        $relatedAnswersPeer = DB::table('answers_peer')
+            ->join('mahasiswa', 'answers_peer.mahasiswa_id', '=', 'mahasiswa.id')
+            ->join('groups', 'mahasiswa.id', '=', 'groups.mahasiswa_id')
+            ->where('groups.project_id', $validated['project_id'])
+            ->where('groups.group', $validated['group_name'])
+            ->exists();
+
+        // Check related data in answers table
+        $relatedAnswers = DB::table('answers')
+            ->join('mahasiswa', 'answers.mahasiswa_id', '=', 'mahasiswa.id')
+            ->join('groups', 'mahasiswa.id', '=', 'groups.mahasiswa_id')
+            ->where('groups.project_id', $validated['project_id'])
+            ->where('groups.group', $validated['group_name'])
+            ->exists();
+
+        // Check related data in reports table
+        $relatedReports = DB::table('reports')
+            ->join('groups', 'reports.group_id', '=', 'groups.id')
+            ->where('groups.project_id', $validated['project_id'])
+            ->where('groups.group', $validated['group_name'])
+            ->exists();
+
+        // If any related data exists, require confirmation
+        if ($relatedAnswersPeer || $relatedAnswers || $relatedReports) {
+            $warningMessage = 'This group has related data. Deleting the group will remove all associated data';
+
+            $relatedDataTypes = [];
+
+            if ($relatedAnswersPeer) {
+                $relatedDataTypes[] = 'peer assessment answers';
+            }
+
+            if ($relatedAnswers) {
+                $relatedDataTypes[] = 'regular answers';
+            }
+
+            if ($relatedReports) {
+                $relatedDataTypes[] = 'reports';
+            }
+
+            $warningMessage .= ' including ' . implode(', ', $relatedDataTypes) . '.';
+
+            return response()->json([
+                'warning' => $warningMessage,
+                'requires_confirmation' => true
+            ]);
+        }
+
+        return response()->json(['requires_confirmation' => false]);
     }
 
-    return response()->json(['requires_confirmation' => false]);
-}
-    
-        public function deleteGroup(Request $request)
+    public function deleteGroup(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'project_id' => ['required', 'string', 'exists:groups,project_id'],
@@ -369,8 +371,8 @@ class KelolaKelompokController extends Controller
         try {
             // Fetch the groups to delete
             $groupsToDelete = Group::where('project_id', $validated['project_id'])
-                                ->where('group', $validated['group_name'])
-                                ->get();
+                ->where('group', $validated['group_name'])
+                ->get();
 
             if ($groupsToDelete->isEmpty()) {
                 \Log::warning('No Groups Found:', [
@@ -394,13 +396,13 @@ class KelolaKelompokController extends Controller
             // Process each group
             foreach ($groupsToDelete as $group) {
                 $groupId = $group->id;
-                
+
                 // 1. Delete records from reports table first (this is causing the constraint violation)
                 $reportsDeleted = DB::table('reports')
                     ->where('group_id', $groupId)
                     ->delete();
                 $totalReportsDeleted += $reportsDeleted;
-                
+
                 \Log::info("Deleted {$reportsDeleted} reports for group {$groupId}");
 
                 // 2. Delete associated answers_peer where students in this group provided answers
@@ -409,7 +411,7 @@ class KelolaKelompokController extends Controller
                     ->join('groups', 'mahasiswa.id', '=', 'groups.mahasiswa_id')
                     ->where('groups.id', $groupId)
                     ->delete();
-                
+
                 // 3. Delete associated answers_peer where the peer is in this group
                 $peerAnswersDeleted = DB::table('answers_peer')
                     ->join('mahasiswa', 'answers_peer.peer_id', '=', 'mahasiswa.id')
@@ -418,7 +420,7 @@ class KelolaKelompokController extends Controller
                     ->delete();
 
                 $totalAnswersPeerDeleted += ($answersPeerDeleted + $peerAnswersDeleted);
-                
+
                 \Log::info("Deleted answers_peer for group {$groupId}: {$answersPeerDeleted} direct answers, {$peerAnswersDeleted} peer answers");
 
                 // 4. Delete associated records from answers table where students in this group provided answers
@@ -427,17 +429,17 @@ class KelolaKelompokController extends Controller
                     ->join('groups', 'mahasiswa.id', '=', 'groups.mahasiswa_id')
                     ->where('groups.id', $groupId)
                     ->delete();
-                
+
                 $totalAnswersDeleted += $answersDeleted;
-                
+
                 \Log::info("Deleted {$answersDeleted} answers for group {$groupId}");
 
                 // 5. Check for any other tables that might have foreign key relationships with groups
                 // Add more delete operations as needed for other related tables
-                
+
                 // 6. Finally delete the group itself
                 $result = $group->delete();
-                
+
                 if ($result) {
                     $totalGroupMembersDeleted++;
                     \Log::info("Successfully deleted group {$groupId}");
@@ -472,5 +474,5 @@ class KelolaKelompokController extends Controller
             ], 500);
         }
     }
-    
+
 }
