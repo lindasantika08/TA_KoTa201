@@ -18,6 +18,28 @@ export default defineConfig({
             '@ziggy': path.resolve('vendor/tightenco/ziggy/dist'),
         },
     },
+    build: {
+        rollupOptions: {
+            external: [],
+            output: {
+                globals: {}
+            }
+        },
+        commonjsOptions: {
+            include: [/node_modules/],
+        },
+    },
+    optimizeDeps: {
+        include: [
+            'vue',
+            '@inertiajs/vue3',
+            'sweetalert2',
+            'axios',
+            'dayjs',
+            'date-fns',
+            'ziggy-js'
+        ],
+    },
     server: {
         host: '0.0.0.0',
         port: 5173,
